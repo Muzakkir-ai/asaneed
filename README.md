@@ -2,6 +2,8 @@
 
 Stage one only. Zite remains the live application; no production records have been migrated.
 
+Foundation deployment: https://asaneed.vercel.app/ — homepage verified HTTP 200; unauthenticated `/manage` was verified in Chrome to redirect to `/login`.
+
 ## Created
 
 - Supabase project: `sqyookpdpymgpwpnicyp`, organization Muzakkir's Org, Mumbai region.
@@ -26,10 +28,10 @@ No real login accounts have been activated. Create or activate the administrator
 
 ## Remaining stage-one work
 
-1. Publish the standalone project to the user-approved public GitHub repository `Muzakkir-ai/asaneed` (repository created).
-2. Create/link Vercel project `asaneed` in team Halaqaat. The connector returned 403 (no project-creation permission); the local CLI is logged out.
-3. Configure the two public Supabase environment variables in Vercel, configure the final Auth site/redirect URLs, activate the administrator, and test sign-in end to end.
+1. Code is published at `https://github.com/Muzakkir-ai/asaneed`. Vercel's existing GitHub installation now has access to Asaneed alongside turuq, approved by the user.
+2. Vercel project `asaneed` was created in team Halaqaat (Hobby) through the browser. Its first production deployment succeeded: `dpl_9fB1bxYAjUFKTV4mFrS8n6kYNQah`, source commit `e6546c7e8dd8f8c66b932bbfcab0d32f8d9d4c95`. The connected API lacks access; the local CLI is logged out.
+3. Both public Supabase variables are configured for production and preview. Configure final Auth site/redirect URLs, activate the administrator, and test sign-in end to end.
 4. Add public verification lookup and the full management interface during the next implementation stage. The current home page clearly marks verification as pending.
 5. Migrate with an export manifest, relationship and numbering reconciliation, asset copies and a restore rehearsal before cutover.
 
-Computer-use fallback ended because its policy check could not confidently determine the current browser URL. No browser changes were made.
+Browser setup resumed successfully after the user restored Chrome and completed GitHub and Vercel identity verification. No production Zite data has been moved.

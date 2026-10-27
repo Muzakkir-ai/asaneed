@@ -1,6 +1,6 @@
 # Asaneed independent foundation
 
-Status: Supabase foundation provisioned and permission tests passed. Independent app source prepared. Hosting, repository publication and real-account activation are pending. No live Zite data moved or Zite changes made.
+Status: Supabase foundation provisioned and permission tests passed. Code published to GitHub. Vercel deployment succeeded at https://asaneed.vercel.app/. Homepage and unauthenticated management-to-login redirect verified. Real-account activation remains pending. No live Zite data moved or Zite changes made.
 
 ## Ownership and hosting
 
