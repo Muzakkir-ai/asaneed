@@ -338,6 +338,7 @@ export type Database = {
         Returns: string
       }
       normalize_arabic: { Args: { value: string }; Returns: string }
+      verify_ijazah: { Args: { p_number: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never

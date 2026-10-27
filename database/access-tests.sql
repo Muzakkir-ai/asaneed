@@ -74,5 +74,22 @@ do $$ begin
  if sqlerrm <> 'Finalized certificates are immutable' then raise; end if;
  end;
 end $$;
-select 'PASS: issuer isolation, shared students, inactive accounts, student access, finalization, snapshot protection, deletion guard, Arabic search, anonymous denial' as result;
+set local role anon;
+do $$ declare response jsonb; begin
+ response := public.verify_ijazah('0126-9801');
+ if response->>'status' <> 'verified' then raise exception 'Finalized ijazah lookup failed'; end if;
+ if response->'certificate' ? 'certificate_id' or response->'certificate' ? 'draft' then raise exception 'Private fields exposed'; end if;
+ if response->'certificate'->>'student_name' <> 'مُحَمَّد مُذَكِّر' then raise exception 'Wrong student returned'; end if;
+ if public.verify_ijazah('9926-9801')->>'status' <> 'not_found' then raise exception 'Draft appeared in public lookup'; end if;
+ begin
+ perform public.verify_ijazah('%');
+ raise exception 'Wildcard lookup allowed';
+ exception when invalid_parameter_value then null; end;
+ begin
+ perform count(*) from public.certificates;
+ raise exception 'Anonymous certificate enumeration allowed';
+ exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+select 'PASS: issuer isolation, shared students, inactive accounts, student access, finalization, snapshot protection, deletion guard, Arabic search, public exact lookup, draft exclusion, anonymous table denial' as result;
 rollback;
