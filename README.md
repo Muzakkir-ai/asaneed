@@ -8,6 +8,8 @@ The public home page is an Arabic ijazah-number checker with self-hosted Readex 
 
 ## Created
 
+The site supports Arabic, Urdu and English through the header language switcher. A validated, HTTP-only preference cookie remembers the selection for one year. HTML language/direction, page metadata, form feedback, dates and account screens follow the selected language; certificate names remain in their original form.
+
 - Supabase project: `sqyookpdpymgpwpnicyp`, organization Muzakkir's Org, Mumbai region.
 - Independent Next.js app with Arabic layout, password sign-in, refreshed server sessions, and account activation checks.
 - PostgreSQL schema with separate login accounts and issuer identities, shared students, qiraat/riwayat catalog, sanads, certificates and immutable snapshots.

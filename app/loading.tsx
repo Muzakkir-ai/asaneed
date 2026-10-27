@@ -1,1 +1,3 @@
-export default function Loading() { return <p role="status">جارٍ التحميل…</p>; }
+'use client';
+import { useLanguage } from './language-provider';
+export default function Loading() { const {t}=useLanguage(); return <p role="status">{t.loading}</p>; }
