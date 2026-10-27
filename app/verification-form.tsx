@@ -13,7 +13,7 @@ export default function VerificationForm() {
   if (loading) return;
   setResult(null); setError(''); setInvalid(false);
   const normalized = normalizeRegistration(number);
-  if (!isRegistration(normalized)) { setInvalid(true); setError('أدخل رقمًا من ثمانية أرقام، مثل ٠١٢٦-١٠٠٢.'); return; }
+  if (!isRegistration(normalized)) { setInvalid(true); setError('أدخل رقمًا من ثمانية أرقام، مع شرطة بعد أول أربعة أرقام.'); return; }
   setLoading(true);
   try {
    const response = await fetch('/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({number:normalized}),cache:'no-store',signal:AbortSignal.timeout(12000)});
@@ -27,7 +27,7 @@ export default function VerificationForm() {
   <form onSubmit={submit} className="verification-form" aria-busy={loading}>
    <label htmlFor="ijazah-number">رقم الإجازة</label>
    <p id="number-hint" className="field-hint">الرقم المدوّن على الإجازة بعد عبارة «المسجّل برقم».</p>
-   <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder="٠١٢٦-١٠٠٢" required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
+   <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder={'\u2066٠١٢٦\u2069-\u2066١٠٠٢\u2069'} required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
    <button type="submit" className="verify-button" disabled={loading}>{loading?<><span className="spinner" aria-hidden="true"/>جارٍ التحقق…</>:<>تحقق من الإجازة<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></>}</button>
    <p className="input-note">يمكنك إدخال الرقم بالأرقام العربية أو الإنجليزية.</p>
    {error&&<p id="verification-error" role="alert" className="lookup-message lookup-error">{error}</p>}
@@ -36,7 +36,7 @@ export default function VerificationForm() {
    {result?.status==='preparing'&&<div className="lookup-message"><h2>سجل التحقق قيد التجهيز</h2><p>ستتوفر نتائج التحقق بعد إدراج الإجازات المعتمدة في السجل.</p></div>}
    {result?.status==='not_found'&&<div className="lookup-message"><h2>لم نعثر على إجازة بهذا الرقم</h2><p>تحقق من الرقم المدوّن على الإجازة وحاول مجددًا. قد لا تكون الإجازة قد أُدرجت في السجل بعد.</p></div>}
    {result?.status==='verified'&&<section className="verified-result"><p className="verified-badge"><span aria-hidden="true">✓</span> إجازة معتمدة</p><h2>{result.certificate.student_name}</h2><dl>
-    <div><dt>رقم الإجازة</dt><dd><bdi dir="ltr" className="registration-number">{arabicDigits(result.certificate.registration_number)}</bdi></dd></div>
+    <div><dt>رقم الإجازة</dt><dd><bdi dir="ltr" className="registration-number"><span>{arabicDigits(result.certificate.registration_number.slice(0,4))}</span><span>-</span><span>{arabicDigits(result.certificate.registration_number.slice(5))}</span></bdi></dd></div>
     <div><dt>المجيز</dt><dd>{result.certificate.issuer_name}</dd></div>
     <div><dt>القراءة</dt><dd>{result.certificate.qiraah_name}</dd></div>
     <div><dt>الرواية</dt><dd>{result.certificate.riwayah_name}</dd></div>
