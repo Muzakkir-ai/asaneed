@@ -1,0 +1,92 @@
+import {useEffect,useState} from 'react';
+import {additionalShaykhs,additionalReadingSanads,mutoonTemplates,type AdditionalShaykhsOutputType} from '../lib/api';
+import MatnFormatting,{MatnPreview,parseMatnFormat,type MatnFormat} from './MatnFormatting';
+import {QURRA,displayRawi} from '../lib/qurra';
+import {Button} from '@project/components/ui/button';
+import {Input} from '@project/components/ui/input';
+import {Textarea} from '@project/components/ui/textarea';
+import {Card,CardContent} from '@project/components/ui/card';
+import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@project/components/ui/dialog';
+import {BookOpen,GraduationCap,Plus,PenLine,UserRound,Mail} from 'lucide-react';
+import {toast} from 'sonner';
+type Sheikh=AdditionalShaykhsOutputType['sheikhs'][number];
+type Reading={qariId:string;rawi:string};
+type Matn={name:string;category:string;sanadText:string;wordingText:string;introductionId:string;conclusionId:string;sanadFormatting:string};
+type Template={id:string;name:string;kind:string;body:string;formatting:string};
+const emptyMatn=():Matn=>({name:'',category:'',sanadText:'',wordingText:'',introductionId:'',conclusionId:'',sanadFormatting:'[]'});
+const blank={email:'',mutoon:[] as Matn[],name:'',qualification:'',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'ubaydi' as 'ubaydi'|'jazari',readings:[] as Reading[]};
+export default function AdditionalShaykhsPage({onSaved}:{onSaved:()=>void}){
+ const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState('');
+ const [items,setItems]=useState<Sheikh[]>([]);
+ const [selected,setSelected]=useState('');
+ const [form,setForm]=useState(blank);
+ const [saving,setSaving]=useState(false);
+ const [editingOpen,setEditingOpen]=useState(false);
+ const [readingOpen,setReadingOpen]=useState(false);
+ const [savedReadingSanads,setSavedReadingSanads]=useState<{id:string;qariId:string;rawi:string;sanadText:string;junction:'ubaydi'|'jazari'}[]>([]);
+ const [readingEditor,setReadingEditor]=useState<Reading|null>(null);
+ const [readingText,setReadingText]=useState('');
+ const [readingJunction,setReadingJunction]=useState<'ubaydi'|'jazari'>('ubaydi');
+ const [readingSaving,setReadingSaving]=useState(false);
+ const loadReadingSanads=async(id:string)=>{try{setSavedReadingSanads((await additionalReadingSanads({action:'list',shaykhId:id})).sanads)}catch{toast.error('تعذر تحميل أسانيد الروايات')}};
+ const openReading=(r:Reading)=>{const specific=savedReadingSanads.find(x=>x.qariId===r.qariId&&x.rawi===r.rawi);setReadingText(specific?.sanadText||form.personalChain);setReadingJunction(specific?.junction||form.junction);setReadingEditor(r)};
+ const saveReading=async()=>{if(!selected||!readingEditor)return;setReadingSaving(true);try{await additionalReadingSanads({action:'save',shaykhId:selected,qariId:readingEditor.qariId,rawi:readingEditor.rawi,sanadText:readingText,junction:readingJunction});await loadReadingSanads(selected);setReadingEditor(null);toast.success('تم حفظ سند الرواية بشكل مستقل')}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ السند')}finally{setReadingSaving(false)}};
+
+ const [section,setSection]=useState<'profile'|'qiraat'|'mutoon'>('profile');
+ const [matnOpen,setMatnOpen]=useState(false);
+ const [matnDraft,setMatnDraft]=useState<Matn>(emptyMatn);
+ const [templates,setTemplates]=useState<Template[]>([]);
+ const [matnPreview,setMatnPreview]=useState(false);
+ const [templateEditor,setTemplateEditor]=useState<'introduction'|'conclusion'|null>(null);
+ const [templateName,setTemplateName]=useState(''),[templateText,setTemplateText]=useState('');
+ const [templateFormats,setTemplateFormats]=useState<MatnFormat[]>([]);
+ const [matnIndex,setMatnIndex]=useState<number|null>(null);
+ const saveTemplate=async()=>{if(!templateEditor||!templateName.trim()||!templateText.trim())return toast.error('أدخل اسم النص ومحتواه');try{await mutoonTemplates({action:'save',kind:templateEditor,name:templateName,body:templateText,formatting:JSON.stringify(templateFormats)});const list=(await mutoonTemplates({action:'list'})).templates;setTemplates(list);const item=[...list].reverse().find(v=>v.name===templateName&&v.kind===templateEditor);if(item)setMatnDraft(v=>({...v,[templateEditor==='introduction'?'introductionId':'conclusionId']:item.id}));setTemplateEditor(null);toast.success('تم حفظ النموذج')}catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ')}};
+ const load=async()=>{setLoading(true);setLoadError('');try{const r=await additionalShaykhs({action:'list'});setItems(r.sheikhs);}catch(e){setLoadError(e instanceof Error?e.message:'تعذر تحميل المشايخ الإضافيين');}finally{setLoading(false);}};
+ useEffect(()=>{void load();mutoonTemplates({action:'list'}).then(r=>setTemplates(r.templates)).catch(()=>{});},[]);
+ const setField=(key:keyof typeof blank,value:any)=>setForm(x=>({...x,[key]:value}));
+ const select=(s?:Sheikh)=>{setSelected(s?.id||'');setForm(s?{
+  email:s.email,mutoon:s.mutoon,name:s.name,qualification:s.qualification,teachingRole:s.teachingRole,
+  madrasaName:s.madrasaName,madrasaPlace:s.madrasaPlace,personalChain:s.personalChain,
+  junction:s.junction,readings:s.readings}:blank);setSection('profile');setMatnOpen(false);setEditingOpen(true);setSavedReadingSanads([]);if(s)void loadReadingSanads(s.id);};
+ const toggle=(qariId:string,rawi:string)=>setForm(x=>{
+  const exists=x.readings.some(r=>r.qariId===qariId&&r.rawi===rawi);
+  return {...x,readings:exists?x.readings.filter(r=>r.qariId!==qariId||r.rawi!==rawi):[...x.readings,{qariId,rawi}]};
+ });
+ const save=async()=>{
+  setSaving(true);try{await additionalShaykhs({action:'save',id:selected||undefined,...form});toast.success('حُفظ الشيخ وأسانيده وإجازاته');await load();onSaved();setEditingOpen(false);}
+  catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ');}finally{setSaving(false);}
+ };
+ const editor=(label:string,key:'name'|'qualification'|'teachingRole'|'madrasaName'|'madrasaPlace')=>
+  <label className="space-y-1 block text-sm"><span>{label}</span><Input dir="rtl" value={form[key]} onChange={e=>setField(key,e.target.value)}/></label>;
+ return <div className="space-y-5" dir="rtl">
+  <div><h2 className="text-xl font-bold">المشايخ الإضافيون</h2><p className="text-sm text-muted-foreground">حفظ مشايخ آخرين وأسانيدهم وإجازاتهم لكلا المديرين. لإنشاء شهادة باسم الشيخ اختره من زر إضافة طالب في الصفحة الرئيسية.</p></div>
+  <div className="flex justify-end"><Button onClick={()=>select()}><Plus className="h-4 w-4 me-2"/>إضافة شيخ جديد</Button></div>
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(s=><Card key={s.id} className="overflow-hidden transition-shadow hover:shadow-md"><CardContent className="p-5 space-y-4"><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><UserRound className="h-6 w-6"/></div><div className="min-w-0 flex-1"><h3 className="font-bold text-lg leading-relaxed">{s.name}</h3><p className="text-xs text-muted-foreground truncate">{s.qualification||s.teachingRole||'ملف الشيخ'}</p></div></div><div className="flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><BookOpen className="w-3.5 h-3.5"/>{s.readings.length} رواية</span><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><GraduationCap className="w-3.5 h-3.5"/>{s.mutoon.length} متن</span></div>{s.email&&<p dir="ltr" className="flex items-center gap-2 text-xs text-muted-foreground truncate"><Mail className="h-3.5 w-3.5 shrink-0"/>{s.email}</p>}<Button variant="outline" className="w-full gap-2" onClick={()=>select(s)}><PenLine className="h-4 w-4"/>عرض وتعديل الملف</Button></CardContent></Card>)}</div>
+  {loading&&<p role="status" className="rounded-xl border p-6">جارٍ تحميل المشايخ الإضافيين…</p>}
+  {loadError&&<div role="alert" className="rounded-xl border p-6 space-y-3"><p>{loadError}</p><Button variant="outline" onClick={load}>إعادة المحاولة</Button></div>}
+  {!loading&&!loadError&&items.length===0&&<div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">لا يوجد مشايخ إضافيون بعد. اختر إضافة شيخ جديد للبدء.</div>}
+  <Dialog open={editingOpen} onOpenChange={v=>{if(!v&&!saving){setEditingOpen(false);setReadingOpen(false)}}}><DialogContent dir="rtl" className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{selected?form.name||'تعديل الشيخ':'إضافة شيخ جديد'}</DialogTitle></DialogHeader>
+  <div className="flex flex-wrap gap-2 border-b pb-3">{([{key:'profile',label:'بيانات الشيخ'},{key:'qiraat',label:'إجازات القراءات'},{key:'mutoon',label:'المتون العلمية'}] as const).map(t=><Button key={t.key} type="button" size="sm" variant={section===t.key?'default':'outline'} onClick={()=>setSection(t.key)}>{t.label}</Button>)}</div>
+  <div className="space-y-4">
+  {section==='profile'&&<>
+   <div className="grid sm:grid-cols-2 gap-3">
+    <label className="block space-y-1 text-sm">البريد الإلكتروني (ربط لاحق بمعرفة المدير)<Input dir="ltr" type="email" value={form.email} onChange={e=>setField('email',e.target.value)} placeholder="name@example.com"/><span className="block text-xs text-muted-foreground">إضافة البريد لا تنشئ حسابًا ولا تمنح صلاحيات الدخول؛ الربط يتطلب التحقق من هوية المستخدم.</span></label>
+    {editor('اسم الشيخ / المُجيز','name')}
+    {editor('المُجاز به / المؤهل العلمي','qualification')}
+    {editor('الصفة التدريسية (مثلاً: المدرس في)','teachingRole')}
+    {editor('المدرسة / المعهد','madrasaName')}
+    {editor('مكان المدرسة','madrasaPlace')}
+    <label className="block space-y-1 text-sm">نهاية السند<select value={form.junction} onChange={e=>setField('junction',e.target.value)} className="block w-full rounded-md border bg-background p-2"><option value="ubaydi">إبراهيم العُبيدي</option><option value="jazari">الإمام ابن الجزري</option></select></label>
+   </div>
+  </>}
+  {section==='qiraat'&&<div className="space-y-3"><div className="flex justify-between items-center rounded-xl border p-4"><div><h3 className="font-semibold">القراءات والروايات</h3><p className="text-xs text-muted-foreground">{form.readings.length} رواية محددة</p></div><Button variant="outline" onClick={()=>setReadingOpen(true)}>اختيار الروايات</Button></div><div className="grid gap-2 sm:grid-cols-2">{form.readings.map((r,i)=>{const specific=savedReadingSanads.find(x=>x.qariId===r.qariId&&x.rawi===r.rawi);return <div className="rounded-xl border bg-card p-3 flex items-center justify-between gap-3" key={r.qariId+'|'+r.rawi}><div><p className="font-medium text-sm">{QURRA.find(q=>q.id===r.qariId)?.reading} — {displayRawi(r.qariId,r.rawi)}</p><p className="text-xs text-muted-foreground">{specific?'سند مستقل محفوظ':'يستخدم السند العام للشيخ'}</p></div><Button type="button" variant="outline" size="sm" disabled={!selected} onClick={()=>openReading(r)}>{specific?'تعديل السند':'إضافة سند خاص'}</Button></div>})}</div>{!selected&&<p className="text-xs text-muted-foreground">احفظ بيانات الشيخ والروايات أولا، ثم افتح ملفه لإضافة سند مستقل لكل رواية.</p>}<label className="block space-y-1 text-sm"><span>نهاية السند</span><select value={form.junction} onChange={e=>setField('junction',e.target.value)} className="w-full rounded-md border bg-background p-2"><option value="ubaydi">إبراهيم العُبيدي</option><option value="jazari">الإمام ابن الجزري</option></select></label><label className="block space-y-1 text-sm"><span>السند العام للشيخ (يُستخدم للروايات التي ليس لها سند مستقل)</span><Textarea rows={7} dir="rtl" value={form.personalChain} onChange={e=>setField('personalChain',e.target.value)} placeholder="عن الشيخ... حتى إبراهيم العُبيدي أو ابن الجزري"/></label></div>}
+  {section==='mutoon'&&
+   <div className="space-y-3 rounded-lg border p-4"><div className="flex justify-between gap-3 items-center"><div><h3 className="font-semibold">إجازات المتون العلمية</h3><p className="text-xs text-muted-foreground">إضافة متن مع اسمه وتصنيفه وسنده الكامل وكلمات إجازته</p></div><Button type="button" variant="outline" onClick={()=>{setMatnIndex(null);setMatnDraft(emptyMatn());setMatnOpen(true)}}>إضافة متن</Button></div>{form.mutoon.map((m,i)=><div key={i} className="flex items-center justify-between gap-2 rounded border p-3"><span className="text-sm">{m.name} — {m.category}</span><div className="flex gap-2"><Button type="button" variant="outline" size="sm" onClick={()=>{setMatnIndex(i);setMatnDraft({...emptyMatn(),...m});setMatnOpen(true)}}>تعديل</Button><Button type="button" variant="ghost" size="sm" onClick={()=>setForm(v=>({...v,mutoon:v.mutoon.filter((_,j)=>j!==i)}))}>إزالة</Button></div></div>)}{matnOpen&&<div className="rounded-lg border bg-muted/20 p-3 space-y-3"><Input placeholder="اسم المتن" value={matnDraft.name} onChange={e=>setMatnDraft(v=>({...v,name:e.target.value}))}/><Input placeholder="التصنيف" value={matnDraft.category} onChange={e=>setMatnDraft(v=>({...v,category:e.target.value}))}/><div className="grid sm:grid-cols-2 gap-2">{([{key:'introductionId',kind:'introduction',label:'المقدمة'},{key:'conclusionId',kind:'conclusion',label:'الخاتمة'}] as const).map(t=><label key={t.key} className="text-sm space-y-1">{t.label}<select value={matnDraft[t.key]} onChange={e=>setMatnDraft(v=>({...v,[t.key]:e.target.value}))} className="block w-full rounded-md border bg-background p-2"><option value="">بدون {t.label}</option>{templates.filter(a=>a.kind===t.kind).map(a=><option key={a.id} value={a.id}>{a.name}</option>)}</select><Button size="sm" variant="outline" type="button" onClick={()=>{setTemplateEditor(t.kind as 'introduction'|'conclusion');setTemplateName('');setTemplateText('');setTemplateFormats([])}}>إضافة {t.label} جديدة</Button></label>)}</div>{templateEditor&&<div className="rounded-lg border p-3 space-y-3"><strong>{templateEditor==='introduction'?'مقدمة جديدة':'خاتمة جديدة'}</strong><Input placeholder="اسم النموذج" value={templateName} onChange={e=>setTemplateName(e.target.value)}/><MatnFormatting sanad={templateText} onChange={setTemplateText} formats={templateFormats} onFormatsChange={setTemplateFormats}/><div className="flex gap-2"><Button onClick={saveTemplate}>حفظ واختيار</Button><Button variant="outline" onClick={()=>setTemplateEditor(null)}>إلغاء</Button></div></div>}<MatnFormatting sanad={matnDraft.sanadText} onChange={v=>setMatnDraft(x=>({...x,sanadText:v}))} formats={parseMatnFormat(matnDraft.sanadFormatting)} onFormatsChange={v=>setMatnDraft(x=>({...x,sanadFormatting:JSON.stringify(v)}))}/><Button variant="outline" type="button" onClick={()=>setMatnPreview(v=>!v)}>{matnPreview?'إخفاء المعاينة':'معاينة الإسناد'}</Button>{matnPreview&&<MatnPreview intro={templates.find(t=>t.id===matnDraft.introductionId)?.body||''} wording={matnDraft.wordingText} sanad={matnDraft.sanadText} end={templates.find(t=>t.id===matnDraft.conclusionId)?.body||''} formats={parseMatnFormat(matnDraft.sanadFormatting)} introFormats={parseMatnFormat(templates.find(t=>t.id===matnDraft.introductionId)?.formatting||'[]')} endFormats={parseMatnFormat(templates.find(t=>t.id===matnDraft.conclusionId)?.formatting||'[]')}/>}<Textarea rows={4} placeholder="كلمات الإجازة" dir="rtl" value={matnDraft.wordingText} onChange={e=>setMatnDraft(v=>({...v,wordingText:e.target.value}))}/><div className="flex gap-2"><Button type="button" onClick={()=>{if(!matnDraft.name.trim()||!matnDraft.category.trim()||!matnDraft.sanadText.trim())return toast.error('أدخل اسم المتن وتصنيفه وسنده');setForm(v=>({...v,mutoon:matnIndex===null?[...v.mutoon,matnDraft]:v.mutoon.map((m,i)=>i===matnIndex?matnDraft:m)}));setMatnOpen(false)}}>إضافة للقائمة</Button><Button type="button" variant="outline" onClick={()=>setMatnOpen(false)}>إلغاء</Button></div></div>}</div>
+  }
+   <Button disabled={saving} onClick={save}>{saving?'جارٍ الحفظ…':'حفظ بيانات الشيخ والسند'}</Button>
+  </div></DialogContent></Dialog>
+  <Dialog open={!!readingEditor} onOpenChange={v=>{if(!v&&!readingSaving)setReadingEditor(null)}}><DialogContent dir="rtl" className="max-w-2xl"><DialogHeader><DialogTitle>سند رواية {readingEditor?displayRawi(readingEditor.qariId,readingEditor.rawi):''}</DialogTitle></DialogHeader><label className="space-y-1 text-sm block">نهاية هذا السند<select className="w-full rounded-md border bg-background p-2" value={readingJunction} onChange={e=>setReadingJunction(e.target.value as 'ubaydi'|'jazari')}><option value="ubaydi">إبراهيم العُبيدي</option><option value="jazari">الإمام ابن الجزري</option></select></label><Textarea rows={9} className="font-sanad" dir="rtl" value={readingText} onChange={e=>setReadingText(e.target.value)} placeholder="اكتب سند هذه الرواية حتى نقطة الالتقاء"/><p className="text-xs text-muted-foreground">هذا السند خاص بهذه الرواية ولا يغيّر أسانيد الروايات الأخرى.</p><Button disabled={readingSaving} onClick={saveReading}>حفظ سند الرواية</Button></DialogContent></Dialog>
+  <Dialog open={readingOpen} onOpenChange={setReadingOpen}><DialogContent dir="rtl" className="max-w-2xl"><DialogHeader><DialogTitle>تحديد القراءات والروايات</DialogTitle></DialogHeader><div className="max-h-[55vh] overflow-y-auto grid gap-3 sm:grid-cols-2 p-1">{QURRA.map(q=><div key={q.id} className="rounded-lg border p-3"><div className="flex items-center justify-between gap-2"><strong className="text-sm">{q.reading}</strong><label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={q.rawis.every(r=>form.readings.some(x=>x.qariId===q.id&&x.rawi===r))} onChange={e=>setForm(v=>({...v,readings:e.target.checked?[...v.readings.filter(r=>r.qariId!==q.id),...q.rawis.map(rawi=>({qariId:q.id,rawi}))]:v.readings.filter(r=>r.qariId!==q.id)}))}/>القراءة كاملة</label></div><div className="flex flex-wrap gap-4 mt-2">{q.rawis.map(r=><label key={r} className="flex gap-2 items-center text-sm"><input type="checkbox" checked={form.readings.some(x=>x.qariId===q.id&&x.rawi===r)} onChange={()=>toggle(q.id,r)}/>{displayRawi(q.id,r)}</label>)}</div></div>)}</div><Button onClick={()=>setReadingOpen(false)}>تم — {form.readings.length} رواية</Button></DialogContent></Dialog>
+ </div>;
+}

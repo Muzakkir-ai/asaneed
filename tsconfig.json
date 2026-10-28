@@ -22,7 +22,21 @@
     ],
     "incremental": true,
     "allowJs": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {
+      "@project/components/*": [
+        "./legacy-ui/*"
+      ],
+      "zitejs/backend": [
+        "./legacy/compat/backend.ts"
+      ],
+      "zitejs/db": [
+        "./legacy/compat/database.ts"
+      ],
+      "zitejs/auth": [
+        "./legacy/compat/auth.tsx"
+      ]
+    }
   },
   "include": [
     "next-env.d.ts",

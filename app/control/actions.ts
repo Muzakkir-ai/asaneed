@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { managementSession } from '../../lib/manage-session';
 import {validName,validId} from '../../lib/manage';
-function finish(view:string,status:string):never { revalidatePath('/manage'); redirect(`/manage?view=${view}&notice=${status}`); }
+function finish(view:string,status:string):never { revalidatePath('/control'); redirect(`/control?view=${view}&notice=${status}`); }
 export async function saveStudent(form:FormData) {
  const {client,account}=await managementSession();
  if(!account?.active || !['admin','shaykh'].includes(account.role)) redirect('/manage');

@@ -1,0 +1,307 @@
+[
+  {
+    "name": "Qiraat",
+    "sdk": "qiraat",
+    "fields": {
+      "Name": "name",
+      "Description": "description",
+      "Asaneed": "asaneed",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "Asaneed",
+    "sdk": "asaneed",
+    "fields": {
+      "Title": "title",
+      "Qiraah": "qiraah",
+      "Shaykh": "shaykh",
+      "Chain": "chain",
+      "Certificates": "certificates",
+      "legacyId": "legacyId",
+      "Original Shaykh User ID": "originalShaykhUserId",
+      "Original Shaykh Name": "originalShaykhName",
+      "additionalShaykh": "additionalShaykh"
+    }
+  },
+  {
+    "name": "Certificates",
+    "sdk": "certificates",
+    "fields": {
+      "Student Name": "studentName",
+      "Completion Date": "completionDate",
+      "Sanad": "sanad",
+      "Shaykh": "shaykh",
+      "Notes": "notes",
+      "Certificate Number": "certificateNumber",
+      "hijriDayOffset": "hijriDayOffset",
+      "shahadaNumber": "shahadaNumber",
+      "publicationStatus": "publicationStatus",
+      "recipientUserId": "recipientUserId",
+      "guestShaykhId": "guestShaykhId",
+      "studentAccount": "studentAccount",
+      "additionalShaykh": "additionalShaykh",
+      "verificationToken": "verificationToken",
+      "legacyId": "legacyId",
+      "Original Shaykh Name": "originalShaykhName",
+      "Original Shaykh User ID": "originalShaykhUserId",
+      "registrationNumber": "registrationNumber"
+    }
+  },
+  {
+    "name": "SanadSections",
+    "sdk": "sanadSections",
+    "fields": {
+      "Title": "title",
+      "SectionType": "sectionType",
+      "Body": "body",
+      "OwnerId": "ownerId",
+      "SortOrder": "sortOrder",
+      "ParentId": "parentId",
+      "formatting": "formatting",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "IjazahHoldings",
+    "sdk": "ijazahHoldings",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "qariId": "qariId",
+      "rawi": "rawi",
+      "personalChain": "personalChain",
+      "junction": "junction",
+      "introductionId": "introductionId",
+      "wordingId": "wordingId",
+      "formatting": "formatting",
+      "personalSanadConfirmed": "personalSanadConfirmed",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "SanadPrintStyles",
+    "sdk": "sanadPrintStyles",
+    "fields": {
+      "Name": "name",
+      "sanadId": "sanadId",
+      "ownerId": "ownerId",
+      "settings": "settings"
+    }
+  },
+  {
+    "name": "PreparedIjazahs",
+    "sdk": "preparedIjazahs",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "holdingId": "holdingId",
+      "sanadId": "sanadId",
+      "sourceSignature": "sourceSignature",
+      "rawi": "rawi",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "CertificateSnapshots",
+    "sdk": "certificateSnapshots",
+    "fields": {
+      "Name": "name",
+      "certificateId": "certificateId",
+      "ownerId": "ownerId",
+      "chain": "chain",
+      "heading": "heading",
+      "formatting": "formatting",
+      "issuedAt": "issuedAt",
+      "archived": "archived",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "SanadSectionVersions",
+    "sdk": "sanadSectionVersions",
+    "fields": {
+      "Name": "name",
+      "sectionId": "sectionId",
+      "revision": "revision",
+      "body": "body",
+      "formatting": "formatting",
+      "savedBy": "savedBy",
+      "savedAt": "savedAt",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "ShaykhPrintProfiles",
+    "sdk": "shaykhPrintProfiles",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "printedName": "printedName",
+      "teachingRole": "teachingRole",
+      "madrasaName": "madrasaName",
+      "madrasaPlace": "madrasaPlace",
+      "centerStampText": "centerStampText",
+      "showTeachingRole": "showTeachingRole",
+      "showMadrasaName": "showMadrasaName",
+      "showMadrasaPlace": "showMadrasaPlace",
+      "scientificQualification": "scientificQualification",
+      "showScientificQualification": "showScientificQualification",
+      "footerLineStyles": "footerLineStyles",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "RiwayahPrintColors",
+    "sdk": "riwayahPrintColors",
+    "fields": {
+      "Name": "name",
+      "qariId": "qariId",
+      "rawi": "rawi",
+      "primaryColor": "primaryColor",
+      "secondaryColor": "secondaryColor",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "Students",
+    "sdk": "students",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "AdditionalShaykhs",
+    "sdk": "additionalShaykhs",
+    "fields": {
+      "Name": "name",
+      "qualification": "qualification",
+      "teachingRole": "teachingRole",
+      "madrasaName": "madrasaName",
+      "madrasaPlace": "madrasaPlace",
+      "readingsJson": "readingsJson",
+      "personalChain": "personalChain",
+      "junction": "junction",
+      "createdBy": "createdBy",
+      "legacyId": "legacyId"
+    }
+  },
+  {
+    "name": "Asset Sources",
+    "sdk": "assetSources",
+    "fields": {
+      "Key": "key",
+      "GitHub Repository": "gitHubRepository",
+      "Branch": "branch",
+      "Updated At": "updatedAt"
+    }
+  },
+  {
+    "name": "App Admins",
+    "sdk": "appAdmins",
+    "fields": {
+      "Email": "email",
+      "Name": "name",
+      "Active": "active"
+    }
+  },
+  {
+    "name": "Legacy User Directory",
+    "sdk": "legacyUserDirectory",
+    "fields": {
+      "Name": "name",
+      "Email": "email",
+      "Original User ID": "originalUserId",
+      "First Name": "firstName",
+      "Last Name": "lastName"
+    }
+  },
+  {
+    "name": "App Users",
+    "sdk": "appUsers",
+    "fields": {
+      "Name": "name",
+      "Email": "email",
+      "Stable ID": "stableId",
+      "Auth User ID": "authUserId",
+      "Legacy User ID": "legacyUserId",
+      "Role": "role",
+      "Active": "active"
+    }
+  },
+  {
+    "name": "Mutoon Holdings",
+    "sdk": "mutoonHoldings",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "category": "category",
+      "sanadText": "sanadText",
+      "wordingText": "wordingText",
+      "createdAtText": "createdAtText",
+      "introductionId": "introductionId",
+      "conclusionId": "conclusionId",
+      "sanadFormatting": "sanadFormatting"
+    }
+  },
+  {
+    "name": "Mutoon Text Templates",
+    "sdk": "mutoonTextTemplates",
+    "fields": {
+      "Name": "name",
+      "ownerId": "ownerId",
+      "kind": "kind",
+      "body": "body",
+      "formatting": "formatting"
+    }
+  },
+  {
+    "name": "Additional Shaykh Extensions",
+    "sdk": "additionalShaykhExtensions",
+    "fields": {
+      "Name": "name",
+      "shaykhId": "shaykhId",
+      "email": "email",
+      "mutoonJson": "mutoonJson",
+      "mutoonFormattingJson": "mutoonFormattingJson"
+    }
+  },
+  {
+    "name": "Additional Shaykh Reading Sanads",
+    "sdk": "additionalShaykhReadingSanads",
+    "fields": {
+      "Name": "name",
+      "shaykhId": "shaykhId",
+      "qariId": "qariId",
+      "rawi": "rawi",
+      "sanadText": "sanadText",
+      "junction": "junction"
+    }
+  },
+  {
+    "name": "Certificate Issuers",
+    "sdk": "certificateIssuers",
+    "fields": {
+      "issuerKey": "issuerKey",
+      "issuerNumber": "issuerNumber",
+      "displayName": "displayName",
+      "issuerCode": "issuerCode"
+    }
+  },
+  {
+    "name": "Certificate Registrations",
+    "sdk": "certificateRegistrations",
+    "fields": {
+      "reservationKey": "reservationKey",
+      "reservationOrder": "reservationOrder",
+      "certificateId": "certificateId",
+      "issuerKey": "issuerKey",
+      "year": "year",
+      "riwayahCode": "riwayahCode",
+      "registrationNumber": "registrationNumber",
+      "sequenceOrder": "sequenceOrder"
+    }
+  }
+]

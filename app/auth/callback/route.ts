@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
  if(code&&code.length<4096) {
   const client=await createClient();
   const {error}=await client.auth.exchangeCodeForSession(code);
-  if(!error)return NextResponse.redirect(new URL(request.nextUrl.searchParams.get('flow')==='recovery'?'/reset-password':'/manage',appOrigin),{headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
+  if(!error)return NextResponse.redirect(new URL(request.nextUrl.searchParams.get('flow')==='recovery'?'/reset-password':'/studio',appOrigin),{headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
  }
  return NextResponse.redirect(new URL('/login?error=expired',appOrigin),{headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}});
 }

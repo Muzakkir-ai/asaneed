@@ -1,4 +1,4 @@
-export const authPaths = ['/login','/register','/forgot-password','/reset-password','/manage'] as const;
+export const authPaths = ['/login','/register','/forgot-password','/reset-password','/manage','/studio','/control'] as const;
 export function authReturnPath(value: unknown) { return typeof value==='string' && (authPaths as readonly string[]).includes(value) ? value : '/'; }
 export function validEmail(value:string) { return value.length<=254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
 export function validPassword(value:string) { return value.length>=12 && value.length<=1024; }

@@ -15,9 +15,15 @@ end $$;
 select set_config('request.jwt.claim.sub','cce0ba30-0000-4000-8000-000000000001',true);
 do $$ begin
  if jsonb_typeof(public.read_legacy_library()->'records')<>'array' then raise exception 'Library response invalid'; end if;
- if public.finalize_certificate('cce0ba30-0000-4000-8000-000000000005','{"fixture":true}')<>'9626-1007' then raise exception 'Reserved registration changed'; end if;
+ if public.finalize_certificate('cce0ba30-0000-4000-8000-000000000005','{"fixture":true,"formatting":"{}"}')<>'9626-1007' then raise exception 'Reserved registration changed'; end if;
 end $$;
 reset role;
+do $$ declare token text; frozen text; begin
+ select verification_token into token from public.certificates where id='cce0ba30-0000-4000-8000-000000000005';
+ select (content->>'formatting')::jsonb->>'verificationToken' into frozen from public.certificate_snapshots where certificate_id='cce0ba30-0000-4000-8000-000000000005';
+ if token is distinct from frozen then raise exception 'QR token mismatch'; end if;
+ if not (public.verify_certificate_token(token)->>'verified')::boolean then raise exception 'Public QR lookup failed'; end if;
+end; $$;
 do $$ begin
  if (select last_number from private.registration_counters where issuer_id='cce0ba30-0000-4000-8000-000000000003' and completion_year=2026 and riwayah_code='10')<>7 then raise exception 'Counter not preserved'; end if;
  if has_function_privilege('anon','public.read_legacy_library(text,integer)','EXECUTE') then raise exception 'Anonymous library access'; end if;

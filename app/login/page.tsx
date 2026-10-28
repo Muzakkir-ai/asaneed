@@ -1,3 +1,5 @@
+import {redirect} from 'next/navigation';
+import {createClient} from '../../lib/supabase/server';
 import Link from 'next/link';
 import { login, googleLogin } from './actions';
 import { getLocale } from '../../lib/locale-server';
@@ -8,6 +10,7 @@ import AuthShell from '../auth-shell';
 import SubmitButton from '../submit-button';
 export default async function Login({searchParams}:{searchParams:Promise<{error?:string;notice?:string}>}) {
  const [{error,notice},locale,google]=await Promise.all([searchParams,getLocale(),googleEnabled()]);
+ const existing=await (await createClient()).auth.getUser();if(existing.data.user)redirect('/studio');
  const t=messages[locale],a=authMessages[locale];
  return <AuthShell path="/login"><h1>{t.login}</h1><p>{a.loginIntro}</p>
  {error&&<p className="error" role="alert">{error==='google'?a.googleSetup:error==='expired'?a.expired:error==='request'?a.requestError:t.loginError}</p>}

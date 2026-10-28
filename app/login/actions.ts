@@ -9,7 +9,7 @@ export async function login(form: FormData) {
   const client = await createClient();
   const { error } = await client.auth.signInWithPassword({ email, password });
   if (error) redirect('/login?error=invalid');
-  redirect('/manage');
+  redirect('/studio');
 }
 export async function logout() {
   const client = await createClient();
@@ -25,7 +25,7 @@ export async function register(form: FormData) {
  const client=await createClient();
  const {data,error}=await client.auth.signUp({email,password,options:{data:{display_name:name},emailRedirectTo:`${appOrigin}/auth/callback`}});
  if(error)redirect('/register?error=request');
- if(data.session)redirect('/manage');
+ if(data.session)redirect('/studio');
  redirect('/login?notice=signup');
 }
 export async function requestReset(form: FormData) {

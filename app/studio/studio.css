@@ -1,0 +1,1748 @@
+
+
+.zite-app .certificate-text { font-family: 'KSA Regular', serif; }
+.zite-app .certificate-text p { line-height: inherit; }
+.zite-app .certificate-text .certificate-verse { font-family: 'QCF2', serif; direction: rtl; }
+.zite-app .certificate-text .certificate-verse-bracket { font-family: 'Traditional Arabic', 'KSA Regular', serif; font-size: 8pt; }
+
+.zite-app *, .zite-app ::before, .zite-app ::after { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x:  ; --tw-pan-y:  ; --tw-pinch-zoom:  ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position:  ; --tw-gradient-via-position:  ; --tw-gradient-to-position:  ; --tw-ordinal:  ; --tw-slashed-zero:  ; --tw-numeric-figure:  ; --tw-numeric-spacing:  ; --tw-numeric-fraction:  ; --tw-ring-inset:  ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur:  ; --tw-brightness:  ; --tw-contrast:  ; --tw-grayscale:  ; --tw-hue-rotate:  ; --tw-invert:  ; --tw-saturate:  ; --tw-sepia:  ; --tw-drop-shadow:  ; --tw-backdrop-blur:  ; --tw-backdrop-brightness:  ; --tw-backdrop-contrast:  ; --tw-backdrop-grayscale:  ; --tw-backdrop-hue-rotate:  ; --tw-backdrop-invert:  ; --tw-backdrop-opacity:  ; --tw-backdrop-saturate:  ; --tw-backdrop-sepia:  ; --tw-contain-size:  ; --tw-contain-layout:  ; --tw-contain-paint:  ; --tw-contain-style:  ; }
+
+.zite-app ::backdrop { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x:  ; --tw-pan-y:  ; --tw-pinch-zoom:  ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position:  ; --tw-gradient-via-position:  ; --tw-gradient-to-position:  ; --tw-ordinal:  ; --tw-slashed-zero:  ; --tw-numeric-figure:  ; --tw-numeric-spacing:  ; --tw-numeric-fraction:  ; --tw-ring-inset:  ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur:  ; --tw-brightness:  ; --tw-contrast:  ; --tw-grayscale:  ; --tw-hue-rotate:  ; --tw-invert:  ; --tw-saturate:  ; --tw-sepia:  ; --tw-drop-shadow:  ; --tw-backdrop-blur:  ; --tw-backdrop-brightness:  ; --tw-backdrop-contrast:  ; --tw-backdrop-grayscale:  ; --tw-backdrop-hue-rotate:  ; --tw-backdrop-invert:  ; --tw-backdrop-opacity:  ; --tw-backdrop-saturate:  ; --tw-backdrop-sepia:  ; --tw-contain-size:  ; --tw-contain-layout:  ; --tw-contain-paint:  ; --tw-contain-style:  ; }
+
+/*
+! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
+*/
+
+/*
+1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
+2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
+*/
+
+.zite-app *,
+.zite-app ::before,
+.zite-app ::after {
+  box-sizing: border-box; /* 1 */
+  border-width: 0; /* 2 */
+  border-style: solid; /* 2 */
+  border-color: #e5e7eb; /* 2 */
+}
+
+.zite-app ::before,
+.zite-app ::after {
+  --tw-content: '';
+}
+
+/*
+1. Use a consistent sensible line-height in all browsers.
+2. Prevent adjustments of font size after orientation changes in iOS.
+3. Use a more readable tab size.
+4. Use the user's configured `sans` font-family by default.
+5. Use the user's configured `sans` font-feature-settings by default.
+6. Use the user's configured `sans` font-variation-settings by default.
+7. Disable tap highlights on iOS
+*/
+
+.zite-app,
+.zite-app :host {
+  line-height: 1.5; /* 1 */
+  -webkit-text-size-adjust: 100%; /* 2 */
+  -moz-tab-size: 4; /* 3 */
+  -o-tab-size: 4;
+     tab-size: 4; /* 3 */
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* 4 */
+  font-feature-settings: normal; /* 5 */
+  font-variation-settings: normal; /* 6 */
+  -webkit-tap-highlight-color: transparent; /* 7 */
+}
+
+/*
+1. Remove the margin in all browsers.
+2. Inherit line-height from `html` so users can set them as a class directly on the `html` element.
+*/
+
+.zite-app {
+  margin: 0; /* 1 */
+  line-height: inherit; /* 2 */
+}
+
+/*
+1. Add the correct height in Firefox.
+2. Correct the inheritance of border color in Firefox. (https://bugzilla.mozilla.org/show_bug.cgi?id=190655)
+3. Ensure horizontal rules are visible by default.
+*/
+
+.zite-app hr {
+  height: 0; /* 1 */
+  color: inherit; /* 2 */
+  border-top-width: 1px; /* 3 */
+}
+
+/*
+Add the correct text decoration in Chrome, Edge, and Safari.
+*/
+
+.zite-app abbr:where([title]) {
+  -webkit-text-decoration: underline dotted;
+          text-decoration: underline dotted;
+}
+
+/*
+Remove the default font size and weight for headings.
+*/
+
+.zite-app h1,
+.zite-app h2,
+.zite-app h3,
+.zite-app h4,
+.zite-app h5,
+.zite-app h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/*
+Reset links to optimize for opt-in styling instead of opt-out.
+*/
+
+.zite-app a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+/*
+Add the correct font weight in Edge and Safari.
+*/
+
+.zite-app b,
+.zite-app strong {
+  font-weight: bolder;
+}
+
+/*
+1. Use the user's configured `mono` font-family by default.
+2. Use the user's configured `mono` font-feature-settings by default.
+3. Use the user's configured `mono` font-variation-settings by default.
+4. Correct the odd `em` font sizing in all browsers.
+*/
+
+.zite-app code,
+.zite-app kbd,
+.zite-app samp,
+.zite-app pre {
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* 1 */
+  font-feature-settings: normal; /* 2 */
+  font-variation-settings: normal; /* 3 */
+  font-size: 1em; /* 4 */
+}
+
+/*
+Add the correct font size in all browsers.
+*/
+
+.zite-app small {
+  font-size: 80%;
+}
+
+/*
+Prevent `sub` and `sup` elements from affecting the line height in all browsers.
+*/
+
+.zite-app sub,
+.zite-app sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+.zite-app sub {
+  bottom: -0.25em;
+}
+
+.zite-app sup {
+  top: -0.5em;
+}
+
+/*
+1. Remove text indentation from table contents in Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=999088, https://bugs.webkit.org/show_bug.cgi?id=201297)
+2. Correct table border color inheritance in all Chrome and Safari. (https://bugs.chromium.org/p/chromium/issues/detail?id=935729, https://bugs.webkit.org/show_bug.cgi?id=195016)
+3. Remove gaps between table borders by default.
+*/
+
+.zite-app table {
+  text-indent: 0; /* 1 */
+  border-color: inherit; /* 2 */
+  border-collapse: collapse; /* 3 */
+}
+
+/*
+1. Change the font styles in all browsers.
+2. Remove the margin in Firefox and Safari.
+3. Remove default padding in all browsers.
+*/
+
+.zite-app button,
+.zite-app input,
+.zite-app optgroup,
+.zite-app select,
+.zite-app textarea {
+  font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
+  font-size: 100%; /* 1 */
+  font-weight: inherit; /* 1 */
+  line-height: inherit; /* 1 */
+  letter-spacing: inherit; /* 1 */
+  color: inherit; /* 1 */
+  margin: 0; /* 2 */
+  padding: 0; /* 3 */
+}
+
+/*
+Remove the inheritance of text transform in Edge and Firefox.
+*/
+
+.zite-app button,
+.zite-app select {
+  text-transform: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Remove default button styles.
+*/
+
+.zite-app button,
+.zite-app input:where([type='button']),
+.zite-app input:where([type='reset']),
+.zite-app input:where([type='submit']) {
+  -webkit-appearance: button; /* 1 */
+  background-color: transparent; /* 2 */
+  background-image: none; /* 2 */
+}
+
+/*
+Use the modern Firefox focus style for all focusable elements.
+*/
+
+.zite-app :-moz-focusring {
+  outline: auto;
+}
+
+/*
+Remove the additional `:invalid` styles in Firefox. (https://github.com/mozilla/gecko-dev/blob/2f9eacd9d3d995c937b4251a5557d95d494c9be1/layout/style/res/forms.css#L728-L737)
+*/
+
+.zite-app :-moz-ui-invalid {
+  box-shadow: none;
+}
+
+/*
+Add the correct vertical alignment in Chrome and Firefox.
+*/
+
+.zite-app progress {
+  vertical-align: baseline;
+}
+
+/*
+Correct the cursor style of increment and decrement buttons in Safari.
+*/
+
+.zite-app ::-webkit-inner-spin-button,
+.zite-app ::-webkit-outer-spin-button {
+  height: auto;
+}
+
+/*
+1. Correct the odd appearance in Chrome and Safari.
+2. Correct the outline style in Safari.
+*/
+
+.zite-app [type='search'] {
+  -webkit-appearance: textfield; /* 1 */
+  outline-offset: -2px; /* 2 */
+}
+
+/*
+Remove the inner padding in Chrome and Safari on macOS.
+*/
+
+.zite-app ::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+/*
+1. Correct the inability to style clickable types in iOS and Safari.
+2. Change font properties to `inherit` in Safari.
+*/
+
+.zite-app ::-webkit-file-upload-button {
+  -webkit-appearance: button; /* 1 */
+  font: inherit; /* 2 */
+}
+
+/*
+Add the correct display in Chrome and Safari.
+*/
+
+.zite-app summary {
+  display: list-item;
+}
+
+/*
+Removes the default spacing and border for appropriate elements.
+*/
+
+.zite-app blockquote,
+.zite-app dl,
+.zite-app dd,
+.zite-app h1,
+.zite-app h2,
+.zite-app h3,
+.zite-app h4,
+.zite-app h5,
+.zite-app h6,
+.zite-app hr,
+.zite-app figure,
+.zite-app p,
+.zite-app pre {
+  margin: 0;
+}
+
+.zite-app fieldset {
+  margin: 0;
+  padding: 0;
+}
+
+.zite-app legend {
+  padding: 0;
+}
+
+.zite-app ol,
+.zite-app ul,
+.zite-app menu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+
+.zite-app dialog {
+  padding: 0;
+}
+
+/*
+Prevent resizing textareas horizontally by default.
+*/
+
+.zite-app textarea {
+  resize: vertical;
+}
+
+/*
+1. Reset the default placeholder opacity in Firefox. (https://github.com/tailwindlabs/tailwindcss/issues/3300)
+2. Set the default placeholder color to the user's configured gray 400 color.
+*/
+
+.zite-app input::-moz-placeholder, .zite-app textarea::-moz-placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+.zite-app input::placeholder,
+.zite-app textarea::placeholder {
+  opacity: 1; /* 1 */
+  color: #9ca3af; /* 2 */
+}
+
+/*
+Set the default cursor for buttons.
+*/
+
+.zite-app button,
+.zite-app [role="button"] {
+  cursor: pointer;
+}
+
+/*
+Make sure disabled buttons don't get the pointer cursor.
+*/
+
+.zite-app :disabled {
+  cursor: default;
+}
+
+/*
+1. Make replaced elements `display: block` by default. (https://github.com/mozdevs/cssremedy/issues/14)
+2. Add `vertical-align: middle` to align replaced elements more sensibly by default. (https://github.com/jensimmons/cssremedy/issues/14#issuecomment-634934210)
+   This can trigger a poorly considered lint error in some tools but is included by design.
+*/
+
+.zite-app img,
+.zite-app svg,
+.zite-app video,
+.zite-app canvas,
+.zite-app audio,
+.zite-app iframe,
+.zite-app embed,
+.zite-app object {
+  display: block; /* 1 */
+  vertical-align: middle; /* 2 */
+}
+
+/*
+Constrain images and videos to the parent width and preserve their intrinsic aspect ratio. (https://github.com/mozdevs/cssremedy/issues/14)
+*/
+
+.zite-app img,
+.zite-app video {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Make elements with the HTML hidden attribute stay hidden by default */
+
+.zite-app [hidden]:where(:not([hidden="until-found"])) {
+  display: none;
+}
+
+.zite-app {
+    /* Auto-restored theme variables */
+    --shadow-x: 0px;
+    --shadow-y: 1px;
+    --shadow-blur: 4px;
+    --shadow-spread: 0px;
+    --shadow-opacity: 0.2;
+    --shadow-color: #000000;
+    --shadow-2xs: var(--shadow-x) var(--shadow-y) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-xs: var(--shadow-x) var(--shadow-y) var(--shadow-blur) var(--shadow-spread) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-sm: var(--shadow-x) var(--shadow-y) calc(var(--shadow-blur) * 1.5) var(--shadow-spread) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-md: calc(var(--shadow-x) * 2) calc(var(--shadow-y) * 2) calc(var(--shadow-blur) * 3) calc(var(--shadow-spread) - 1px) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-lg: calc(var(--shadow-x) * 4) calc(var(--shadow-y) * 4) calc(var(--shadow-blur) * 5) calc(var(--shadow-spread) - 3px) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-xl: calc(var(--shadow-x) * 6) calc(var(--shadow-y) * 6) calc(var(--shadow-blur) * 7) calc(var(--shadow-spread) - 5px) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 100%), transparent);
+    --shadow-2xl: calc(var(--shadow-x) * 8) calc(var(--shadow-y) * 8) calc(max(0px, var(--shadow-blur) * 9 - 8px)) calc(var(--shadow-spread) - 12px) color-mix(in srgb, var(--shadow-color) calc(var(--shadow-opacity) * 250%), transparent);
+    --shadow: var(--shadow-md);
+
+    --background: 40 33% 97%;
+    --foreground: 0 0% 13%;
+    --muted: 40 20% 93%;
+    --muted-foreground: 0 0% 38%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+    --border: 40 18% 85%;
+    --input: 40 18% 82%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+    --primary: 186 98% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 188 51% 19%;
+    --secondary-foreground: 40 33% 97%;
+    --accent: 37 58% 59%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 186 98% 25%;
+    --radius: 0.6rem;
+    --sidebar-background: 188 51% 19%;
+    --sidebar-foreground: 40 33% 97%;
+    --sidebar-primary: 37 58% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 188 45% 25%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 188 40% 28%;
+    --sidebar-ring: 37 58% 59%;
+    --chart-1: 186 98% 25%;
+    --chart-2: 188 51% 19%;
+    --chart-3: 37 58% 59%;
+    --chart-4: 186 50% 45%;
+    --chart-5: 43 40% 65%;
+    --font-sans: 'Readex Pro', 'Tahoma', sans-serif;
+    --font-mono: 'Courier New', monospace;
+    --font-display: 'Readex Pro', 'Tahoma', sans-serif;
+    --font-sanad: 'KSA Regular', serif;
+  }
+
+.dark .zite-app {
+    --background: 188 51% 8%;
+    --foreground: 40 33% 95%;
+    --muted: 188 40% 14%;
+    --muted-foreground: 40 10% 65%;
+    --accent: 37 58% 59%;
+    --accent-foreground: 0 0% 100%;
+    --popover: 188 51% 10%;
+    --popover-foreground: 40 33% 95%;
+    --border: 188 40% 20%;
+    --input: 188 40% 20%;
+    --card: 188 51% 10%;
+    --card-foreground: 40 33% 95%;
+    --primary: 186 80% 40%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 188 51% 19%;
+    --secondary-foreground: 40 33% 97%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --ring: 186 80% 40%;
+    --sidebar-background: 188 51% 10%;
+    --sidebar-foreground: 40 33% 95%;
+    --sidebar-primary: 37 58% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 188 40% 16%;
+    --sidebar-accent-foreground: 40 33% 95%;
+    --sidebar-border: 188 40% 20%;
+    --sidebar-ring: 37 58% 59%;
+  }
+
+.zite-app * { border-color: hsl(var(--border)); outline-color: hsl(var(--ring) / 0.5); }
+
+.zite-app { background-color: hsl(var(--background)); font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; color: hsl(var(--foreground)); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+.zite-app .font-sanad { font-family: var(--font-sanad) !important; }
+
+.zite-app .font-display {
+    font-family: var(--font-display);
+  }
+.zite-app .container { width: 100%; }
+@media (min-width: 640px) {
+ .zite-app .container { max-width: 640px; } }
+@media (min-width: 768px) {
+ .zite-app .container { max-width: 768px; } }
+@media (min-width: 1024px) {
+ .zite-app .container { max-width: 1024px; } }
+@media (min-width: 1280px) {
+ .zite-app .container { max-width: 1280px; } }
+@media (min-width: 1536px) {
+ .zite-app .container { max-width: 1536px; } }
+.zite-app .prose { color: var(--tw-prose-body); max-width: 65ch; }
+.zite-app .prose :where(p):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 1.25em; margin-bottom: 1.25em; }
+.zite-app .prose :where([class~="lead"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-lead); font-size: 1.25em; line-height: 1.6; margin-top: 1.2em; margin-bottom: 1.2em; }
+.zite-app .prose :where(a):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-links); text-decoration: underline; font-weight: 500; }
+.zite-app .prose :where(strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-bold); font-weight: 600; }
+.zite-app .prose :where(a strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(blockquote strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(thead th strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(ol):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: decimal; margin-top: 1.25em; margin-bottom: 1.25em; padding-inline-start: 1.625em; }
+.zite-app .prose :where(ol[type="A"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: upper-alpha; }
+.zite-app .prose :where(ol[type="a"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: lower-alpha; }
+.zite-app .prose :where(ol[type="A" s]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: upper-alpha; }
+.zite-app .prose :where(ol[type="a" s]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: lower-alpha; }
+.zite-app .prose :where(ol[type="I"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: upper-roman; }
+.zite-app .prose :where(ol[type="i"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: lower-roman; }
+.zite-app .prose :where(ol[type="I" s]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: upper-roman; }
+.zite-app .prose :where(ol[type="i" s]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: lower-roman; }
+.zite-app .prose :where(ol[type="1"]):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: decimal; }
+.zite-app .prose :where(ul):not(:where([class~="not-prose"],[class~="not-prose"] *)) { list-style-type: disc; margin-top: 1.25em; margin-bottom: 1.25em; padding-inline-start: 1.625em; }
+.zite-app .prose :where(ol > li):not(:where([class~="not-prose"],[class~="not-prose"] *))::marker { font-weight: 400; color: var(--tw-prose-counters); }
+.zite-app .prose :where(ul > li):not(:where([class~="not-prose"],[class~="not-prose"] *))::marker { color: var(--tw-prose-bullets); }
+.zite-app .prose :where(dt):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 600; margin-top: 1.25em; }
+.zite-app .prose :where(hr):not(:where([class~="not-prose"],[class~="not-prose"] *)) { border-color: var(--tw-prose-hr); border-top-width: 1px; margin-top: 3em; margin-bottom: 3em; }
+.zite-app .prose :where(blockquote):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 500; font-style: italic; color: var(--tw-prose-quotes); border-inline-start-width: 0.25rem; border-inline-start-color: var(--tw-prose-quote-borders); quotes: "\201C""\201D""\2018""\2019"; margin-top: 1.6em; margin-bottom: 1.6em; padding-inline-start: 1em; }
+.zite-app .prose :where(blockquote p:first-of-type):not(:where([class~="not-prose"],[class~="not-prose"] *))::before { content: open-quote; }
+.zite-app .prose :where(blockquote p:last-of-type):not(:where([class~="not-prose"],[class~="not-prose"] *))::after { content: close-quote; }
+.zite-app .prose :where(h1):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 800; font-size: 2.25em; margin-top: 0; margin-bottom: 0.8888889em; line-height: 1.1111111; }
+.zite-app .prose :where(h1 strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 900; color: inherit; }
+.zite-app .prose :where(h2):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 700; font-size: 1.5em; margin-top: 2em; margin-bottom: 1em; line-height: 1.3333333; }
+.zite-app .prose :where(h2 strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 800; color: inherit; }
+.zite-app .prose :where(h3):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 600; font-size: 1.25em; margin-top: 1.6em; margin-bottom: 0.6em; line-height: 1.6; }
+.zite-app .prose :where(h3 strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 700; color: inherit; }
+.zite-app .prose :where(h4):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; line-height: 1.5; }
+.zite-app .prose :where(h4 strong):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 700; color: inherit; }
+.zite-app .prose :where(img):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 2em; margin-bottom: 2em; }
+.zite-app .prose :where(picture):not(:where([class~="not-prose"],[class~="not-prose"] *)) { display: block; margin-top: 2em; margin-bottom: 2em; }
+.zite-app .prose :where(video):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 2em; margin-bottom: 2em; }
+.zite-app .prose :where(kbd):not(:where([class~="not-prose"],[class~="not-prose"] *)) { font-weight: 500; font-family: inherit; color: var(--tw-prose-kbd); box-shadow: 0 0 0 1px var(--tw-prose-kbd-shadows), 0 3px 0 var(--tw-prose-kbd-shadows); font-size: 0.875em; border-radius: 0.3125rem; padding-top: 0.1875em; padding-inline-end: 0.375em; padding-bottom: 0.1875em; padding-inline-start: 0.375em; }
+.zite-app .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-code); font-weight: 600; font-size: 0.875em; }
+.zite-app .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *))::before { content: "`"; }
+.zite-app .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *))::after { content: "`"; }
+.zite-app .prose :where(a code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(h1 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(h2 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; font-size: 0.875em; }
+.zite-app .prose :where(h3 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; font-size: 0.9em; }
+.zite-app .prose :where(h4 code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(blockquote code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(thead th code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: inherit; }
+.zite-app .prose :where(pre):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-pre-code); background-color: var(--tw-prose-pre-bg); overflow-x: auto; font-weight: 400; font-size: 0.875em; line-height: 1.7142857; margin-top: 1.7142857em; margin-bottom: 1.7142857em; border-radius: 0.375rem; padding-top: 0.8571429em; padding-inline-end: 1.1428571em; padding-bottom: 0.8571429em; padding-inline-start: 1.1428571em; }
+.zite-app .prose :where(pre code):not(:where([class~="not-prose"],[class~="not-prose"] *)) { background-color: transparent; border-width: 0; border-radius: 0; padding: 0; font-weight: inherit; color: inherit; font-size: inherit; font-family: inherit; line-height: inherit; }
+.zite-app .prose :where(pre code):not(:where([class~="not-prose"],[class~="not-prose"] *))::before { content: none; }
+.zite-app .prose :where(pre code):not(:where([class~="not-prose"],[class~="not-prose"] *))::after { content: none; }
+.zite-app .prose :where(table):not(:where([class~="not-prose"],[class~="not-prose"] *)) { width: 100%; table-layout: auto; margin-top: 2em; margin-bottom: 2em; font-size: 0.875em; line-height: 1.7142857; }
+.zite-app .prose :where(thead):not(:where([class~="not-prose"],[class~="not-prose"] *)) { border-bottom-width: 1px; border-bottom-color: var(--tw-prose-th-borders); }
+.zite-app .prose :where(thead th):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-headings); font-weight: 600; vertical-align: bottom; padding-inline-end: 0.5714286em; padding-bottom: 0.5714286em; padding-inline-start: 0.5714286em; }
+.zite-app .prose :where(tbody tr):not(:where([class~="not-prose"],[class~="not-prose"] *)) { border-bottom-width: 1px; border-bottom-color: var(--tw-prose-td-borders); }
+.zite-app .prose :where(tbody tr:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { border-bottom-width: 0; }
+.zite-app .prose :where(tbody td):not(:where([class~="not-prose"],[class~="not-prose"] *)) { vertical-align: baseline; }
+.zite-app .prose :where(tfoot):not(:where([class~="not-prose"],[class~="not-prose"] *)) { border-top-width: 1px; border-top-color: var(--tw-prose-th-borders); }
+.zite-app .prose :where(tfoot td):not(:where([class~="not-prose"],[class~="not-prose"] *)) { vertical-align: top; }
+.zite-app .prose :where(th, td):not(:where([class~="not-prose"],[class~="not-prose"] *)) { text-align: start; }
+.zite-app .prose :where(figure > *):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; margin-bottom: 0; }
+.zite-app .prose :where(figcaption):not(:where([class~="not-prose"],[class~="not-prose"] *)) { color: var(--tw-prose-captions); font-size: 0.875em; line-height: 1.4285714; margin-top: 0.8571429em; }
+.zite-app .prose { --tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-lead: #4b5563; --tw-prose-links: #111827; --tw-prose-bold: #111827; --tw-prose-counters: #6b7280; --tw-prose-bullets: #d1d5db; --tw-prose-hr: #e5e7eb; --tw-prose-quotes: #111827; --tw-prose-quote-borders: #e5e7eb; --tw-prose-captions: #6b7280; --tw-prose-kbd: #111827; --tw-prose-kbd-shadows: rgb(17 24 39 / 10%); --tw-prose-code: #111827; --tw-prose-pre-code: #e5e7eb; --tw-prose-pre-bg: #1f2937; --tw-prose-th-borders: #d1d5db; --tw-prose-td-borders: #e5e7eb; --tw-prose-invert-body: #d1d5db; --tw-prose-invert-headings: #fff; --tw-prose-invert-lead: #9ca3af; --tw-prose-invert-links: #fff; --tw-prose-invert-bold: #fff; --tw-prose-invert-counters: #9ca3af; --tw-prose-invert-bullets: #4b5563; --tw-prose-invert-hr: #374151; --tw-prose-invert-quotes: #f3f4f6; --tw-prose-invert-quote-borders: #374151; --tw-prose-invert-captions: #9ca3af; --tw-prose-invert-kbd: #fff; --tw-prose-invert-kbd-shadows: rgb(255 255 255 / 10%); --tw-prose-invert-code: #fff; --tw-prose-invert-pre-code: #d1d5db; --tw-prose-invert-pre-bg: rgb(0 0 0 / 50%); --tw-prose-invert-th-borders: #4b5563; --tw-prose-invert-td-borders: #374151; font-size: 1rem; line-height: 1.75; }
+.zite-app .prose :where(picture > img):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; margin-bottom: 0; }
+.zite-app .prose :where(li):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0.5em; margin-bottom: 0.5em; }
+.zite-app .prose :where(ol > li):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-start: 0.375em; }
+.zite-app .prose :where(ul > li):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-start: 0.375em; }
+.zite-app .prose :where(.prose > ul > li p):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0.75em; margin-bottom: 0.75em; }
+.zite-app .prose :where(.prose > ul > li > p:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 1.25em; }
+.zite-app .prose :where(.prose > ul > li > p:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-bottom: 1.25em; }
+.zite-app .prose :where(.prose > ol > li > p:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 1.25em; }
+.zite-app .prose :where(.prose > ol > li > p:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-bottom: 1.25em; }
+.zite-app .prose :where(ul ul, ul ol, ol ul, ol ol):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0.75em; margin-bottom: 0.75em; }
+.zite-app .prose :where(dl):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 1.25em; margin-bottom: 1.25em; }
+.zite-app .prose :where(dd):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0.5em; padding-inline-start: 1.625em; }
+.zite-app .prose :where(hr + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; }
+.zite-app .prose :where(h2 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; }
+.zite-app .prose :where(h3 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; }
+.zite-app .prose :where(h4 + *):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; }
+.zite-app .prose :where(thead th:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-start: 0; }
+.zite-app .prose :where(thead th:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-end: 0; }
+.zite-app .prose :where(tbody td, tfoot td):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-top: 0.5714286em; padding-inline-end: 0.5714286em; padding-bottom: 0.5714286em; padding-inline-start: 0.5714286em; }
+.zite-app .prose :where(tbody td:first-child, tfoot td:first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-start: 0; }
+.zite-app .prose :where(tbody td:last-child, tfoot td:last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { padding-inline-end: 0; }
+.zite-app .prose :where(figure):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 2em; margin-bottom: 2em; }
+.zite-app .prose :where(.prose > :first-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-top: 0; }
+.zite-app .prose :where(.prose > :last-child):not(:where([class~="not-prose"],[class~="not-prose"] *)) { margin-bottom: 0; }
+.zite-app .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0; }
+.zite-app .visible { visibility: visible; }
+.zite-app .invisible { visibility: hidden; }
+.zite-app .fixed { position: fixed; }
+.zite-app .absolute { position: absolute; }
+.zite-app .relative { position: relative; }
+.zite-app .inset-0 { inset: 0px; }
+.zite-app .left-1 { left: 0.25rem; }
+.zite-app .left-\[50\%\] { left: 50%; }
+.zite-app .right-1 { right: 0.25rem; }
+.zite-app .right-2 { right: 0.5rem; }
+.zite-app .right-3 { right: 0.75rem; }
+.zite-app .right-4 { right: 1rem; }
+.zite-app .top-2\.5 { top: 0.625rem; }
+.zite-app .top-3 { top: 0.75rem; }
+.zite-app .top-3\.5 { top: 0.875rem; }
+.zite-app .top-4 { top: 1rem; }
+.zite-app .top-\[50\%\] { top: 50%; }
+.zite-app .isolate { isolation: isolate; }
+.zite-app .z-10 { z-index: 10; }
+.zite-app .z-50 { z-index: 50; }
+.zite-app .-mx-1 { margin-left: -0.25rem; margin-right: -0.25rem; }
+.zite-app .-mx-3 { margin-left: -0.75rem; margin-right: -0.75rem; }
+.zite-app .mx-2 { margin-left: 0.5rem; margin-right: 0.5rem; }
+.zite-app .mx-auto { margin-left: auto; margin-right: auto; }
+.zite-app .my-1 { margin-top: 0.25rem; margin-bottom: 0.25rem; }
+.zite-app .mb-1 { margin-bottom: 0.25rem; }
+.zite-app .mb-2 { margin-bottom: 0.5rem; }
+.zite-app .mb-3 { margin-bottom: 0.75rem; }
+.zite-app .mb-4 { margin-bottom: 1rem; }
+.zite-app .mb-6 { margin-bottom: 1.5rem; }
+.zite-app .me-1 { margin-inline-end: 0.25rem; }
+.zite-app .me-2 { margin-inline-end: 0.5rem; }
+.zite-app .ml-2 { margin-left: 0.5rem; }
+.zite-app .ms-2 { margin-inline-start: 0.5rem; }
+.zite-app .mt-0\.5 { margin-top: 0.125rem; }
+.zite-app .mt-1 { margin-top: 0.25rem; }
+.zite-app .mt-2 { margin-top: 0.5rem; }
+.zite-app .mt-3 { margin-top: 0.75rem; }
+.zite-app .mt-4 { margin-top: 1rem; }
+.zite-app .mt-6 { margin-top: 1.5rem; }
+.zite-app .mt-auto { margin-top: auto; }
+.zite-app .line-clamp-1 { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.zite-app .block { display: block; }
+.zite-app .inline-block { display: inline-block; }
+.zite-app .inline { display: inline; }
+.zite-app .flex { display: flex; }
+.zite-app .inline-flex { display: inline-flex; }
+.zite-app .table { display: table; }
+.zite-app .table-cell { display: table-cell; }
+.zite-app .grid { display: grid; }
+.zite-app .hidden { display: none; }
+.zite-app .aspect-square { aspect-ratio: 1 / 1; }
+.zite-app .size-4 { width: 1rem; height: 1rem; }
+.zite-app .size-7 { width: 1.75rem; height: 1.75rem; }
+.zite-app .size-8 { width: 2rem; height: 2rem; }
+.zite-app .h-1 { height: 0.25rem; }
+.zite-app .h-10 { height: 2.5rem; }
+.zite-app .h-11 { height: 2.75rem; }
+.zite-app .h-2\.5 { height: 0.625rem; }
+.zite-app .h-3\.5 { height: 0.875rem; }
+.zite-app .h-4 { height: 1rem; }
+.zite-app .h-44 { height: 11rem; }
+.zite-app .h-5 { height: 1.25rem; }
+.zite-app .h-6 { height: 1.5rem; }
+.zite-app .h-64 { height: 16rem; }
+.zite-app .h-7 { height: 1.75rem; }
+.zite-app .h-8 { height: 2rem; }
+.zite-app .h-9 { height: 2.25rem; }
+.zite-app .h-\[360px\] { height: 360px; }
+.zite-app .h-\[var\(--radix-select-trigger-height\)\] { height: var(--radix-select-trigger-height); }
+.zite-app .h-full { height: 100%; }
+.zite-app .h-px { height: 1px; }
+.zite-app .max-h-28 { max-height: 7rem; }
+.zite-app .max-h-40 { max-height: 10rem; }
+.zite-app .max-h-44 { max-height: 11rem; }
+.zite-app .max-h-48 { max-height: 12rem; }
+.zite-app .max-h-52 { max-height: 13rem; }
+.zite-app .max-h-56 { max-height: 14rem; }
+.zite-app .max-h-64 { max-height: 16rem; }
+.zite-app .max-h-96 { max-height: 24rem; }
+.zite-app .max-h-\[340px\] { max-height: 340px; }
+.zite-app .max-h-\[55vh\] { max-height: 55vh; }
+.zite-app .max-h-\[560px\] { max-height: 560px; }
+.zite-app .max-h-\[90vh\] { max-height: 90vh; }
+.zite-app .min-h-\[60px\] { min-height: 60px; }
+.zite-app .min-h-screen { min-height: 100vh; }
+.zite-app .w-11 { width: 2.75rem; }
+.zite-app .w-12 { width: 3rem; }
+.zite-app .w-2\.5 { width: 0.625rem; }
+.zite-app .w-20 { width: 5rem; }
+.zite-app .w-28 { width: 7rem; }
+.zite-app .w-3\.5 { width: 0.875rem; }
+.zite-app .w-4 { width: 1rem; }
+.zite-app .w-5 { width: 1.25rem; }
+.zite-app .w-6 { width: 1.5rem; }
+.zite-app .w-7 { width: 1.75rem; }
+.zite-app .w-72 { width: 18rem; }
+.zite-app .w-8 { width: 2rem; }
+.zite-app .w-9 { width: 2.25rem; }
+.zite-app .w-\[95vw\] { width: 95vw; }
+.zite-app .w-\[var\(--radix-popover-trigger-width\)\] { width: var(--radix-popover-trigger-width); }
+.zite-app .w-auto { width: auto; }
+.zite-app .w-full { width: 100%; }
+.zite-app .w-max { width: -moz-max-content; width: max-content; }
+.zite-app .min-w-0 { min-width: 0px; }
+.zite-app .min-w-9 { min-width: 2.25rem; }
+.zite-app .min-w-\[300px\] { min-width: 300px; }
+.zite-app .min-w-\[8rem\] { min-width: 8rem; }
+.zite-app .min-w-\[var\(--radix-select-trigger-width\)\] { min-width: var(--radix-select-trigger-width); }
+.zite-app .max-w-2xl { max-width: 42rem; }
+.zite-app .max-w-3xl { max-width: 48rem; }
+.zite-app .max-w-44 { max-width: 11rem; }
+.zite-app .max-w-4xl { max-width: 56rem; }
+.zite-app .max-w-\[288px\] { max-width: 288px; }
+.zite-app .max-w-\[320px\] { max-width: 320px; }
+.zite-app .max-w-\[90vw\] { max-width: 90vw; }
+.zite-app .max-w-lg { max-width: 32rem; }
+.zite-app .max-w-xl { max-width: 36rem; }
+.zite-app .flex-1 { flex: 1 1 0%; }
+.zite-app .shrink-0 { flex-shrink: 0; }
+.zite-app .caption-bottom { caption-side: bottom; }
+.zite-app .border-collapse { border-collapse: collapse; }
+.zite-app .translate-x-\[-50\%\] { --tw-translate-x: -50%; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .translate-y-\[-50\%\] { --tw-translate-y: -50%; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .transform { transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+@keyframes pulse {
+ 50% { opacity: .5; } }
+.zite-app .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+@keyframes spin {
+ to { transform: rotate(360deg); } }
+.zite-app .animate-spin { animation: spin 1s linear infinite; }
+.zite-app .cursor-default { cursor: default; }
+.zite-app .cursor-not-allowed { cursor: not-allowed; }
+.zite-app .cursor-pointer { cursor: pointer; }
+.zite-app .touch-none { touch-action: none; }
+.zite-app .select-none { -webkit-user-select: none; -moz-user-select: none; user-select: none; }
+.zite-app .resize { resize: both; }
+.zite-app .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.zite-app .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.zite-app .flex-col { flex-direction: column; }
+.zite-app .flex-col-reverse { flex-direction: column-reverse; }
+.zite-app .flex-wrap { flex-wrap: wrap; }
+.zite-app .flex-nowrap { flex-wrap: nowrap; }
+.zite-app .place-items-center { place-items: center; }
+.zite-app .items-start { align-items: flex-start; }
+.zite-app .items-end { align-items: flex-end; }
+.zite-app .items-center { align-items: center; }
+.zite-app .justify-end { justify-content: flex-end; }
+.zite-app .justify-center { justify-content: center; }
+.zite-app .justify-between { justify-content: space-between; }
+.zite-app .gap-1 { gap: 0.25rem; }
+.zite-app .gap-2 { gap: 0.5rem; }
+.zite-app .gap-3 { gap: 0.75rem; }
+.zite-app .gap-4 { gap: 1rem; }
+.zite-app .space-x-1 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(0.25rem * var(--tw-space-x-reverse)); margin-left: calc(0.25rem * calc(1 - var(--tw-space-x-reverse))); }
+.zite-app .space-y-1 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.25rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-1\.5 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.375rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.5rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-3 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0.75rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0.75rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-5 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(1.25rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1.25rem * var(--tw-space-y-reverse)); }
+.zite-app .space-y-6 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(1.5rem * var(--tw-space-y-reverse)); }
+.zite-app .divide-y > :not([hidden]) ~ :not([hidden]) { --tw-divide-y-reverse: 0; border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse))); border-bottom-width: calc(1px * var(--tw-divide-y-reverse)); }
+.zite-app .self-start { align-self: flex-start; }
+.zite-app .overflow-auto { overflow: auto; }
+.zite-app .overflow-hidden { overflow: hidden; }
+.zite-app .overflow-x-auto { overflow-x: auto; }
+.zite-app .overflow-y-auto { overflow-y: auto; }
+.zite-app .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zite-app .whitespace-nowrap { white-space: nowrap; }
+.zite-app .whitespace-pre-line { white-space: pre-line; }
+.zite-app .whitespace-pre-wrap { white-space: pre-wrap; }
+.zite-app .break-words { overflow-wrap: break-word; }
+.zite-app .break-all { word-break: break-all; }
+.zite-app .rounded { border-radius: calc(var(--radius) - 2px); }
+.zite-app .rounded-\[inherit\] { border-radius: inherit; }
+.zite-app .rounded-full { border-radius: 9999px; }
+.zite-app .rounded-lg { border-radius: var(--radius); }
+.zite-app .rounded-md { border-radius: calc(var(--radius) - 2px); }
+.zite-app .rounded-sm { border-radius: calc(var(--radius) - 4px); }
+.zite-app .rounded-xl { border-radius: calc(var(--radius) + 4px); }
+.zite-app .border { border-width: 1px; }
+.zite-app .border-0 { border-width: 0px; }
+.zite-app .border-b { border-bottom-width: 1px; }
+.zite-app .border-l { border-left-width: 1px; }
+.zite-app .border-t { border-top-width: 1px; }
+.zite-app .border-dashed { border-style: dashed; }
+.zite-app .border-black { --tw-border-opacity: 1; border-color: rgb(0 0 0 / var(--tw-border-opacity, 1)); }
+.zite-app .border-border { border-color: hsl(var(--border)); }
+.zite-app .border-destructive { border-color: hsl(var(--destructive)); }
+.zite-app .border-destructive\/40 { border-color: hsl(var(--destructive) / 0.4); }
+.zite-app .border-input { border-color: hsl(var(--input)); }
+.zite-app .border-primary { border-color: hsl(var(--primary)); }
+.zite-app .border-primary\/50 { border-color: hsl(var(--primary) / 0.5); }
+.zite-app .border-red-500 { --tw-border-opacity: 1; border-color: rgb(239 68 68 / var(--tw-border-opacity, 1)); }
+.zite-app .border-white\/60 { border-color: rgb(255 255 255 / 0.6); }
+.zite-app .border-l-transparent { border-left-color: transparent; }
+.zite-app .border-t-transparent { border-top-color: transparent; }
+.zite-app .bg-\[\#f7f5f0\] { --tw-bg-opacity: 1; background-color: rgb(247 245 240 / var(--tw-bg-opacity, 1)); }
+.zite-app .bg-\[\#fffdf9\] { --tw-bg-opacity: 1; background-color: rgb(255 253 249 / var(--tw-bg-opacity, 1)); }
+.zite-app .bg-accent { background-color: hsl(var(--accent)); }
+.zite-app .bg-background { background-color: hsl(var(--background)); }
+.zite-app .bg-black\/80 { background-color: rgb(0 0 0 / 0.8); }
+.zite-app .bg-border { background-color: hsl(var(--border)); }
+.zite-app .bg-card { background-color: hsl(var(--card)); }
+.zite-app .bg-destructive { background-color: hsl(var(--destructive)); }
+.zite-app .bg-destructive\/5 { background-color: hsl(var(--destructive) / 0.05); }
+.zite-app .bg-muted { background-color: hsl(var(--muted)); }
+.zite-app .bg-muted\/20 { background-color: hsl(var(--muted) / 0.2); }
+.zite-app .bg-muted\/30 { background-color: hsl(var(--muted) / 0.3); }
+.zite-app .bg-muted\/40 { background-color: hsl(var(--muted) / 0.4); }
+.zite-app .bg-muted\/50 { background-color: hsl(var(--muted) / 0.5); }
+.zite-app .bg-muted\/60 { background-color: hsl(var(--muted) / 0.6); }
+.zite-app .bg-popover { background-color: hsl(var(--popover)); }
+.zite-app .bg-primary { background-color: hsl(var(--primary)); }
+.zite-app .bg-primary\/10 { background-color: hsl(var(--primary) / 0.1); }
+.zite-app .bg-secondary { background-color: hsl(var(--secondary)); }
+.zite-app .bg-transparent { background-color: transparent; }
+.zite-app .bg-white { --tw-bg-opacity: 1; background-color: rgb(255 255 255 / var(--tw-bg-opacity, 1)); }
+.zite-app .fill-primary { fill: hsl(var(--primary)); }
+.zite-app .p-0 { padding: 0px; }
+.zite-app .p-1 { padding: 0.25rem; }
+.zite-app .p-10 { padding: 2.5rem; }
+.zite-app .p-2 { padding: 0.5rem; }
+.zite-app .p-3 { padding: 0.75rem; }
+.zite-app .p-4 { padding: 1rem; }
+.zite-app .p-5 { padding: 1.25rem; }
+.zite-app .p-6 { padding: 1.5rem; }
+.zite-app .p-8 { padding: 2rem; }
+.zite-app .p-\[1px\] { padding: 1px; }
+.zite-app .px-0\.5 { padding-left: 0.125rem; padding-right: 0.125rem; }
+.zite-app .px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
+.zite-app .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.zite-app .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.zite-app .px-4 { padding-left: 1rem; padding-right: 1rem; }
+.zite-app .px-8 { padding-left: 2rem; padding-right: 2rem; }
+.zite-app .py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
+.zite-app .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.zite-app .py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.zite-app .py-10 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+.zite-app .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.zite-app .py-2\.5 { padding-top: 0.625rem; padding-bottom: 0.625rem; }
+.zite-app .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.zite-app .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.zite-app .py-6 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+.zite-app .pb-1 { padding-bottom: 0.25rem; }
+.zite-app .pb-3 { padding-bottom: 0.75rem; }
+.zite-app .pb-4 { padding-bottom: 1rem; }
+.zite-app .pl-2 { padding-left: 0.5rem; }
+.zite-app .pr-8 { padding-right: 2rem; }
+.zite-app .pr-9 { padding-right: 2.25rem; }
+.zite-app .pt-0 { padding-top: 0px; }
+.zite-app .pt-1 { padding-top: 0.25rem; }
+.zite-app .pt-2 { padding-top: 0.5rem; }
+.zite-app .pt-3 { padding-top: 0.75rem; }
+.zite-app .pt-4 { padding-top: 1rem; }
+.zite-app .pt-5 { padding-top: 1.25rem; }
+.zite-app .text-left { text-align: left; }
+.zite-app .text-center { text-align: center; }
+.zite-app .text-right { text-align: right; }
+.zite-app .align-middle { vertical-align: middle; }
+.zite-app .font-mono { font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+.zite-app .font-sans { font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; }
+.zite-app .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+.zite-app .text-\[0\.8rem\] { font-size: 0.8rem; }
+.zite-app .text-\[9px\] { font-size: 9px; }
+.zite-app .text-base { font-size: 1rem; line-height: 1.5rem; }
+.zite-app .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.zite-app .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.zite-app .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.zite-app .text-xs { font-size: 0.75rem; line-height: 1rem; }
+.zite-app .font-bold { font-weight: 700; }
+.zite-app .font-medium { font-weight: 500; }
+.zite-app .font-normal { font-weight: 400; }
+.zite-app .font-semibold { font-weight: 600; }
+.zite-app .tabular-nums { --tw-numeric-spacing: tabular-nums; font-variant-numeric: var(--tw-ordinal) var(--tw-slashed-zero) var(--tw-numeric-figure) var(--tw-numeric-spacing) var(--tw-numeric-fraction); }
+.zite-app .leading-6 { line-height: 1.5rem; }
+.zite-app .leading-7 { line-height: 1.75rem; }
+.zite-app .leading-8 { line-height: 2rem; }
+.zite-app .leading-9 { line-height: 2.25rem; }
+.zite-app .leading-loose { line-height: 2; }
+.zite-app .leading-none { line-height: 1; }
+.zite-app .leading-relaxed { line-height: 1.625; }
+.zite-app .leading-tight { line-height: 1.25; }
+.zite-app .tracking-tight { letter-spacing: -0.025em; }
+.zite-app .text-\[\#146348\] { --tw-text-opacity: 1; color: rgb(20 99 72 / var(--tw-text-opacity, 1)); }
+.zite-app .text-\[\#202020\] { --tw-text-opacity: 1; color: rgb(32 32 32 / var(--tw-text-opacity, 1)); }
+.zite-app .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+.zite-app .text-card-foreground { color: hsl(var(--card-foreground)); }
+.zite-app .text-current { color: currentColor; }
+.zite-app .text-destructive { color: hsl(var(--destructive)); }
+.zite-app .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+.zite-app .text-emerald-700 { --tw-text-opacity: 1; color: rgb(4 120 87 / var(--tw-text-opacity, 1)); }
+.zite-app .text-foreground { color: hsl(var(--foreground)); }
+.zite-app .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+.zite-app .text-popover-foreground { color: hsl(var(--popover-foreground)); }
+.zite-app .text-primary { color: hsl(var(--primary)); }
+.zite-app .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+.zite-app .text-red-600 { --tw-text-opacity: 1; color: rgb(220 38 38 / var(--tw-text-opacity, 1)); }
+.zite-app .text-red-800 { --tw-text-opacity: 1; color: rgb(153 27 27 / var(--tw-text-opacity, 1)); }
+.zite-app .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+.zite-app .text-white { --tw-text-opacity: 1; color: rgb(255 255 255 / var(--tw-text-opacity, 1)); }
+.zite-app .underline { text-decoration-line: underline; }
+.zite-app .underline-offset-4 { text-underline-offset: 4px; }
+.zite-app .antialiased { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+.zite-app .opacity-50 { opacity: 0.5; }
+.zite-app .opacity-70 { opacity: 0.7; }
+.zite-app .opacity-80 { opacity: 0.8; }
+.zite-app .shadow { --tw-shadow: var(--shadow); --tw-shadow-colored: var(--shadow); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .shadow-lg { --tw-shadow: var(--shadow-lg); --tw-shadow-colored: var(--shadow-lg); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .shadow-md { --tw-shadow: var(--shadow-md); --tw-shadow-colored: var(--shadow-md); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .shadow-none { --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .shadow-sm { --tw-shadow: var(--shadow-sm); --tw-shadow-colored: var(--shadow-sm); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .shadow-xl { --tw-shadow: var(--shadow-xl); --tw-shadow-colored: var(--shadow-xl); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .outline-none { outline: 2px solid transparent; outline-offset: 2px; }
+.zite-app .outline { outline-style: solid; }
+.zite-app .ring-offset-background { --tw-ring-offset-color: hsl(var(--background)); }
+.zite-app .filter { filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow); }
+.zite-app .transition { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.zite-app .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.zite-app .transition-colors { transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.zite-app .transition-opacity { transition-property: opacity; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.zite-app .transition-shadow { transition-property: box-shadow; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+.zite-app .duration-200 { transition-duration: 200ms; }
+@keyframes enter {
+ from { opacity: var(--tw-enter-opacity, 1); transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0) scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0)); } }
+@keyframes exit {
+ to { opacity: var(--tw-exit-opacity, 1); transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0) scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1)) rotate(var(--tw-exit-rotate, 0)); } }
+.zite-app .duration-200 { animation-duration: 200ms; }
+
+.zite-app .certificate-ornament { position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); width:292.2mm; aspect-ratio:292.17 / 206.99; height:auto; z-index:0; pointer-events:none; -webkit-mask-size:100% 100%; mask-size:100% 100%; -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat; }
+/* Neutral, near-white paper in dark-mode preview so the SVG border and
+   selected ink colors remain visually accurate rather than turning beige. */
+@media screen {
+  .zite-app .dark .certificate-print-screen .print-area:not(.certificate-export-original-paper) { background-color:#fafafa !important; }
+}
+@media print {
+  .zite-app .certificate-print-screen .print-area { background-color:#fff !important; }
+  .zite-app .certificate-scale-box { width: auto !important; height: auto !important; }
+  .zite-app .certificate-scale-inner { transform: none !important; }
+  .zite-app .certificate-ornament { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  @page { size: A4 landscape; margin: 0; }
+  .zite-app { background: white !important; }
+  .zite-app .no-print { display: none !important; }
+  /* Print only the certificate; hide external badges and page chrome injected into the DOM. */
+  .zite-app body * { visibility: hidden !important; }
+  .zite-app .print-area, .zite-app .print-area * { visibility: visible !important; }
+  .zite-app body > iframe, .zite-app body > a, .zite-app body > button, .zite-app body > div:not(#root) { display: none !important; }
+  .zite-app .certificate-print-screen { position: relative !important; }
+
+  .zite-app, .zite-app, .zite-app #root { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+  .zite-app .certificate-print-screen { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: white !important; overflow: hidden !important; }
+  .zite-app .certificate-print-viewport { width: 297mm !important; height: 210mm !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+  .zite-app .print-area { position: relative !important; width: 297mm !important; height: 210mm !important; min-height: 0 !important; max-height: 210mm !important; box-sizing: border-box !important; box-shadow: none !important; margin: 0 auto !important; padding: var(--sanad-text-top, 52.8mm) 16mm 24mm !important; overflow: hidden !important; -moz-column-break-inside: avoid !important; break-inside: avoid !important; page-break-inside: avoid !important; -moz-column-break-after: avoid !important; break-after: avoid !important; }
+  .zite-app .certificate-ornament { inset: auto !important; top: 50% !important; left: 50% !important; width: 292.2mm !important; height: auto !important; aspect-ratio: 292.17 / 206.99 !important; transform: translate(-50%, -50%) !important; }
+  .zite-app * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+.zite-app .certificate-composed-sanad { font-family: 'KSA Regular', serif; overflow-wrap: anywhere; }
+.zite-app .certificate-verse-inline { white-space: nowrap; direction: rtl; unicode-bidi: isolate; }
+.zite-app .certificate-qcf { font-family: 'QCF2', serif; font-size: 9pt; }
+.zite-app .certificate-ayah-marker { font-family: 'KSA Regular', serif; }
+
+/* Isolate the ornament behind the complete sanad text, including PDF capture. */
+.zite-app .print-area { isolation: isolate; }
+.zite-app .print-area > .certificate-ornament { z-index: 0 !important; }
+.zite-app .print-area > .certificate-content { position: relative; z-index: 2 !important; }
+
+/* Artwork coordinates are measured from the top-left of the 297 × 210 mm paper. */
+.zite-app .certificate-header-art {
+  position: absolute;
+  top: 14.993mm;
+  left: 50%; /* center: x = 148.5 mm; artwork shifted 3mm upward */
+  transform: translate(-50%,var(--certificate-center-shift,0px));
+  width: 100mm;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+.zite-app .certificate-basmalah-svg {
+  width: 34.18mm;
+  height: 4.4mm;
+  margin-bottom: 3mm;
+  background: #303030;
+  -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+/* Source: Muzakkir-ai/fonts/svg/ijazah.svg (viewBox 277.5 × 54.92).
+   Preserve the established 19.4mm print height and match the SVG's new aspect ratio. */
+.zite-app .certificate-ijazah-svg {
+  width: 98.0244mm;
+  height: 19.4mm;
+  -webkit-mask-position: center; mask-position: center; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+}
+
+.zite-app .certificate-conclusion { display: block; width: 100%; white-space: pre-line; text-align: center !important; }
+
+/* Fixed-width centered sanad text area: 297mm page minus 16mm on each side. */
+.zite-app .print-area > .certificate-content { width: 265mm; max-width: 100%; margin-inline: auto; }
+
+/* Center the whole Basmalah-to-footer composition as one measured group.
+   Keep original internal spacing; content that cannot fit the 12mm A4
+   safety margin automatically falls back to the established layout. */
+.zite-app .print-area.certificate-auto-center-fit > .certificate-content {
+  height:auto !important;
+  transform:translateY(var(--certificate-center-shift,0px));
+}
+.zite-app .print-area.certificate-auto-center-fit .certificate-footer {
+  margin-top:5mm !important;
+}
+/* Five original vector glyphs form ONE centered heading beneath ijazah.svg.
+   No flex gap, letter spacing, text shaping, or SVG overlap adjustments;
+   each image abuts the next at its exact source viewBox boundary.
+   Background masks tint every glyph with the selected secondary color. */
+.zite-app .certificate-reading-svg-line {
+  display:flex;
+  flex-direction:row;
+  direction:rtl;
+  justify-content:center;
+  align-items:center;
+  gap:0 !important;
+  font-size:0;
+  letter-spacing:0;
+  flex:0 0 auto;
+  width:-moz-max-content;
+  width:max-content;
+  max-width:none;
+  margin-top:2mm;
+  white-space:nowrap;
+  align-self:center;
+}
+.zite-app .certificate-reading-svg-piece {
+  display:block;
+  flex:0 0 auto;
+  padding:0 !important;
+  margin:0 !important;
+  border:0;
+  min-width:0;
+  background-color:var(--certificate-secondary,#075f69) !important;
+  -webkit-mask-position:center;
+  mask-position:center;
+  -webkit-mask-size:100% 100%;
+  mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+/* Legacy headings that cannot be matched safely retain their previous typography. */
+/* Two millimeters below the lower edge of the ijazah SVG. */
+.zite-app .certificate-reading-label {
+  margin-top: 2mm;
+  text-align: center;
+  white-space: normal;
+}
+
+.zite-app .certificate-symbol { font-family: 'KFGQPC Symbols', serif; line-height: inherit; }
+.zite-app .certificate-reading-label { font-family: 'Sakkal Kitab', serif; line-height: normal; }
+
+/* All KSA sanad copy uses the requested 9pt size. */
+.zite-app .font-sanad { font-size: 9pt; }
+
+/* 208.2 mm reading text box, original vertical metrics unchanged. */
+.zite-app .certificate-reading-label { width: 208.2mm; max-width: none; flex: 0 0 auto; align-self: center; }
+
+/* Protect Quranic presentation-form glyphs from shared and personal font overrides. */
+.zite-app .certificate-qcf { font-family: 'QCF2', serif !important; font-weight: normal !important; }
+
+/* Quranic typography remains fixed independently of editable sanad sections. */
+.zite-app .certificate-verse-bracket { font-family: 'Traditional Arabic', serif !important; font-size: 8pt !important; color: var(--certificate-primary, #926e35) !important; }
+.zite-app .certificate-verse-inline, .zite-app .certificate-ayah-marker { color: var(--certificate-primary, #926e35) !important; }
+.zite-app .certificate-qcf { color: var(--certificate-primary, #926e35) !important; }
+/* Justify the body without stretching the paragraph's final line; keep the closing khutbah centered. */
+.zite-app .certificate-composed-sanad { text-align: justify !important; -moz-text-align-last: right !important; text-align-last: right !important; }
+.zite-app .certificate-composed-sanad .certificate-conclusion { text-align: center !important; -moz-text-align-last: center !important; text-align-last: center !important; }
+
+/* Certificate issuer footer: three invisible-border columns, two rows, total 265 mm. */
+.zite-app .certificate-footer { width:265mm; max-width:100%; flex-shrink:0; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; line-height:1.2; }
+.zite-app .certificate-footer-table { width:100%; table-layout:fixed; border-collapse:collapse; border:0 !important; }
+.zite-app .certificate-footer-table td { border:0 !important; padding:0 2mm; vertical-align:top; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; }
+/* Anchor every first-row footer heading to the bottom of its cell. */
+.zite-app .certificate-footer-head td { vertical-align:bottom !important; padding-bottom:2mm; }
+.zite-app .certificate-footer-right { text-align:right; }
+.zite-app .certificate-footer-center { text-align:center; }
+.zite-app .certificate-footer-left { text-align:left; }
+.zite-app .certificate-footer-name { font-family:'Sakkal Kitab',serif; font-weight:normal; }
+.zite-app .certificate-stamp-extra { white-space:pre-line; }
+.zite-app .certificate-footer-dates { text-align:left; }
+.zite-app .certificate-date-gap { height:1.2em; }
+
+/* Symmetric thirds put the stamp column exactly at the horizontal page midpoint. */
+.zite-app .certificate-footer-head .certificate-footer-heading { text-align:center !important; font-family:'KSA Regular',serif !important; font-weight:700 !important; font-synthesis:weight; color:var(--certificate-primary,#926e35) !important; }
+
+/* Footer detail cells sit directly under the centered headings. Long lines
+   justify within their own column; short/final lines remain centered. */
+.zite-app .certificate-footer,
+.zite-app .certificate-footer-table td,
+.zite-app .certificate-footer-table td div {
+  color:var(--certificate-primary,#926e35) !important;
+}
+.zite-app .certificate-footer-details td {
+  text-align:justify !important;
+  -moz-text-align-last:center !important;
+       text-align-last:center !important;
+}
+.zite-app .certificate-footer-details td > div,
+.zite-app .certificate-footer-dates,
+.zite-app .certificate-stamp-extra {
+  text-align:justify !important;
+  -moz-text-align-last:center !important;
+       text-align-last:center !important;
+}
+
+/* Shahada body text uses exact 9.5pt type and 16pt line height; keep decorative sizes unchanged. */
+.zite-app .certificate-text { font-size:9.5pt; line-height:16pt; }
+.zite-app .certificate-text .certificate-title { font-size:26.4pt; line-height:33pt; }
+.zite-app .certificate-text .certificate-name { font-size:18.7pt; line-height:25.3pt; }
+.zite-app .certificate-composed-sanad { font-size:9.5pt; line-height:16pt; }
+.zite-app .certificate-text .certificate-verse { font-size:9.9pt; line-height:16.5pt; }
+.zite-app .certificate-qcf { font-size:9.9pt !important; line-height:16.5pt; }
+.zite-app .certificate-ayah-marker { font-size:12.1pt; line-height:16.5pt; }
+.zite-app .certificate-verse-bracket, .zite-app .certificate-text .certificate-verse-bracket { font-size:8.8pt !important; }
+.zite-app .certificate-symbol { font-size:12.1pt; }
+.zite-app .certificate-reading-label { font-size:12.1pt; }
+.zite-app .certificate-footer, .zite-app .certificate-footer-table td { font-size:11pt; }
+.zite-app .certificate-footer-name { font-size:11pt; }
+.zite-app .certificate-footer-head .certificate-footer-heading { font-size:11pt !important; }
+
+/* Compact separation between certificate paragraphs; keep within-paragraph line height unchanged. */
+.zite-app .certificate-composed-sanad .certificate-sanad-paragraph { margin:0 0 3pt 0; text-align:justify; -moz-text-align-last:right; text-align-last:right; }
+.zite-app .certificate-composed-sanad .certificate-sanad-paragraph:last-child { margin-bottom:0; }
+.zite-app .certificate-composed-sanad .certificate-sanad-paragraph + .certificate-conclusion { margin-top:3pt !important; }
+
+/* Certificate glyph conventions: standalone Quranic brackets, transmission symbols and salawat. */
+.zite-app .certificate-text .certificate-verse-bracket { font-family:'Traditional Arabic',serif !important; }
+.zite-app .certificate-symbol { color:var(--certificate-secondary,#075f69) !important; }
+.zite-app .certificate-salawat { font-family:'Sakkal Kitab',serif !important; color:var(--certificate-secondary,#075f69) !important; }
+/* Only footer row two, excluding the shaykh name, returns to KSA Regular 9pt. */
+.zite-app .certificate-footer-details td,
+.zite-app .certificate-footer-details td > div:not(.certificate-footer-name),
+.zite-app .certificate-footer-details .certificate-footer-dates,
+.zite-app .certificate-footer-details .certificate-footer-dates div,
+.zite-app .certificate-footer-details .certificate-stamp-extra { font-family:'KSA Regular',serif !important; font-size:9pt !important; }
+.zite-app .certificate-footer-details .certificate-footer-name { font-family:'Sakkal Kitab',serif !important; font-size:11pt !important; }
+
+/* The salawat glyph always follows the *secondary* riwayah color, including
+   inside primary-colored imam names and the Prophet chain. */
+.zite-app .certificate-print-screen .certificate-salawat,
+.zite-app .certificate-print-screen .certificate-composed-sanad .certificate-salawat {
+  font-family:'Sakkal Kitab',serif !important;
+  color:var(--certificate-secondary,#075f69) !important;
+}
+/* First Ibn al-Jazari mention follows the normal body typeface, even inside
+   a general-purpose styled section. */
+.zite-app .certificate-composed-sanad .certificate-jazari-normal {
+  font-family:'KSA Regular',serif !important;
+  font-size:9.9pt !important;
+  font-weight:400 !important;
+}
+
+/* Independent primary-color emphasis for the two personal names and route switch. */
+.zite-app .certificate-composed-sanad .certificate-personal-name,
+.zite-app .certificate-composed-sanad .certificate-route-switch {
+ color:var(--certificate-primary,#926e35) !important;
+}
+
+/* Two separate issuer detail lines: position, then madrasa/location, with no dash. */
+.zite-app .certificate-footer-details .certificate-footer-madrasa-line {white-space:normal;}
+
+/* Issuer details remain within the same visual measure as the name above. */
+.zite-app .certificate-footer-details .certificate-footer-right > div:not(.certificate-footer-name) {
+ box-sizing:border-box;
+ margin-inline:3mm !important;
+ padding-inline:1mm !important;
+ max-width:calc(100% - 6mm);
+ text-align:justify !important;
+ -moz-text-align-last:center !important;
+      text-align-last:center !important;
+}
+
+/* CHAIN:<qari>:prophet uses the actual Sakkal Kitab Bold font.
+   It remains inline with the preceding Sahaba sentence; the ﷺ glyph has
+   an independent secondary-color override. */
+.zite-app .certificate-composed-sanad .certificate-prophet-chain {
+ display:inline !important;
+ width:auto !important;
+ margin:0 !important;
+ font-family:'Sakkal Kitab',serif !important;
+ font-size:10pt !important;
+ font-weight:700 !important;
+ font-synthesis:none;
+ line-height:inherit;
+ color:var(--certificate-primary,#926e35) !important;
+}
+/* Keep the two dates in matching columns with equal labels and padding. */
+.zite-app .certificate-footer-dates .certificate-date-row {
+ text-align:justify !important;
+ -moz-text-align-last:justify !important;
+      text-align-last:justify !important;
+}
+.zite-app .certificate-footer-dates .certificate-date-label,
+.zite-app .certificate-footer-dates .certificate-date-value {
+ text-align:right !important;
+}
+
+/* Date label occupies the right edge, date and calendar suffix the left edge. */
+.zite-app .certificate-footer-dates .certificate-date-label {flex:0 0 auto;}
+.zite-app .certificate-footer-dates .certificate-date-value {flex:0 0 auto;}
+
+/* Compact date pairing: align both labels and values without stretching the gap. */
+.zite-app .certificate-footer-dates .certificate-date-row {
+ grid-template-columns:18mm max-content;
+}
+.zite-app .certificate-footer-dates .certificate-date-value {-moz-text-align-last:right !important;text-align-last:right !important;}
+
+/* Evenly fill a *narrower* inset width, as requested for both date rows.
+   Each date row has the same right and left edges, without large spaces. */
+.zite-app .certificate-footer-dates {
+  box-sizing:border-box;
+  width:100%;
+  padding-inline:5mm;
+}
+.zite-app .certificate-footer-dates .certificate-date-row {
+  display:flex;
+  width:100%;
+  box-sizing:border-box;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:1mm;
+  direction:rtl;
+  white-space:nowrap;
+}
+.zite-app .certificate-footer-dates .certificate-date-label,
+.zite-app .certificate-footer-dates .certificate-date-value {
+  flex:0 0 auto;
+  font-family:'KSA Regular',serif !important;
+  font-size:9pt !important;
+}
+.zite-app .certificate-footer-dates .certificate-date-label {text-align:right !important;}
+.zite-app .certificate-footer-dates .certificate-date-value {text-align:left !important;}
+
+/* Footer signing space: issuer details at top, date information at bottom. */
+.zite-app .certificate-footer-table .certificate-footer-details {height:19mm;}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-left {
+ vertical-align:bottom !important;
+}
+.zite-app .certificate-footer-details .certificate-footer-dates {
+ padding-inline:8mm;
+}
+.zite-app .certificate-footer-details .certificate-footer-dates .certificate-date-row {
+ justify-content:space-between;
+ white-space:nowrap;
+}
+
+/* Actual full-line justification for each date part, not a single gap after the label. */
+.zite-app .certificate-footer-details .certificate-footer-dates .certificate-date-row {
+ display:flex;
+ width:100%;
+ flex-wrap:nowrap;
+ justify-content:space-between !important;
+ align-items:baseline;
+ gap:0.3mm;
+ direction:rtl;
+ text-align:justify !important;
+}
+.zite-app .certificate-footer-details .certificate-date-row > span {
+ flex:0 0 auto;
+ white-space:nowrap;
+ font-family:'KSA Regular',serif !important;
+ font-size:9pt !important;
+ color:var(--certificate-primary,#926e35) !important;
+}
+/* Keep issuer name centered, but spread the individual words in detail rows. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right > div:not(.certificate-footer-name) {
+ text-align:justify !important;
+ -moz-text-align-last:justify !important;
+      text-align-last:justify !important;
+}
+
+/* Justify the issuer's name within the same inset area as the title and madrasa. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right > div.certificate-footer-name {
+  box-sizing:border-box;
+  margin-inline:3mm !important;
+  padding-inline:1mm !important;
+  max-width:calc(100% - 6mm);
+  text-align:justify !important;
+  -moz-text-align-last:justify !important;
+       text-align-last:justify !important;
+}
+
+/* User-defined precise footer widths. Each footer cell is 265/3 mm wide,
+   with 2 mm cell padding on each side. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right > div.certificate-footer-name,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right > div:not(.certificate-footer-name) {
+  box-sizing:border-box;
+  width:45mm !important;
+  max-width:100% !important;
+  margin-inline:auto !important;
+  padding-inline:0 !important;
+  text-align:justify !important;
+  -moz-text-align-last:justify !important;
+       text-align-last:justify !important;
+}
+.zite-app .certificate-footer-details .certificate-footer-dates {
+  box-sizing:border-box;
+  width:100%;
+  /* User-requested inward inset for both Hijri and Gregorian date rows. */
+  padding-inline:24mm !important;
+}
+
+/* Each of the four mujeez lines respects its independently configured typography. */
+.zite-app .certificate-footer-table .certificate-footer-details .certificate-footer-right > div {
+ font-size:var(--footer-line-font-size,9pt) !important;
+ font-weight:var(--footer-line-font-weight,400) !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details .certificate-footer-right > div.certificate-footer-name {
+ font-size:var(--footer-line-font-size,11pt) !important;
+}
+
+/* The Prophet chain's inline alignment and bold Sakkal Kitab treatment are
+   defined above; avoid a later duplicate selector changing the font weight. */
+/* Verified imam and named-scholar spans use the bundled
+   SakkalKitab-Bold.ttf rather than synthetic browser bold. */
+.zite-app .certificate-composed-sanad .certificate-aimma-name {
+  font-family:'Sakkal Kitab',serif !important;
+  font-weight:700 !important;
+  font-size:10pt !important;
+  font-synthesis:none;
+  color:var(--certificate-primary,#926e35) !important;
+}
+/* The source CHAIN:<qari>:prophet can contain nested phrase markup.
+   Keep all ordinary nested text in Sakkal Kitab Bold, but never override
+   Quranic fonts, honorific symbols, or the secondary-colored ﷺ. */
+.zite-app .certificate-composed-sanad .certificate-prophet-chain span:not(.certificate-symbol):not(.certificate-salawat):not(.certificate-qcf):not(.certificate-ayah-marker):not(.certificate-verse-bracket) {
+  font-family:'Sakkal Kitab',serif !important;
+  font-weight:700 !important;
+  font-synthesis:none;
+}
+
+
+/* Mujeez details are centered vertically in their footer row, text justified inside 45 mm. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right {
+ text-align:justify !important;
+ -moz-text-align-last:justify !important;
+      text-align-last:justify !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right > div {
+ text-align:justify !important; -moz-text-align-last:justify !important; text-align-last:justify !important;
+}
+
+/* Second footer row: 3.5 mm inward padding on both sides of the mujeez cell. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right {
+ padding-inline:3.5mm !important;
+ box-sizing:border-box;
+}
+
+/* Mujeez details begin 3.5 mm below the upper edge of the second footer row. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-right {
+  vertical-align:top !important;
+  padding-top:3.5mm !important;
+}
+
+/* Keep the reading heading in Sakkal Kitab. Isolate the presentation-form
+   beh and reh so the browser cannot reshape them together. */
+.zite-app .certificate-reading-label { font-family: 'Sakkal Kitab', serif !important; }
+.zite-app .certificate-reading-glyph {
+  display: inline-block;
+  direction: rtl;
+  unicode-bidi: isolate;
+  font-family: 'Sakkal Kitab', serif !important;
+}
+
+
+/* All certificate Sakkal Kitab segments use the installed real bold font.
+   KFGQPC/QCF/Traditional Arabic glyphs retain their distinct fonts. */
+.zite-app .certificate-composed-sanad .certificate-personal-name,
+.zite-app .certificate-composed-sanad .certificate-emphasized-name,
+.zite-app .certificate-composed-sanad .certificate-aimma-name,
+.zite-app .certificate-composed-sanad .certificate-route-narrator,
+.zite-app .certificate-composed-sanad .certificate-salawat,
+.zite-app .certificate-composed-sanad .certificate-reading-glyph,
+.zite-app .certificate-salawat,
+.zite-app .certificate-reading-label {
+  font-weight:700 !important;
+  font-synthesis:none;
+}
+.zite-app .certificate-composed-sanad .certificate-personal-name,
+.zite-app .certificate-composed-sanad .certificate-emphasized-name,
+.zite-app .certificate-composed-sanad .certificate-route-narrator {
+  font-family:'Sakkal Kitab',serif !important;
+}
+.zite-app .certificate-composed-sanad .certificate-route-narrator,
+.zite-app .certificate-composed-sanad .certificate-route-narrator .certificate-route-switch {
+  color:var(--certificate-secondary,#075f69) !important;
+}
+.zite-app .certificate-composed-sanad .certificate-route-narrator .certificate-symbol {
+  font-family:'KFGQPC Symbols',serif !important;
+}
+.zite-app .certificate-composed-sanad .certificate-symbol {
+  font-family:'KFGQPC Symbols',serif !important;
+  font-weight:700;
+}
+.zite-app .certificate-text .certificate-name {
+  font-family:'Sakkal Kitab',serif !important;
+  font-weight:700 !important;
+  font-synthesis:none;
+}
+
+/* The complete narrator name directly before (ح) shares the same genuine
+   KSARegular_B.ttf face and secondary color as the route switch itself. */
+.zite-app .certificate-print-screen .certificate-composed-sanad .certificate-route-narrator,
+.zite-app .certificate-print-screen .certificate-composed-sanad .certificate-route-narrator > span:not(.certificate-symbol):not(.certificate-salawat),
+.zite-app .certificate-print-screen .certificate-composed-sanad .certificate-route-narrator > span > span:not(.certificate-symbol):not(.certificate-salawat) {
+ font-family:'KSA Regular',serif !important;
+ font-weight:700 !important;
+ font-synthesis:none !important;
+ color:var(--certificate-secondary,#075f69) !important;
+}
+/* The (ح) switch uses the genuine GitHub KSARegular_B.ttf bold face.
+   Other Arabic and Quranic symbols keep their independent normal-weight fonts. */
+.zite-app .certificate-print-screen .certificate-route-switch {
+ font-family:'KSA Regular',serif !important;
+ font-weight:700 !important;
+ color:var(--certificate-secondary,#075f69) !important;
+}
+/* Quranic and Arabic symbol glyphs must never inherit Sakkal Kitab Bold.
+   Retain their dedicated KFGQPC/QCF/Traditional Arabic typefaces and weights. */
+.zite-app .certificate-print-screen .certificate-symbol,
+.zite-app .certificate-print-screen .certificate-qcf,
+.zite-app .certificate-print-screen .certificate-ayah-marker,
+.zite-app .certificate-print-screen .certificate-verse-bracket,
+.zite-app .certificate-print-screen .certificate-salawat,
+.zite-app .certificate-print-screen .certificate-reading-glyph {
+  font-weight:400 !important;
+  font-synthesis:none !important;
+}
+.zite-app .certificate-print-screen .certificate-symbol {
+  font-family:'KFGQPC Symbols',serif !important;
+}
+.zite-app .certificate-print-screen .certificate-qcf {
+  font-family:'QCF2',serif !important;
+}
+.zite-app .certificate-print-screen .certificate-verse-bracket {
+  font-family:'Traditional Arabic',serif !important;
+}
+/* Footer line one: use the actual SakkalKitab-Bold.ttf face for the mujeez.
+   Overrides the editable regular-weight setting without changing its size. */
+.zite-app .certificate-footer-table .certificate-footer-details .certificate-footer-right > div.certificate-footer-name {
+  font-family: 'Sakkal Kitab', serif !important;
+  font-weight: 700 !important;
+  font-synthesis: none;
+}
+
+/* Add the same 0.9em gap above line two and line three. The previous
+   extra gap before line three was 1.2em; 0.9em is 25% less. */
+.zite-app .certificate-footer-table .certificate-footer-details .certificate-footer-right > .certificate-footer-name + .certificate-footer-qualification,
+.zite-app .certificate-footer-table .certificate-footer-details .certificate-footer-right > .certificate-footer-qualification + .certificate-footer-madrasa-line {
+  margin-top: 0.9em !important;
+}
+
+/* Verified shahada footer: RTL order is QR | centered mujeez | signature.
+   Use the existing certificate palette with no QR background rectangle. */
+.zite-app .certificate-footer-table .certificate-footer-details {height:24mm !important;}
+.zite-app .certificate-footer-table .certificate-footer-heading.certificate-footer-center,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > div {
+  text-align:center !important;
+  -moz-text-align-last:center !important;
+       text-align-last:center !important;
+}
+/* Keep the centered issuer block anchored to the bottom of footer row two,
+   matching the signature/date cell; retain its horizontal inset. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez {
+  vertical-align:bottom !important;
+  padding:0 3mm !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > div {
+  font-size:var(--footer-line-font-size,9pt) !important;
+  line-height:1.2;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez .certificate-footer-name {
+  font-family:'Sakkal Kitab',serif !important;
+  font-size:var(--footer-line-font-size,11pt) !important;
+  font-weight:700 !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-qr-cell {
+  vertical-align:top !important;
+}
+/* Number-only mode: pin the registration line to the actual bottom edge
+   of the second footer row, independent of table-cell vertical alignment.
+   QR-mode certificates retain their original placement. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-number-only {
+  position:relative !important;
+  vertical-align:bottom !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-number-only > .certificate-footer-verification {
+  position:absolute !important;
+  bottom:0 !important;
+  right:0 !important;
+  margin:0 !important;
+}
+.zite-app .certificate-footer-verification {display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:0;}
+.zite-app .certificate-qr-code {display:block;width:20mm;height:20mm;overflow:visible;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.zite-app .certificate-registration-number {
+  display:block;
+  white-space:nowrap;
+  font-family:'KSA Regular',serif !important;
+  font-weight:700;
+  font-size:8pt;
+  color:var(--certificate-primary,#926e35) !important;
+  text-align:center !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-signature {vertical-align:bottom !important;}
+/* Draft QR is a layout preview, not a verification credential. */
+.zite-app .certificate-qr-preview-label {
+  display:block;
+  font-family:'KSA Regular',serif;
+  font-size:7pt;
+  line-height:1;
+  color:var(--certificate-secondary,#075f69);
+  white-space:nowrap;
+}
+/* Footer alignment: restore pre-move line spacing for the mujeez,
+   without stretching/justifying individual Arabic words. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > div {
+  text-align:center !important;
+  -moz-text-align-last:center !important;
+       text-align-last:center !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > .certificate-footer-name + .certificate-footer-qualification,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > .certificate-footer-qualification + .certificate-footer-madrasa-line {
+  margin-top:0.45em !important;
+}
+/* Keep a small, consistent gap when the qualification line is hidden. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > .certificate-footer-name + .certificate-footer-madrasa-line,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > .certificate-footer-madrasa-line + .certificate-footer-place,
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > .certificate-footer-qualification + .certificate-footer-place {
+  margin-top:0.45em !important;
+}
+/* Anchor the QR and its registration label as one unit to the far right
+   (start in RTL), leaving the rest of the right column clear. */
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-qr-cell {
+  text-align:right !important;
+  -moz-text-align-last:right !important;
+       text-align-last:right !important;
+  padding:0 !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-details > td.certificate-footer-qr-cell > .certificate-footer-verification {
+  display:flex;
+  width:-moz-max-content;
+  width:max-content;
+  max-width:100%;
+  flex-direction:column;
+  align-items:center;
+  margin-inline-start:0;
+  margin-inline-end:auto;
+}
+
+/* One height controls all three lines, retaining the original SVG proportions. */
+.zite-app .certificate-footer-table .certificate-zakaullah-artwork {
+  --mujeez-artwork-height:10.5mm;
+  display:flex !important; flex-direction:column; align-items:center;
+  width:calc(var(--mujeez-artwork-height) * 3.3975085);
+  max-width:100%; margin-inline:auto;
+  gap:calc(var(--mujeez-artwork-height) * 0.055);
+  border:0; padding:0; -moz-column-break-inside:avoid; break-inside:avoid;
+}
+.zite-app .certificate-zakaullah-line {
+  display:block; flex:none;
+  background-color:var(--certificate-primary,#926e35) !important;
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-position:center; mask-position:center;
+  -webkit-mask-size:contain; mask-size:contain;
+}
+.zite-app .certificate-zakaullah-line-1 { width:100%; aspect-ratio:150 / 44.15; }
+.zite-app .certificate-zakaullah-line-2 { width:96.666667%; aspect-ratio:145 / 16.44; }
+.zite-app .certificate-zakaullah-line-3 {
+  width:95.333333%; aspect-ratio:143 / 15.22;
+  background-color:var(--certificate-secondary,#075f69) !important;
+}
+.zite-app .certificate-footer-table .certificate-footer-head > td { vertical-align:bottom !important; padding-bottom:2mm; }
+.zite-app .file\:border-0::file-selector-button { border-width: 0px; }
+.zite-app .file\:bg-transparent::file-selector-button { background-color: transparent; }
+.zite-app .file\:text-sm::file-selector-button { font-size: 0.875rem; line-height: 1.25rem; }
+.zite-app .file\:font-medium::file-selector-button { font-weight: 500; }
+.zite-app .file\:text-foreground::file-selector-button { color: hsl(var(--foreground)); }
+.zite-app .placeholder\:text-muted-foreground::-moz-placeholder { color: hsl(var(--muted-foreground)); }
+.zite-app .placeholder\:text-muted-foreground::placeholder { color: hsl(var(--muted-foreground)); }
+.zite-app .focus-within\:relative:focus-within { position: relative; }
+.zite-app .focus-within\:z-20:focus-within { z-index: 20; }
+.zite-app .focus-within\:ring-1:focus-within { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus-within\:ring-ring:focus-within { --tw-ring-color: hsl(var(--ring)); }
+.zite-app .hover\:border-primary\/40:hover { border-color: hsl(var(--primary) / 0.4); }
+.zite-app .hover\:bg-accent:hover { background-color: hsl(var(--accent)); }
+.zite-app .hover\:bg-destructive\/90:hover { background-color: hsl(var(--destructive) / 0.9); }
+.zite-app .hover\:bg-muted:hover { background-color: hsl(var(--muted)); }
+.zite-app .hover\:bg-muted\/40:hover { background-color: hsl(var(--muted) / 0.4); }
+.zite-app .hover\:bg-muted\/50:hover { background-color: hsl(var(--muted) / 0.5); }
+.zite-app .hover\:bg-muted\/60:hover { background-color: hsl(var(--muted) / 0.6); }
+.zite-app .hover\:bg-primary:hover { background-color: hsl(var(--primary)); }
+.zite-app .hover\:bg-primary\/90:hover { background-color: hsl(var(--primary) / 0.9); }
+.zite-app .hover\:bg-secondary\/80:hover { background-color: hsl(var(--secondary) / 0.8); }
+.zite-app .hover\:bg-white\/10:hover { background-color: rgb(255 255 255 / 0.1); }
+.zite-app .hover\:bg-white\/15:hover { background-color: rgb(255 255 255 / 0.15); }
+.zite-app .hover\:text-accent-foreground:hover { color: hsl(var(--accent-foreground)); }
+.zite-app .hover\:text-foreground:hover { color: hsl(var(--foreground)); }
+.zite-app .hover\:text-primary-foreground:hover { color: hsl(var(--primary-foreground)); }
+.zite-app .hover\:text-white:hover { --tw-text-opacity: 1; color: rgb(255 255 255 / var(--tw-text-opacity, 1)); }
+.zite-app .hover\:underline:hover { text-decoration-line: underline; }
+.zite-app .hover\:opacity-100:hover { opacity: 1; }
+.zite-app .hover\:shadow-md:hover { --tw-shadow: var(--shadow-md); --tw-shadow-colored: var(--shadow-md); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .focus\:bg-accent:focus { background-color: hsl(var(--accent)); }
+.zite-app .focus\:bg-muted:focus { background-color: hsl(var(--muted)); }
+.zite-app .focus\:bg-primary:focus { background-color: hsl(var(--primary)); }
+.zite-app .focus\:text-accent-foreground:focus { color: hsl(var(--accent-foreground)); }
+.zite-app .focus\:text-primary-foreground:focus { color: hsl(var(--primary-foreground)); }
+.zite-app .focus\:outline-none:focus { outline: 2px solid transparent; outline-offset: 2px; }
+.zite-app .focus\:ring-1:focus { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus\:ring-2:focus { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus\:ring-ring:focus { --tw-ring-color: hsl(var(--ring)); }
+.zite-app .focus\:ring-offset-2:focus { --tw-ring-offset-width: 2px; }
+.zite-app .focus-visible\:outline-none:focus-visible { outline: 2px solid transparent; outline-offset: 2px; }
+.zite-app .focus-visible\:outline:focus-visible { outline-style: solid; }
+.zite-app .focus-visible\:outline-2:focus-visible { outline-width: 2px; }
+.zite-app .focus-visible\:outline-primary:focus-visible { outline-color: hsl(var(--primary)); }
+.zite-app .focus-visible\:ring-0:focus-visible { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus-visible\:ring-1:focus-visible { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus-visible\:ring-2:focus-visible { --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color); --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color); box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000); }
+.zite-app .focus-visible\:ring-ring:focus-visible { --tw-ring-color: hsl(var(--ring)); }
+.zite-app .focus-visible\:ring-white:focus-visible { --tw-ring-opacity: 1; --tw-ring-color: rgb(255 255 255 / var(--tw-ring-opacity, 1)); }
+.zite-app .focus-visible\:ring-offset-2:focus-visible { --tw-ring-offset-width: 2px; }
+.zite-app .disabled\:pointer-events-none:disabled { pointer-events: none; }
+.zite-app .disabled\:cursor-default:disabled { cursor: default; }
+.zite-app .disabled\:cursor-not-allowed:disabled { cursor: not-allowed; }
+.zite-app .disabled\:opacity-50:disabled { opacity: 0.5; }
+.zite-app .group:hover .group-hover\:text-primary { color: hsl(var(--primary)); }
+.zite-app .group.toaster .group-\[\.toaster\]\:border-border { border-color: hsl(var(--border)); }
+.zite-app .group.toast .group-\[\.toast\]\:bg-muted { background-color: hsl(var(--muted)); }
+.zite-app .group.toast .group-\[\.toast\]\:bg-primary { background-color: hsl(var(--primary)); }
+.zite-app .group.toaster .group-\[\.toaster\]\:bg-background { background-color: hsl(var(--background)); }
+.zite-app .group.toast .group-\[\.toast\]\:text-muted-foreground { color: hsl(var(--muted-foreground)); }
+.zite-app .group.toast .group-\[\.toast\]\:text-primary-foreground { color: hsl(var(--primary-foreground)); }
+.zite-app .group.toaster .group-\[\.toaster\]\:text-foreground { color: hsl(var(--foreground)); }
+.zite-app .group.toaster .group-\[\.toaster\]\:shadow-lg { --tw-shadow: var(--shadow-lg); --tw-shadow-colored: var(--shadow-lg); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .peer:disabled ~ .peer-disabled\:cursor-not-allowed { cursor: not-allowed; }
+.zite-app .peer:disabled ~ .peer-disabled\:opacity-70 { opacity: 0.7; }
+.zite-app .aria-selected\:bg-accent[aria-selected="true"] { background-color: hsl(var(--accent)); }
+.zite-app .aria-selected\:bg-accent\/50[aria-selected="true"] { background-color: hsl(var(--accent) / 0.5); }
+.zite-app .aria-selected\:text-accent-foreground[aria-selected="true"] { color: hsl(var(--accent-foreground)); }
+.zite-app .aria-selected\:text-muted-foreground[aria-selected="true"] { color: hsl(var(--muted-foreground)); }
+.zite-app .aria-selected\:opacity-100[aria-selected="true"] { opacity: 1; }
+.zite-app .data-\[disabled\]\:pointer-events-none[data-disabled] { pointer-events: none; }
+.zite-app .data-\[side\=bottom\]\:translate-y-1[data-side="bottom"] { --tw-translate-y: 0.25rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .data-\[side\=left\]\:-translate-x-1[data-side="left"] { --tw-translate-x: -0.25rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .data-\[side\=right\]\:translate-x-1[data-side="right"] { --tw-translate-x: 0.25rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .data-\[side\=top\]\:-translate-y-1[data-side="top"] { --tw-translate-y: -0.25rem; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .data-\[state\=active\]\:bg-background[data-state="active"] { background-color: hsl(var(--background)); }
+.zite-app .data-\[state\=checked\]\:bg-primary[data-state="checked"] { background-color: hsl(var(--primary)); }
+.zite-app .data-\[state\=open\]\:bg-accent[data-state="open"] { background-color: hsl(var(--accent)); }
+.zite-app .data-\[state\=selected\]\:bg-muted[data-state="selected"] { background-color: hsl(var(--muted)); }
+.zite-app .data-\[placeholder\]\:text-muted-foreground[data-placeholder] { color: hsl(var(--muted-foreground)); }
+.zite-app .data-\[state\=active\]\:text-foreground[data-state="active"] { color: hsl(var(--foreground)); }
+.zite-app .data-\[state\=checked\]\:text-primary-foreground[data-state="checked"] { color: hsl(var(--primary-foreground)); }
+.zite-app .data-\[state\=open\]\:text-muted-foreground[data-state="open"] { color: hsl(var(--muted-foreground)); }
+.zite-app .data-\[disabled\]\:opacity-50[data-disabled] { opacity: 0.5; }
+.zite-app .data-\[state\=active\]\:shadow[data-state="active"] { --tw-shadow: var(--shadow); --tw-shadow-colored: var(--shadow); box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow); }
+.zite-app .data-\[state\=open\]\:animate-in[data-state="open"] { animation-name: enter; animation-duration: 150ms; --tw-enter-opacity: initial; --tw-enter-scale: initial; --tw-enter-rotate: initial; --tw-enter-translate-x: initial; --tw-enter-translate-y: initial; }
+.zite-app .data-\[state\=closed\]\:animate-out[data-state="closed"] { animation-name: exit; animation-duration: 150ms; --tw-exit-opacity: initial; --tw-exit-scale: initial; --tw-exit-rotate: initial; --tw-exit-translate-x: initial; --tw-exit-translate-y: initial; }
+.zite-app .data-\[state\=closed\]\:fade-out-0[data-state="closed"] { --tw-exit-opacity: 0; }
+.zite-app .data-\[state\=open\]\:fade-in-0[data-state="open"] { --tw-enter-opacity: 0; }
+.zite-app .data-\[state\=closed\]\:zoom-out-95[data-state="closed"] { --tw-exit-scale: .95; }
+.zite-app .data-\[state\=open\]\:zoom-in-95[data-state="open"] { --tw-enter-scale: .95; }
+.zite-app .data-\[side\=bottom\]\:slide-in-from-top-2[data-side="bottom"] { --tw-enter-translate-y: -0.5rem; }
+.zite-app .data-\[side\=left\]\:slide-in-from-right-2[data-side="left"] { --tw-enter-translate-x: 0.5rem; }
+.zite-app .data-\[side\=right\]\:slide-in-from-left-2[data-side="right"] { --tw-enter-translate-x: -0.5rem; }
+.zite-app .data-\[side\=top\]\:slide-in-from-bottom-2[data-side="top"] { --tw-enter-translate-y: 0.5rem; }
+.zite-app .data-\[state\=closed\]\:slide-out-to-left-1\/2[data-state="closed"] { --tw-exit-translate-x: -50%; }
+.zite-app .data-\[state\=closed\]\:slide-out-to-top-\[48\%\][data-state="closed"] { --tw-exit-translate-y: -48%; }
+.zite-app .data-\[state\=open\]\:slide-in-from-left-1\/2[data-state="open"] { --tw-enter-translate-x: -50%; }
+.zite-app .data-\[state\=open\]\:slide-in-from-top-\[48\%\][data-state="open"] { --tw-enter-translate-y: -48%; }
+.zite-app .dark\:border-input:is(.dark *) { border-color: hsl(var(--input)); }
+.zite-app .dark\:bg-input\/30:is(.dark *) { background-color: hsl(var(--input) / 0.3); }
+.zite-app .dark\:hover\:bg-input\/50:hover:is(.dark *) { background-color: hsl(var(--input) / 0.5); }
+@media (min-width: 640px) {
+ .zite-app .sm\:mx-0 { margin-left: 0px; margin-right: 0px; }
+ .zite-app .sm\:me-2 { margin-inline-end: 0.5rem; }
+ .zite-app .sm\:mt-0 { margin-top: 0px; }
+ .zite-app .sm\:inline { display: inline; }
+ .zite-app .sm\:h-11 { height: 2.75rem; }
+ .zite-app .sm\:w-11 { width: 2.75rem; }
+ .zite-app .sm\:w-80 { width: 20rem; }
+ .zite-app .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ .zite-app .sm\:grid-cols-\[minmax\(0\2c 1fr\)_210px_180px\] { grid-template-columns: minmax(0,1fr) 210px 180px; }
+ .zite-app .sm\:flex-row { flex-direction: row; }
+ .zite-app .sm\:justify-end { justify-content: flex-end; }
+ .zite-app .sm\:gap-4 { gap: 1rem; }
+ .zite-app .sm\:space-x-2 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(0.5rem * var(--tw-space-x-reverse)); margin-left: calc(0.5rem * calc(1 - var(--tw-space-x-reverse))); }
+ .zite-app .sm\:space-x-4 > :not([hidden]) ~ :not([hidden]) { --tw-space-x-reverse: 0; margin-right: calc(1rem * var(--tw-space-x-reverse)); margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse))); }
+ .zite-app .sm\:space-y-0 > :not([hidden]) ~ :not([hidden]) { --tw-space-y-reverse: 0; margin-top: calc(0px * calc(1 - var(--tw-space-y-reverse))); margin-bottom: calc(0px * var(--tw-space-y-reverse)); }
+ .zite-app .sm\:rounded-lg { border-radius: var(--radius); }
+ .zite-app .sm\:p-6 { padding: 1.5rem; }
+ .zite-app .sm\:p-9 { padding: 2.25rem; }
+ .zite-app .sm\:px-0 { padding-left: 0px; padding-right: 0px; }
+ .zite-app .sm\:px-4 { padding-left: 1rem; padding-right: 1rem; }
+ .zite-app .sm\:py-5 { padding-top: 1.25rem; padding-bottom: 1.25rem; }
+ .zite-app .sm\:py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+ .zite-app .sm\:text-left { text-align: left; }
+ .zite-app .sm\:text-2xl { font-size: 1.5rem; line-height: 2rem; }
+ .zite-app .sm\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+ .zite-app .sm\:text-xl { font-size: 1.25rem; line-height: 1.75rem; } }
+@media (min-width: 768px) {
+ .zite-app .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+ .zite-app .md\:grid-cols-\[minmax\(0\2c 0\.9fr\)_minmax\(0\2c 1\.4fr\)\] { grid-template-columns: minmax(0,0.9fr) minmax(0,1.4fr); }
+ .zite-app .md\:text-sm { font-size: 0.875rem; line-height: 1.25rem; } }
+@media (min-width: 1024px) {
+ .zite-app .lg\:grid-cols-\[minmax\(0\2c 0\.88fr\)_minmax\(0\2c 1\.3fr\)\] { grid-template-columns: minmax(0,0.88fr) minmax(0,1.3fr); } }
+@media (min-width: 1280px) {
+ .zite-app .xl\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+ .zite-app .xl\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.zite-app .\[\&\:has\(\>\.day-range-end\)\]\:rounded-r-md:has(>.day-range-end) { border-top-right-radius: calc(var(--radius) - 2px); border-bottom-right-radius: calc(var(--radius) - 2px); }
+.zite-app .\[\&\:has\(\>\.day-range-start\)\]\:rounded-l-md:has(>.day-range-start) { border-top-left-radius: calc(var(--radius) - 2px); border-bottom-left-radius: calc(var(--radius) - 2px); }
+.zite-app .\[\&\:has\(\[aria-selected\]\)\]\:rounded-md:has([aria-selected]) { border-radius: calc(var(--radius) - 2px); }
+.zite-app .\[\&\:has\(\[aria-selected\]\)\]\:bg-accent:has([aria-selected]) { background-color: hsl(var(--accent)); }
+.zite-app .first\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-l-md:has([aria-selected]):first-child { border-top-left-radius: calc(var(--radius) - 2px); border-bottom-left-radius: calc(var(--radius) - 2px); }
+.zite-app .last\:\[\&\:has\(\[aria-selected\]\)\]\:rounded-r-md:has([aria-selected]):last-child { border-top-right-radius: calc(var(--radius) - 2px); border-bottom-right-radius: calc(var(--radius) - 2px); }
+.zite-app .\[\&\:has\(\[aria-selected\]\.day-outside\)\]\:bg-accent\/50:has([aria-selected].day-outside) { background-color: hsl(var(--accent) / 0.5); }
+.zite-app .\[\&\:has\(\[aria-selected\]\.day-range-end\)\]\:rounded-r-md:has([aria-selected].day-range-end) { border-top-right-radius: calc(var(--radius) - 2px); border-bottom-right-radius: calc(var(--radius) - 2px); }
+.zite-app .\[\&\:has\(\[role\=checkbox\]\)\]\:pr-0:has([role=checkbox]) { padding-right: 0px; }
+.zite-app .\[\&\>\[role\=checkbox\]\]\:translate-y-\[2px\]>[role=checkbox] { --tw-translate-y: 2px; transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y)); }
+.zite-app .\[\&\>span\]\:line-clamp-1>span { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+.zite-app .\[\&\>tr\]\:last\:border-b-0:last-child>tr { border-bottom-width: 0px; }
+.zite-app .\[\&_svg\]\:pointer-events-none svg { pointer-events: none; }
+.zite-app .\[\&_svg\]\:size-4 svg { width: 1rem; height: 1rem; }
+.zite-app .\[\&_svg\]\:shrink-0 svg { flex-shrink: 0; }
+.zite-app .\[\&_tr\:last-child\]\:border-0 tr:last-child { border-width: 0px; }
+.zite-app .\[\&_tr\]\:border-b tr { border-bottom-width: 1px; }
+
+body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}

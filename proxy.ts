@@ -19,4 +19,4 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
-export const config = { matcher: ['/manage/:path*', '/login', '/register', '/forgot-password', '/reset-password', '/auth/:path*'] };
+export const config = { matcher: ['/control/:path*','/studio/:path*', '/api/workspace/:path*', '/manage/:path*', '/login', '/register', '/forgot-password', '/reset-password', '/auth/:path*'] };
