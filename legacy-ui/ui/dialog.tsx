@@ -10,7 +10,7 @@ const Dialog = DialogPrimitive.Root;
 
 const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal;
+const DialogPortal = ({children,...props}:React.ComponentProps<typeof DialogPrimitive.Portal>)=><DialogPrimitive.Portal {...props} container={typeof document==='undefined'?undefined:document.querySelector('.zite-app') as HTMLElement??undefined}>{children}</DialogPrimitive.Portal>;
 
 const DialogClose = DialogPrimitive.Close;
 

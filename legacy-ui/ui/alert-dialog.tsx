@@ -10,7 +10,7 @@ const AlertDialog = AlertDialogPrimitive.Root;
 
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
-const AlertDialogPortal = AlertDialogPrimitive.Portal;
+const AlertDialogPortal = ({children,...props}:React.ComponentProps<typeof AlertDialogPrimitive.Portal>)=><AlertDialogPrimitive.Portal {...props} container={typeof document==='undefined'?undefined:document.querySelector('.zite-app') as HTMLElement??undefined}>{children}</AlertDialogPrimitive.Portal>;
 
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,

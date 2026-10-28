@@ -1,3 +1,5 @@
+import '@fontsource/amiri/400.css';
+import '@fontsource/amiri/700.css';
 import {redirect} from 'next/navigation';
 import {managementSession} from '../../lib/manage-session';
 import StudioClient from './client';

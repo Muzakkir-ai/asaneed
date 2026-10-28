@@ -11,9 +11,7 @@
 
 /*
 ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com
-*/
-
-/*
+*//*
 1. Prevent padding and border from affecting element width. (https://github.com/mozdevs/cssremedy/issues/4)
 2. Allow adding a border to an element by just adding a border-width. (https://github.com/tailwindcss/tailwindcss/pull/116)
 */
@@ -330,7 +328,6 @@ Removes the default spacing and border for appropriate elements.
 /*
 Reset default styling for dialogs.
 */
-
 .zite-app dialog {
   padding: 0;
 }
@@ -371,7 +368,6 @@ Set the default cursor for buttons.
 /*
 Make sure disabled buttons don't get the pointer cursor.
 */
-
 .zite-app :disabled {
   cursor: default;
 }
@@ -405,12 +401,10 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 }
 
 /* Make elements with the HTML hidden attribute stay hidden by default */
-
 .zite-app [hidden]:where(:not([hidden="until-found"])) {
   display: none;
 }
-
-.zite-app {
+  .zite-app {
     /* Auto-restored theme variables */
     --shadow-x: 0px;
     --shadow-y: 1px;
@@ -439,9 +433,9 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     --card-foreground: 0 0% 13%;
     --primary: 186 98% 25%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 188 51% 19%;
-    --secondary-foreground: 40 33% 97%;
-    --accent: 37 58% 59%;
+    --secondary: 37.19 58.45% 59.41%;
+    --secondary-foreground: 188 51% 19%;
+    --accent: 37.19 58.45% 59.41%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 70% 45%;
     --destructive-foreground: 0 0% 100%;
@@ -449,15 +443,15 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     --radius: 0.6rem;
     --sidebar-background: 188 51% 19%;
     --sidebar-foreground: 40 33% 97%;
-    --sidebar-primary: 37 58% 59%;
+    --sidebar-primary: 37.19 58.45% 59.41%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 188 45% 25%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 188 40% 28%;
-    --sidebar-ring: 37 58% 59%;
+    --sidebar-ring: 37.19 58.45% 59.41%;
     --chart-1: 186 98% 25%;
     --chart-2: 188 51% 19%;
-    --chart-3: 37 58% 59%;
+    --chart-3: 37.19 58.45% 59.41%;
     --chart-4: 186 50% 45%;
     --chart-5: 43 40% 65%;
     --font-sans: 'Readex Pro', 'Tahoma', sans-serif;
@@ -466,12 +460,12 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     --font-sanad: 'KSA Regular', serif;
   }
 
-.dark .zite-app {
+  .dark .zite-app {
     --background: 188 51% 8%;
     --foreground: 40 33% 95%;
     --muted: 188 40% 14%;
     --muted-foreground: 40 10% 65%;
-    --accent: 37 58% 59%;
+    --accent: 37.19 58.45% 59.41%;
     --accent-foreground: 0 0% 100%;
     --popover: 188 51% 10%;
     --popover-foreground: 40 33% 95%;
@@ -481,28 +475,24 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     --card-foreground: 40 33% 95%;
     --primary: 186 80% 40%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 188 51% 19%;
-    --secondary-foreground: 40 33% 97%;
+    --secondary: 37.19 58.45% 59.41%;
+    --secondary-foreground: 188 51% 19%;
     --destructive: 0 63% 40%;
     --destructive-foreground: 0 0% 100%;
     --ring: 186 80% 40%;
     --sidebar-background: 188 51% 10%;
     --sidebar-foreground: 40 33% 95%;
-    --sidebar-primary: 37 58% 59%;
+    --sidebar-primary: 37.19 58.45% 59.41%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 188 40% 16%;
     --sidebar-accent-foreground: 40 33% 95%;
     --sidebar-border: 188 40% 20%;
-    --sidebar-ring: 37 58% 59%;
+    --sidebar-ring: 37.19 58.45% 59.41%;
   }
-
-.zite-app * { border-color: hsl(var(--border)); outline-color: hsl(var(--ring) / 0.5); }
-
-.zite-app { background-color: hsl(var(--background)); font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; color: hsl(var(--foreground)); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-
-.zite-app .font-sanad { font-family: var(--font-sanad) !important; }
-
-.zite-app .font-display {
+  .zite-app * { border-color: hsl(var(--border)); outline-color: hsl(var(--ring) / 0.5); }
+  .zite-app { background-color: hsl(var(--background)); font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; color: hsl(var(--foreground)); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  .zite-app .font-sanad { font-family: var(--font-sanad) !important; }
+  .zite-app .font-display {
     font-family: var(--font-display);
   }
 .zite-app .container { width: 100%; }
@@ -950,12 +940,12 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
   .zite-app { background: white !important; }
   .zite-app .no-print { display: none !important; }
   /* Print only the certificate; hide external badges and page chrome injected into the DOM. */
-  .zite-app body * { visibility: hidden !important; }
+  .zite-app * { visibility: hidden !important; }
   .zite-app .print-area, .zite-app .print-area * { visibility: visible !important; }
   .zite-app body > iframe, .zite-app body > a, .zite-app body > button, .zite-app body > div:not(#root) { display: none !important; }
   .zite-app .certificate-print-screen { position: relative !important; }
 
-  .zite-app, .zite-app, .zite-app #root { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
+  .zite-app, .zite-app, .zite-app { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
   .zite-app .certificate-print-screen { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: white !important; overflow: hidden !important; }
   .zite-app .certificate-print-viewport { width: 297mm !important; height: 210mm !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
   .zite-app .print-area { position: relative !important; width: 297mm !important; height: 210mm !important; min-height: 0 !important; max-height: 210mm !important; box-sizing: border-box !important; box-shadow: none !important; margin: 0 auto !important; padding: var(--sanad-text-top, 52.8mm) 16mm 24mm !important; overflow: hidden !important; -moz-column-break-inside: avoid !important; break-inside: avoid !important; page-break-inside: avoid !important; -moz-column-break-after: avoid !important; break-after: avoid !important; }
@@ -1746,3 +1736,4 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 .zite-app .\[\&_tr\]\:border-b tr { border-bottom-width: 1px; }
 
 body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}
+@media print{html:has(.zite-app .print-area),body:has(.zite-app .print-area),body>main:has(.zite-app .print-area){width:297mm!important;height:210mm!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}body:has(.zite-app .print-area){visibility:hidden}.zite-app .print-area,.zite-app .print-area *{visibility:visible!important}}
