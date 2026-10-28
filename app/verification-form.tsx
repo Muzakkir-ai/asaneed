@@ -31,7 +31,7 @@ export default function VerificationForm() {
   <form onSubmit={submit} className="verification-form" aria-busy={loading}>
    <label htmlFor="ijazah-number">{t.number}</label>
    <p id="number-hint" className="field-hint">{t.hint}</p>
-   <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder={locale==='en'?'0126-1002':'\u2066٠١٢٦\u2069-\u2066١٠٠٢\u2069'} required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
+   <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder={locale==='en'?'1234-5678':'\u2066١٢٣٤\u2069-\u2066٥٦٧٨\u2069'} required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
    <button type="submit" className="verify-button" disabled={loading}>{loading?<><span className="spinner" aria-hidden="true"/>{t.checking}</>:<>{t.verify}<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></>}</button>
    <p className="input-note">{t.inputNote}</p>
    {error&&<p id="verification-error" role="alert" className="lookup-message lookup-error">{t[error]}</p>}

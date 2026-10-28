@@ -1,6 +1,13 @@
 :root { color-scheme:light; --ink:hsl(188 51% 19%); --accent:hsl(186 98% 25%); --paper:hsl(40 33% 97%); --gold:hsl(43 28% 48%); --border:hsl(40 18% 85%); --muted:hsl(0 0% 38%); }
+@font-face { font-family:'Faiz Lahori'; src:url('../node_modules/faiz-nastaliq/fonts/FaizNastaliq2.woff2') format('woff2'); font-weight:400; font-style:normal; font-display:swap; }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--paper); color:var(--ink); font-family:'Readex Pro Variable',Tahoma,sans-serif; line-height:1.9; -webkit-font-smoothing:antialiased; }
+:lang(ur) { font-family:'Faiz Lahori','Readex Pro Variable',Tahoma,sans-serif; }
+html[lang=ur] body { font-family:'Faiz Lahori','Readex Pro Variable',Tahoma,sans-serif; line-height:2.5; }
+html[lang=ur] h1 { line-height:2; }
+html[lang=ur] .field-hint,html[lang=ur] .input-note,html[lang=ur] .intro-description { line-height:2.7; }
+html[lang=ur] .verify-button { line-height:2.2; padding-block:14px; }
+html[lang=ur] .language-switcher button[lang=en],html[lang=ur] .language-switcher button[lang=ar],.number-input-wrap input,.registration-number { font-family:'Readex Pro Variable',Tahoma,sans-serif; }
 main { max-width:960px; margin:auto; padding:0 24px; }
 h1,h2,p { margin-top:0; }
 h1 { font-size:clamp(1.8rem,5vw,2.65rem); font-weight:600; line-height:1.6; margin-bottom:12px; }
@@ -58,3 +65,5 @@ button:focus-visible,a:focus-visible,input:focus-visible { outline:3px solid var
 @media(prefers-reduced-motion:reduce) { .spinner { animation:none; } }
 @media(max-width:560px) { main { padding:0 18px; } .site-header { padding:28px 0 24px; } .checker-intro { padding-top:35px; } .checker-card { padding:25px 20px; margin-top:24px; } .intro-description { font-size:.82rem; max-width:320px; } .number-input-wrap input { font-size:1.4rem; } dl>div { grid-template-columns:85px minmax(0,1fr); } }
 @media(max-width:480px) { .site-header { justify-content:center; gap:18px; } }
+
+.language-switcher button[lang=ur] { font-family:'Faiz Lahori','Readex Pro Variable',Tahoma,sans-serif; line-height:2; }
