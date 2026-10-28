@@ -31,7 +31,7 @@ export default createEndpoint({
      .filter(x=>heading.includes(x.imam)&&(heading.includes('رواية '+x.label)||heading.includes('رواية '+x.rawi)))
      .map(({qariId,rawi})=>({qariId,rawi}));
   };
-  const sourceStudents=zaka?students.filter(s=>s.ownerId==='guest:'+zaka.id||s.ownerId==='bfAc0v80BtnVlcodGAggOgnvr5jRVosm'):[];
+  const sourceStudents=zaka?students.filter(s=>certs.some(c=>c.additionalShaykh===zaka.id&&plain(c.studentName||'')===plain(s.name||''))):[];
   const pupils=sourceStudents.map(s=>{
    const name=plain(s.name||'');const readings=new Map<string,{qariId:string;rawi:string}>();
    for(const c of certs){

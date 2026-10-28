@@ -47,7 +47,7 @@ export default createEndpoint({
         const wordingId=input.wordingId??existing?.wordingId??'';
         if(introductionId&&!sections.records.some(s=>s.id===introductionId&&s.sectionType==='introduction'))throw new Error('Invalid introduction');
         if(wordingId&&!sections.records.some(s=>s.id===wordingId&&s.sectionType==='wording'))throw new Error('Invalid ijazah wording');
-        const record={introductionId,wordingId,formatting:input.formatting?JSON.stringify(input.formatting):existing?.formatting||'',name:rawi?`رواية ${displayRawi(q.id,rawi)} عن ${q.imam}`:`قراءة ${q.reading}`,ownerId:uid,qariId,rawi,personalChain,junction};
+        const record={personalSanadConfirmed:input.personalSanadConfirmed??existing?.personalSanadConfirmed??false,introductionId,wordingId,formatting:input.formatting?JSON.stringify(input.formatting):existing?.formatting||'',name:rawi?`رواية ${displayRawi(q.id,rawi)} عن ${q.imam}`:`قراءة ${q.reading}`,ownerId:uid,qariId,rawi,personalChain,junction};
         if(existing)await zite.ijazahHoldings.update({id:existing.id,record});
         else {
           const {records}=await zite.ijazahHoldings.findAll({filters:{ownerId:uid},limit:2000});

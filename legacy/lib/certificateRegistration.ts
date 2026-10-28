@@ -26,4 +26,4 @@ export const twoDigit=(value:number)=>{
  if(!Number.isInteger(value)||value<1||value>99)throw new Error('بلغ الترقيم حد الخانتين (٩٩)؛ يلزم توسيع صيغة الرقم');
  return String(value).padStart(2,'0');
 };
-export async function ensureCertificateRegistration(certificateId:string){const {data,error}=await context().client.rpc('reserve_certificate_number',{certificate_id:certificateId});if(error)throw new Error(error.message);return String(data);}
+export async function ensureCertificateRegistration(certificateId:string){const {data,error}=await context().client.rpc('reserve_certificate_number',{certificate_id:certificateId});if(error)throw new Error(error.message);context().cache?.clear();return String(data);}

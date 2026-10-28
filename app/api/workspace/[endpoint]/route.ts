@@ -12,7 +12,8 @@ export async function POST(request:Request,{params}:{params:Promise<{endpoint:st
  if(endpoint==='verifyCertificate'){
   try{const input=endpoints.verifyCertificate.inputSchema.parse(await request.json());const result=await client.rpc('verify_certificate_token' as never,{token:input.token} as never);if(result.error)throw result.error;return NextResponse.json(result.data,{headers:{'Cache-Control':'no-store'}});}catch{return NextResponse.json({error:'Unable to verify certificate'},{status:400});}
  }
- const {data:{user},error}=await client.auth.getUser();
+ const {data:identity,error}=await client.auth.getClaims();
+ const claims=identity?.claims;const user=claims?.sub?{id:claims.sub,email:typeof claims.email==='string'?claims.email:''}:null;
  if(error||!user)return NextResponse.json({error:'Sign in required'},{status:401});
  const {data:account,error:accountError}=await client.from('accounts').select('id,display_name,role,active').eq('auth_user_id',user.id).maybeSingle();
  if(accountError||!account?.active)return NextResponse.json({error:'Account activation required'},{status:403});

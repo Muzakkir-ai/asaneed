@@ -6,18 +6,22 @@ import {normalizeName} from '../../lib/manage';
 type RecordRow={id:string;[key:string]:any};
 type Params={filters?:Record<string,unknown>;limit?:number;offset?:number;sort?:unknown};
 function checked(result:{data:any;error:{message:string}|null}):any{if(result.error)throw new Error(result.error.message);if(result.data===null)throw new Error('Record unavailable');return result.data;}
-async function table(name:string){const {client}=context();const all:any[]=[];for(let n=0;;n+=1000){const rows=checked(await client.from(name).select('*').range(n,n+999));all.push(...rows);if(rows.length<1000)break;}return all;}
+async function fetchTable(name:string){const {client}=context();const all:any[]=[];for(let n=0;;n+=1000){const fields=name==='certificates'?'id,student_id,issuer_id,sanad_id,completion_date,status,registration_number,verification_token,recipient_account_id,legacy_id,created_at,riwayah_code,editor:draft->editor,source:draft->source,studentName:draft->studentName':'*';const rows=checked(await client.from(name).select(fields).range(n,n+999));all.push(...(name==='certificates'?rows.map((r:any)=>({...r,draft:{editor:r.editor??{},source:r.source??{},studentName:r.studentName??''}})):rows));if(rows.length<1000)break;}return all;}
 function userIdentity(){return context().user.id;}
+function cached<T>(key:string,read:()=>Promise<T>):Promise<T>{const ctx=context();ctx.cache??=new Map();const prior=ctx.cache.get(key);if(prior)return prior;const result=read();ctx.cache.set(key,result);return result;}
+function table(name:string){return cached('table:'+name,()=>fetchTable(name));}
+function coreCertificates(){return cached('core:certificates',()=>readCoreCertificates());}
+function load(kind:string):Promise<RecordRow[]>{return cached('kind:'+kind,()=>readKind(kind));}
 function first(v:unknown):string{return String(Array.isArray(v)?v[0]??'':v??'');}
-async function coreCertificates(){const [certs,students]=await Promise.all([table('certificates'),table('students')]);const names=new Map(students.map(s=>[s.id,s.display_name]));return certs.map(c=>({...c.draft?.source,...c.draft?.editor,id:c.id,studentName:names.get(c.student_id)||c.draft?.studentName||c.draft?.source?.['Student Name']||'',completionDate:c.completion_date,sanad:c.sanad_id?[c.sanad_id]:[],shaykh:[context().account.role==='student'?'guest:'+c.issuer_id:context().user.id],additionalShaykh:c.issuer_id,registrationNumber:c.registration_number||'',publicationStatus:c.status==='finalized'?'final':'draft',verificationToken:c.verification_token||'',studentAccount:c.recipient_account_id===context().account.id?userIdentity():c.recipient_account_id,notes:c.draft?.editor?.notes??c.draft?.source?.Notes??'',hijriDayOffset:c.draft?.editor?.hijriDayOffset??c.draft?.source?.hijriDayOffset??0,shahadaNumber:c.draft?.editor?.shahadaNumber??c.draft?.source?.shahadaNumber??c.draft?.source?.['Certificate Number']??0,_core:c}));}
-async function load(kind:string):Promise<RecordRow[]>{
+async function readCoreCertificates(){const [certs,students,issuers]=await Promise.all([table('certificates'),table('students'),table('issuers')]);const names=new Map(students.map(s=>[s.id,s.display_name]));return certs.map(c=>({...c.draft?.source,...c.draft?.editor,id:c.id,studentName:names.get(c.student_id)||c.draft?.studentName||c.draft?.source?.['Student Name']||'',completionDate:c.completion_date,sanad:c.sanad_id?[c.sanad_id]:[],shaykh:[context().account.role==='student'?'guest:'+c.issuer_id:context().user.id],additionalShaykh:issuers.find(i=>i.id===c.issuer_id)?.print_profile?.personalAccount?'':c.issuer_id,registrationNumber:c.registration_number||'',publicationStatus:c.status==='finalized'?'final':'draft',verificationToken:c.verification_token||'',studentAccount:c.recipient_account_id===context().account.id?userIdentity():c.recipient_account_id,notes:c.draft?.editor?.notes??c.draft?.source?.Notes??'',hijriDayOffset:c.draft?.editor?.hijriDayOffset??c.draft?.source?.hijriDayOffset??0,shahadaNumber:c.draft?.editor?.shahadaNumber??c.draft?.source?.shahadaNumber??c.draft?.source?.['Certificate Number']??0,_core:c}));}
+async function readKind(kind:string):Promise<RecordRow[]>{
  const {client,user}=context();
  if(kind==='certificates')return coreCertificates();
  if(kind==='students')return (await table('students')).map(r=>({id:r.id,name:r.display_name,ownerId:'',legacyId:r.legacy_id}));
  if(kind==='qiraat')return (await table('qiraat')).map(r=>({id:r.id,name:r.display_name,description:'',asaneed:[]}));
- if(kind==='additionalShaykhs')return (await table('issuers')).map(r=>({...r.print_profile,id:r.id,name:r.display_name,qualification:r.print_profile?.qualification??r.print_profile?.scientificQualification??'',readingsJson:r.print_profile?.readingsJson??'[]'}));
+ if(kind==='additionalShaykhs')return (await table('issuers')).filter(i=>!i.print_profile?.personalAccount).map(r=>({...r.print_profile,id:r.id,name:r.display_name,qualification:r.print_profile?.qualification??r.print_profile?.scientificQualification??'',readingsJson:r.print_profile?.readingsJson??'[]'}));
  if(kind==='asaneed'){
- const core=(await table('sanads')).map(r=>({...r.body?.editor,id:r.id,title:r.title,chain:r.body?.chain??'',shaykh:[user.id],additionalShaykh:r.issuer_id,qiraah:r.qiraah_id?[r.qiraah_id]:[],certificates:[],_core:r}));
+ const issuers=await table('issuers');const core=(await table('sanads')).map(r=>({...r.body?.editor,id:r.id,title:r.title,chain:r.body?.chain??'',shaykh:[user.id],additionalShaykh:issuers.find(i=>i.id===r.issuer_id)?.print_profile?.personalAccount?'':r.issuer_id,qiraah:r.qiraah_id?[r.qiraah_id]:[],certificates:[],_core:r}));
  const extra:RecordRow[]=checked(await client.from('workspace_records').select('id,payload').eq('kind',kind));return [...core,...extra.filter(r=>!core.some(c=>c.id===r.id)).map(r=>({...r.payload,id:r.id}))];
  }
  if(kind==='appUsers')return (await table('accounts')).map(a=>({id:a.id,name:a.display_name,email:a.auth_user_id===user.id?user.email:'',authUserId:a.auth_user_id??'',stableId:a.id,legacyUserId:a.legacy_auth_id??'',role:{admin:'Admin',shaykh:'Shaykh',student:'Student'}[a.role as 'admin'|'shaykh'|'student'],active:a.active}));
@@ -40,6 +44,7 @@ async function personalIssuer(){const {client,account,user}=context();const assi
 async function rememberStudent(name:string){const all=await table('students');const existing=all.find(s=>normalizeName(s.display_name)===normalizeName(name));if(existing)return existing.id;return checked(await context().client.from('students').insert({display_name:name.trim()}).select('id').single()).id;}
 async function write(kind:string,id:string|undefined,record:Record<string,unknown>):Promise<RecordRow>{
  const {client,user,account}=context();
+ context().cache?.clear();
  if(kind==='students'){const data=id?checked(await client.from('students').update({display_name:record.name}).eq('id',id).select().single()):checked(await client.from('students').insert({display_name:record.name}).select().single());return {id:data.id,name:data.display_name,ownerId:''};}
  if(kind==='additionalShaykhs'){
   if(id){const old=checked(await client.from('issuers').select('*').eq('id',id).single());checked(await client.from('issuers').update({display_name:record.name??old.display_name,print_profile:{...old.print_profile,...record}}).eq('id',id).select().single());}
@@ -47,13 +52,13 @@ async function write(kind:string,id:string|undefined,record:Record<string,unknow
   return (await load(kind)).find(r=>r.id===id)!;
  }
  if(kind==='asaneed'){
-  if(id){const old=checked(await client.from('sanads').select('*').eq('id',id).maybeSingle());if(old){checked(await client.from('sanads').update({title:record.title??old.title,body:{...old.body,chain:record.chain??old.body.chain,editor:{...old.body.editor,...record}}}).eq('id',id).select().single());return (await load(kind)).find(r=>r.id===id)!;}}
+  if(id){const lookup=await client.from('sanads').select('*').eq('id',id).maybeSingle();if(lookup.error)throw new Error(lookup.error.message);const old=lookup.data;if(!old){const prior=checked(await client.from('workspace_records').select('payload').eq('kind','asaneed').eq('id',id).single());if(first(prior.payload.shaykh)===user.id){const issuer=await personalIssuer();checked(await client.from('sanads').insert({id,issuer_id:issuer,title:record.title??prior.payload.title,body:{chain:record.chain??prior.payload.chain,editor:{...prior.payload,...record}},legacy_id:id}).select().single());return {...prior.payload,...record,id,shaykh:[user.id],additionalShaykh:''};}const result=checked(await client.from('workspace_records').update({payload:{...prior.payload,...record}}).eq('kind','asaneed').eq('id',id).select().single());return {...result.payload,id};}if(old){checked(await client.from('sanads').update({title:record.title??old.title,body:{...old.body,chain:record.chain??old.body.chain,editor:{...old.body.editor,...record}}}).eq('id',id).select().single());return (await load(kind)).find(r=>r.id===id)!;}}
   const issuer=first(record.additionalShaykh)||await personalIssuer();const data=checked(await client.from('sanads').insert({issuer_id:issuer,title:record.title,body:{chain:record.chain,editor:record}}).select().single());return {...record,id:data.id,shaykh:[user.id],additionalShaykh:issuer};
  }
  if(kind==='certificates'){
   const old=id?checked(await client.from('certificates').select('*').eq('id',id).single()):null;
   if(old?.status==='finalized')throw Error('Finalized certificates are immutable');
-  const sanadId=first(record.sanad)||old?.sanad_id;const sanad=checked(await client.from('sanads').select('*').eq('id',sanadId).single());
+  const sanadId=first(record.sanad)||old?.sanad_id;let sanadQuery=await client.from('sanads').select('*').eq('id',sanadId).maybeSingle();if(sanadQuery.error)throw new Error(sanadQuery.error.message);if(!sanadQuery.data){const source=checked(await client.from('workspace_records').select('payload').eq('kind','asaneed').eq('id',sanadId).single());if(first(source.payload.shaykh)!==user.id)throw Error('Sanad owner must be verified');await write('asaneed',sanadId,{title:source.payload.title,chain:source.payload.chain});sanadQuery=await client.from('sanads').select('*').eq('id',sanadId).single();}const sanad=checked(sanadQuery);
   if(old&&old.issuer_id!==sanad.issuer_id)throw Error('Issuer cannot change');
   const identity=readingIdentityFromHeading((sanad.body.chain??'').match(/^【بيان القراءة:([^】]+)】/)?.[1]??'');
   const code=identity&&RIWAYAH_CODES[identity.qariId+'|'+identity.rawi];if(!code)throw Error('A single riwayah is required');
@@ -73,9 +78,9 @@ async function write(kind:string,id:string|undefined,record:Record<string,unknow
 function entity<T extends RecordRow>(kind:string){return {
  async findAll(p:Params={}){const rows=filtered(await load(kind),p.filters);const start=p.offset??0,limit=Math.min(p.limit??100,2000);return {records:rows.slice(start,start+limit) as T[],hasMore:start+limit<rows.length};},
  async findOne(p:{id:string}){const row=(await load(kind)).find(r=>r.id===p.id);if(!row)throw Error('Record unavailable');return row as T;},
- async create(p:{record:Record<string,unknown>}){return await write(kind,undefined,p.record) as T;},
- async update(p:{id:string;record:Record<string,unknown>}){return await write(kind,p.id,p.record) as T;},
- async delete(p:{id:string}){const {client}=context();const core:Record<string,string>={certificates:'certificates',asaneed:'sanads',students:'students'};if(core[kind]){checked(await client.from(core[kind]).delete().eq('id',p.id).select().single());}else{checked(await client.from('workspace_records').delete().eq('kind',kind).eq('id',p.id).select().single());}return {success:true};},
+ async create(p:{record:Record<string,unknown>}){const value=await write(kind,undefined,p.record) as T;context().cache?.clear();return value;},
+ async update(p:{id:string;record:Record<string,unknown>}){const value=await write(kind,p.id,p.record) as T;context().cache?.clear();return value;},
+ async delete(p:{id:string}){context().cache?.clear();const {client}=context();const core:Record<string,string>={certificates:'certificates',asaneed:'sanads',students:'students'};if(core[kind]){checked(await client.from(core[kind]).delete().eq('id',p.id).select().single());}else{checked(await client.from('workspace_records').delete().eq('kind',kind).eq('id',p.id).select().single());}return {success:true};},
  async bulkCreate(p:{records:Record<string,unknown>[];matchOn?:string[]}){const records:T[]=[];for(const record of p.records){let existing=p.matchOn?(await load(kind)).find(row=>p.matchOn!.every(k=>row[k]===record[k])):null;records.push(await write(kind,existing?.id,record) as T);}return {records};}
 };}
 
