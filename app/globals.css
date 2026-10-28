@@ -75,3 +75,12 @@ html[lang=ur] label,html[lang=ur] .verify-button { font-size:1.2rem; }
 html[lang=ur] .lookup-message p,html[lang=ur] dl>div { font-size:1.1rem; line-height:2.3; }
 html[lang=ur] .lookup-message h2 { font-size:1.4rem; }
 .language-switcher button[lang=ur] { font-size:1rem; }
+
+.arabic-phrase { font-family:'Readex Pro Variable',Tahoma,sans-serif; font-size:.85em; }
+.site-header { background:var(--accent); color:white; border:0; border-radius:0 0 16px 16px; padding-inline:24px; }
+.site-header .brand-subtitle,.site-header .brand-mark { color:white; }
+.site-header .brand-mark { border-color:#ffffff80; }
+.site-header .language-switcher { border-color:#ffffff66; background:#ffffff12; }
+.site-header .language-switcher button { color:white; }
+.site-header .language-switcher button[aria-pressed=true] { background:white; color:var(--accent); }
+.site-header .language-switcher button:hover:not(:disabled):not([aria-pressed=true]) { background:#ffffff22; color:white; }

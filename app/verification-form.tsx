@@ -30,7 +30,7 @@ export default function VerificationForm() {
  return <section className="checker-card" aria-label={t.searchLabel}>
   <form onSubmit={submit} className="verification-form" aria-busy={loading}>
    <label htmlFor="ijazah-number">{t.number}</label>
-   <p id="number-hint" className="field-hint">{t.hint}</p>
+   <p id="number-hint" className="field-hint">{t.hint.split('المسجّل برقم').map((part,index)=><span key={index}>{index>0&&<bdi lang="ar" className="arabic-phrase">المسجّل برقم</bdi>}{part}</span>)}</p>
    <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder={locale==='en'?'1234-5678':'\u2066١٢٣٤\u2069-\u2066٥٦٧٨\u2069'} required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
    <button type="submit" className="verify-button" disabled={loading}>{loading?<><span className="spinner" aria-hidden="true"/>{t.checking}</>:<>{t.verify}<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></>}</button>
    <p className="input-note">{t.inputNote}</p>
