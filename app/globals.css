@@ -67,3 +67,11 @@ button:focus-visible,a:focus-visible,input:focus-visible { outline:3px solid var
 @media(max-width:480px) { .site-header { justify-content:center; gap:18px; } }
 
 .language-switcher button[lang=ur] { font-family:'Faiz Lahori','Readex Pro Variable',Tahoma,sans-serif; line-height:2; }
+
+html[lang=ur] h1 { font-size:clamp(2.5rem,6vw,3.5rem); line-height:1.7; }
+html[lang=ur] .intro-description { font-size:1.25rem; line-height:2.3; }
+html[lang=ur] .field-hint,html[lang=ur] .input-note,html[lang=ur] .site-footer,html[lang=ur] .eyebrow,html[lang=ur] .brand-subtitle { font-size:1rem; line-height:2.3; }
+html[lang=ur] label,html[lang=ur] .verify-button { font-size:1.2rem; }
+html[lang=ur] .lookup-message p,html[lang=ur] dl>div { font-size:1.1rem; line-height:2.3; }
+html[lang=ur] .lookup-message h2 { font-size:1.4rem; }
+.language-switcher button[lang=ur] { font-size:1rem; }
