@@ -5,6 +5,7 @@ import {RIWAYAH_CODES} from '../lib/certificateRegistration';
 import {normalizeName} from '../../lib/manage';
 type RecordRow={id:string;[key:string]:any};
 type Params={filters?:Record<string,unknown>;limit?:number;offset?:number;sort?:unknown};
+function completed(result:{error:{message:string}|null}){if(result.error)throw new Error(result.error.message);}
 function checked(result:{data:any;error:{message:string}|null}):any{if(result.error)throw new Error(result.error.message);if(result.data===null)throw new Error('Record unavailable');return result.data;}
 async function fetchTable(name:string){const {client}=context();const all:any[]=[];for(let n=0;;n+=1000){const fields=name==='certificates'?'id,student_id,issuer_id,sanad_id,completion_date,status,registration_number,verification_token,recipient_account_id,legacy_id,created_at,riwayah_code,editor:draft->editor,source:draft->source,studentName:draft->studentName':'*';const rows=checked(await client.from(name).select(fields).range(n,n+999));all.push(...(name==='certificates'?rows.map((r:any)=>({...r,draft:{editor:r.editor??{},source:r.source??{},studentName:r.studentName??''}})):rows));if(rows.length<1000)break;}return all;}
 function userIdentity(){return context().user.id;}
@@ -24,7 +25,7 @@ async function readKind(kind:string):Promise<RecordRow[]>{
  const issuers=await table('issuers');const core=(await table('sanads')).map(r=>({...r.body?.editor,id:r.id,title:r.title,chain:r.body?.chain??'',shaykh:[user.id],additionalShaykh:issuers.find(i=>i.id===r.issuer_id)?.print_profile?.personalAccount?'':r.issuer_id,qiraah:r.qiraah_id?[r.qiraah_id]:[],certificates:[],_core:r}));
  const extra:RecordRow[]=checked(await client.from('workspace_records').select('id,payload').eq('kind',kind));return [...core,...extra.filter(r=>!core.some(c=>c.id===r.id)).map(r=>({...r.payload,id:r.id}))];
  }
- if(kind==='appUsers')return (await table('accounts')).map(a=>({id:a.id,name:a.display_name,email:a.auth_user_id===user.id?user.email:'',authUserId:a.auth_user_id??'',stableId:a.id,legacyUserId:a.legacy_auth_id??'',role:{admin:'Admin',shaykh:'Shaykh',student:'Student'}[a.role as 'admin'|'shaykh'|'student'],active:a.active}));
+ if(kind==='appUsers')return (checked(await client.rpc('list_application_accounts')) as any[]).map(a=>({id:a.id,name:a.display_name,email:a.email??'',authUserId:a.auth_user_id??'',stableId:a.id,legacyUserId:a.legacy_auth_id??'',role:{admin:'Admin',shaykh:'Shaykh',student:'Student'}[a.role as 'admin'|'shaykh'|'student'],active:a.active}));
  if(kind==='appAdmins')return (await load('appUsers')).filter(a=>a.role==='Admin').map(a=>({...a,email:a.authUserId===user.id?user.email:'',active:a.active}));
  if(kind==='certificateIssuers')return (await table('issuers')).map(i=>({id:i.id,issuerKey:'guest:'+i.id,issuerNumber:Number(i.issuer_code),issuerCode:i.issuer_code,displayName:i.display_name}));
  if(kind==='certificateRegistrations')return (await coreCertificates()).filter(c=>c.registrationNumber).map(c=>({id:c.id,reservationKey:c.id,certificateId:c.id,issuerKey:'guest:'+c.additionalShaykh,year:c.completionDate.slice(0,4),riwayahCode:c.registrationNumber.slice(5,7),registrationNumber:c.registrationNumber,sequenceOrder:Number(c.registrationNumber.slice(-2)),reservationOrder:Number(c.registrationNumber.slice(-2))}));
@@ -69,7 +70,7 @@ async function write(kind:string,id:string|undefined,record:Record<string,unknow
  }
  if(kind==='appUsers'){
   if(!id)throw Error('Create login accounts through registration');const old=(await load(kind)).find(a=>a.id===id);if(!old)throw Error('Unknown account');if(record.authUserId!==undefined&&record.authUserId!==old.authUserId)throw Error('Login identities cannot be reassigned');
-  checked(await client.rpc('edit_account_profile',{target:id,new_name:record.name??old.name,new_role:String(record.role??old.role).toLowerCase(),new_active:record.active??old.active}));return (await load(kind)).find(a=>a.id===id)!;
+  completed(await client.rpc('save_account_profile',{target:id,new_name:record.name??old.name,new_role:String(record.role??old.role).toLowerCase(),new_active:record.active??old.active,legacy_id:record.legacyUserId||null}));context().cache?.clear();return (await load(kind)).find(a=>a.id===id)!;
  }
  if(['appAdmins','certificateIssuers','certificateRegistrations','qiraat'].includes(kind))throw Error('This system directory is read-only');
  const lookup=id?await client.from('workspace_records').select('payload').eq('kind',kind).eq('id',id).maybeSingle():null;if(lookup?.error)throw new Error(lookup.error.message);const old=lookup?.data;

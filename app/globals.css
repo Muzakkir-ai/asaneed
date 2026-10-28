@@ -117,7 +117,7 @@ html[lang=ur] .auth-panel p,html[lang=ur] .auth-panel .auth-links,html[lang=ur] 
 /* Asaneed palette: primary teal, user-selected gold secondary, deep teal surfaces. */
 :root { --primary:hsl(186 98% 25%); --secondary:#D4A75B; --secondary-foreground:var(--ink); }
 .auth-panel { padding:0; overflow:hidden; box-shadow:0 8px 28px hsl(188 51% 19% / .06); }
-.auth-brand { background:var(--ink); color:var(--paper); padding:24px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px; border-bottom:3px solid var(--gold); }
+.auth-brand { background:var(--primary); color:var(--paper); padding:24px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:18px; border-bottom:3px solid var(--gold); }
 .auth-brand-name { color:var(--paper); font-size:1.6rem; text-decoration:none; font-weight:600; }
 .auth-brand .language-switcher { border-color:#ffffff55; background:#ffffff0a; }
 .auth-brand .language-switcher button { color:var(--paper); }

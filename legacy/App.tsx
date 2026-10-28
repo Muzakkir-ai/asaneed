@@ -114,16 +114,16 @@ function PrivateApp() {
   return (
     <div className="min-h-screen">
       <Toaster />
-      <header className="bg-primary text-primary-foreground">
+      <header className="studio-header bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4">
-          <div className="flex items-center gap-3 min-w-0">
+          <div className="studio-header-brand flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 sm:h-11 sm:w-11 shrink-0 rounded-full bg-accent grid place-items-center"><BookOpen className="h-5 w-5" /></div>
             <div className="min-w-0">
               <h1 className="font-display text-lg sm:text-2xl font-bold leading-tight">منصة الأسانيد والإجازات</h1>
               <p className="text-xs sm:text-sm opacity-80 truncate">مرحباً، الشيخ {shaykhName}</p>
             </div>
           </div>
-          <div className="flex gap-2 items-center">{isAdmin&&<a className="text-sm underline text-white" href="/control">إدارة الحسابات والبيانات</a>}
+          <div className="studio-header-actions flex gap-2 items-center">{isAdmin&&<a className="studio-admin-tools text-sm underline text-white" href="/control">إدارة الحسابات والبيانات</a>}
           <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setDark(v=>!v)}>{dark?<Sun className="h-4 w-4" aria-hidden="true"/>:<Moon className="h-4 w-4" aria-hidden="true"/>}<span>{dark?'Light':'Dark'}</span></Button>
           <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setLanguage(v=>v==='ar'?'en':'ar')}><Languages className="h-4 w-4" aria-hidden="true"/><span>{language==='ar'?'English':'العربية'}</span></Button>
           <Button variant="ghost" className="shrink-0 px-2 sm:px-4 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={() => logout()}>

@@ -1,3 +1,4 @@
+import {context as requestContext} from '../compat/context';
 import {z} from 'zod';
 import {createEndpoint,ZiteError} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
@@ -6,8 +7,8 @@ import {isAppAdmin} from '../lib/admin';
 export default createEndpoint({
  description:'Administrator directory of stable user identities and roles',
  authenticated:true,
- inputSchema:z.object({action:z.enum(['list','update']).default('list'),id:z.string().optional(),name:z.string().optional(),role:z.enum(['Admin','Shaykh','Student']).optional(),active:z.boolean().optional(),authUserId:z.string().optional(),transferOwnership:z.boolean().optional()}),
- outputSchema:z.object({users:z.array(z.object({id:z.string(),stableId:z.string(),name:z.string(),email:z.string(),role:z.string(),active:z.boolean(),authUserId:z.string(),legacyUserId:z.string()}))}),
+ inputSchema:z.object({action:z.enum(['list','update']).default('list'),id:z.string().optional(),name:z.string().optional(),role:z.enum(['Admin','Shaykh','Student']).optional(),active:z.boolean().optional(),authUserId:z.string().optional(),transferOwnership:z.boolean().optional(),legacyUserId:z.string().optional()}),
+ outputSchema:z.object({legacyProfiles:z.array(z.object({id:z.string(),name:z.string(),email:z.string()})),users:z.array(z.object({id:z.string(),stableId:z.string(),name:z.string(),email:z.string(),role:z.string(),active:z.boolean(),authUserId:z.string(),legacyUserId:z.string()}))}),
  execute:async({input,context})=>{
   if(!await isAppAdmin(context.user.email))throw new ZiteError({code:'FORBIDDEN',message:'Admins only'});
   if(input.action==='update'){
@@ -17,6 +18,7 @@ export default createEndpoint({
    const patch:Record<string,string|boolean>={};
    if(input.name!==undefined){if(!input.name.trim())throw new Error('Name required');patch.name=input.name.trim();}
    if(input.role!==undefined)patch.role=input.role;
+   if(input.legacyUserId)patch.legacyUserId=input.legacyUserId;
    if(input.active!==undefined)patch.active=input.active;
    if(input.authUserId!==undefined){
     const uid=input.authUserId.trim();
@@ -52,6 +54,7 @@ export default createEndpoint({
    await zite.appUsers.update({id:existing.id,record:patch});
   }
   const {records}=await zite.appUsers.findAll({limit:2000});
-  return {users:records.map(u=>({id:u.id,stableId:u.stableId||'',name:u.name||'',email:u.email||'',role:u.role||'Shaykh',active:u.active===true,authUserId:u.authUserId||'',legacyUserId:u.legacyUserId||''}))};
+  const legacy=await requestContext().client.rpc('legacy_identity_choices');if(legacy.error)throw new Error(legacy.error.message);
+  return {legacyProfiles:legacy.data,users:records.map(u=>({id:u.id,stableId:u.stableId||'',name:u.name||'',email:u.email||'',role:u.role||'Shaykh',active:u.active===true,authUserId:u.authUserId||'',legacyUserId:u.legacyUserId||''}))};
  }
 });

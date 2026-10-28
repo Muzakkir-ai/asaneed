@@ -454,9 +454,9 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
     --chart-3: 37.19 58.45% 59.41%;
     --chart-4: 186 50% 45%;
     --chart-5: 43 40% 65%;
-    --font-sans: 'Readex Pro', 'Tahoma', sans-serif;
+    --font-sans: 'Readex Pro Variable', 'Tahoma', sans-serif;
     --font-mono: 'Courier New', monospace;
-    --font-display: 'Readex Pro', 'Tahoma', sans-serif;
+    --font-display: 'Readex Pro Variable', 'Tahoma', sans-serif;
     --font-sanad: 'KSA Regular', serif;
   }
 
@@ -1735,5 +1735,5 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 .zite-app .\[\&_tr\:last-child\]\:border-0 tr:last-child { border-width: 0px; }
 .zite-app .\[\&_tr\]\:border-b tr { border-bottom-width: 1px; }
 
-body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}
+.zite-app .container{width:100%;max-width:none;padding-inline:4%}.zite-app .studio-header .container{gap:16px;flex-wrap:wrap}.zite-app .studio-header-actions{flex-wrap:wrap;justify-content:flex-end}.zite-app .studio-header-brand{flex:1;min-width:210px}.zite-app .studio-header h1{white-space:normal}.zite-app .studio-admin-tools{white-space:nowrap}@media(max-width:640px){.zite-app .studio-header-brand{width:100%}.zite-app .studio-header-actions{width:100%;justify-content:flex-start}.zite-app .studio-header .container{padding-block:12px}}body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}
 @media print{html:has(.zite-app .print-area),body:has(.zite-app .print-area),body>main:has(.zite-app .print-area){width:297mm!important;height:210mm!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}body:has(.zite-app .print-area){visibility:hidden}.zite-app .print-area,.zite-app .print-area *{visibility:visible!important}}
