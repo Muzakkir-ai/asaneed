@@ -21,11 +21,14 @@ Create a Google OAuth web client for this app, request only basic identity scope
 
 The owner creates their account and verifies the email. A trusted operator then promotes only that verified identity to an active administrator. Do not use a public signup role field or user-editable metadata to grant access. No administrator email or credential is stored in this public repository.
 
-All other signups create an inactive student account through a private database trigger. A login account is separate from an issuer; no issuer permissions are granted by signup. Account approval controls and full management screens remain later migration work.
+All other signups create an inactive student account through a private database trigger. A login account is separate from an issuer; no issuer permissions are granted by signup. The /manage workspace now provides a dashboard, shared student creation and editing, issuing-shaykh directory, ijazah draft creation with qiraah/riwayah selection, status/issuer filtering, and administrator approval of verified pending accounts. Approving a shaykh requires selecting an issuer. The approval function cannot create administrators or change existing active accounts.
+
+The original certificate layout editor, sanad editing, print/export and Zite data import remain migration work. The current draft form does not finalize or publish certificates.
 
 ## Verification
 
 - `npm run build`
 - `node --experimental-strip-types tests/auth.test.ts`
-- Run `database/auth-tests.sql` and `database/access-tests.sql` as the database owner; both roll back their fixtures.
+- Run `database/auth-tests.sql` and `database/access-tests.sql` as the database owner; both roll back their fixtures. Run database/management-tests.sql to check administrator-only account approval, verified identities, and issuer assignment.
 - Test the delivered signup/confirmation/recovery email links after URL, sender and Google settings are configured. UI and database tests alone do not confirm external email delivery or Google consent.
+
