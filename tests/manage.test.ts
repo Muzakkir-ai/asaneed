@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {normalizeName,validName,validId} from '../lib/manage.ts';
+import {managementMessages} from '../lib/manage-i18n.ts';
+assert.equal(normalizeName('مُحَمَّد مُذَكِّر'),normalizeName('محمد مذكر'));
+assert.equal(normalizeName('إِبْرَاهِيم'),normalizeName('ابراهيم'));
+assert.equal(normalizeName(' عَلِيّ  '),normalizeName('علي'));
+assert.ok(!validName('  ')); assert.ok(!validName('x'.repeat(201)));
+assert.ok(validId('64dd31bc-7105-4732-8646-148f27fe7fca')); assert.ok(!validId('anything'));
+for(const locale of ['ar','ur','en'] as const) assert.deepEqual(Object.keys(managementMessages[locale]).sort(),Object.keys(managementMessages.en).sort());
+console.log('PASS: Arabic name search, validation and management translations');

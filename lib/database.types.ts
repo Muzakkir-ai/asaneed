@@ -333,6 +333,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_account: {
+        Args: { target_account:string; target_role:string; target_issuer?:string }
+        Returns: undefined
+      }
       finalize_certificate: {
         Args: { certificate_id: string; snapshot: Json }
         Returns: string
