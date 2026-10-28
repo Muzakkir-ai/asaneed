@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {certificateOverflows,type PrintLayout} from '../src/lib/printOverflow';
+const page={left:0,right:297,top:0,bottom:210,width:297};
+const layout:PrintLayout={page,footer:{left:16,right:281,top:175,bottom:198,width:265},body:{left:16,right:281,top:60,bottom:170,width:265},header:{left:80,right:217,top:12,bottom:55,width:137},scrollHeight:794,clientHeight:794,scrollWidth:1123,clientWidth:1123};
+assert.equal(certificateOverflows(layout),false);
+assert.equal(certificateOverflows({...layout,body:{...layout.body!,bottom:180}}),true);
+assert.equal(certificateOverflows({...layout,header:{...layout.header!,bottom:65}}),true);
+assert.equal(certificateOverflows({...layout,footer:{...layout.footer,bottom:211}}),true);
+assert.equal(certificateOverflows({...layout,scrollHeight:805}),true);
+assert.equal(certificateOverflows({...layout,scrollWidth:1200}),true);
+const scaled=(rect:any)=>Object.fromEntries(Object.entries(rect).map(([k,v])=>[k,Number(v)*0.5])) as typeof page;
+assert.equal(certificateOverflows({...layout,page:scaled(page),footer:scaled(layout.footer),body:scaled(layout.body),header:scaled(layout.header)}),false);
+console.log('PASS print overflow: safe A4, body/footer overlap, header overlap, page bounds, long/wide content, scaled preview.');

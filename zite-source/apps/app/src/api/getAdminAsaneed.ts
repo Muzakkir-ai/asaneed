@@ -1,0 +1,6 @@
+import {isAppAdmin} from '../lib/admin';
+import { z } from 'zod';
+import { createEndpoint } from 'zitejs/backend';
+import { zite } from 'zitejs/db';
+const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v||'';
+export default createEndpoint({description:'Admin overview of user accounts and asaneed',authenticated:true,inputSchema:z.object({}),outputSchema:z.object({users:z.array(z.object({id:z.string(),name:z.string(),email:z.string()})),asaneed:z.array(z.object({id:z.string(),ownerId:z.string(),title:z.string(),chain:z.string(),qiraahId:z.string()})),qiraat:z.array(z.object({id:z.string(),name:z.string()}))}),execute:async({context})=>{if(!(await isAppAdmin(context.user.email)))throw new Error('Permission denied');const [users,sanads,qiraat,extras]=await Promise.all([zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}),zite.asaneed.findAll({limit:2000}),zite.qiraat.findAll({limit:2000}),zite.additionalShaykhs.findAll({limit:2000})]);return {users:[...users.records.map(u=>({id:u.id,name:u.name||u.email,email:u.email})),...extras.records.map(s=>({id:'guest:'+s.id,name:s.name||'شيخ إضافي',email:''}))],asaneed:sanads.records.map(s=>({id:s.id,ownerId:s.additionalShaykh?'guest:'+s.additionalShaykh:first(s.shaykh),title:s.title||'',chain:s.chain||'',qiraahId:first(s.qiraah)})),qiraat:qiraat.records.map(q=>({id:q.id,name:q.name||''}))};}});

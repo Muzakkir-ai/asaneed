@@ -1,0 +1,1815 @@
+{
+  "tables": [
+    {
+      "id": "tpbKK9KLXXf",
+      "sdkName": "qiraat",
+      "name": "Qiraat",
+      "primaryFieldId": "fuQD2E5A1oa",
+      "fields": [
+        {
+          "id": "fuQD2E5A1oa",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f92jAZ63FwN",
+          "sdkName": "description",
+          "definition": {
+            "name": "Description",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1PrNVsyr9Z",
+          "sdkName": "asaneed",
+          "definition": {
+            "name": "Asaneed",
+            "type": "linked_record",
+            "template": {
+              "tableId": "thmPxN3U7tQ",
+              "isInverse": true,
+              "allowMultiple": true,
+              "inverseFieldId": "frdLauaXh6e"
+            }
+          }
+        },
+        {
+          "id": "fsSH3m4DL83",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "thmPxN3U7tQ",
+      "sdkName": "asaneed",
+      "name": "Asaneed",
+      "primaryFieldId": "f8PMCpAq72L",
+      "fields": [
+        {
+          "id": "f8PMCpAq72L",
+          "sdkName": "title",
+          "definition": {
+            "name": "Title",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "frdLauaXh6e",
+          "sdkName": "qiraah",
+          "definition": {
+            "name": "Qiraah",
+            "type": "linked_record",
+            "template": {
+              "tableId": "tpbKK9KLXXf",
+              "isInverse": false,
+              "allowMultiple": true,
+              "inverseFieldId": "f1PrNVsyr9Z"
+            }
+          }
+        },
+        {
+          "id": "fsAXB4Fckpm",
+          "sdkName": "shaykh",
+          "definition": {
+            "name": "Shaykh",
+            "type": "user",
+            "template": {
+              "internalOnly": false,
+              "allowMultiple": false,
+              "deleteRowWhenUserDeleted": false
+            }
+          }
+        },
+        {
+          "id": "fmU3pA7eg8u",
+          "sdkName": "chain",
+          "definition": {
+            "name": "Chain",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "feWyfRZ2Cjo",
+          "sdkName": "certificates",
+          "definition": {
+            "name": "Certificates",
+            "type": "linked_record",
+            "template": {
+              "tableId": "t1XA59bL6mX",
+              "isInverse": true,
+              "allowMultiple": true,
+              "inverseFieldId": "fpzQLJfmBim"
+            }
+          }
+        },
+        {
+          "id": "f2GeNKiTVhb",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsKQheXwZdB",
+          "sdkName": "originalShaykhUserId",
+          "definition": {
+            "name": "Original Shaykh User ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3qm7jyRw8h",
+          "sdkName": "originalShaykhName",
+          "definition": {
+            "name": "Original Shaykh Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fmnisoR6Dcv",
+          "sdkName": "additionalShaykh",
+          "definition": {
+            "name": "additionalShaykh",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t1XA59bL6mX",
+      "sdkName": "certificates",
+      "name": "Certificates",
+      "primaryFieldId": "fmYGvU4gCdp",
+      "fields": [
+        {
+          "id": "fmYGvU4gCdp",
+          "sdkName": "studentName",
+          "definition": {
+            "name": "Student Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f8VmE1SGkbJ",
+          "sdkName": "completionDate",
+          "definition": {
+            "name": "Completion Date",
+            "type": "date",
+            "template": {
+              "dateFormat": "local"
+            }
+          }
+        },
+        {
+          "id": "fpzQLJfmBim",
+          "sdkName": "sanad",
+          "definition": {
+            "name": "Sanad",
+            "type": "linked_record",
+            "template": {
+              "tableId": "thmPxN3U7tQ",
+              "isInverse": false,
+              "allowMultiple": true,
+              "inverseFieldId": "feWyfRZ2Cjo"
+            }
+          }
+        },
+        {
+          "id": "few7UC3opwu",
+          "sdkName": "shaykh",
+          "definition": {
+            "name": "Shaykh",
+            "type": "user",
+            "template": {
+              "internalOnly": false,
+              "allowMultiple": false,
+              "deleteRowWhenUserDeleted": false
+            }
+          }
+        },
+        {
+          "id": "foXRfcNFDs8",
+          "sdkName": "notes",
+          "definition": {
+            "name": "Notes",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fbhDk6QMydr",
+          "sdkName": "certificateNumber",
+          "definition": {
+            "name": "Certificate Number",
+            "type": "autonumber",
+            "template": {}
+          }
+        },
+        {
+          "id": "frjFftzfaBu",
+          "sdkName": "hijriDayOffset",
+          "definition": {
+            "name": "hijriDayOffset",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 0
+            }
+          }
+        },
+        {
+          "id": "fbhRic2wUbF",
+          "sdkName": "shahadaNumber",
+          "definition": {
+            "name": "shahadaNumber",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 0
+            }
+          }
+        },
+        {
+          "id": "f5mn52Xo2YB",
+          "sdkName": "publicationStatus",
+          "definition": {
+            "name": "publicationStatus",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpGbdcboWzd",
+          "sdkName": "recipientUserId",
+          "definition": {
+            "name": "recipientUserId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fag6RKtTEXs",
+          "sdkName": "guestShaykhId",
+          "definition": {
+            "name": "guestShaykhId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9Uh3XXC3Zy",
+          "sdkName": "studentAccount",
+          "definition": {
+            "name": "studentAccount",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fg2hsno8sb6",
+          "sdkName": "additionalShaykh",
+          "definition": {
+            "name": "additionalShaykh",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fbfTPNoBwaT",
+          "sdkName": "verificationToken",
+          "definition": {
+            "name": "verificationToken",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9g5ADikJPo",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffn95pcZHsc",
+          "sdkName": "originalShaykhName",
+          "definition": {
+            "name": "Original Shaykh Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3YWpiNuJXh",
+          "sdkName": "originalShaykhUserId",
+          "definition": {
+            "name": "Original Shaykh User ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fmFFpr9AQDw",
+          "sdkName": "registrationNumber",
+          "definition": {
+            "name": "registrationNumber",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tbcaSyikqLy",
+      "sdkName": "sanadSections",
+      "name": "SanadSections",
+      "primaryFieldId": "f4xUWuriBhr",
+      "fields": [
+        {
+          "id": "f4xUWuriBhr",
+          "sdkName": "title",
+          "definition": {
+            "name": "Title",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fqR1nXHMNGT",
+          "sdkName": "sectionType",
+          "definition": {
+            "name": "SectionType",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "jWQi",
+                  "label": "introduction",
+                  "color": "purple"
+                },
+                {
+                  "value": "6KWc",
+                  "label": "route",
+                  "color": "orange"
+                },
+                {
+                  "value": "1cBZ",
+                  "label": "narrator",
+                  "color": "blue"
+                },
+                {
+                  "value": "w4ry",
+                  "label": "final_chain",
+                  "color": "gray"
+                },
+                {
+                  "value": "cLoB",
+                  "label": "conclusion",
+                  "color": "red"
+                },
+                {
+                  "value": "41TD",
+                  "label": "personal",
+                  "color": "yellow"
+                },
+                {
+                  "value": "kXvR",
+                  "label": "wording",
+                  "color": "green"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fhh2EeS1TQm",
+          "sdkName": "body",
+          "definition": {
+            "name": "Body",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fonJg2h6TGi",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "OwnerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fcY2AZnX1dz",
+          "sdkName": "sortOrder",
+          "definition": {
+            "name": "SortOrder",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 1
+            }
+          }
+        },
+        {
+          "id": "f3nDK89Tx3R",
+          "sdkName": "parentId",
+          "definition": {
+            "name": "ParentId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6kx873RxgA",
+          "sdkName": "formatting",
+          "definition": {
+            "name": "formatting",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsV4Lbg6rrg",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tcptpYS3xZq",
+      "sdkName": "ijazahHoldings",
+      "name": "IjazahHoldings",
+      "primaryFieldId": "f1xPZRckQa9",
+      "fields": [
+        {
+          "id": "f1xPZRckQa9",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhzvvADtPgx",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fa8Vxz2CVWy",
+          "sdkName": "qariId",
+          "definition": {
+            "name": "qariId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1xrj74LAcX",
+          "sdkName": "rawi",
+          "definition": {
+            "name": "rawi",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f5ZashDjsRo",
+          "sdkName": "personalChain",
+          "definition": {
+            "name": "personalChain",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fqqAXwVKCVK",
+          "sdkName": "junction",
+          "definition": {
+            "name": "junction",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f2hk2tsjRar",
+          "sdkName": "introductionId",
+          "definition": {
+            "name": "introductionId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1ng5pqKbNt",
+          "sdkName": "wordingId",
+          "definition": {
+            "name": "wordingId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f679gtCTokx",
+          "sdkName": "formatting",
+          "definition": {
+            "name": "formatting",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fj6e8KyQ7n1",
+          "sdkName": "personalSanadConfirmed",
+          "definition": {
+            "name": "personalSanadConfirmed",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "fi6YWtgEzqc",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tfG7YjdAPZa",
+      "sdkName": "sanadPrintStyles",
+      "name": "SanadPrintStyles",
+      "primaryFieldId": "fvRXUWYQwuM",
+      "fields": [
+        {
+          "id": "fvRXUWYQwuM",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9e1245qudf",
+          "sdkName": "sanadId",
+          "definition": {
+            "name": "sanadId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpUX44L7nHu",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fu3kQDX8RFD",
+          "sdkName": "settings",
+          "definition": {
+            "name": "settings",
+            "type": "long_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t5XsHfQAY7Z",
+      "sdkName": "preparedIjazahs",
+      "name": "PreparedIjazahs",
+      "primaryFieldId": "fnHFBDjck39",
+      "fields": [
+        {
+          "id": "fnHFBDjck39",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "favH6dfzsy4",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9CEkizZ5WB",
+          "sdkName": "holdingId",
+          "definition": {
+            "name": "holdingId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f451xa7gw9m",
+          "sdkName": "sanadId",
+          "definition": {
+            "name": "sanadId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fiNecqLTrcF",
+          "sdkName": "sourceSignature",
+          "definition": {
+            "name": "sourceSignature",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f7TWtUA3gu1",
+          "sdkName": "rawi",
+          "definition": {
+            "name": "rawi",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fmyhcCew1TH",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "trzHQLhvQdK",
+      "sdkName": "certificateSnapshots",
+      "name": "CertificateSnapshots",
+      "primaryFieldId": "fsiPiFEVDXK",
+      "fields": [
+        {
+          "id": "fsiPiFEVDXK",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3nULVzGvCA",
+          "sdkName": "certificateId",
+          "definition": {
+            "name": "certificateId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f5vthmXzoxS",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fi7jkyTj4Zz",
+          "sdkName": "chain",
+          "definition": {
+            "name": "chain",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f5Ba35gBgf8",
+          "sdkName": "heading",
+          "definition": {
+            "name": "heading",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fiY5CW5d8cR",
+          "sdkName": "formatting",
+          "definition": {
+            "name": "formatting",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fcquhg2ZVkS",
+          "sdkName": "issuedAt",
+          "definition": {
+            "name": "issuedAt",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsiEt1P8NWP",
+          "sdkName": "archived",
+          "definition": {
+            "name": "archived",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "fuHx7dZaHcf",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t5PVvi4Tkg7",
+      "sdkName": "sanadSectionVersions",
+      "name": "SanadSectionVersions",
+      "primaryFieldId": "fvEDLJc9aka",
+      "fields": [
+        {
+          "id": "fvEDLJc9aka",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3cW1T24K5k",
+          "sdkName": "sectionId",
+          "definition": {
+            "name": "sectionId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f4D2FKuecuX",
+          "sdkName": "revision",
+          "definition": {
+            "name": "revision",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 1
+            }
+          }
+        },
+        {
+          "id": "fcKPs2ZYqWL",
+          "sdkName": "body",
+          "definition": {
+            "name": "body",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fgoJ4hkcK92",
+          "sdkName": "formatting",
+          "definition": {
+            "name": "formatting",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fnpfnQfbGdh",
+          "sdkName": "savedBy",
+          "definition": {
+            "name": "savedBy",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fvHTq8sKNA1",
+          "sdkName": "savedAt",
+          "definition": {
+            "name": "savedAt",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fheodTnP5Nu",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t4YWqVyJbDX",
+      "sdkName": "shaykhPrintProfiles",
+      "name": "ShaykhPrintProfiles",
+      "primaryFieldId": "fhV4oew5S1Z",
+      "fields": [
+        {
+          "id": "fhV4oew5S1Z",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fe6ax3TDLES",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhwGcYhoEv4",
+          "sdkName": "printedName",
+          "definition": {
+            "name": "printedName",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fajWXqe3LRz",
+          "sdkName": "teachingRole",
+          "definition": {
+            "name": "teachingRole",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fxdhig1nsxQ",
+          "sdkName": "madrasaName",
+          "definition": {
+            "name": "madrasaName",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fqe2rN2zTWq",
+          "sdkName": "madrasaPlace",
+          "definition": {
+            "name": "madrasaPlace",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fx5Q1byVt4x",
+          "sdkName": "centerStampText",
+          "definition": {
+            "name": "centerStampText",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6rQYigqwwq",
+          "sdkName": "showTeachingRole",
+          "definition": {
+            "name": "showTeachingRole",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpVPe7vghti",
+          "sdkName": "showMadrasaName",
+          "definition": {
+            "name": "showMadrasaName",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "figEXWemFaw",
+          "sdkName": "showMadrasaPlace",
+          "definition": {
+            "name": "showMadrasaPlace",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "fbfS6Ceb1Yi",
+          "sdkName": "scientificQualification",
+          "definition": {
+            "name": "scientificQualification",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fk2tdC8eNE5",
+          "sdkName": "showScientificQualification",
+          "definition": {
+            "name": "showScientificQualification",
+            "type": "checkbox",
+            "template": {}
+          }
+        },
+        {
+          "id": "fjj4B1DP83K",
+          "sdkName": "footerLineStyles",
+          "definition": {
+            "name": "footerLineStyles",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fgqFgVP1i4u",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t99ga6faA3F",
+      "sdkName": "riwayahPrintColors",
+      "name": "RiwayahPrintColors",
+      "primaryFieldId": "ffir6CVAVRW",
+      "fields": [
+        {
+          "id": "ffir6CVAVRW",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fnH44Jav1GV",
+          "sdkName": "qariId",
+          "definition": {
+            "name": "qariId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fxanxePthXK",
+          "sdkName": "rawi",
+          "definition": {
+            "name": "rawi",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fe7XDBZ9i3A",
+          "sdkName": "primaryColor",
+          "definition": {
+            "name": "primaryColor",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f5hB6btE9pz",
+          "sdkName": "secondaryColor",
+          "definition": {
+            "name": "secondaryColor",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fxgNjeb2hwW",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t8Rb77pELKc",
+      "sdkName": "students",
+      "name": "Students",
+      "primaryFieldId": "f862oej7Jmh",
+      "fields": [
+        {
+          "id": "f862oej7Jmh",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fbo3izgTagU",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fkNXEDTTDVW",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tmbLCgSKHHp",
+      "sdkName": "additionalShaykhs",
+      "name": "AdditionalShaykhs",
+      "primaryFieldId": "f5t19rRP11R",
+      "fields": [
+        {
+          "id": "f5t19rRP11R",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1997kfr2Xk",
+          "sdkName": "qualification",
+          "definition": {
+            "name": "qualification",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9cLgbXz56e",
+          "sdkName": "teachingRole",
+          "definition": {
+            "name": "teachingRole",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3UHKWU1zbW",
+          "sdkName": "madrasaName",
+          "definition": {
+            "name": "madrasaName",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fovGvojE4Fa",
+          "sdkName": "madrasaPlace",
+          "definition": {
+            "name": "madrasaPlace",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fjfBqs3huxs",
+          "sdkName": "readingsJson",
+          "definition": {
+            "name": "readingsJson",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fkyXYJs94AA",
+          "sdkName": "personalChain",
+          "definition": {
+            "name": "personalChain",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fcQwBYBcqUS",
+          "sdkName": "junction",
+          "definition": {
+            "name": "junction",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fvLxckcWirs",
+          "sdkName": "createdBy",
+          "definition": {
+            "name": "createdBy",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f95Ar1Lv1i2",
+          "sdkName": "legacyId",
+          "definition": {
+            "name": "legacyId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t8rGwy5rmen",
+      "sdkName": "assetSources",
+      "name": "Asset Sources",
+      "primaryFieldId": "feSdeakxSyr",
+      "fields": [
+        {
+          "id": "feSdeakxSyr",
+          "sdkName": "key",
+          "definition": {
+            "name": "Key",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1Fz8BtnFF7",
+          "sdkName": "gitHubRepository",
+          "definition": {
+            "name": "GitHub Repository",
+            "type": "url",
+            "template": {}
+          }
+        },
+        {
+          "id": "fp2spgZMQ4r",
+          "sdkName": "branch",
+          "definition": {
+            "name": "Branch",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fiHPcHQ2tSz",
+          "sdkName": "updatedAt",
+          "definition": {
+            "name": "Updated At",
+            "type": "updated_at",
+            "template": {
+              "timezone": "",
+              "dateFormat": "local",
+              "timeFormat": "12h",
+              "displayTimeZone": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tufPeBW7cpq",
+      "sdkName": "appAdmins",
+      "name": "App Admins",
+      "primaryFieldId": "ftsA623YqGy",
+      "fields": [
+        {
+          "id": "ftsA623YqGy",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "fufqCwM2rkG",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fcc7MHSuX42",
+          "sdkName": "active",
+          "definition": {
+            "name": "Active",
+            "type": "checkbox",
+            "template": {
+              "defaultValue": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "t1jEYbFgHFA",
+      "sdkName": "legacyUserDirectory",
+      "name": "Legacy User Directory",
+      "primaryFieldId": "f5AveyWtUw6",
+      "fields": [
+        {
+          "id": "f5AveyWtUw6",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fnHVT81wHKv",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsCd8sahZLM",
+          "sdkName": "originalUserId",
+          "definition": {
+            "name": "Original User ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fwKJtpCkujr",
+          "sdkName": "firstName",
+          "definition": {
+            "name": "First Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3dMwRPLYeQ",
+          "sdkName": "lastName",
+          "definition": {
+            "name": "Last Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "thanigYYyQB",
+      "sdkName": "appUsers",
+      "name": "App Users",
+      "primaryFieldId": "foctk9AAQTv",
+      "fields": [
+        {
+          "id": "foctk9AAQTv",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffpxBa168nA",
+          "sdkName": "email",
+          "definition": {
+            "name": "Email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffv7VSERt7h",
+          "sdkName": "stableId",
+          "definition": {
+            "name": "Stable ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "facZrrtRdPA",
+          "sdkName": "authUserId",
+          "definition": {
+            "name": "Auth User ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fuXZ5sAVDgy",
+          "sdkName": "legacyUserId",
+          "definition": {
+            "name": "Legacy User ID",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fkR68KZuB87",
+          "sdkName": "role",
+          "definition": {
+            "name": "Role",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "nZDe",
+                  "label": "Admin",
+                  "color": "purple"
+                },
+                {
+                  "value": "jyMo",
+                  "label": "Shaykh",
+                  "color": "orange"
+                },
+                {
+                  "value": "7nP1",
+                  "label": "Student",
+                  "color": "blue"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "fizve4TdKoa",
+          "sdkName": "active",
+          "definition": {
+            "name": "Active",
+            "type": "checkbox",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t5ieJWkUNV4",
+      "sdkName": "mutoonHoldings",
+      "name": "Mutoon Holdings",
+      "primaryFieldId": "fwtvNE3ekh6",
+      "fields": [
+        {
+          "id": "fwtvNE3ekh6",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fed6WRuvYYC",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fj2Y4jQDAwi",
+          "sdkName": "category",
+          "definition": {
+            "name": "category",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fb6K55ujY1z",
+          "sdkName": "sanadText",
+          "definition": {
+            "name": "sanadText",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fpxWg22jBMd",
+          "sdkName": "wordingText",
+          "definition": {
+            "name": "wordingText",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f7y1b9TZ3Wn",
+          "sdkName": "createdAtText",
+          "definition": {
+            "name": "createdAtText",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6Sjv9D66Ug",
+          "sdkName": "introductionId",
+          "definition": {
+            "name": "introductionId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ff6LJjjkWy9",
+          "sdkName": "conclusionId",
+          "definition": {
+            "name": "conclusionId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ftKbMJXbviq",
+          "sdkName": "sanadFormatting",
+          "definition": {
+            "name": "sanadFormatting",
+            "type": "long_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tjZRxpjqVPV",
+      "sdkName": "mutoonTextTemplates",
+      "name": "Mutoon Text Templates",
+      "primaryFieldId": "fiz2VDCnwvr",
+      "fields": [
+        {
+          "id": "fiz2VDCnwvr",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f3b9TQwSwqf",
+          "sdkName": "ownerId",
+          "definition": {
+            "name": "ownerId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fgRFWC1qmkV",
+          "sdkName": "kind",
+          "definition": {
+            "name": "kind",
+            "type": "single_select",
+            "template": {
+              "options": [
+                {
+                  "value": "99G2",
+                  "label": "introduction",
+                  "color": "purple"
+                },
+                {
+                  "value": "eds7",
+                  "label": "conclusion",
+                  "color": "orange"
+                }
+              ],
+              "disableColors": false
+            }
+          }
+        },
+        {
+          "id": "feDUJDAcVbM",
+          "sdkName": "body",
+          "definition": {
+            "name": "body",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fbYCNhSLDTL",
+          "sdkName": "formatting",
+          "definition": {
+            "name": "formatting",
+            "type": "long_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "trSTpGvCFsp",
+      "sdkName": "additionalShaykhExtensions",
+      "name": "Additional Shaykh Extensions",
+      "primaryFieldId": "f6MaJpCbDKk",
+      "fields": [
+        {
+          "id": "f6MaJpCbDKk",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsMbkCp4sGK",
+          "sdkName": "shaykhId",
+          "definition": {
+            "name": "shaykhId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fraiY3iXrpu",
+          "sdkName": "email",
+          "definition": {
+            "name": "email",
+            "type": "email",
+            "template": {}
+          }
+        },
+        {
+          "id": "f6RAjrg6n82",
+          "sdkName": "mutoonJson",
+          "definition": {
+            "name": "mutoonJson",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f7EZwrKrvjZ",
+          "sdkName": "mutoonFormattingJson",
+          "definition": {
+            "name": "mutoonFormattingJson",
+            "type": "long_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "ttifbRyENu2",
+      "sdkName": "additionalShaykhReadingSanads",
+      "name": "Additional Shaykh Reading Sanads",
+      "primaryFieldId": "f15K1HbkZaN",
+      "fields": [
+        {
+          "id": "f15K1HbkZaN",
+          "sdkName": "name",
+          "definition": {
+            "name": "Name",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fwmoDTsUVii",
+          "sdkName": "shaykhId",
+          "definition": {
+            "name": "shaykhId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsmB7tcvFMv",
+          "sdkName": "qariId",
+          "definition": {
+            "name": "qariId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fiRkxG1JP7H",
+          "sdkName": "rawi",
+          "definition": {
+            "name": "rawi",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fhEg5npSYLP",
+          "sdkName": "sanadText",
+          "definition": {
+            "name": "sanadText",
+            "type": "long_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fdPktgJYV64",
+          "sdkName": "junction",
+          "definition": {
+            "name": "junction",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "t2rXJLS8G3M",
+      "sdkName": "certificateIssuers",
+      "name": "Certificate Issuers",
+      "primaryFieldId": "fjTyD6bsJ6T",
+      "fields": [
+        {
+          "id": "fjTyD6bsJ6T",
+          "sdkName": "issuerKey",
+          "definition": {
+            "name": "issuerKey",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ff5ntoaKEpm",
+          "sdkName": "issuerNumber",
+          "definition": {
+            "name": "issuerNumber",
+            "type": "autonumber",
+            "template": {}
+          }
+        },
+        {
+          "id": "fx2XS7oyzUs",
+          "sdkName": "displayName",
+          "definition": {
+            "name": "displayName",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fsQa13qEpJb",
+          "sdkName": "issuerCode",
+          "definition": {
+            "name": "issuerCode",
+            "type": "single_line_text",
+            "template": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "tkGuCaZAhMz",
+      "sdkName": "certificateRegistrations",
+      "name": "Certificate Registrations",
+      "primaryFieldId": "fthxRncC7LL",
+      "fields": [
+        {
+          "id": "fthxRncC7LL",
+          "sdkName": "reservationKey",
+          "definition": {
+            "name": "reservationKey",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffQUStkRzdg",
+          "sdkName": "reservationOrder",
+          "definition": {
+            "name": "reservationOrder",
+            "type": "autonumber",
+            "template": {}
+          }
+        },
+        {
+          "id": "ffBKu7EfqGW",
+          "sdkName": "certificateId",
+          "definition": {
+            "name": "certificateId",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f9XzKnL8UKi",
+          "sdkName": "issuerKey",
+          "definition": {
+            "name": "issuerKey",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fahEC15qQf3",
+          "sdkName": "year",
+          "definition": {
+            "name": "year",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fwtRFSyh6kn",
+          "sdkName": "riwayahCode",
+          "definition": {
+            "name": "riwayahCode",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "f1TMLs5kFC6",
+          "sdkName": "registrationNumber",
+          "definition": {
+            "name": "registrationNumber",
+            "type": "single_line_text",
+            "template": {}
+          }
+        },
+        {
+          "id": "fccsL5j9Ljb",
+          "sdkName": "sequenceOrder",
+          "definition": {
+            "name": "sequenceOrder",
+            "type": "number",
+            "template": {
+              "numberFormat": "local",
+              "decimalPlaces": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

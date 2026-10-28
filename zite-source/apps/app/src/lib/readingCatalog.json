@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "description": "Canonical qari and rawi names, stable IDs, and role-specific SVG paths. Legacy root files remain compatible.",
+  "common": {
+    "riwayah": "common/riwayah.svg",
+    "imam": "common/imam.svg",
+    "shatbiyah": "common/shatbiyah.svg",
+    "durrah": "common/durrah.svg"
+  },
+  "qurra": [
+    {
+      "id": "nafi",
+      "imam": "الإمام نافع المدني",
+      "reading": "نافع المدني",
+      "family": "seven",
+      "rawis": [
+        "قالون",
+        "ورش"
+      ],
+      "qariSvg": "qari/nafi.svg",
+      "qariSource": "nafi.svg",
+      "rawiSvgs": {
+        "قالون": "rawi/nafi-qalun.svg",
+        "ورش": "rawi/nafi-warsh.svg"
+      },
+      "rawiSources": {
+        "قالون": "qalun.svg",
+        "ورش": "warsh.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "ibnkathir",
+      "imam": "الإمام ابن كثير المكي",
+      "reading": "ابن كثير المكي",
+      "family": "seven",
+      "rawis": [
+        "البزّي",
+        "قُنبل"
+      ],
+      "qariSvg": "qari/ibnkathir.svg",
+      "qariSource": "ibnkathir.svg",
+      "rawiSvgs": {
+        "البزّي": "rawi/ibnkathir-bazzi.svg",
+        "قُنبل": "rawi/ibnkathir-qunbul.svg"
+      },
+      "rawiSources": {
+        "البزّي": "bazzi.svg",
+        "قُنبل": "qunbul.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "abiamr",
+      "imam": "الإمام أبو عمرو البصري",
+      "reading": "أبي عمرو البصري",
+      "family": "seven",
+      "rawis": [
+        "حفص الدوري",
+        "السوسي"
+      ],
+      "qariSvg": "qari/abiamr.svg",
+      "qariSource": "basri.svg",
+      "rawiSvgs": {
+        "حفص الدوري": "rawi/abiamr-duri.svg",
+        "السوسي": "rawi/abiamr-susi.svg"
+      },
+      "rawiSources": {
+        "حفص الدوري": "duri.svg",
+        "السوسي": "susi.svg"
+      },
+      "displayRawis": {
+        "حفص الدوري": "الدوري"
+      }
+    },
+    {
+      "id": "ibnamir",
+      "imam": "الإمام ابن عامر الشامي",
+      "reading": "ابن عامر الشامي",
+      "family": "seven",
+      "rawis": [
+        "هشام",
+        "ابن ذكوان"
+      ],
+      "qariSvg": "qari/ibnamir.svg",
+      "qariSource": "ibnamir.svg",
+      "rawiSvgs": {
+        "هشام": "rawi/ibnamir-hisham.svg",
+        "ابن ذكوان": "rawi/ibnamir-ibnzakwan.svg"
+      },
+      "rawiSources": {
+        "هشام": "hisham.svg",
+        "ابن ذكوان": "ibnzakwan.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "asim",
+      "imam": "الإمام عاصم الكوفي",
+      "reading": "عاصم الكوفي",
+      "family": "seven",
+      "rawis": [
+        "شعبة",
+        "حفص"
+      ],
+      "qariSvg": "qari/asim.svg",
+      "qariSource": "aasim.svg",
+      "rawiSvgs": {
+        "شعبة": "rawi/asim-shuba.svg",
+        "حفص": "rawi/asim-hafs.svg"
+      },
+      "rawiSources": {
+        "شعبة": "shuba.svg",
+        "حفص": "hafs.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "hamza",
+      "imam": "الإمام حمزة الزيات",
+      "reading": "حمزة الزيات",
+      "family": "seven",
+      "rawis": [
+        "خلف",
+        "خلّاد"
+      ],
+      "qariSvg": "qari/hamza.svg",
+      "qariSource": "hamza.svg",
+      "rawiSvgs": {
+        "خلف": "rawi/hamza-khalaf.svg",
+        "خلّاد": "rawi/hamza-khallad.svg"
+      },
+      "rawiSources": {
+        "خلف": "khalaf.svg",
+        "خلّاد": "khallad.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "kisai",
+      "imam": "الإمام الكسائي",
+      "reading": "الكسائي",
+      "family": "seven",
+      "rawis": [
+        "أبو الحارث",
+        "حفص الدوري"
+      ],
+      "qariSvg": "qari/kisai.svg",
+      "qariSource": "kisai.svg",
+      "rawiSvgs": {
+        "أبو الحارث": "rawi/kisai-abulharith.svg",
+        "حفص الدوري": "rawi/kisai-hafsduri.svg"
+      },
+      "rawiSources": {
+        "أبو الحارث": "abulharith.svg",
+        "حفص الدوري": "hafsduri.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "abujafar",
+      "imam": "الإمام أبو جعفر المدني",
+      "reading": "أبي جعفر المدني",
+      "family": "three",
+      "rawis": [
+        "ابن وردان",
+        "ابن جمّاز"
+      ],
+      "qariSvg": "qari/abujafar.svg",
+      "qariSource": "abujafar.svg",
+      "rawiSvgs": {
+        "ابن وردان": "rawi/abujafar-ibnwardan.svg",
+        "ابن جمّاز": "rawi/abujafar-ibnjammaz.svg"
+      },
+      "rawiSources": {
+        "ابن وردان": "ibnwardan.svg",
+        "ابن جمّاز": "ibnjammaz.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "yaqub",
+      "imam": "الإمام يعقوب الحضرمي",
+      "reading": "يعقوب الحضرمي",
+      "family": "three",
+      "rawis": [
+        "رُويس",
+        "رَوح"
+      ],
+      "qariSvg": "qari/yaqub.svg",
+      "qariSource": "yaqub.svg",
+      "rawiSvgs": {
+        "رُويس": "rawi/yaqub-ruwais.svg",
+        "رَوح": "rawi/yaqub-rawh.svg"
+      },
+      "rawiSources": {
+        "رُويس": "ruwais.svg",
+        "رَوح": "rawh.svg"
+      },
+      "displayRawis": {}
+    },
+    {
+      "id": "khalaf",
+      "imam": "الإمام خلف البزار",
+      "reading": "خلف البزار",
+      "family": "three",
+      "rawis": [
+        "إسحاق",
+        "إدريس"
+      ],
+      "qariSvg": "qari/khalaf.svg",
+      "qariSource": "khalafbazzar.svg",
+      "rawiSvgs": {
+        "إسحاق": "rawi/khalaf-ishaq.svg",
+        "إدريس": "rawi/khalaf-idris.svg"
+      },
+      "rawiSources": {
+        "إسحاق": "ishaq.svg",
+        "إدريس": "idris.svg"
+      },
+      "displayRawis": {}
+    }
+  ]
+}

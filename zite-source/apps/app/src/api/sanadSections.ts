@@ -1,0 +1,17 @@
+import {isAppAdmin} from '../lib/admin';
+import {z} from 'zod';
+import {createEndpoint} from 'zitejs/backend';
+import {zite} from 'zitejs/db';
+import {sectionFormatting} from '../lib/sanadFormatting';
+import {syncSharedSanads} from '../lib/syncSharedSanads';
+const type=z.enum(['introduction','wording','route','narrator','final_chain','conclusion','personal']);
+export default createEndpoint({description:'Read and manage reusable sanad text sections with administrator-only shared edits',authenticated:true,inputSchema:z.object({action:z.enum(['list','save','delete']).default('list'),id:z.string().optional(),title:z.string().optional(),body:z.string().optional(),sectionType:type.optional(),sortOrder:z.number().optional(),parentId:z.string().optional(),formatting:sectionFormatting.optional()}),outputSchema:z.object({sections:z.array(z.object({id:z.string(),title:z.string(),body:z.string(),sectionType:z.string(),ownerId:z.string(),sortOrder:z.number(),parentId:z.string(),formatting:z.string()}))}),execute:async({input,context})=>{const admin=(await isAppAdmin(context.user.email));const uid=context.user.id; if(input.action!=='list'){const existing=input.id?await zite.sanadSections.findOne({id:input.id}):undefined;if(input.id&&!existing)throw new Error('Section not found');if(existing){if(existing.ownerId?existing.ownerId!==uid&&!admin:!admin)throw new Error('Permission denied');}else if(!admin&&input.sectionType!=='personal')throw new Error('Only admin can edit shared sections');if(input.action==='delete'){if(!existing)throw new Error('Missing section');await zite.sanadSections.delete({id:existing.id});}else{const sectionType=input.sectionType||existing?.sectionType||'personal';if(!admin&&sectionType!=='personal')throw new Error('Only admin can edit shared sections');if(!input.title?.trim()||!input.body?.trim())throw new Error('Title and text required');const record={title:input.title.trim(),body:input.body.trim(),sectionType,ownerId:existing?.ownerId??(admin&&sectionType!=='personal'?'':uid),sortOrder:input.sortOrder??existing?.sortOrder??0,parentId:input.parentId??existing?.parentId??'',formatting:input.formatting?JSON.stringify(input.formatting):existing?.formatting??''};if(existing){
+ const {records:history}=await zite.sanadSectionVersions.findAll({filters:{sectionId:existing.id},limit:2000});
+ if(!history.length){await zite.sanadSectionVersions.create({record:{name:existing.title||'المقطع',sectionId:existing.id,revision:1,body:existing.body||'',formatting:existing.formatting||'',savedBy:uid,savedAt:new Date().toISOString()}});}
+ await zite.sanadSections.update({id:existing.id,record});
+ await zite.sanadSectionVersions.create({record:{name:record.title,sectionId:existing.id,revision:Math.max(1,...history.map(h=>h.revision||0))+1,body:record.body,formatting:record.formatting,savedBy:uid,savedAt:new Date().toISOString()}});
+ if(sectionType!=='personal'&&existing.body!==record.body)await syncSharedSanads(existing.body||'',record.body);
+}else{
+ const created=await zite.sanadSections.create({record});
+ await zite.sanadSectionVersions.create({record:{name:record.title,sectionId:created.id,revision:1,body:record.body,formatting:record.formatting,savedBy:uid,savedAt:new Date().toISOString()}});
+}}}const {records}=await zite.sanadSections.findAll({limit:2000});return {sections:records.filter(x=>!x.ownerId||x.ownerId===uid).map(x=>({id:x.id,title:x.title||'',body:x.body||'',sectionType:x.sectionType||'',ownerId:x.ownerId||'',sortOrder:x.sortOrder||0,parentId:x.parentId||'',formatting:x.formatting||''}))};}});
