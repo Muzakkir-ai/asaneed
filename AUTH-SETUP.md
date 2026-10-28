@@ -23,7 +23,7 @@ The owner creates their account and verifies the email. A trusted operator then 
 
 All other signups create an inactive student account through a private database trigger. A login account is separate from an issuer; no issuer permissions are granted by signup. The /manage workspace now provides a dashboard, shared student creation and editing, issuing-shaykh directory, ijazah draft creation with qiraah/riwayah selection, status/issuer filtering, and administrator approval of verified pending accounts. Approving a shaykh requires selecting an issuer. The approval function cannot create administrators or change existing active accounts.
 
-The original certificate layout editor, sanad editing, print/export and Zite data import remain migration work. The current draft form does not finalize or publish certificates.
+The original certificate layout editor, sanad editing and print/export remain migration work. Zite records have been copied into the independent database; see docs/IMPORT-REPORT.md. The current draft form does not finalize or publish certificates.
 
 ## Verification
 
@@ -31,4 +31,3 @@ The original certificate layout editor, sanad editing, print/export and Zite dat
 - `node --experimental-strip-types tests/auth.test.ts`
 - Run `database/auth-tests.sql` and `database/access-tests.sql` as the database owner; both roll back their fixtures. Run database/management-tests.sql to check administrator-only account approval, verified identities, and issuer assignment.
 - Test the delivered signup/confirmation/recovery email links after URL, sender and Google settings are configured. UI and database tests alone do not confirm external email delivery or Google consent.
-

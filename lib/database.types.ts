@@ -333,6 +333,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      read_legacy_library: {
+        Args: {source_name?:string;page_number?:number}
+        Returns: Json
+      }
       approve_account: {
         Args: { target_account:string; target_role:string; target_issuer?:string }
         Returns: undefined

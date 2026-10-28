@@ -28,35 +28,35 @@ insert into public.certificates(id,issuer_id,student_id,riwayah_code,completion_
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000002',true);
 do $$ begin
- if (select count(*) from public.certificates) <> 1 then raise exception 'Issuer isolation failed'; end if;
- if (select count(*) from public.students) <> 1 then raise exception 'Shared students missing'; end if;
+ if (select count(*) from public.certificates where id::text like '50000000-%') <> 1 then raise exception 'Issuer isolation failed'; end if;
+ if (select count(*) from public.students where id::text like '40000000-%') <> 1 then raise exception 'Shared students missing'; end if;
  if public.normalize_arabic('مُحَمَّد مُذَكِّر') <> 'محمد مذكر' then raise exception 'Arabic normalization failed'; end if;
  begin
  perform public.finalize_certificate('50000000-0000-0000-0000-000000000002','{"test":true}');
  raise exception 'Cross issuer finalization allowed';
  exception when insufficient_privilege then null; end;
  if public.finalize_certificate('50000000-0000-0000-0000-000000000001','{"test":true}') <> '0126-9801' then raise exception 'Wrong registration format'; end if;
- if (select count(*) from public.certificate_snapshots) <> 1 then raise exception 'Snapshot missing'; end if;
+ if (select count(*) from public.certificate_snapshots where certificate_id::text like '50000000-%') <> 1 then raise exception 'Snapshot missing'; end if;
  update public.certificates set draft='{"changed":true}' where id='50000000-0000-0000-0000-000000000001';
  if found then raise exception 'Final certificate writable'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000003',true);
 do $$ begin
- if (select count(*) from public.certificates) <> 1 then raise exception 'Other issuer isolation failed'; end if;
- if (select count(*) from public.students) <> 1 then raise exception 'Students not shared'; end if;
+ if (select count(*) from public.certificates where id::text like '50000000-%') <> 1 then raise exception 'Other issuer isolation failed'; end if;
+ if (select count(*) from public.students where id::text like '40000000-%') <> 1 then raise exception 'Students not shared'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000004',true);
 do $$ begin
- if (select count(*) from public.certificates) <> 0 or (select count(*) from public.students) <> 0 then raise exception 'Inactive account access'; end if;
+ if (select count(*) from public.certificates where id::text like '50000000-%') <> 0 or (select count(*) from public.students where id::text like '40000000-%') <> 0 then raise exception 'Inactive account access'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000005',true);
 do $$ begin
- if (select count(*) from public.certificates) <> 1 then raise exception 'Student certificate visibility failed'; end if;
- if (select count(*) from public.students) <> 0 then raise exception 'Student directory exposed'; end if;
+ if (select count(*) from public.certificates where id::text like '50000000-%') <> 1 then raise exception 'Student certificate visibility failed'; end if;
+ if (select count(*) from public.students where id::text like '40000000-%') <> 0 then raise exception 'Student directory exposed'; end if;
 end $$;
 select set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
 do $$ begin
- if (select count(*) from public.certificates) <> 2 then raise exception 'Admin visibility failed'; end if;
+ if (select count(*) from public.certificates where id::text like '50000000-%') <> 2 then raise exception 'Admin visibility failed'; end if;
  begin
  delete from public.students where id='40000000-0000-0000-0000-000000000001';
  raise exception 'Referenced student deleted';
