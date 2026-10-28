@@ -84,3 +84,14 @@ html[lang=ur] .lookup-message h2 { font-size:1.4rem; }
 .site-header .language-switcher button { color:white; }
 .site-header .language-switcher button[aria-pressed=true] { background:white; color:var(--accent); }
 .site-header .language-switcher button:hover:not(:disabled):not([aria-pressed=true]) { background:#ffffff22; color:white; }
+
+.auth-panel { max-width:600px; margin:36px auto; }
+.auth-panel>.language-switcher { width:fit-content; margin-bottom:28px; }
+.auth-panel h1 { font-size:1.8rem; }
+.auth-panel form:not(.language-switcher) { max-width:none; }
+.auth-panel form:not(.language-switcher)>button { width:100%; }
+.auth-panel .auth-links { display:flex; flex-wrap:wrap; gap:16px; justify-content:space-between; margin-top:24px; font-size:.85rem; }
+.auth-panel .auth-notice { background:hsl(186 40% 94%); padding:16px; border-radius:8px; }
+.auth-panel .auth-back { margin-top:28px; font-size:.85rem; }
+html[lang=ur] .auth-panel p,html[lang=ur] .auth-panel .auth-links,html[lang=ur] .auth-panel button { font-size:1.15rem; }
+@media(max-width:480px) { .auth-panel { padding:24px 20px; } }

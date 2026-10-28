@@ -6,6 +6,11 @@ insert into auth.users(id,email) values
  ('10000000-0000-0000-0000-000000000003','other-test@example.invalid'),
  ('10000000-0000-0000-0000-000000000004','inactive-test@example.invalid'),
  ('10000000-0000-0000-0000-000000000005','student-test@example.invalid');
+-- Signup now creates inactive rows automatically; replace only these transaction-local fixtures.
+delete from public.accounts where auth_user_id in (
+ '10000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000002',
+ '10000000-0000-0000-0000-000000000003','10000000-0000-0000-0000-000000000004',
+ '10000000-0000-0000-0000-000000000005');
 insert into public.accounts(id,auth_user_id,display_name,role,active) values
  ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001','Test admin','admin',true),
  ('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000002','Test shaykh','shaykh',true),
