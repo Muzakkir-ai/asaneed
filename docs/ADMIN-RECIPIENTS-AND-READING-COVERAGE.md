@@ -15,3 +15,5 @@ Default-route coverage across all ten imams (each full qiraah or both rawis) dis
 Footer row height is reduced from 24 mm to 20 mm and its heading gap from 2 mm to 1 mm. Native select arrows use one inset RTL/LTR chevron. Text-footer controls are retained as a collapsed optional fallback because missing SVG lines still use those text settings.
 
 Validation: production build, coverage/name-offset tests, adapter recipient-link tests, hosted rollback RLS/link/backup/snapshot tests, and existing route/artwork/heading/workspace suites. Security advisors report no new findings beyond the existing private deny-all tables and previously disabled leaked-password protection.
+
+For the explicitly recognized default Shatibiyyah/Taysir heading, al-Shatibi is the book author and al-Dani is the route source: Sakkal primary and bold KSA primary respectively. Custom route names never trigger that default inference.

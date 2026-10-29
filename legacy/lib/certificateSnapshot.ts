@@ -1,3 +1,4 @@
+import {arabicSearchKey} from './arabicSearch';
 import {zite} from 'zitejs/db';
 import {context} from '../compat/context';
 import {assembleIjazah} from './assembleIjazah';
@@ -61,7 +62,8 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  try{settings=latest?.settings?JSON.parse(latest.settings):null;}catch{}
  const {records:preps}=await zite.preparedIjazahs.findAll({filters:{ownerId:sourceOwner},limit:2000});
  const sourceHolding=holdings.find(h=>h.id===preps.find(p=>p.sanadId===sanadId)?.holdingId);
- const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||'',routeSource:sourceHolding?.routeSource||sanad.routeSource||''};
+ const standardShatibi=arabicSearchKey(heading).endsWith('من طريقي الشاطبية والتيسير');
+ const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSource:sourceHolding?.routeSource||sanad.routeSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
  return JSON.stringify({routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
 }
 
