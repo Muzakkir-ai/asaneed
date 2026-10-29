@@ -15,6 +15,8 @@
 .zite-app .palette-preview>div{border:1px solid;padding:18px;text-align:center}
 .zite-app .mobile-records{display:none}
 .zite-app .workspace-context select{min-width:160px;max-width:min(100%,420px);text-overflow:ellipsis}
+.zite-app label{margin-top:0}
+.zite-app .mobile-record-card{content-visibility:auto;contain-intrinsic-size:auto 240px}
 @media screen and (max-width:1023px){
  .zite-app .workspace-shell,.zite-app .workspace-shell.sidebar-collapsed{padding-right:0}
  .zite-app .workspace-sidebar{display:none}

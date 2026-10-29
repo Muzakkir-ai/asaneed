@@ -25,6 +25,7 @@ const PAGE = 15;
 export default function CertificatesView({ data, currentUserId, onChange, onPrint,loading=false,error='',onRetry,readOnly=false }: { readOnly?:boolean;loading?:boolean;error?:string;onRetry?:()=>void; data: Data | null; currentUserId:string; onChange: () => void; onPrint: (c: Cert) => void }) {
   const [q, setQ] = useState('');
   const [view,setView]=useState<'certificates'|'students'>('certificates');
+  const [filtersOpen,setFiltersOpen]=useState(false);
   const [details,setDetails]=useState<Cert[]|null>(null);
   const [selectedShaykh,setSelectedShaykh]=useState('all');
   const [page, setPage] = useState(0);
@@ -72,7 +73,8 @@ export default function CertificatesView({ data, currentUserId, onChange, onPrin
           <Plus className="h-4 w-4 me-2" /> إضافة طالب
         </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+      <Button variant="outline" className="md:hidden" aria-expanded={filtersOpen} aria-controls="certificate-filters" onClick={()=>setFiltersOpen(v=>!v)}>{filtersOpen?'إخفاء عوامل التصفية':'التصفية والترتيب'}</Button>
+      <div id="certificate-filters" className={(filtersOpen?'grid':'hidden md:grid')+' gap-3 sm:grid-cols-2 xl:grid-cols-6'}>
        <label className="text-sm space-y-1">المُجيز<select aria-label="تصفية حسب المُجيز" className="block w-full rounded-md border bg-background p-2" value={selectedShaykh} onChange={e=>{setSelectedShaykh(e.target.value);setPage(0);}}><option value="all">جميع المُجيزين</option>{data.issuers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
        <label className="text-sm space-y-1">القراءة<select aria-label="تصفية حسب القراءة" className="block w-full rounded-md border bg-background p-2" value={qari} onChange={e=>{setQari(e.target.value);setRawi('all');setPage(0);}}><option value="all">جميع القراءات</option>{QURRA.map(q=><option key={q.id} value={q.id}>{q.reading}</option>)}</select></label>
        <label className="text-sm space-y-1">الرواية<select aria-label="تصفية حسب الرواية" className="block w-full rounded-md border bg-background p-2" value={rawi} onChange={e=>{setRawi(e.target.value);setPage(0);}}><option value="all">جميع الروايات</option>{QURRA.filter(q=>qari==='all'||q.id===qari).flatMap(q=>q.rawis.map(r=><option key={q.id+'|'+r} value={q.id+'|'+r}>{displayRawi(q.id,r)} — {q.reading}</option>))}</select></label>
