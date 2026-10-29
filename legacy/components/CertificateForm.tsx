@@ -87,6 +87,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
     return()=>{active=false;};},[form.shaykhId,isAdmin]);
   const availableAsaneed=asaneed.filter(s=>s.shaykhId===form.shaykhId);
   const [selectedTariq,setSelectedTariq]=useState('');
+  useEffect(()=>{setSelectedTariq('');},[form.shaykhId]);
   const routeOptions=[...new Map((isGuest?selectedGuest?.routes||[]:holdings).filter(h=>h.tariqNumber).map(h=>[h.tariqNumber,h.tariqName])).entries()];
   const routeHoldings=holdings.filter(h=>(h.tariqNumber||'')===selectedTariq);
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));

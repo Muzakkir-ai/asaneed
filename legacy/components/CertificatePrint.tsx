@@ -503,7 +503,10 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                       </div>
                     </td>
                     <td className="certificate-footer-center certificate-footer-mujeez">
-                      {hasNumberedArtwork?<div className="certificate-numbered-artwork" role="img" aria-label={footerName}>{issuerArtwork.map(a=><span key={a.path} aria-hidden="true" style={{display:'block',width:(a.width/issuerArtwork[0].height*10.5)+'mm',height:(a.height/issuerArtwork[0].height*10.5)+'mm',maxWidth:'100%',backgroundColor:a.line==='line-03'?accentColor:borderColor,WebkitMaskImage:'url("'+activeArtworkBase+'/'+a.path+'")',maskImage:'url("'+activeArtworkBase+'/'+a.path+'")',WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>)}</div>:zakaullahArtwork?<div className="certificate-zakaullah-artwork" role="img" aria-label={footerName}>
+                      {hasNumberedArtwork?<div className="certificate-numbered-artwork" role="img" aria-label={footerName}>{issuerArtwork.map(a=><span key={a.path} aria-hidden="true" style={{display:'block',width:(a.width/issuerArtwork[0].height*10.5)+'mm',height:(a.height/issuerArtwork[0].height*10.5)+'mm',maxWidth:'100%',backgroundColor:a.line==='line-03'?accentColor:borderColor,WebkitMaskImage:'url("'+activeArtworkBase+'/'+a.path+'")',maskImage:'url("'+activeArtworkBase+'/'+a.path+'")',WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>) }
+                        {!issuerArtwork.some(a=>a.line==='line-02')&&footerProfile.showScientificQualification&&footerProfile.scientificQualification?.trim()&&<div className="certificate-footer-qualification" style={footerLineStyle('qualification')}>{footerProfile.scientificQualification.trim()}</div>}
+                        {!issuerArtwork.some(a=>a.line==='line-03')&&<>{(footerProfile.showTeachingRole&&footerProfile.teachingRole?.trim()||footerProfile.showMadrasaName&&footerProfile.madrasaName?.trim())&&<div className="certificate-footer-madrasa-line" style={footerLineStyle('teaching')}>{[footerProfile.showTeachingRole?footerProfile.teachingRole.trim():'',footerProfile.showMadrasaName?footerProfile.madrasaName.trim():''].filter(Boolean).join(' ')}</div>}{footerProfile.showMadrasaPlace&&footerProfile.madrasaPlace?.trim()&&<div className="certificate-footer-place" style={footerLineStyle('place')}>{footerProfile.madrasaPlace.trim()}</div>}</>}
+                      </div>:zakaullahArtwork?<div className="certificate-zakaullah-artwork" role="img" aria-label={footerName}>
                         {['zakaullah.svg','zakaullah-02.svg','zakaullah-03.svg'].map((file,i)=><span key={file} aria-hidden="true" className={`certificate-zakaullah-line certificate-zakaullah-line-${i+1}`} style={{WebkitMaskImage:`url("${assetBase()}/svg/${file}")`,maskImage:`url("${assetBase()}/svg/${file}")`}}/>)}
                       </div>:<>
                       <div className="certificate-footer-name" style={footerLineStyle('name')}>{footerName}</div>
@@ -529,4 +532,3 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     </div>
   );
 }
-
