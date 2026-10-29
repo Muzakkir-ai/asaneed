@@ -18,6 +18,7 @@ import {certificateDate,hijriOffsetChoices} from '../lib/certificateDates';
 import {QURRA,displayRawi} from '../lib/qurra';
 import {SelectGroup,SelectLabel,SelectSeparator} from '@project/components/ui/select';
 import {canUsePersonalSanad} from '../lib/personalSanadValidation';
+import {getWorkspaceSelection} from '../lib/workspaceSelection';
 
 const schema = z.object({
   shaykhId:z.string().min(1,'اختر المُجيز'),
@@ -43,7 +44,7 @@ export default function CertificateForm({ cert, asaneed, shaykhs, isAdmin, curre
   useEffect(()=>{
     if(!isAdmin)return;
     let active=true;
-    additionalShaykhs({action:'list'}).then(r=>{if(active)setGuestSheikhs(r.sheikhs);})
+    additionalShaykhs({action:'list'}).then(r=>{if(active){setGuestSheikhs(r.sheikhs);const selected=r.sheikhs.find(s=>s.id===getWorkspaceSelection().issuerId);if(!cert&&selected)setForm(p=>({...p,shaykhId:'guest:'+selected.id,sanadId:''}));}})
       .catch(()=>{if(active)setGuestError('تعذر تحميل المشايخ الإضافيين');});
     return()=>{active=false;};
   },[isAdmin]);

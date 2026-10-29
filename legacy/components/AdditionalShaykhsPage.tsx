@@ -15,7 +15,7 @@ type Matn={name:string;category:string;sanadText:string;wordingText:string;intro
 type Template={id:string;name:string;kind:string;body:string;formatting:string};
 const emptyMatn=():Matn=>({name:'',category:'',sanadText:'',wordingText:'',introductionId:'',conclusionId:'',sanadFormatting:'[]'});
 const blank={email:'',mutoon:[] as Matn[],name:'',qualification:'',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'ubaydi' as 'ubaydi'|'jazari',readings:[] as Reading[]};
-export default function AdditionalShaykhsPage({onSaved}:{onSaved:()=>void}){
+export default function AdditionalShaykhsPage({onSaved}:{onSaved:(issuerId?:string)=>void}){
  const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState('');
  const [items,setItems]=useState<Sheikh[]>([]);
  const [selected,setSelected]=useState('');
@@ -54,7 +54,7 @@ export default function AdditionalShaykhsPage({onSaved}:{onSaved:()=>void}){
   return {...x,readings:exists?x.readings.filter(r=>r.qariId!==qariId||r.rawi!==rawi):[...x.readings,{qariId,rawi}]};
  });
  const save=async()=>{
-  setSaving(true);try{await additionalShaykhs({action:'save',id:selected||undefined,...form});toast.success('حُفظ الشيخ وأسانيده وإجازاته');await load();onSaved();setEditingOpen(false);}
+  setSaving(true);try{const result=await additionalShaykhs({action:'save',id:selected||undefined,...form});toast.success('حُفظ الشيخ وأسانيده وإجازاته');const savedId=selected||result.sheikhs.find(s=>s.name===form.name.trim())?.id;onSaved(savedId);setEditingOpen(false);}
   catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ');}finally{setSaving(false);}
  };
  const editor=(label:string,key:'name'|'qualification'|'teachingRole'|'madrasaName'|'madrasaPlace')=>

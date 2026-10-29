@@ -1,4 +1,5 @@
 import {zite} from 'zitejs/db';
+import {context} from '../compat/context';
 import {assembleIjazah} from './assembleIjazah';
 import {parseFormatting} from './sanadFormatting';
 import {readingIdentityFromHeading} from './riwayahSvgHeading';
@@ -25,7 +26,7 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string){
  const result=assembleIjazah({...holding,rawi:prep.rawi||holding.rawi||''} as Parameters<typeof assembleIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
  if(result.missing.length)throw new Error('السند غير مكتمل: '+result.missing.join('، '));
  if(!sanadInChain(result.chain,holding.personalChain||''))throw new Error(sanadBlockMessage);
- if(result.chain!==sanad.chain)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
+ if(result.chain!==sanad.chain&&!context().scope?.readOnly)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
  return result.chain;
 }
 export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:string){

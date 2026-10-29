@@ -328,24 +328,88 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_records: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          payload: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      read_legacy_library: {
-        Args: {source_name?:string;page_number?:number}
-        Returns: Json
-      }
       approve_account: {
-        Args: { target_account:string; target_role:string; target_issuer?:string }
+        Args: {
+          target_account: string
+          target_issuer?: string
+          target_role: string
+        }
+        Returns: undefined
+      }
+      create_issuer_profile: {
+        Args: { new_name: string; personal?: boolean; profile: Json }
+        Returns: string
+      }
+      edit_account_profile: {
+        Args: {
+          new_active: boolean
+          new_name: string
+          new_role: string
+          target: string
+        }
         Returns: undefined
       }
       finalize_certificate: {
         Args: { certificate_id: string; snapshot: Json }
         Returns: string
       }
+      full_application_backup: { Args: never; Returns: Json }
+      legacy_identity_choices: { Args: never; Returns: Json }
+      list_application_accounts: { Args: never; Returns: Json }
       normalize_arabic: { Args: { value: string }; Returns: string }
+      read_legacy_library: {
+        Args: { page_number?: number; source_name?: string }
+        Returns: Json
+      }
+      reserve_certificate_number: {
+        Args: { certificate_id: string }
+        Returns: string
+      }
+      restore_application_backup: {
+        Args: { data: Json; overwrite?: boolean }
+        Returns: Json
+      }
+      save_account_profile: {
+        Args: {
+          legacy_id?: string
+          new_active: boolean
+          new_name: string
+          new_role: string
+          target: string
+        }
+        Returns: undefined
+      }
+      set_issuer_assignment: {
+        Args: { enabled: boolean; issuer: string; target: string }
+        Returns: undefined
+      }
+      verify_certificate_token: { Args: { token: string }; Returns: Json }
       verify_ijazah: { Args: { p_number: string }; Returns: Json }
     }
     Enums: {

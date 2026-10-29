@@ -25,6 +25,7 @@ export default function NarratorDirectoryPage(){
  const [data,setData]=useState<NarratorDirectoryOutputType|null>(null);
  const [error,setError]=useState(false);
  const [query,setQuery]=useState('');
+ const [visibleCount,setVisibleCount]=useState(40);
  const [qariId,setQariId]=useState('all');
  const [rawi,setRawi]=useState('all');
  const [selectedId,setSelectedId]=useState('');
@@ -67,10 +68,11 @@ export default function NarratorDirectoryPage(){
      <Card className="self-start overflow-hidden"><CardContent className="p-2">
        <div className="flex items-center justify-between px-3 py-2 text-xs text-muted-foreground"><span>الأسماء</span><span>{filtered.length}</span></div>
        <div className="max-h-[560px] space-y-1 overflow-y-auto px-1 pb-1" role="listbox" aria-label="رجال الأسانيد">
-        {filtered.map(p=><button key={p.id} type="button" role="option" aria-selected={active?.id===p.id} onClick={()=>setSelectedId(p.id)} className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-right transition-colors ${active?.id===p.id?'bg-primary/10 text-foreground':'hover:bg-muted/60'}`}>
+        {filtered.slice(0,visibleCount).map(p=><button key={p.id} type="button" role="option" aria-selected={active?.id===p.id} onClick={()=>setSelectedId(p.id)} className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-right transition-colors ${active?.id===p.id?'bg-primary/10 text-foreground':'hover:bg-muted/60'}`}>
           <span className="min-w-0 break-words text-sm leading-6">{p.name}</span><ChevronLeft className="h-4 w-4 shrink-0 text-muted-foreground"/>
         </button>)}
         {filtered.length===0&&<p className="py-10 text-center text-sm text-muted-foreground">لا توجد نتائج مطابقة</p>}
+        {filtered.length>visibleCount&&<Button variant="outline" className="w-full" onClick={()=>setVisibleCount(n=>n+40)}>عرض المزيد من الأسماء</Button>}
        </div>
      </CardContent></Card>
      {active&&<Card className="self-start overflow-hidden"><CardContent className="space-y-6 p-4 sm:p-6">

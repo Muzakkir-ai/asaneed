@@ -15,6 +15,6 @@ async function build(){
   });
  });
  const shell=".zite-app .container{width:100%;max-width:none;padding-inline:4%}.zite-app .studio-header .container{gap:16px;flex-wrap:wrap}.zite-app .studio-header-actions{flex-wrap:wrap;justify-content:flex-end}.zite-app .studio-header-brand{flex:1;min-width:210px}.zite-app .studio-header h1{white-space:normal}.zite-app .studio-admin-tools{white-space:nowrap}@media(max-width:640px){.zite-app .studio-header-brand{width:100%}.zite-app .studio-header-actions{width:100%;justify-content:flex-start}.zite-app .studio-header .container{padding-block:12px}}"+'body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}\n@media print{html:has(.zite-app .print-area),body:has(.zite-app .print-area),body>main:has(.zite-app .print-area){width:297mm!important;height:210mm!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}body:has(.zite-app .print-area){visibility:hidden}.zite-app .print-area,.zite-app .print-area *{visibility:visible!important}}';
- fs.writeFileSync('app/studio/studio.css',result.root.toString()+'\n'+shell);
+ fs.writeFileSync('app/studio/studio.css',result.root.toString()+'\n'+shell+'\n'+fs.readFileSync('legacy/workspace.css','utf8'));
 }
 build().catch(error=>{console.error(error);process.exitCode=1;});

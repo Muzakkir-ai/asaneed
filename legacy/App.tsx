@@ -23,6 +23,8 @@ import AdditionalShaykhsPage from './components/AdditionalShaykhsPage';
 import MyCertificatesPage from './components/MyCertificatesPage';
 import UsersManager from './components/UsersManager';
 import CertificateVerificationPage from './components/CertificateVerificationPage';
+import {WorkspaceSidebar,WorkspaceAccounts,type WorkspaceDirectory,type WorkspacePerson} from './components/WorkspaceNavigation';
+import {setWorkspaceSelection} from './lib/workspaceSelection';
 
 export type Data = GetDashboardOutputType;
 export type Cert = Data['certificates'][0];
@@ -50,6 +52,17 @@ function PrivateApp() {
   const activeUserId=useRef<string | undefined>(user?.id);
   activeUserId.current=user?.id;
   const [data, setData] = useState<Data | null>(null);
+  const [directory,setDirectory]=useState<WorkspaceDirectory|null>(null);
+  const [directoryError,setDirectoryError]=useState('');
+  const [target,setTarget]=useState(''),[issuer,setIssuer]=useState(''),[editInspection,setEditInspection]=useState(false);
+  const [active,setActive]=useState(user?.role==='student'?'mycerts':'certs');
+  const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('asaneed-sidebar')==='collapsed');
+  const scopeVersion=useRef(0);
+  const person=directory?.accounts.find(a=>a.id===(target||directory.actorId));
+  const inspecting=!!directory&&!!target&&target!==directory.actorId;
+  const refreshDirectory=async()=>{try{const r=await fetch('/api/workspace-scope');if(!r.ok)throw Error('تعذر تحديث دليل الحسابات');setDirectory(await r.json());}catch(e){toast.error(e instanceof Error?e.message:'تعذر التحديث');}};
+  const changeScope=(accountId:string,issuerId:string,edit=false)=>{scopeVersion.current++;setWorkspaceSelection({accountId,issuerId,edit});setData(null);setPrinting(null);setTarget(accountId);setIssuer(issuerId);setEditInspection(edit);};
+  useEffect(()=>{if(!user)return;let current=true;fetch('/api/workspace-scope').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d as WorkspaceDirectory;}).then(d=>{if(!current)return;const own=d.accounts.find(a=>a.id===d.actorId);const remembered=localStorage.getItem('asaneed-issuer:'+d.actorId);const chosen=own?.issuers.find(i=>i.id===remembered)?.id||own?.issuers[0]?.id||'';changeScope(d.actorId,chosen);setDirectory(d);}).catch(e=>{if(current)setDirectoryError(e.message);});return()=>{current=false;};},[user?.id]);
   const [printing, setPrinting] = useState<Cert | null>(null);
   const [profileName, setProfileName] = useState('');
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -72,24 +85,27 @@ function PrivateApp() {
 
   const load = useCallback(async () => {
     const requestedUser=user?.id;
-    if(!requestedUser)return;
+    if(!requestedUser||!directory)return;
+    const version=scopeVersion.current;
     setLoadError('');setRefreshing(true);
     try {
       const dashboard=await getDashboard({});
-      if(activeUserId.current===requestedUser)setData(dashboard);
+      if(activeUserId.current===requestedUser&&version===scopeVersion.current)setData(dashboard);
     } catch(e) {
-      if(activeUserId.current===requestedUser)setLoadError(e instanceof Error?e.message:'تعذّر تحميل البيانات');
-    }finally{if(activeUserId.current===requestedUser)setRefreshing(false);}
-  }, [user?.id]);
+      if(activeUserId.current===requestedUser&&version===scopeVersion.current)setLoadError(e instanceof Error?e.message:'تعذّر تحميل البيانات');
+    }finally{if(activeUserId.current===requestedUser&&version===scopeVersion.current)setRefreshing(false);}
+  }, [user?.id,directory,target,issuer,editInspection]);
   useEffect(() => {
     if (user) load();
   }, [user, load]);
 
   if(sessionExpired)return <div className="min-h-screen grid place-items-center p-6" dir="rtl"><div role="alert" className="max-w-lg space-y-4 rounded-xl border p-6"><h1 className="text-xl font-bold">انتهت جلسة الدخول</h1><p>سجّل الدخول مرة أخرى للمتابعة. لم تُلغَ صلاحياتك ولم تُحذف بياناتك.</p><Button onClick={()=>loginWithRedirect()}>تسجيل الدخول والمتابعة</Button></div></div>;
   if (isLoading || !user) return <div className="min-h-screen grid place-items-center text-muted-foreground">جارٍ التحميل…</div>;
+  if(directoryError)return <div role="alert" className="p-6">{directoryError}<Button onClick={()=>window.location.reload()}>إعادة المحاولة</Button></div>;
+  if(!directory)return <div role="status" className="p-6">جارٍ تحميل مساحتك…</div>;
 
   const shaykhName = displayName || user.name || `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
-  const isAdmin = !!data?.isAdmin;
+  const isAdmin = directory.isAdmin;
   const isStaff=user.role!=='student';
   const changeName = async () => {
     if (profileName.trim().length < 2) return toast.error('أدخل اسماً صحيحاً');
@@ -105,22 +121,23 @@ function PrivateApp() {
     // An administrator previewing someone else's certificate must never become
     // the fallback mujeez merely because the issuer's profile is still loading.
     const issuerFallback=printing.shaykhName||(printing.shaykhId===user.id?shaykhName:'');
-    return <CertificatePrint cert={printing} sanad={sanad} shaykhName={issuerFallback} onClose={() => setPrinting(null)} onFinalized={result=>{
+    return <CertificatePrint readOnly={inspecting&&!editInspection} cert={printing} sanad={sanad} shaykhName={issuerFallback} onClose={() => setPrinting(null)} onFinalized={result=>{
       setPrinting(current=>current?.id===printing.id?{...current,publicationStatus:'final',snapshotChain:result.chain,snapshotHeading:result.heading,snapshotFormatting:result.formatting}:current);
       void load();
     }} />;
   }
 
   return (
-    <div className="min-h-screen">
+    <div className={'min-h-screen workspace-shell '+(collapsed?'sidebar-collapsed':'')}>
       <Toaster />
+      <WorkspaceSidebar active={active} onSelect={setActive} admin={isAdmin&&!inspecting} staff={isStaff} collapsed={collapsed} onCollapse={()=>setCollapsed(v=>{localStorage.setItem('asaneed-sidebar',v?'expanded':'collapsed');return !v;})} onLogout={()=>logout()} english={language==='en'}/>
       <header className="studio-header bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4">
           <div className="studio-header-brand flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 sm:h-11 sm:w-11 shrink-0 rounded-full bg-accent grid place-items-center"><BookOpen className="h-5 w-5" /></div>
             <div className="min-w-0">
               <h1 className="font-display text-lg sm:text-2xl font-bold leading-tight">منصة الأسانيد والإجازات</h1>
-              <p className="text-xs sm:text-sm opacity-80 truncate">مرحباً، الشيخ {shaykhName}</p>
+              <p className="text-xs sm:text-sm opacity-80 truncate">{person?.name||shaykhName}</p>
             </div>
           </div>
           <div className="studio-header-actions flex gap-2 items-center">
@@ -133,26 +150,18 @@ function PrivateApp() {
         <div className="h-1 bg-accent" />
       </header>
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        <Tabs defaultValue={isStaff?"certs":"mycerts"} dir={language==='ar'?'rtl':'ltr'}>
-          <div className="-mx-3 sm:mx-0 mb-6 overflow-x-auto px-3 sm:px-0"><TabsList className="w-max">
-            {isStaff&&<TabsTrigger value="certs">{tx('الطلاب والشهادات','Students & Certificates')}</TabsTrigger>}
-            <TabsTrigger value="mycerts">{tx('شهاداتي','My Certificates')}</TabsTrigger>
-            {isStaff&&<TabsTrigger value="asaneed">{tx('أسانيدي','My Asaneed')}</TabsTrigger>}
-            {isStaff&&<TabsTrigger value="narrators">{tx('رجال الأسانيد','Narrator Directory')}</TabsTrigger>}
-            {isAdmin&&<TabsTrigger value="shared-sanads">{tx('إدارة الأسانيد','Sanad Management')}</TabsTrigger>}
-            {isAdmin&&<TabsTrigger value="extra-sheikhs">{tx('المشايخ الإضافيون','Additional Shaykhs')}</TabsTrigger>}
-            {isAdmin&&<TabsTrigger value="users">{tx('المستخدمون','Users')}</TabsTrigger>}
-            <TabsTrigger value="profile">{tx('الملف الشخصي','Profile')}</TabsTrigger>
-          </TabsList></div>
+        {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>changeScope(target,issuer,!editInspection)}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{const own=directory.accounts.find(a=>a.id===directory.actorId);const chosen=localStorage.getItem('asaneed-issuer:'+directory.actorId);changeScope(directory.actorId,own?.issuers.find(i=>i.id===chosen)?.id||own?.issuers[0]?.id||'');setActive('certs');}}>العودة إلى مساحتي</Button></section>}
+        {isStaff&&active!=='users'&&<div className="workspace-context mb-5 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm font-medium">المجيز:<select className="rounded-md border bg-background p-2 max-w-full" aria-label="المجيز الحالي" value={issuer} onChange={e=>{const id=e.target.value;if(!inspecting)localStorage.setItem('asaneed-issuer:'+directory.actorId,id);changeScope(target,id,editInspection);}}>{!person?.issuers.length&&<option value="">لم يُعيّن مجيز بعد</option>}{person?.issuers.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label><span className="text-xs text-muted-foreground">{inspecting?'معاينة إدارية':'مساحتي'}</span></div>}
+        <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+issuer+':'+editInspection}>
           <TabsContent value="certs">
-            <CertificatesView loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
+            <CertificatesView readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
           </TabsContent>
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
-          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={load}/></TabsContent>}
-          {isAdmin&&<TabsContent value="users"><UsersManager/></TabsContent>}
+          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={id=>{if(id)changeScope(target,id,editInspection);void refreshDirectory();void load();}}/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="users"><div className="space-y-8"><WorkspaceAccounts directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id,p.issuers[0]?.id||'');setActive('certs');}}/><UsersManager/></div></TabsContent>}
           <TabsContent value="profile"><div className="max-w-xl space-y-4"><div className="space-y-3 rounded-lg border p-5"><h2 className="text-xl font-bold">تعديل اسم المستخدم</h2><p className="text-sm text-muted-foreground">اسمك الحالي: {shaykhName}</p><Input placeholder="الاسم الجديد" value={profileName} onChange={e=>setProfileName(e.target.value)} /><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button></div><ShaykhPrintProfileForm key={user.id}/>{isAdmin&&<AssetSourcePanel/>}{isAdmin&&<DataBackupPanel/>}</div></TabsContent>
         </Tabs>
       </main>

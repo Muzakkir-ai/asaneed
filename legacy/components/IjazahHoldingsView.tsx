@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import {matchesArabic} from '../lib/arabicSearch';
 import {ijazahHoldings,sanadSections,personalWording,IjazahHoldingsOutputType,SanadSectionsOutputType} from '../lib/api';
 import {Pencil,Plus,Trash2,Eye} from 'lucide-react';
 import {Button} from '@project/components/ui/button';
@@ -19,7 +20,8 @@ type Section=SanadSectionsOutputType['sections'][number];
 export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
  const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState('');
  const [holdings,setHoldings]=useState<Holding[]>([]);
- const sortedHoldings=[...holdings].sort((a,b)=>QURRA.findIndex(q=>q.id===a.qariId)-QURRA.findIndex(q=>q.id===b.qariId)||((QURRA.find(q=>q.id===a.qariId)?.rawis as readonly string[]|undefined)?.indexOf(a.rawi||'')??-1)-((QURRA.find(q=>q.id===b.qariId)?.rawis as readonly string[]|undefined)?.indexOf(b.rawi||'')??-1));
+ const [search,setSearch]=useState('');
+ const sortedHoldings=holdings.filter(h=>matchesArabic([h.name,h.rawi,QURRA.find(q=>q.id===h.qariId)?.reading].join(' '),search)).sort((a,b)=>QURRA.findIndex(q=>q.id===a.qariId)-QURRA.findIndex(q=>q.id===b.qariId)||((QURRA.find(q=>q.id===a.qariId)?.rawis as readonly string[]|undefined)?.indexOf(a.rawi||'')??-1)-((QURRA.find(q=>q.id===b.qariId)?.rawis as readonly string[]|undefined)?.indexOf(b.rawi||'')??-1));
  const [sections,setSections]=useState<Section[]>([]);
  const [introductionId,setIntroductionId]=useState('');
  const [wordingId,setWordingId]=useState('');
@@ -119,6 +121,7 @@ export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
  if(loading)return <p role="status" className="rounded-xl border p-6">جارٍ تحميل الأسانيد والإجازات…</p>;
  if(loadError)return <div role="alert" className="rounded-xl border p-6 space-y-3"><p>{loadError}</p><Button onClick={refresh}>إعادة المحاولة</Button></div>;
  return <div className="space-y-4" dir="rtl">
+  <Input aria-label="بحث أسانيدي" placeholder="ابحث عن القراءة أو الرواية…" value={search} onChange={e=>setSearch(e.target.value)}/>
   <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-bold">إجازاتي وأسانيدي الشخصية</h2></div><div className="flex gap-2"><Button onClick={()=>start()}><Plus className="h-4 w-4 me-1"/>إضافة إجازة</Button><Button variant="outline" disabled={busy} onClick={()=>{setDeleteAllPhrase('');setDeleteAllOpen(true);}}>حذف جميع الأسانيد</Button></div></div>
   {deleteAllOpen&&<div className="rounded-lg border border-destructive p-4 space-y-3"><strong>حذف جميع الأسانيد المحفوظة في حسابك</strong><p className="text-sm">سيُحذف جميع سجلات إجازاتك وأسانيدك المحفوظة والمسودات غير المرتبطة بشهادات صادرة. تبقى بيانات الشهادات الصادرة محفوظة للرجوع إليها، لكن لن تتاح طباعتها دون سند محفوظ. لا يمكن التراجع عن الحذف.</p><p className="text-sm">اكتب «حذف جميع الأسانيد» للتأكيد.</p><Input dir="rtl" value={deleteAllPhrase} onChange={e=>setDeleteAllPhrase(e.target.value)} placeholder="حذف جميع الأسانيد"/><div className="flex gap-2"><Button variant="destructive" disabled={busy||deleteAllPhrase!=='حذف جميع الأسانيد'} onClick={deleteEverything}>حذف نهائي</Button><Button variant="outline" onClick={()=>setDeleteAllOpen(false)}>إلغاء</Button></div></div>}
   <Dialog open={!!editing} onOpenChange={open=>{if(!open&&!busy)reset()}}><DialogContent dir="rtl" className="max-w-4xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{editing==='new'?'إضافة الإجازات':'تعديل الإجازة'}</DialogTitle></DialogHeader><div className="space-y-4">

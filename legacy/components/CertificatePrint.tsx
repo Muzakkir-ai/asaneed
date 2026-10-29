@@ -30,7 +30,7 @@ function FooterDateRow({label,date,suffix}:{label:string;date:string;suffix:stri
     <span className="certificate-date-suffix">{suffix}</span>
   </div>;
 }
-type Props = { cert: Cert; sanad?: Data['asaneed'][0]; shaykhName: string; onClose: () => void; onFinalized:(result:{chain:string;heading:string;formatting:string})=>void };
+type Props = { readOnly?:boolean;cert: Cert; sanad?: Data['asaneed'][0]; shaykhName: string; onClose: () => void; onFinalized:(result:{chain:string;heading:string;formatting:string})=>void };
 const quranicVerse = 'ﲃﲄﲅﲆ۞ﲈﲉﲊﲋ۞';
 const hadiths = [
   '«خَيرُكُم مَن تَعَلَّم القُرآنَ وَعَلَّمَهُ»',
@@ -216,7 +216,7 @@ const defaults:Record<Area,Typography> = {
   conclusion:{font:'KSA Regular',size:9,color:'primary'},
   shaykh:{font:'KSA Regular',size:17,color:'secondary'},
 };
-export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onFinalized }: Props) {
+export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onFinalized,readOnly=false }: Props) {
   const isDraft=cert.publicationStatus==='draft';
   // New certificates default to number-only; already finalized certificates
   // without a printMode snapshot retain their historical QR presentation.
@@ -465,7 +465,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
-          {isDraft?<Button disabled={finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> اعتماد نهائي</Button>:<>
+          {isDraft?<Button disabled={readOnly||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
             <Button disabled={overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
             <Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>
           </>}
