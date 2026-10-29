@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {defaultCertificateFilters,decodeCertificateFilters,encodeCertificateFilters,reconcileCertificateFilters} from '../legacy/lib/certificateFilters.ts';
+import {certificateSummary} from '../legacy/lib/certificateSummary.ts';
+const now=100000000;
+const chosen={...defaultCertificateFilters,query:'محمد',qari:'nafi',rawi:'nafi|ورش',year:'2026',status:'draft',sort:'completion' as const};
+assert.deepEqual(decodeCertificateFilters(encodeCertificateFilters(chosen,now),now+1000),chosen);
+for(const value of ['broken','{}',encodeCertificateFilters(chosen,now-5*60*60*1000),encodeCertificateFilters(chosen,now+1000)])assert.deepEqual(decodeCertificateFilters(value,now),defaultCertificateFilters);
+const options={issuers:['guest:one'],qariRawis:{nafi:['قالون','ورش'],asim:['حفص','شعبة']},years:['2026'],showIssuer:false};
+assert.deepEqual(reconcileCertificateFilters({...chosen,issuer:'guest:other',rawi:'asim|حفص',year:'2025'},options),{...chosen,issuer:'all',rawi:'all',year:'all'});
+assert.equal(reconcileCertificateFilters({...chosen,qari:'missing'},options).qari,'all');
+assert.equal(reconcileCertificateFilters({...chosen,issuer:'guest:one'},{...options,showIssuer:true}).issuer,'guest:one');
+assert.equal(certificateSummary('بِرِوَايَةِ حَفْصٍ عَنِ الإِمَامِ عَاصِمٍ الكُوفِيِّ مِن طَرِيقَيِ الشَّاطِبِيَّةِ وَالتَّيسِيرِ','asim','حفص'),'حفص عن عاصم · الشاطبية والتيسير');
+assert.equal(certificateSummary('برواية قالون عن الإمام نافع المدني من طريقي الشاطبية والتيسير','nafi','قالون'),'قالون عن نافع · الشاطبية والتيسير');
+assert.equal(certificateSummary('برواية ورش عن الإمام نافع المدني من طريق الأزرق','nafi','ورش'),'ورش عن نافع · الأزرق');
+assert.equal(certificateSummary('بقراءة نافع المدني بروايتي قالون وورش من طريقي الشاطبية والتيسير'),'قراءة نافع المدني بروايتي قالون وورش · الشاطبية والتيسير');
+assert.equal(certificateSummary('برواية حفص عن الإمام عاصم الكوفي من طريق المصباح عن الفيل','asim','حفص'),'حفص عن عاصم · المصباح عن الفيل');
+console.log('PASS: scoped filter persistence/expiry, stale choices, dependent rawi reset, and concise summaries preserving the selected route');

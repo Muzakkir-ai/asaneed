@@ -5,7 +5,7 @@ import {parseFormatting} from './sanadFormatting';
 import {readingIdentityFromHeading} from './riwayahSvgHeading';
 import {canUsePersonalSanad,sanadInChain,sanadBlockMessage,reachesJunction} from './personalSanadValidation';
 const one=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
-export async function getCurrentSanadForIssuance(sanadId:string,uid:string){
+export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{persist=true}:{persist?:boolean}={}){
  const sanad=await zite.asaneed.findOne({id:sanadId}).catch(()=>null);
  if(!sanad||one(sanad.shaykh)!==uid)throw new Error('السند غير موجود لهذا الحساب');
  // Additional-shaykh drafts use the chain validated when they were created or
@@ -26,7 +26,7 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string){
  const result=assembleIjazah({...holding,rawi:prep.rawi||holding.rawi||''} as Parameters<typeof assembleIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
  if(result.missing.length)throw new Error('السند غير مكتمل: '+result.missing.join('، '));
  if(!sanadInChain(result.chain,holding.personalChain||''))throw new Error(sanadBlockMessage);
- if(result.chain!==sanad.chain&&!context().scope?.readOnly)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
+ if(persist&&result.chain!==sanad.chain&&!context().scope?.readOnly)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
  return result.chain;
 }
 export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:string){
@@ -65,7 +65,7 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
 /** Resolve a draft afresh; old certificates with an unavailable original holding
  * still preview safely from their issuer-owned preserved text, not another sanad. */
 export async function getDraftSanadForCertificate(sanadId:string,issuer:string,certificateId:string){
- try{return {chain:await getCurrentSanadForIssuance(sanadId,issuer),source:'current' as const};}
+ try{return {chain:await getCurrentSanadForIssuance(sanadId,issuer,{persist:false}),source:'current' as const};}
  catch(error){
   const {records}=await zite.certificateSnapshots.findAll({filters:{certificateId},limit:100});
   const saved=records.find(s=>s.ownerId===issuer&&!!s.chain?.trim());

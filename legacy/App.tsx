@@ -154,7 +154,7 @@ function PrivateApp() {
         {isStaff&&active!=='users'&&<div className="workspace-context mb-5 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm font-medium">المجيز:<select className="rounded-md border bg-background p-2 max-w-full" aria-label="المجيز الحالي" value={issuer} onChange={e=>{const id=e.target.value;if(!inspecting)localStorage.setItem('asaneed-issuer:'+directory.actorId,id);changeScope(target,id,editInspection);}}>{!person?.issuers.length&&<option value="">لم يُعيّن مجيز بعد</option>}{person?.issuers.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label><span className="text-xs text-muted-foreground">{inspecting?'معاينة إدارية':'مساحتي'}</span></div>}
         <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+issuer+':'+editInspection}>
           <TabsContent value="certs">
-            <CertificatesView readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
+            <CertificatesView scopeKey={directory.actorId+':'+target+':'+issuer} administrativeView={inspecting} readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
           </TabsContent>
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting}/></TabsContent>

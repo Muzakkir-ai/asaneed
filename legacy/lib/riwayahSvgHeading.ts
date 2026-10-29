@@ -54,11 +54,15 @@ export function readingIdentityFromHeading(heading:string):{qariId:string;rawi:s
 }
 
 /** Five adjacent original SVGs, with names and roles from the shared catalog. */
-export function svgReadingParts(heading:string):RiwayahSvgName[]|null{
+export function svgReadingParts(heading:string,{preserveHistoricalRoute=false}:{preserveHistoricalRoute?:boolean}={}):RiwayahSvgName[]|null{
  const identity=readingIdentityFromHeading(heading);
  if(!identity)return null;
  const q=QURRA.find(q=>q.id===identity.qariId);
  if(!q)return null;
+ // A named non-standard route must not silently acquire a Shatibiyyah/Durrah image.
+ // Existing finalized output retains its previous artwork selection.
+ const route=simple(heading).match(/\s+من\s+طريق(?:ي|ين)?\s+(.+)$/u)?.[1];
+ if(!preserveHistoricalRoute&&route){const expected=q.family==='seven'?['الشاطبية','التيسير']:['الدرة','التحبير'];if(!expected.every(name=>route.includes(simple(name))))return null;}
  const rawiSvg=(q.rawiSvgs as unknown as Record<string,string>)[identity.rawi];
  if(!rawiSvg)return null;
  return [readingCatalog.common.riwayah,

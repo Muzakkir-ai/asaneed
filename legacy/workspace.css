@@ -17,6 +17,30 @@
 .zite-app .workspace-context select{min-width:160px;max-width:min(100%,420px);text-overflow:ellipsis}
 .zite-app label{margin-top:0}
 .zite-app .mobile-record-card{content-visibility:auto;contain-intrinsic-size:auto 240px}
+.zite-app .certificate-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.zite-app .certificate-search{flex:1 1 220px;min-width:0}
+.zite-app .certificate-count{white-space:nowrap;font-size:12px;color:hsl(var(--muted-foreground))}
+.zite-app .filter-trigger{gap:6px;white-space:nowrap}
+.zite-app .filter-counter{display:grid;place-items:center;min-width:20px;height:20px;border-radius:20px;background:hsl(var(--primary)/.1);font-size:11px}
+.zite-app .certificate-filter-panel[hidden]{display:none}
+.zite-app .certificate-filter-chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.zite-app .certificate-filter-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;min-height:32px;border-radius:20px;border:1px solid hsl(var(--border));background:hsl(var(--muted));color:hsl(var(--foreground));font-size:12px;max-width:100%;overflow-wrap:anywhere}
+.zite-app .certificate-menu-item{display:flex;align-items:center;gap:9px;width:100%;padding:10px;border:0;border-radius:5px;background:transparent;text-align:right;font-size:13px}
+.zite-app .certificate-menu-item:hover,.zite-app .certificate-menu-item:focus-visible{background:hsl(var(--muted))}
+.zite-app .certificate-card-summary{font-size:13px;line-height:1.65;color:hsl(var(--muted-foreground));overflow-wrap:anywhere}
+.zite-app .certificate-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.zite-app .certificate-card-title h3{font-size:16px;font-weight:600;line-height:1.6;margin:0}
+.zite-app .certificate-status{font-size:10px;line-height:1.7;white-space:nowrap;color:hsl(var(--muted-foreground));border:1px solid hsl(var(--border));border-radius:20px;padding:1px 7px}
+.zite-app .certificate-card-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:hsl(var(--muted-foreground))}
+.zite-app .certificate-card-issuer{font-size:12px;color:hsl(var(--muted-foreground))}
+.zite-app .certificate-heading-preview{position:relative;width:100%;overflow:hidden;min-width:0;background:#fffdf7}
+.zite-app .certificate-heading-stage{position:absolute;top:12px;left:50%;transform-origin:top center}
+.zite-app .certificate-heading-preview .certificate-header-art{position:relative;top:auto;left:auto;transform:none;width:100%}
+.zite-app .authentic-palette-preview>div{padding:8px}
+.zite-app .palette-sample-copy{font-family:'KSA Regular',serif;font-size:14px;line-height:1.8}
+.zite-app [role=dialog].certificate-preview-dialog{position:fixed;inset:0;transform:none!important;width:100vw;max-width:none!important;height:100dvh;max-height:100dvh;padding:0;border-radius:0;display:block;overflow:auto}
+.zite-app [role=dialog].certificate-preview-dialog>button:last-child{right:auto;left:10px;background:hsl(var(--background));z-index:60}
+.zite-app .mobile-record-actions button{gap:6px}
 @media screen and (max-width:1023px){
  .zite-app .workspace-shell,.zite-app .workspace-shell.sidebar-collapsed{padding-right:0}
  .zite-app .workspace-sidebar{display:none}
@@ -28,9 +52,14 @@
 @media screen and (max-width:767px){
  .zite-app .desktop-records{display:none}
  .zite-app .mobile-records{display:grid;gap:12px}
- .zite-app .mobile-record-card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:12px;padding:16px;min-width:0}
+ .zite-app .mobile-record-card{background:hsl(var(--card));border:1px solid hsl(var(--border));border-radius:12px;padding:12px;min-width:0}
  .zite-app .mobile-record-card p{overflow-wrap:anywhere}
  .zite-app .mobile-record-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+ .zite-app .compact-certificate-card{display:grid;gap:5px;contain-intrinsic-size:auto 190px}
+ .zite-app .compact-certificate-card p{margin-bottom:0}
+ .zite-app .compact-certificate-card .mobile-record-actions{margin-top:3px;gap:6px}
+ .zite-app .certificate-search{flex-basis:100%}
+ .zite-app .certificate-toolbar .filter-trigger{margin-inline-start:auto}
  .zite-app [role=dialog]:not(.workspace-drawer){width:100%;max-width:100%!important;height:100dvh;max-height:100dvh;inset:0;transform:none!important;border-radius:0;padding:24px 16px;overflow-y:auto}
  .zite-app [role=dialog]>button:last-child{min-width:40px;min-height:40px}
  .zite-app .workspace-context label{width:100%;align-items:flex-start;flex-direction:column}

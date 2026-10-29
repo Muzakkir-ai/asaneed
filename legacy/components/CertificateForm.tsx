@@ -15,7 +15,11 @@ import { toast } from 'sonner';
 import type { Cert, Data } from '../App';
 import { fromIso, toIso } from '../lib/date';
 import {certificateDate,hijriOffsetChoices} from '../lib/certificateDates';
-import {QURRA,displayRawi} from '../lib/qurra';
+import {QURRA,displayRawi,readingText,routeFor} from '../lib/qurra';
+import {riwayahColors,type RiwayahColorsOutputType} from '../lib/api';
+import {vocalizeReadingLabel} from '../lib/vocalizedReading';
+import {CertificateHeadingPreview} from './CertificateHeading';
+import {readingIdentityFromHeading} from '../lib/riwayahSvgHeading';
 import {SelectGroup,SelectLabel,SelectSeparator} from '@project/components/ui/select';
 import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 import {getWorkspaceSelection} from '../lib/workspaceSelection';
@@ -94,6 +98,18 @@ export default function CertificateForm({ cert, asaneed, shaykhs, isAdmin, curre
   const choosingQiraah=!cert&&!isGuest&&form.sanadId.startsWith('qiraah:');
   const guestReadings=selectedGuest?.readings||[];
   const guestChoices=QURRA.map(q=>({q,rawis:q.rawis.filter(rawi=>guestReadings.some(r=>r.qariId===q.id&&r.rawi===rawi))})).filter(item=>item.rawis.length);
+  const [headingPreviewOpen,setHeadingPreviewOpen]=useState(false),[previewColors,setPreviewColors]=useState<RiwayahColorsOutputType['entries']|null>(null),[previewColorError,setPreviewColorError]=useState(false);
+  useEffect(()=>{if(!headingPreviewOpen||previewColors)return;let active=true;riwayahColors({action:'list'}).then(r=>{if(active){setPreviewColors(r.entries);setPreviewColorError(false);}}).catch(()=>{if(active)setPreviewColorError(true);});return()=>{active=false;};},[headingPreviewOpen,previewColors]);
+  const previewChoices:{qariId:string;rawi:string;heading:string}[]=[];
+  if(cert){const heading=cert.snapshotHeading||asaneed.find(s=>s.id===cert.sanadId)?.chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||cert.qiraahName;const identity=readingIdentityFromHeading(heading);previewChoices.push({qariId:identity?.qariId||'',rawi:identity?.rawi||'',heading:vocalizeReadingLabel(heading)});}
+  else{
+   const full=form.sanadId.startsWith('guest-qiraah:')||form.sanadId.startsWith('qiraah:');
+   let qariId='',rawi='';
+   if(full)qariId=form.sanadId.slice(form.sanadId.indexOf(':')+1);
+   else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
+   else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
+   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+routeFor([qariId]))});
+  }
 
   const [touched, setTouched] = useState(false);
   const parsed = schema.safeParse(form);
@@ -226,6 +242,7 @@ export default function CertificateForm({ cert, asaneed, shaykhs, isAdmin, curre
             {choosingQiraah&&<p className="text-xs text-muted-foreground">شهادتان مستقلتان بنفس تاريخ الختم</p>}
             {err('sanadId')}
           </div>
+          {previewChoices.length>0&&<details className="rounded-lg border p-3" onToggle={e=>setHeadingPreviewOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-semibold">معاينة عنوان الإجازة قبل الحفظ</summary>{headingPreviewOpen&&<div className="space-y-3 mt-3">{previewChoices.length>1&&<p className="text-xs text-muted-foreground">القراءة كاملة: تُنشأ شهادتان مستقلتان، وهذه معاينة عنوان كل رواية.</p>}{previewColorError?<p role="alert" className="text-sm text-destructive">تعذر تحميل ألوان الروايات. أغلق المعاينة وافتحها لإعادة المحاولة.</p>:!previewColors?<p role="status">جارٍ تحميل المعاينة…</p>:previewChoices.map(choice=>{const colors=previewColors.find(c=>c.qariId===choice.qariId&&c.rawi===choice.rawi);return <div key={choice.heading} className="rounded border bg-white"><CertificateHeadingPreview heading={choice.heading} primary={colors?.primaryColor||'#926e35'} secondary={colors?.secondaryColor||'#075f69'}/></div>;})}</div>}</details>}
           <div className="space-y-1.5">
             <Label>تاريخ الختم</Label>
             <DatePicker inlineCalendar value={fromIso(form.completionDate)} onChange={(d) => setForm({ ...form, completionDate: d ? toIso(d) : '' })} />

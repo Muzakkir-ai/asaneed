@@ -10,7 +10,7 @@ import type { Cert, Data } from '../App';
 import { arDate } from '../lib/date';
 import {certificateDate} from '../lib/certificateDates';
 import { vocalizeReadingLabel } from '../lib/vocalizedReading';
-import {svgReadingParts,riwayahSvgWidthMm,riwayahSvgUrl,RIWAYAH_SVG_HEIGHT_MM} from '../lib/riwayahSvgHeading';
+import CertificateHeading from './CertificateHeading';
 import { sanadTitleRanges,scholarlyNameRanges,lightVocalizeTitle } from '../lib/sanadTitleRanges';
 import CertificateQR from './CertificateQR';
 import { prophetChainRanges } from '../lib/prophetChainRanges';
@@ -30,7 +30,7 @@ function FooterDateRow({label,date,suffix}:{label:string;date:string;suffix:stri
     <span className="certificate-date-suffix">{suffix}</span>
   </div>;
 }
-type Props = { readOnly?:boolean;cert: Cert; sanad?: Data['asaneed'][0]; shaykhName: string; onClose: () => void; onFinalized:(result:{chain:string;heading:string;formatting:string})=>void };
+type Props = { previewPalette?:{primaryColor:string;secondaryColor:string};readOnly?:boolean;cert: Cert; sanad?: Data['asaneed'][0]; shaykhName: string; onClose: () => void; onFinalized:(result:{chain:string;heading:string;formatting:string})=>void };
 const quranicVerse = 'ﲃﲄﲅﲆ۞ﲈﲉﲊﲋ۞';
 const hadiths = [
   '«خَيرُكُم مَن تَعَلَّم القُرآنَ وَعَلَّمَهُ»',
@@ -44,15 +44,6 @@ const renderQuranGlyphs = (verse: string) => verse.split(/(۞)/g).map((part, i) 
 /** Render the first two letters of بِرِوَايَةِ as independently shaped
  *  Sakkal Kitab presentation-form glyphs, without altering saved sanad text.
  *  Retain the attached vowels and leave وَايَةِ at its natural font spacing. */
-const renderReadingLine=(value:string):React.ReactNode=>{
-  const match=value.match(/^ب([\u064b-\u065f]*)ر([\u064b-\u065f]*)(?=و)/u);
-  if(!match)return value;
-  return <>
-    <span className="certificate-reading-glyph">{'\uFE91'}{match[1]}</span>
-    <span className="certificate-reading-glyph">{'\uFEAE'}{match[2]}</span>
-    <span>{value.slice(match[0].length)}</span>
-  </>;
-};
 type ColorChoice = 'primary'|'secondary'|'charcoal';
 type StyledPhrase = {text:string; font:FontChoice; size:number; color:ColorChoice};
 const resolvedColor=(choice:ColorChoice,primary:string,secondary:string)=>choice==='primary'?primary:choice==='secondary'?secondary:'#303030';
@@ -216,7 +207,7 @@ const defaults:Record<Area,Typography> = {
   conclusion:{font:'KSA Regular',size:9,color:'primary'},
   shaykh:{font:'KSA Regular',size:17,color:'secondary'},
 };
-export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onFinalized,readOnly=false }: Props) {
+export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onFinalized,readOnly=false,previewPalette }: Props) {
   const isDraft=cert.publicationStatus==='draft';
   // New certificates default to number-only; already finalized certificates
   // without a printMode snapshot retain their historical QR presentation.
@@ -247,10 +238,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   },[cert.id,isDraft,previewAttempt]);
   const activeSanad=isDraft&&draftData?{...(sanad||{id:cert.sanadId,title:'',qiraahName:'',shaykhId:cert.shaykhId}),chain:draftData.chain}:sanad;
   const readingMarker = activeSanad?.chain?.match(/^【بيان القراءة:([^】]+)】\s*/);
-  const readingLabel = vocalizeReadingLabel((readingMarker?.[1]?.trim() || [cert.qiraahName?.trim(), activeSanad?.title?.trim()].filter((item, index, arr): item is string => Boolean(item) && arr.indexOf(item) === index).join(' '))
+  const readingLabel = vocalizeReadingLabel(((!isDraft&&cert.snapshotHeading)||readingMarker?.[1]?.trim() || [cert.qiraahName?.trim(), activeSanad?.title?.trim()].filter((item, index, arr): item is string => Boolean(item) && arr.indexOf(item) === index).join(' '))
     .replace(/\s*[—–-]\s*(?=مِن\s+طَرِيق|من\s+طَرِيق|من\s+طريق|مِن\s+طريق)/gu,' ')
     .replace(/\s+/g,' ').trim());
-  const readingSvgParts=svgReadingParts(readingLabel);
   const verificationToken=(()=>{
     if(isDraft)return '';
     try{return JSON.parse(cert.snapshotFormatting||'{}').verificationToken||'';}catch{return '';}
@@ -337,6 +327,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       }
     }catch{toast.error('تعذر قراءة تنسيق الشهادة');}
   },[cert.id,isDraft,cert.snapshotFormatting,draftData?.formatting]);
+  useEffect(()=>{if(isDraft&&previewPalette){setBorderColor(previewPalette.primaryColor);setAccentColor(previewPalette.secondaryColor);}},[isDraft,previewPalette?.primaryColor,previewPalette?.secondaryColor,draftData?.formatting]);
   useEffect(()=>{
     const update=()=>{
       const page=printArea.current;
@@ -443,7 +434,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   useEffect(()=>{const fit=()=>setPreviewScale(Math.min(1,(window.innerWidth-16)/1123));fit();window.addEventListener("resize",fit);return()=>window.removeEventListener("resize",fit);},[]);
   const areaStyle=(area:Area):React.CSSProperties=>({fontFamily:`'${typography[area].font}', serif`,fontWeight:typography[area].font==='Sakkal Kitab'?700:undefined,fontSynthesis:typography[area].font==='Sakkal Kitab'?'none':undefined,fontSize:area==='sanad'?'9.5pt':`${+(typography[area].size*1.1).toFixed(2)}pt`,...(area==='sanad'?{lineHeight:'16pt'}:{}),color:resolvedColor(typography[area].color,borderColor,accentColor)});
   const approveFinal=async()=>{
-    if(!isDraft||printPermission!=='allowed')return;
+    if(readOnly||previewPalette||!isDraft||printPermission!=='allowed')return;
     if(measureOverflow()){toast.error('لا يمكن اعتماد الشهادة قبل معالجة تجاوز مساحة الطباعة.');return;}
     setFinalizing(true);
     try{
@@ -460,12 +451,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <div className="no-print container mx-auto px-4 mb-4 flex flex-wrap justify-between gap-3">
         <Button variant="outline" onClick={onClose}><ArrowRight className="h-4 w-4 me-2" /> رجوع</Button>
         <div className="flex flex-wrap items-center gap-3" dir="rtl">
-          {isDraft&&<span className="text-sm font-semibold">معاينة · مسودة</span>}
+          {isDraft&&<span className="text-sm font-semibold">{previewPalette?'معاينة الألوان غير المحفوظة · لا يتم اعتماد الشهادة هنا':'معاينة · مسودة'}</span>}
           {isDraft&&draftData?.source==='saved'&&<span className="text-xs text-muted-foreground">سند محفوظ سابقًا</span>}
           {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
-          <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
-          <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
-          {isDraft?<Button disabled={readOnly||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
+          <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft||!!previewPalette} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
+          <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft||!!previewPalette} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
+          {isDraft?<Button disabled={readOnly||!!previewPalette||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly||previewPalette?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
             <Button disabled={overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
             <Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>
           </>}
@@ -475,20 +466,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <div className="certificate-print-viewport overflow-hidden"><div className="certificate-scale-box mx-auto" style={{width:`calc(297mm * ${previewScale})`,height:`calc(210mm * ${previewScale})`}}><div className="certificate-scale-inner" style={{transform:`scale(${previewScale})`,transformOrigin:"top left",width:"297mm"}}>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
-          <div ref={headerArea} className="certificate-header-art" aria-label="البسملة وشهادة الإجازة">
-            <div className="certificate-basmalah-svg" role="img" aria-label="بسم الله الرحمن الرحيم" />
-            <div className="certificate-ijazah-svg" role="img" aria-label="شهادة إجازة" style={{backgroundColor:borderColor}} />
-            {readingLabel && (readingSvgParts
-              ? <div className="certificate-reading-svg-line" role="img" aria-label={readingLabel} dir="rtl">
-                  {readingSvgParts.map((glyph,i)=><span key={glyph+'-'+i} aria-hidden="true" className="certificate-reading-svg-piece" style={{
-                    width:`${riwayahSvgWidthMm(glyph)}mm`,
-                    height:`${RIWAYAH_SVG_HEIGHT_MM}mm`,
-                    WebkitMaskImage:`url("${riwayahSvgUrl(glyph)}")`,
-                    maskImage:`url("${riwayahSvgUrl(glyph)}")`,
-                  }}/>)}
-                </div>
-              : <div className="certificate-reading-label" style={areaStyle('reading')} dir="rtl">{renderReadingLine(readingLabel)}</div>)}
-          </div>
+          <CertificateHeading ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft}/>
           <div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (
