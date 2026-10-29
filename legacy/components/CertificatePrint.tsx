@@ -355,7 +355,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(printArea.current)observer.observe(printArea.current);
     document.fonts.ready.then(update).catch(()=>{});
     return()=>observer.disconnect();
-  },[typography.reading.size,typography.reading.font,activeSanad?.id]);
+  },[printPermission,typography.reading.size,typography.reading.font,activeSanad?.id]);
   // Move the *entire* artwork-to-footer composition, without altering any
   // spacing inside it. For content longer than the safe A4 area, return to
   // the established layout and never squeeze or clip a long sanad.
@@ -383,7 +383,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[centerFits,textTopMm,activeSanad?.id,cert.id]);
+  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
