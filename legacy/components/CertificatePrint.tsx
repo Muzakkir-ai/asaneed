@@ -412,7 +412,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   // Native print/PDF preserves selectable Arabic text and vector SVG masks.
   // The older html-to-image -> PNG -> PDF path rasterized the entire A4 page.
   const savePdf=async()=>{
-    if(isDraft||printPermission!=='allowed'||!printArea.current)return;
+    if(printPermission!=='allowed'||!printArea.current)return;
     if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}
     setExporting(true);
     printArea.current.classList.add('certificate-export-original-paper');
@@ -456,6 +456,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft||!!previewPalette} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft||!!previewPalette} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
+          {isDraft&&<Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'معاينة PDF بدون اعتماد'}</Button>}
           {isDraft?<Button disabled={readOnly||!!previewPalette||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly||previewPalette?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
             <Button disabled={overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
             <Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>
