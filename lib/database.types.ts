@@ -379,6 +379,7 @@ export type Database = {
         Args: { certificate_id: string; snapshot: Json }
         Returns: string
       }
+      save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
       full_application_backup: { Args: never; Returns: Json }
       legacy_identity_choices: { Args: never; Returns: Json }
       list_application_accounts: { Args: never; Returns: Json }

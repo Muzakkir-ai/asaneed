@@ -110,7 +110,7 @@ function PrivateApp() {
   const changeName = async () => {
     if (profileName.trim().length < 2) return toast.error('أدخل اسماً صحيحاً');
     setSavingProfile(true);
-    try { await saveProfile({ name: profileName.trim() }); setDisplayName(profileName.trim()); toast.success('تم تحديث الاسم'); }
+    try { await saveProfile({ name: profileName.trim() }); setDisplayName(profileName.trim());void refreshDirectory();void load(); toast.success('تم تحديث الاسم'); }
     catch { toast.error('تعذر تحديث الاسم'); }
     finally { setSavingProfile(false); }
   };
@@ -161,7 +161,7 @@ function PrivateApp() {
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
           {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
           {isAdmin&&!inspecting&&<TabsContent value="users"><div className="space-y-8"><WorkspaceAccounts directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/><UsersManager/></div></TabsContent>}
-          <TabsContent value="profile"><div className="max-w-xl space-y-4"><div className="space-y-3 rounded-lg border p-5"><h2 className="text-xl font-bold">تعديل اسم المستخدم</h2><p className="text-sm text-muted-foreground">اسمك الحالي: {shaykhName}</p><Input placeholder="الاسم الجديد" value={profileName} onChange={e=>setProfileName(e.target.value)} /><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button></div><ShaykhPrintProfileForm key={user.id}/>{isAdmin&&<AssetSourcePanel/>}{isAdmin&&<DataBackupPanel/>}</div></TabsContent>
+          <TabsContent value="profile"><div className="max-w-xl space-y-4"><div className="space-y-3 rounded-lg border p-5"><h2 className="text-xl font-bold">تعديل اسم المستخدم</h2><p className="text-sm text-muted-foreground">اسمك الحالي: {shaykhName}</p><Input placeholder="الاسم الجديد" value={profileName} onChange={e=>setProfileName(e.target.value)} /><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button></div><ShaykhPrintProfileForm key={user.id} onSaved={()=>{void refreshDirectory();void load();}}/>{isAdmin&&<AssetSourcePanel/>}{isAdmin&&<DataBackupPanel/>}</div></TabsContent>
         </Tabs>
       </main>
     </div>

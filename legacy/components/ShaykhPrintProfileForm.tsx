@@ -7,7 +7,7 @@ import {Checkbox} from '@project/components/ui/checkbox';
 import {toast} from 'sonner';
 type Profile=ShaykhPrintProfileOutputType['profile'];
 const empty:Profile={footerLineStyles:'',scientificQualification:'',showScientificQualification:true,printedName:'',teachingRole:'مدرس في',madrasaName:'',madrasaPlace:'',centerStampText:'',showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true};
-export default function ShaykhPrintProfileForm(){
+export default function ShaykhPrintProfileForm({onSaved}:{onSaved?:()=>void}={}){
  const [profile,setProfile]=useState<Profile>(empty);
  const [busy,setBusy]=useState(false);
  useEffect(()=>{let active=true;shaykhPrintProfile({action:'get'}).then(x=>{if(active)setProfile({...empty,...x.profile,teachingRole:x.profile.teachingRole||'مدرس في'});}).catch(()=>toast.error('تعذر تحميل بيانات المجيز'));return()=>{active=false;};},[]);
@@ -17,8 +17,8 @@ export default function ShaykhPrintProfileForm(){
  const lineLabels=['١. اسم المجيز','٢. المجاز بـ','٣. المدرس في مدرسة','٤. مكان المدرسة'];
  const getStyles=()=>{try{return JSON.parse(profile.footerLineStyles||'{}') as Record<string,{bold?:boolean,size?:number}>;}catch{return {} as Record<string,{bold?:boolean,size?:number}>;}};
  const changeLineStyle=(line:string,patch:{bold?:boolean,size?:number})=>{const current=getStyles();setProfile(p=>({...p,footerLineStyles:JSON.stringify({...current,[line]:{...current[line],...patch}})}));};
- const save=async()=>{setBusy(true);try{await shaykhPrintProfile({action:'save',profile});toast.success('تم حفظ بيانات تذييل الشهادة');}catch{toast.error('تعذر حفظ بيانات الشهادة');}finally{setBusy(false);}};
- return <div className="space-y-3 rounded-lg border p-5" dir="rtl"><h2 className="text-lg font-bold">بيانات المجيز في الشهادة</h2><p className="text-xs text-muted-foreground">تُستخدم هذه البيانات في التذييل أسفل الشهادة. إذا تُرك الاسم فارغًا يُستعمل اسم حساب المجيز. يمكنك تحديد ظهور كل سطر بشكل مستقل دون حذف النص المحفوظ.</p>
+ const save=async()=>{setBusy(true);try{await shaykhPrintProfile({action:'save',profile});toast.success('تم حفظ بيانات المجيز');onSaved?.();}catch{toast.error('تعذر حفظ بيانات الشهادة');}finally{setBusy(false);}};
+ return <div className="space-y-3 rounded-lg border p-5" dir="rtl"><h2 className="text-lg font-bold">بيانات المجيز في الشهادة</h2><p className="text-xs text-muted-foreground">تُحفظ هذه البيانات في ملفك الشخصي كمجيز وتُستخدم في التذييل أسفل شهاداتك. إذا تُرك الاسم فارغًا يُستعمل اسم حساب المجيز. يمكنك تحديد ظهور كل سطر بشكل مستقل دون حذف النص المحفوظ.</p>
  {field('printedName','اسم المجيز للطباعة','اسم المجيز')}
  {optionalField('scientificQualification','showScientificQualification','الصفة العلمية / الإجازات','المجاز بالقراءات...')}
  {optionalField('teachingRole','showTeachingRole','صفة التدريس (تُجمع مع المدرسة في سطر واحد)','مدرس في')}

@@ -35,7 +35,7 @@ do $$ begin
  perform public.finalize_certificate('50000000-0000-0000-0000-000000000002','{"test":true}');
  raise exception 'Cross issuer finalization allowed';
  exception when insufficient_privilege then null; end;
- if public.finalize_certificate('50000000-0000-0000-0000-000000000001','{"test":true}') <> '0126-9801' then raise exception 'Wrong registration format'; end if;
+ if public.finalize_certificate('50000000-0000-0000-0000-000000000001','{"test":true}') <> '2601-9801' then raise exception 'Wrong registration format'; end if;
  if (select count(*) from public.certificate_snapshots where certificate_id::text like '50000000-%') <> 1 then raise exception 'Snapshot missing'; end if;
  update public.certificates set draft='{"changed":true}' where id='50000000-0000-0000-0000-000000000001';
  if found then raise exception 'Final certificate writable'; end if;
@@ -81,7 +81,7 @@ do $$ begin
 end $$;
 set local role anon;
 do $$ declare response jsonb; begin
- response := public.verify_ijazah('0126-9801');
+ response := public.verify_ijazah('2601-9801');
  if response->>'status' <> 'verified' then raise exception 'Finalized ijazah lookup failed'; end if;
  if response->'certificate' ? 'certificate_id' or response->'certificate' ? 'draft' then raise exception 'Private fields exposed'; end if;
  if response->'certificate'->>'student_name' <> 'مُحَمَّد مُذَكِّر' then raise exception 'Wrong student returned'; end if;

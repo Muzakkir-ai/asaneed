@@ -22,7 +22,7 @@ begin
  set last_number = private.registration_counters.last_number + 1
  where private.registration_counters.last_number < 99 returning last_number into seq;
  if seq is null then raise exception 'Registration sequence exhausted'; end if;
- result := code || right(yr::text,2) || '-' || c.riwayah_code || lpad(seq::text,2,'0');
+ result := right(yr::text,2) || code || '-' || c.riwayah_code || lpad(seq::text,2,'0');
  insert into public.certificate_snapshots(certificate_id,content) values(c.id,snapshot);
  update public.certificates set status='finalized',registration_number=result,
  verification_token=replace(gen_random_uuid()::text,'-','') || replace(gen_random_uuid()::text,'-','') where id=c.id;

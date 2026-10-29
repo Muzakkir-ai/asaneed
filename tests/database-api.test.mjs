@@ -3,7 +3,7 @@ const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 assert.ok(url && key,'Supabase public configuration is required');
 const [lookup,privateSchema,certificateTable]=await Promise.all([
- fetch(`${url}/rest/v1/rpc/verify_ijazah`,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_number:'0126-1002'})}),
+ fetch(`${url}/rest/v1/rpc/verify_ijazah`,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_number:'2601-1002'})}),
  fetch(`${url}/rest/v1/ijazah_verification_index?select=registration_number&limit=1`,{headers:{apikey:key,'Accept-Profile':'private'}}),
  fetch(`${url}/rest/v1/certificates?select=id&limit=1`,{headers:{apikey:key}}),
 ]);

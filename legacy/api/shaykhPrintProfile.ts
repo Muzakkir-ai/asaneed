@@ -1,3 +1,4 @@
+import {context as requestContext} from '../compat/context';
 import {isAppAdmin} from '../lib/admin';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
@@ -15,7 +16,8 @@ export default createEndpoint({
   const own=records.find(x=>x.ownerId===ownerId);
   if(input.action==='save'){
    if(!input.profile)throw new Error('Missing profile');
-   if(own)await zite.shaykhPrintProfiles.update({id:own.id,record:input.profile});
+   if((await isAppAdmin(context.user.email))){const ctx=requestContext();const result=await ctx.client.rpc('save_personal_issuer_profile',{profile:input.profile});if(result.error)throw new Error(result.error.message);ctx.cache?.clear();}
+   else if(own)await zite.shaykhPrintProfiles.update({id:own.id,record:input.profile});
    else await zite.shaykhPrintProfiles.create({record:{name:'Print profile',ownerId,...input.profile}});
   }else if(ownerId!==context.user.id){
    // Reading another issuer's certificate footer details is limited to administrators or viewers of an issued certificate.

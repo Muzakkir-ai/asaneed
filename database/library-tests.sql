@@ -6,7 +6,7 @@ update public.accounts set role='admin',active=true where auth_user_id='cce0ba30
 update public.accounts set active=true where auth_user_id='cce0ba30-0000-4000-8000-000000000002';
 insert into public.issuers(id,display_name,issuer_code) values('cce0ba30-0000-4000-8000-000000000003','Reserved number test','96');
 insert into public.students(id,display_name) values('cce0ba30-0000-4000-8000-000000000004','Test only');
-insert into public.certificates(id,issuer_id,student_id,riwayah_code,completion_date,registration_number) values('cce0ba30-0000-4000-8000-000000000005','cce0ba30-0000-4000-8000-000000000003','cce0ba30-0000-4000-8000-000000000004','10','2026-01-01','9626-1007');
+insert into public.certificates(id,issuer_id,student_id,riwayah_code,completion_date,registration_number) values('cce0ba30-0000-4000-8000-000000000005','cce0ba30-0000-4000-8000-000000000003','cce0ba30-0000-4000-8000-000000000004','10','2026-01-01','2696-1007');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','cce0ba30-0000-4000-8000-000000000002',true);
 do $$ begin
@@ -15,7 +15,7 @@ end $$;
 select set_config('request.jwt.claim.sub','cce0ba30-0000-4000-8000-000000000001',true);
 do $$ begin
  if jsonb_typeof(public.read_legacy_library()->'records')<>'array' then raise exception 'Library response invalid'; end if;
- if public.finalize_certificate('cce0ba30-0000-4000-8000-000000000005','{"fixture":true,"formatting":"{}"}')<>'9626-1007' then raise exception 'Reserved registration changed'; end if;
+ if public.finalize_certificate('cce0ba30-0000-4000-8000-000000000005','{"fixture":true,"formatting":"{}"}')<>'2696-1007' then raise exception 'Reserved registration changed'; end if;
 end $$;
 reset role;
 do $$ declare token text; frozen text; begin

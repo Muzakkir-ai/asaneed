@@ -7,7 +7,7 @@ const tables:Record<string,any[]>={
  sanads:['one','two','other'].map((issuer_id,i)=>({id:'sanad'+i,issuer_id,title:'Sanad',body:{chain:'preserved'}})),students:[{id:'s',display_name:'Student'}],
  workspace_records:[{id:'own-holding',kind:'ijazahHoldings',payload:{ownerId:'auth'}},{id:'guest-one',kind:'additionalShaykhExtensions',payload:{shaykhId:'one'}},{id:'guest-other',kind:'additionalShaykhExtensions',payload:{shaykhId:'other'}},{id:'other-holding',kind:'ijazahHoldings',payload:{ownerId:'another'}}]
 };
-const client:any={from:(name:string)=>({select:()=>({range:async()=>({data:tables[name]||[],error:null}),eq:async(field:string,value:string)=>({data:(tables[name]||[]).filter(r=>r[field]===value),error:null})})})};
+const client:any={rpc:async()=>({data:[{id:'account',auth_user_id:'auth',display_name:'Admin',role:'admin',active:true}],error:null}),from:(name:string)=>({select:()=>({range:async()=>({data:tables[name]||[],error:null}),eq:async(field:string,value:string)=>({data:(tables[name]||[]).filter(r=>r[field]===value),error:null})})})};
 const ctx:Context={client,user:{id:'auth',name:'Admin',email:'admin@example.invalid',image:null},account:{id:'account',role:'admin',active:true},scope:{accountId:'account',authUserId:'auth',name:'Admin',role:'admin',issuerIds:['one','two'],inspection:false,readOnly:false,system:false}};
 async function main(){
 await requestContext.run(ctx,async()=>{

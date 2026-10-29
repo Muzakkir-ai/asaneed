@@ -266,7 +266,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   },[cert.shaykhId,cert.additionalShaykh,cert.snapshotFormatting,isDraft]);
   const footerProfile=isDraft?(draftData?.footerProfile??blankPrintProfile):finalFooterProfile;
   const footerName=isDraft?(draftData?.issuerName||''):(footerProfile.printedName?.trim()||snapshotDetails?.issuerDisplayName||shaykhName);
-  const zakaullahArtwork=!!cert.additionalShaykh&&(cert.registrationNumber.startsWith('01')||cert.additionalShaykh==='64dd31bc-7105-4732-8646-148f27fe7fca')&&!!assetBase();
+  const zakaullahArtwork=!!cert.additionalShaykh&&cert.additionalShaykh==='64dd31bc-7105-4732-8646-148f27fe7fca'&&!!assetBase();
   const footerLineStyle=(line:'name'|'qualification'|'teaching'|'place'):React.CSSProperties=>{
     let configured:Record<string,{bold?:boolean,size?:number}>={};
     try{configured=JSON.parse(footerProfile.footerLineStyles||'{}');}catch{}

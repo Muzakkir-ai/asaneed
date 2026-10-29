@@ -36,9 +36,9 @@ export default createEndpoint({
       zite.shaykhPrintProfiles.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
     ]);
     const accountNames=users.records.map(u=>({id:u.id,name:profiles.records.find(p=>p.ownerId===u.id)?.printedName||u.name||[u.firstName,u.lastName].filter(Boolean).join(' ')||u.email||'شيخ غير مسمى'}));
-    const shaykhs=extras.records.length?[]:accountNames.filter(u=>holdings.records.some(h=>h.ownerId===u.id)||certs.some(c=>!c.additionalShaykh&&first(c.shaykh)===u.id));
+    const shaykhs=accountNames.filter(u=>profiles.records.some(p=>p.ownerId===u.id)||holdings.records.some(h=>h.ownerId===u.id)||certs.some(c=>!c.additionalShaykh&&first(c.shaykh)===u.id));
     const issuerMap=new Map<string,string>(extras.records.map(g=>['guest:'+g.id,g.name||'شيخ إضافي'] as [string,string]));
-    for(const u of shaykhs)if(certs.some(c=>!c.additionalShaykh&&first(c.shaykh)===u.id))issuerMap.set('user:'+u.id,u.name);
+    for(const u of shaykhs)issuerMap.set('user:'+u.id,u.name);
     const issuers=[...issuerMap].map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
     const shaykhNames=new Map(accountNames.map(u=>[u.id,u.name]));
     const guestNames=new Map<string,string>(extras.records.map(x=>[x.id,x.name||''] as [string,string]));
