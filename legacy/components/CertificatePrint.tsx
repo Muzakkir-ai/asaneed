@@ -383,7 +383,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id]);
+  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
@@ -529,3 +529,4 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     </div>
   );
 }
+
