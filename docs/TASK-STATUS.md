@@ -16,3 +16,5 @@
 Additional completed foundation work includes independent Supabase authentication, Google sign-in, configured domain email delivery, the multilingual public verification page, full application-data backup/restore workflow, Arabic name search, student selection/deletion controls, print overflow detection and removal of confirmed unreferenced editor components.
 
 Google logo/branding verification and a custom authentication hostname are **paused at the user's request**. The original Zite app remains unchanged. A deployed implementation does not imply every possible account, historical certificate or physical printer has been exhaustively tested; the specific verification limits above remain open.
+
+Follow-up: approved draft renumbering now uses YY + shaykh code, with Arabic display. Both administrators have separate personal mujeez profiles; account cards label personal issuance separately from managed records. All 35 draft certificates changed only their number field, verified against a private full backup.
