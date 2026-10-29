@@ -46,9 +46,9 @@ export default createEndpoint({
         let sanad=previous?.sanadId?await zite.asaneed.findOne({id:previous.sanadId}).catch(()=>null):null;
         const sanadOwner=Array.isArray(sanad?.shaykh)?sanad?.shaykh[0]:sanad?.shaykh;
         if(!sanad||sanadOwner!==owner){
-          sanad=await zite.asaneed.create({record:{bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',title:`${rawi} — السند المعتمد`,chain:assembled.chain,qiraah:null,shaykh:owner,certificates:null}});
+          sanad=await zite.asaneed.create({record:{tariqNumber:holding.tariqNumber||'',tariqName:holding.tariqName||'',bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',title:`${rawi} — السند المعتمد`,chain:assembled.chain,qiraah:null,shaykh:owner,certificates:null}});
         }else if(sanad.chain!==assembled.chain||sanad.bookAuthor!==holding.bookAuthor||sanad.routeSource!==holding.routeSource){
-          await zite.asaneed.update({id:sanad.id,record:{chain:assembled.chain}});
+          await zite.asaneed.update({id:sanad.id,record:{tariqNumber:holding.tariqNumber||'',tariqName:holding.tariqName||'',bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',chain:assembled.chain}});
         }
         const sourceSignature=JSON.stringify({chain:assembled.chain,sectionIds:assembled.sectionIds,holdingId:holding.id,rawi});
         if(previous)await zite.preparedIjazahs.update({id:previous.id,record:{sanadId:sanad.id,sourceSignature}});

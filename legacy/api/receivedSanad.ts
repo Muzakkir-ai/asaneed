@@ -4,7 +4,8 @@ import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {extractTeacherTransmission,receivedPersonalChain} from '../lib/receivedTransmission';
 import {readingIdentityFromHeading} from '../lib/riwayahSvgHeading';
-import {QURRA,displayRawi} from '../lib/qurra';
+import {arabicSearchKey} from '../lib/arabicSearch';
+import {QURRA,displayRawi,routeFor} from '../lib/qurra';
 export default createEndpoint({
  description:'Review and save an editable personal sanad derived from an owned finalized received certificate',authenticated:true,
  inputSchema:z.object({action:z.enum(['preview','save']),certificateId:z.string().uuid(),personalChain:z.string().trim().min(100).max(30000).optional(),confirmed:z.boolean().optional()}),
@@ -26,6 +27,9 @@ export default createEndpoint({
   const content=snapshot.content as {chain?:string;heading?:string;formatting?:string};
   const formatting=JSON.parse(content.formatting||'{}');
   const identity=readingIdentityFromHeading(content.heading||'');if(!identity)throw Error('تعذر تحديد القراءة والرواية من الشهادة');
+  const storedRoute=arabicSearchKey(content.heading||'').match(/من طريق(?:ي|ين)? (.+)$/u)?.[1];
+  const defaultRoute=arabicSearchKey(routeFor([identity.qariId])).replace(/^من طريق(?:ي|ين)? /u,'');
+  if(storedRoute&&storedRoute!==defaultRoute&&!formatting.transmission?.tariqNumber)throw Error('بيانات هذا الطريق غير محفوظة في الشهادة القديمة؛ أضفه يدويًا مع رقم الطريق الصحيح');
   const teacherName=String(formatting.footerProfile?.printedName||formatting.issuerDisplayName||'').trim();if(!teacherName)throw Error('اسم المجيز غير محفوظ في الشهادة');
   const {records:sections}=await zite.sanadSections.findAll({limit:2000});
   const teacherChain=formatting.transmission?.chain||extractTeacherTransmission(content.chain||'','',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||''));

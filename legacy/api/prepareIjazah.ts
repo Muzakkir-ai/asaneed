@@ -32,12 +32,12 @@ export default createEndpoint({
     const sanad=existing.sanadId?await zite.asaneed.findOne({id:existing.sanadId}).catch(()=>null):null;
     const owner=Array.isArray(sanad?.shaykh)?sanad.shaykh[0]:sanad?.shaykh;
     if(sanad&&owner===uid){
-      if(sanad.chain!==assembled.chain||sanad.bookAuthor!==holding.bookAuthor||sanad.routeSource!==holding.routeSource){await zite.asaneed.update({id:sanad.id,record:{bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',chain:assembled.chain,title:`${selectedRawi||holding.name||'إجازة'} — السند المعتمد`}});}
+      if(sanad.chain!==assembled.chain||sanad.bookAuthor!==holding.bookAuthor||sanad.routeSource!==holding.routeSource){await zite.asaneed.update({id:sanad.id,record:{tariqNumber:holding.tariqNumber||'',tariqName:holding.tariqName||'',bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',chain:assembled.chain,title:`${selectedRawi||holding.name||'إجازة'} — السند المعتمد`}});}
       await zite.preparedIjazahs.update({id:existing.id,record:{sourceSignature:sig}});
       return {sanadId:sanad.id,updated:true,heading:assembled.heading};
     }
   }
-  const record=await zite.asaneed.create({record:{bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',title:`${selectedRawi||holding.name||'إجازة'} — السند المعتمد`,chain:assembled.chain,qiraah:null,shaykh:uid,certificates:null}});
+  const record=await zite.asaneed.create({record:{tariqNumber:holding.tariqNumber||'',tariqName:holding.tariqName||'',bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',title:`${selectedRawi||holding.name||'إجازة'} — السند المعتمد`,chain:assembled.chain,qiraah:null,shaykh:uid,certificates:null}});
   if(existing)await zite.preparedIjazahs.update({id:existing.id,record:{sanadId:record.id,rawi:selectedRawi,sourceSignature:sig}});
   else await zite.preparedIjazahs.create({record:{name:selectedRawi||holding.name||'إجازة',ownerId:uid,holdingId:holding.id,rawi:selectedRawi,sanadId:record.id,sourceSignature:sig}});
   return {sanadId:record.id,updated:false,heading:assembled.heading};

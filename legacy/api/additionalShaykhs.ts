@@ -87,13 +87,13 @@ export default createEndpoint({
       introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id},
       all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})));
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));
-    return {rawi,assembled,bookAuthor:selected?.bookAuthor||'',routeSource:selected?.routeSource||''};
+    return {rawi,assembled,tariqName:selected?.tariqName||'',bookAuthor:selected?.bookAuthor||'',routeSource:selected?.routeSource||''};
    });
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
    try{
-    for(const [index,{rawi,assembled,bookAuthor,routeSource}] of entries.entries()){
-     const sanad=await zite.asaneed.create({record:{bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
+    for(const [index,{rawi,assembled,tariqName,bookAuthor,routeSource}] of entries.entries()){
+     const sanad=await zite.asaneed.create({record:{tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
        shaykh:context.user.id,additionalShaykh:known.id,chain:assembled.chain,qiraah:null,certificates:null}});
      const row={certificateId:'',sanadId:sanad.id,snapshotId:''};created.push(row);
      const cert=await zite.certificates.create({record:{
