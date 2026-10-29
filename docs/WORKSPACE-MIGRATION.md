@@ -25,7 +25,7 @@ The baseline is an application-data rollback source, not an automatic destructiv
 
 Right sidebar with saved collapse preference, accessible mobile navigation drawer, explicit issuer selector, separate administration cards with counts and assignments, student summaries, mobile certificate cards, desktop certificate table, incremental narrator list, and larger mobile dialogs.
 
-The riwayah color editor provides native swatches, complete HEX inputs, immediate sample rendering, validation, dirty indicators and reset to saved colors. It saves only when explicitly requested. Historical finalized snapshots retain their own settings. The sample is not the actual certificate renderer.
+The riwayah color editor provides 38 × 38 px native swatches beside 128 px HEX inputs, immediate rendering, validation, dirty indicators and reset to saved colors. The controls stack on narrow cards and sit side by side where space permits. It saves only when explicitly requested. The compact heading now shares the actual SVG renderer with the print view; the full preview opens an existing matching draft with unsaved colors in read-only mode. Historical finalized snapshots retain their own settings.
 
 Readex Pro is self-hosted for the application. Certificate fonts, metrics, templates, registration numbering, verification tokens and print overflow checks are retained.
 
@@ -41,3 +41,16 @@ The obsolete `QurraPicker` and `SanadTitleText` components were removed after re
 - New student/certificate writes and finalization are exercised using rollback-only fixtures, not artificial permanent certificates in the live registry.
 
 Google branding review/custom auth hostname is a separate provider-side process. A deployed application or saved branding form alone does not prove Google's verification is complete.
+
+## Certificate list and authentic preview follow-up
+
+- Advanced filters are collapsed on desktop and mobile. Search, result count, active-filter count, removable chips, Clear All and all existing sort modes remain available. Filters are versioned, scoped by acting account/target account/issuer, expire after four hours, and discard unavailable choices with a notice. Editing state remains separate from filtering state.
+- Personal certificate cards and table rows prioritize the student name and show a 13 px concise reading/route summary, one completion date and a small status. Issuer identity remains in details, print and administrative inspection. Preview and Edit stay visible; draft deletion is under a keyboard-accessible menu and confirmation.
+- `CertificateHeading` is shared by print and compact previews, including the original basmalah, ijazah, imam, rawi and route masks and original millimetre dimensions. The compact frame scales the complete heading uniformly. Full-qiraah selection previews both rawis because the existing issuance workflow creates two certificates.
+- Draft previews resolve current text without persisting a refreshed sanad. Unsaved palette preview cannot finalize. Published rendering prioritizes its snapshot heading and preserves historical route behavior. A custom route without matching artwork uses the existing formal text fallback rather than displaying an incorrect standard-route SVG.
+- Automated tests passed for filter persistence/expiry/stale choices, selected-route summaries, Qalun/Warsh SVG selection and dimensions, paired rawis, palette changes and historical-route selection. The production build and TypeScript check passed.
+- Signed-in production checks confirmed filter collapse/chips/count/navigation persistence; Qalun and Warsh full SVG previews; unsaved palette colors with disabled approval; reset; paired qiraah previews before saving; and the deletion confirmation cancelled without deleting. Matching compact/print glyph dimensions were measured in the browser. No physical printer or PDF export was exercised in this follow-up.
+- Responsive checks covered 320, 390, 430, 768 and 1440 px. Readex Pro and 13 px summaries were confirmed; compact headings and controls remained within the viewport. Swatches measured 38 × 38 px and HEX inputs 128 × 38 px; controls stacked on narrow mobile and shared a row on tablet/desktop. Live SVG color changes and reset were verified after deployment.
+- Certificate checksum remains `5e94aefd83bb5d4bc63d681678897f97` for all 33 records; the frozen-snapshot table remains empty. No certificates were created, deleted, published or renumbered during these checks. Published-snapshot cases are covered by fixtures because there are no finalized certificates in the live dataset.
+- Application releases: `f9ad06b970de954944d80017be0b66cdedda26c2` (filters/cards/shared heading) and `a7ab0f831ab4913917ebaf35fc4209c190e3de98` (compact color toolbar), both confirmed successful by Vercel.
+
