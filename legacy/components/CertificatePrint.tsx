@@ -64,7 +64,7 @@ const jazariNormalEnd='\uE105';
 const emphasizeTitle=(s:string)=>titleStart+s+titleEnd;
 const ijazahLicensePhrase='فأجزته بعد ما رأيته أهلًا لذلك بأن يقرأ ويقرئ فى أي مكان شاء -بشروطه المعتبرة عند أرباب هذا الفن-';
 const jazariFullName='إِمَامِ المُقرِئِينَ أَبِي الخَيرِ مُحَمَّدِ بنِ مُحَمَّدٍ الجَزَرِيِّ';
-function highlightCertificateNames(chain:string,teacher:string,student:string,heading:string){
+function highlightCertificateNames(chain:string,teacher:string,student:string,heading:string,routeEmphasis:{bookAuthor?:string;routeSource?:string}={}){
   // Wrap every raawi / imam identification in print-only markers, including
   // old assembled sanad text and old certificate snapshots.
   // Older issued snapshots contain an unvoweled reading inside Kalimat al-Ijazah.
@@ -72,13 +72,15 @@ function highlightCertificateNames(chain:string,teacher:string,student:string,he
   const possibleReadings=heading?[heading,heading.replace(/^برواية/u,'رواية'),heading.replace(/^رواية/u,'برواية')].filter(Boolean):[];
   const oldReading=possibleReadings.find(value=>chain.includes(value));
   const updatedChain=oldReading?chain.replace(oldReading,vocalizeReadingLabel(oldReading)):chain;
-  const ranges=[...sanadTitleRanges(updatedChain),...scholarlyNameRanges(updatedChain)]
+  const sources=scholarlyNameRanges(updatedChain,[routeEmphasis.routeSource||'']);
+  const ranges=[...sanadTitleRanges(updatedChain),...scholarlyNameRanges(updatedChain),...scholarlyNameRanges(updatedChain,[routeEmphasis.bookAuthor||''])].filter(r=>!sources.some(t=>r.start<t.end&&t.start<r.end))
     .sort((a,b)=>a.start-b.start);
   let withTitles=updatedChain;
   // Wrap names in the same Sakkal Kitab 10pt, primary-color markers used for Ibn al-Jazari.
   // All formatting is display-only: keep every sanad character exactly as stored.
-  for(const range of [...ranges].reverse()){
-    withTitles=withTitles.slice(0,range.start)+emphasizeTitle(withTitles.slice(range.start,range.end))+withTitles.slice(range.end);
+  const uniqueRanges=ranges.filter((r,i)=>!ranges.slice(0,i).some(t=>r.start<t.end&&t.start<r.end));
+  for(const range of [...uniqueRanges.map(r=>({...r,source:false})),...sources.map(r=>({...r,source:true}))].sort((a,b)=>b.start-a.start)){
+    withTitles=withTitles.slice(0,range.start)+(range.source?'\uE10A'+withTitles.slice(range.start,range.end)+'\uE10B':emphasizeTitle(withTitles.slice(range.start,range.end)))+withTitles.slice(range.end);
   }
   // Mark placeholders before they are replaced: other instances of the same personal
   // names in narrator chains must keep their original typography.
@@ -98,12 +100,12 @@ function highlightCertificateNames(chain:string,teacher:string,student:string,he
   }
   // Mark only the narrator after the nearest عن through (ح).
   // Preserve the word عن and every saved sanad character unchanged.
-  result=result.replace(/(عن\s+)([^،؛\n.\uE100-\uE109]{2,180}?\s*\(\s*ح\s*\))/gu,
+  result=result.replace(/(عن\s+)([^،؛\n.\uE100-\uE10B]{2,180}?\s*\(\s*ح\s*\))/gu,
     (_all,prefix,name)=>prefix+routeNarratorStart+name+routeNarratorEnd);
   return result;
 }
 function renderSanadText(text: string, primaryColor: string, secondaryColor: string, phrases:StyledPhrase[] = []) {
-  if(text.includes(emphasizedStart)||text.includes(titleStart)||text.includes(jazariNormalStart)||text.includes(personalNameStart)||text.includes(routeNarratorStart)){
+  if(text.includes(emphasizedStart)||text.includes(titleStart)||text.includes(jazariNormalStart)||text.includes(personalNameStart)||text.includes(routeNarratorStart)||text.includes('\uE10A')){
     const fragments:React.ReactNode[]=[];
     let remaining=text;
     let i=0;
@@ -113,16 +115,18 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
       const plainName=remaining.indexOf(jazariNormalStart);
       const personalName=remaining.indexOf(personalNameStart);
       const routeNarrator=remaining.indexOf(routeNarratorStart);
-      const available=[ordinary,identified,plainName,personalName,routeNarrator].filter(n=>n>=0);
+      const routeSource=remaining.indexOf('\uE10A');
+      const available=[ordinary,identified,plainName,personalName,routeNarrator,routeSource].filter(n=>n>=0);
       if(!available.length){fragments.push(<span key={i++}>{renderSanadText(remaining,primaryColor,secondaryColor,phrases)}</span>);break;}
       const start=Math.min(...available);
       if(start>0)fragments.push(<span key={i++}>{renderSanadText(remaining.slice(0,start),primaryColor,secondaryColor,phrases)}</span>);
+      const isRouteSource=start===routeSource;
       const isTitle=start===identified;
       const isPlainName=start===plainName;
       const isPersonalName=start===personalName;
       const isRouteNarrator=start===routeNarrator;
-      const opening=isRouteNarrator?routeNarratorStart:isPlainName?jazariNormalStart:isPersonalName?personalNameStart:isTitle?titleStart:emphasizedStart;
-      const closing=isRouteNarrator?routeNarratorEnd:isPlainName?jazariNormalEnd:isPersonalName?personalNameEnd:isTitle?titleEnd:emphasizedEnd;
+      const opening=isRouteSource?'\uE10A':isRouteNarrator?routeNarratorStart:isPlainName?jazariNormalStart:isPersonalName?personalNameStart:isTitle?titleStart:emphasizedStart;
+      const closing=isRouteSource?'\uE10B':isRouteNarrator?routeNarratorEnd:isPlainName?jazariNormalEnd:isPersonalName?personalNameEnd:isTitle?titleEnd:emphasizedEnd;
       const end=remaining.indexOf(closing,start+opening.length);
       if(end<0){fragments.push(<span key={i++}>{renderSanadText(remaining.slice(start+opening.length),primaryColor,secondaryColor,phrases)}</span>);break;}
       const inner=remaining.slice(start+opening.length,end);
@@ -131,7 +135,7 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
       // Sakkal Kitab Bold face. The separately highlighted ijazah wording
       // keeps its previous normal weight.
       const isImamName=isTitle;
-      fragments.push(<span key={i++} className={isRouteNarrator?'certificate-route-narrator':isPlainName?'certificate-jazari-normal':isPersonalName?'certificate-personal-name':isImamName?'certificate-aimma-name':'certificate-emphasized-name'} style={isPlainName?{fontFamily:"'KSA Regular', serif",fontSize:'9.9pt',fontWeight:400}: {fontFamily:isRouteNarrator?"'KSA Regular', serif":"'Sakkal Kitab', serif",fontSize:'10pt',fontWeight:700,fontSynthesis:'none',...(isRouteNarrator?{color:secondaryColor}:{}),...((isTitle||isPersonalName)?{color:primaryColor}:{})}}>{renderSanadText(printedInner,primaryColor,secondaryColor)}</span>);
+      fragments.push(<span key={i++} className={isRouteSource?'certificate-route-source':isRouteNarrator?'certificate-route-narrator':isPlainName?'certificate-jazari-normal':isPersonalName?'certificate-personal-name':isImamName?'certificate-aimma-name':'certificate-emphasized-name'} style={isPlainName?{fontFamily:"'KSA Regular', serif",fontSize:'9.9pt',fontWeight:400}: {fontFamily:isRouteSource||isRouteNarrator?"'KSA Regular', serif":"'Sakkal Kitab', serif",fontSize:'10pt',fontWeight:700,fontSynthesis:'none',...(isRouteNarrator?{color:secondaryColor}:{}),...((isRouteSource||isTitle||isPersonalName)?{color:primaryColor}:{})}}>{renderSanadText(printedInner,primaryColor,secondaryColor)}</span>);
       remaining=remaining.slice(end+closing.length);
     }
     return fragments;
@@ -281,7 +285,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     const size=typeof settings.size==='number'&&Number.isFinite(settings.size)?Math.min(18,Math.max(7,settings.size)):line==='name'?11:9;
     return {'--footer-line-font-size':`${size}pt`,'--footer-line-font-weight':settings.bold?700:400} as React.CSSProperties;
   };
-  const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'') : undefined;
+  const routeEmphasis=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').routeEmphasis||{};}catch{return {};}})();
+  const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'',routeEmphasis) : undefined;
   const hijriDate=certificateDate(cert.completionDate,'islamic-umalqura',cert.hijriDayOffset);
   const gregorianDate=certificateDate(cert.completionDate,'gregory');
   const [borderColor,setBorderColor]=useState('#926e35');

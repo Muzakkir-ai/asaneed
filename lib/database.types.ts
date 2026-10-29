@@ -304,6 +304,39 @@ export type Database = {
           },
         ]
       }
+      student_accounts: {
+        Row: {
+          account_id: string
+          linked_at: string
+          student_id: string
+        }
+        Insert: {
+          account_id: string
+          linked_at?: string
+          student_id: string
+        }
+        Update: {
+          account_id?: string
+          linked_at?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_accounts_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_accounts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           created_at: string
@@ -379,7 +412,6 @@ export type Database = {
         Args: { certificate_id: string; snapshot: Json }
         Returns: string
       }
-      save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
       full_application_backup: { Args: never; Returns: Json }
       legacy_identity_choices: { Args: never; Returns: Json }
       list_application_accounts: { Args: never; Returns: Json }
@@ -406,8 +438,13 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
       set_issuer_assignment: {
         Args: { enabled: boolean; issuer: string; target: string }
+        Returns: undefined
+      }
+      set_student_account: {
+        Args: { account: string; student: string }
         Returns: undefined
       }
       verify_certificate_token: { Args: { token: string }; Returns: Json }

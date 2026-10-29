@@ -50,7 +50,7 @@ const strippedScholar=(value:string)=>value
  .replace(/[أإآٱ]/gu,'ا').replace(/ى/gu,'ي')
  .replace(/\s+/gu,' ').trim();
 
-export function scholarlyNameRanges(text:string):Array<{start:number;end:number}>{
+export function scholarlyNameRanges(text:string,names:readonly string[]=scholarsToEmphasize):Array<{start:number;end:number}>{
  const letters:string[]=[];
  const index:number[]=[];
  for(let i=0;i<text.length;i++){
@@ -65,7 +65,8 @@ export function scholarlyNameRanges(text:string):Array<{start:number;end:number}
  }
  const plain=letters.join('');
  const found:Array<{start:number;end:number}>=[];
- for(const name of scholarsToEmphasize){
+ for(const name of names){
+  if(!name.trim())continue;
   const target=strippedScholar(name);
   let pos=0;
   while((pos=plain.indexOf(target,pos))!==-1){

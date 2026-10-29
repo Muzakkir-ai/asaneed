@@ -52,7 +52,7 @@ export default createEndpoint({
   const {records:sources}=await zite.assetSources.findAll({filters:{key:'default'},limit:1});
   const source=sources[0];
   const artworkSnapshot={base:source?cdnBase(source.gitHubRepository||'',source.revision||source.branch||'main'):'',artwork:artworkListSchema.catch([]).parse(source?.artwork||[]),issuerNumber:registrationNumber.slice(2,4)};
-  const formatting=JSON.stringify({artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
+  const formatting=JSON.stringify({routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
   const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
   const record={name:'شهادة '+cert.id,certificateId:cert.id,ownerId:issuer,chain,heading,formatting,issuedAt:new Date().toISOString()};
   const {client}=requestContext();

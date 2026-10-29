@@ -5,7 +5,7 @@ import {Button} from '@project/components/ui/button';
 import {Dialog,DialogContent,DialogTitle} from '@project/components/ui/dialog';
 import {toast} from 'sonner';
 export type WorkspacePerson={id:string;name:string;email:string;role:string;active:boolean;issuers:{id:string;name:string}[];personalIssuerCode?:string;personalIssuerId?:string;personalIssuer?:string;issuedCertificates?:number;certificates:number;students:number};
-export type WorkspaceDirectory={actorId:string;isAdmin:boolean;accounts:WorkspacePerson[];issuers:{id:string;name:string}[]};
+export type WorkspaceDirectory={actorId:string;isAdmin:boolean;accounts:WorkspacePerson[];issuers:{id:string;name:string;number?:string}[]};
 export function WorkspaceSidebar({active,onSelect,admin,staff,collapsed,onCollapse,onLogout,english=false}:{active:string;onSelect:(key:string)=>void;admin:boolean;staff:boolean;collapsed:boolean;onCollapse:()=>void;onLogout:()=>void;english?:boolean}){
  const [open,setOpen]=useState(false);
  const items=[

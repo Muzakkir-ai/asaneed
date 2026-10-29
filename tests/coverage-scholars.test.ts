@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {ijazahCoverage} from '../legacy/lib/ijazahCoverage';
+import {QURRA} from '../legacy/lib/qurra';
+import {scholarlyNameRanges} from '../legacy/lib/sanadTitleRanges';
+const all=QURRA.map(q=>({qariId:q.id}));
+assert.equal(ijazahCoverage(all).label,'القراءات العشر الصغرى');
+assert.notEqual(ijazahCoverage(all.slice(1)).label,'القراءات العشر الصغرى');
+assert.notEqual(ijazahCoverage(all.map(h=>({...h,tariqNumber:'03'}))).label,'القراءات العشر الصغرى');
+assert.equal(ijazahCoverage(QURRA.flatMap(q=>q.rawis.map(rawi=>({qariId:q.id,rawi})))).count,10);
+assert.equal(ijazahCoverage(QURRA.map(q=>({qariId:q.id,rawi:q.rawis[0]}))).count,0);
+assert.equal(ijazahCoverage([...all,...all]).count,10);
+const text='عن الشَّيخِ أَبِي الفَتحِ فارس بن أحمد، عن غيره';
+const ranges=scholarlyNameRanges(text,['الشيخ ابي الفتح فارس بن احمد']);
+assert.equal(ranges.length,1);
+assert.equal(text.slice(ranges[0].start,ranges[0].end).trim(),'الشَّيخِ أَبِي الفَتحِ فارس بن أحمد،'.replace(/،$/,''));
+assert.deepEqual(scholarlyNameRanges(text,['']),[]);
+console.log('PASS: complete minor-ten coverage, paired rawis, custom-route exclusion and original-offset Arabic scholar matching');

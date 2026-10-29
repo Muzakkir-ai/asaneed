@@ -59,7 +59,10 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  }
  let settings:unknown=null;
  try{settings=latest?.settings?JSON.parse(latest.settings):null;}catch{}
- return JSON.stringify({phrases:phrases.slice(0,180),settings,palette});
+ const {records:preps}=await zite.preparedIjazahs.findAll({filters:{ownerId:sourceOwner},limit:2000});
+ const sourceHolding=holdings.find(h=>h.id===preps.find(p=>p.sanadId===sanadId)?.holdingId);
+ const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||'',routeSource:sourceHolding?.routeSource||sanad.routeSource||''};
+ return JSON.stringify({routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
 }
 
 /** Resolve a draft afresh; old certificates with an unavailable original holding

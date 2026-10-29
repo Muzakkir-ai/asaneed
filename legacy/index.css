@@ -263,7 +263,7 @@
 .certificate-footer-table { width:100%; table-layout:fixed; border-collapse:collapse; border:0 !important; }
 .certificate-footer-table td { border:0 !important; padding:0 2mm; vertical-align:top; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; }
 /* Anchor every first-row footer heading to the bottom of its cell. */
-.certificate-footer-head td { vertical-align:bottom !important; padding-bottom:2mm; }
+.certificate-footer-head td { vertical-align:bottom !important; padding-bottom:1mm; }
 .certificate-footer-right { text-align:right; }
 .certificate-footer-center { text-align:center; }
 .certificate-footer-left { text-align:left; }
@@ -636,7 +636,7 @@
 
 /* Verified shahada footer: RTL order is QR | centered mujeez | signature.
    Use the existing certificate palette with no QR background rectangle. */
-.certificate-footer-table .certificate-footer-details {height:24mm !important;}
+.certificate-footer-table .certificate-footer-details {height:20mm !important;}
 .certificate-footer-table .certificate-footer-heading.certificate-footer-center,
 .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez,
 .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > div {
@@ -751,6 +751,11 @@
   width:95.333333%; aspect-ratio:143 / 15.22;
   background-color:var(--certificate-secondary,#075f69) !important;
 }
-.certificate-footer-table .certificate-footer-head > td { vertical-align:bottom !important; padding-bottom:2mm; }
+.certificate-footer-table .certificate-footer-head > td { vertical-align:bottom !important; padding-bottom:1mm; }
 
 .certificate-numbered-artwork{display:flex;flex-direction:column;align-items:center;gap:.58mm;max-width:100%;margin-inline:auto}
+
+/* One native-select arrow, inset consistently in RTL and LTR, including dialogs. */
+select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23647580' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:16px 16px;background-position:right 12px center;padding-right:38px!important;}
+select:not([multiple]):not([size]):dir(rtl){background-position:left 12px center;padding-left:38px!important;padding-right:12px!important;}
+.certificate-print-screen [style*="Sakkal Kitab"]{font-feature-settings:"ss16" 1;}
