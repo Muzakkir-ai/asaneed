@@ -18,12 +18,12 @@ export default function AssetSourcePanel() {
   const save = async (repo: string, refresh=false) => {
     setSaving(true);
     try {
-      const r = await assetSource({ repository: repo, branch,refresh });
+      const r = await assetSource(refresh?{refresh:true}:{ repository: repo, branch });
       applyAssets(r.repository, r.branch,r.revision);
-      setRepository(r.repository); setConnected(hasAssets());
+      setRepository(r.repository); setBranch(r.branch); setConnected(hasAssets());
       toast.success(r.repository ? 'تم ربط المستودع وتحميل الخطوط والزخارف' : 'تم فصل المستودع');
     } catch (e) {
-      toast.error((e as { userFacingMessage?: string }).userFacingMessage || 'تعذّر الحفظ');
+      toast.error((e as { userFacingMessage?: string }).userFacingMessage || (e instanceof Error?e.message:'تعذّر الحفظ'));
     } finally { setSaving(false); }
   };
 
