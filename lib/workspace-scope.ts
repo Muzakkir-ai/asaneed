@@ -17,5 +17,12 @@ export async function resolveWorkspaceScope(client:SupabaseClient,actor:{id:stri
  const {data:links,error}=await client.from('issuer_accounts').select('issuer_id').eq('account_id',target.id);
  if(error)throw Error('Unable to load issuing-shaykh assignments');
  const issuerIds=(links??[]).map(r=>r.issuer_id as string);
+ // Administrators manage every additional shaykh by role; explicit assignments
+ // still define personal-user access and account inspection. This is not a UI filter.
+ if(actor.role==='admin'&&!inspection&&!system){
+  const {data:profiles,error:profileError}=await client.from('issuers').select('id,print_profile');
+  if(profileError)throw Error('Unable to load authorized additional shaykhs');
+  for(const profile of profiles??[])if(!(profile.print_profile as Record<string,unknown>)?.personalAccount&&!issuerIds.includes(profile.id))issuerIds.push(profile.id);
+ }
  return {accountId:target.id,authUserId:target.auth_user_id,name:target.display_name,role:target.role,issuerIds,inspection,readOnly:inspection&&request.headers.get('x-workspace-edit')!=='confirmed',system:system&&actor.role==='admin'};
 }

@@ -3,7 +3,7 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import {resolveWorkspaceScope,readOnlyWorkspaceRequest,administrativeWorkspaceRequest} from '../lib/workspace-scope.ts';
 const actor={id:'own-account',auth_user_id:'own-auth',display_name:'Own',role:'admin'};
 const other={id:'other-account',auth_user_id:'other-auth',display_name:'Other',role:'shaykh'};
-function fakeClient(){return {from:(table:string)=>({select:()=>({eq:(_field:string,value:string)=>table==='accounts'?{single:async()=>({data:value===other.id?other:null,error:null})}:Promise.resolve({data:value===actor.id?[{issuer_id:'own-issuer'}]:[{issuer_id:'other-issuer'}],error:null})})})} as unknown as SupabaseClient;}
+function fakeClient(){return {from:(table:string)=>table==='issuers'?{select:async()=>({data:[{id:'additional-shaykh',print_profile:{}},{id:'unassigned-personal',print_profile:{personalAccount:'someone-else'}}],error:null})}:({select:()=>({eq:(_field:string,value:string)=>table==='accounts'?{single:async()=>({data:value===other.id?other:null,error:null})}:Promise.resolve({data:value===actor.id?[{issuer_id:'own-issuer'}]:[{issuer_id:'other-issuer'}],error:null})})})} as unknown as SupabaseClient;}
 const request=(headers:Record<string,string>={})=>new Request('https://asaneed.example/api/workspace/getDashboard',{headers});
 for(const endpoint of ['finalizeCertificate','saveCertificate','deleteCertificate','prepareIjazah','issueQiraah','saveProfile','adminBackup','manageUsers'])for(const action of ['list','get','preview',undefined])assert.equal(readOnlyWorkspaceRequest(endpoint,{action}),false,endpoint+' must not masquerade as a read');
 assert.equal(readOnlyWorkspaceRequest('certificateDraftPreview',{}),true);
@@ -12,7 +12,7 @@ assert.equal(readOnlyWorkspaceRequest('assetSource',{refresh:true}),false);
 assert.equal(readOnlyWorkspaceRequest('assetSource',{action:'list',repository:'https://github.com/example/assets'}),false);
 assert.equal(readOnlyWorkspaceRequest('ijazahHoldings',{action:'save'}),false);
 const own=await resolveWorkspaceScope(fakeClient(),actor,request());
-assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer']);assert.equal(own.system,false);
+assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer','additional-shaykh']);assert.equal(own.system,false);
 const ignoredFilter=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-issuer':'other-issuer'}));
 assert.deepEqual(ignoredFilter,own,'An old/forged certificate filter must not change authorization or narrow other pages');
 for(const endpoint of ['additionalShaykhs','manageUsers','sanadSections','getAdminAsaneed','narratorDirectory'])assert.equal(administrativeWorkspaceRequest(endpoint),true);
@@ -21,6 +21,7 @@ await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),{...actor,role:'shay
 const inspection=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':other.id}));
 assert.equal(inspection.authUserId,other.auth_user_id);assert.equal(inspection.readOnly,true);assert.deepEqual(inspection.issuerIds,['other-issuer']);
 const edit=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':other.id,'x-workspace-edit':'confirmed'}));assert.equal(edit.readOnly,false);
-const normal=await resolveWorkspaceScope(fakeClient(),{...actor,role:'shaykh'},request(),true);assert.equal(normal.system,false);
+const normal=await resolveWorkspaceScope(fakeClient(),{...actor,role:'shaykh'},request(),true);assert.equal(normal.system,false);assert.deepEqual(normal.issuerIds,['own-issuer'],'Normal users must not inherit administrator access to additional shaykhs');
+const secondAdmin=await resolveWorkspaceScope(fakeClient(),{...actor,id:'second-admin',auth_user_id:'second-auth'},request());assert.ok(secondAdmin.issuerIds.includes('additional-shaykh'));assert.ok(!secondAdmin.issuerIds.includes('unassigned-personal'));
 await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':'missing'})),/unavailable/);
 console.log('PASS: personal admin default, verified issuer assignments, forged scope rejection, read-only inspection and explicit admin editing');
