@@ -31,7 +31,7 @@ export type Cert = Data['certificates'][0];
 
 export default function App(){
   const [assetsReady,setAssetsReady]=useState(false);
-  useEffect(()=>{assetSource({}).then(r=>applyAssets(r.repository,r.branch)).catch(()=>{}).finally(()=>setAssetsReady(true));},[]);
+  useEffect(()=>{assetSource({}).then(r=>applyAssets(r.repository,r.branch,r.revision)).catch(()=>{}).finally(()=>setAssetsReady(true));},[]);
   if(!assetsReady)return <div className="min-h-screen grid place-items-center text-muted-foreground">جارٍ التحميل…</div>;
   if(window.location.pathname.startsWith('/verify/'))return <CertificateVerificationPage/>;
   return <PrivateApp/>;

@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { assetSource } from '../lib/api';
 import { Input } from '@project/components/ui/input';
 import { Button } from '@project/components/ui/button';
-import { Github } from 'lucide-react';
+import { Github,RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { applyAssets, hasAssets } from '../lib/assets';
 
-/** Admin-only: link the GitHub repo hosting fonts/artwork. Not included in data backups. */
+/** Admin-only: link the GitHub repo hosting fonts/artwork. Included in application-data backups. */
 export default function AssetSourcePanel() {
   const [repository, setRepository] = useState('');
   const [branch, setBranch] = useState('main');
@@ -15,11 +15,11 @@ export default function AssetSourcePanel() {
 
   useEffect(() => { assetSource({}).then(r => { setRepository(r.repository); setBranch(r.branch); }).catch(() => {}); }, []);
 
-  const save = async (repo: string) => {
+  const save = async (repo: string, refresh=false) => {
     setSaving(true);
     try {
-      const r = await assetSource({ repository: repo, branch });
-      applyAssets(r.repository, r.branch);
+      const r = await assetSource({ repository: repo, branch,refresh });
+      applyAssets(r.repository, r.branch,r.revision);
       setRepository(r.repository); setConnected(hasAssets());
       toast.success(r.repository ? 'تم ربط المستودع وتحميل الخطوط والزخارف' : 'تم فصل المستودع');
     } catch (e) {
@@ -39,6 +39,7 @@ export default function AssetSourcePanel() {
       <Input dir="ltr" placeholder="https://github.com/Muzakkir-ai/fonts" value={repository} onChange={e => setRepository(e.target.value)} />
       <Input dir="ltr" placeholder="main" value={branch} onChange={e => setBranch(e.target.value)} />
       <div className="flex gap-2">
+        <Button variant="outline" disabled={saving||!connected} onClick={()=>save(repository,true)}><RefreshCw className="size-4 ml-2"/>تحديث ملفات GitHub</Button>
         <Button disabled={saving || !repository.trim()} onClick={() => save(repository)}>ربط وتحميل</Button>
         {connected && <Button variant="outline" disabled={saving} onClick={() => save('')}>فصل</Button>}
       </div>

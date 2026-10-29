@@ -23,8 +23,8 @@ const FONTS: [string, string, string][] = [
   ['KFGQPC Symbols', 'kfgqpc-arabic-symbols-01-regular_ufonts.com.ttf', 'font-weight:400'],
 ];
 
-export function applyAssets(repository: string, branch: string) {
-  base = cdnBase(repository, branch);
+export function applyAssets(repository: string, branch: string, revision = '') {
+  base = cdnBase(repository, /^[a-f0-9]{40}$/.test(revision)?revision:branch);
   let el = document.getElementById('remote-assets') as HTMLStyleElement | null;
   if (!el) { el = document.createElement('style'); el.id = 'remote-assets'; document.head.appendChild(el); }
   if (!base) { el.textContent = ''; return; }

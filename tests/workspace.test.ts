@@ -7,6 +7,9 @@ function fakeClient(){return {from:(table:string)=>({select:()=>({eq:(_field:str
 const request=(headers:Record<string,string>={})=>new Request('https://asaneed.example/api/workspace/getDashboard',{headers});
 for(const endpoint of ['finalizeCertificate','saveCertificate','deleteCertificate','prepareIjazah','issueQiraah','saveProfile','adminBackup','manageUsers'])for(const action of ['list','get','preview',undefined])assert.equal(readOnlyWorkspaceRequest(endpoint,{action}),false,endpoint+' must not masquerade as a read');
 assert.equal(readOnlyWorkspaceRequest('certificateDraftPreview',{}),true);
+assert.equal(readOnlyWorkspaceRequest('assetSource',{}),true);
+assert.equal(readOnlyWorkspaceRequest('assetSource',{refresh:true}),false);
+assert.equal(readOnlyWorkspaceRequest('assetSource',{action:'list',repository:'https://github.com/example/assets'}),false);
 assert.equal(readOnlyWorkspaceRequest('ijazahHoldings',{action:'save'}),false);
 const own=await resolveWorkspaceScope(fakeClient(),actor,request());
 assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer']);assert.equal(own.system,false);

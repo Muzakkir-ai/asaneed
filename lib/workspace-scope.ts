@@ -3,6 +3,7 @@ import type {WorkspaceScope} from '../legacy/compat/context';
 /** These endpoints already require admin privileges; RLS remains authoritative. */
 export function administrativeWorkspaceRequest(endpoint:string){return ['manageUsers','adminBackup','additionalShaykhs','additionalReadingSanads','getAdminAsaneed','manageAsaneed','sanadSections','sectionVersions','riwayahColors','narratorDirectory'].includes(endpoint);}
 export function readOnlyWorkspaceRequest(endpoint:string,input:Record<string,unknown>){
+ if(endpoint==='assetSource')return input.repository===undefined&&!input.refresh;
  if(['getDashboard','myCertificates','getAdminAsaneed','narratorDirectory','certificateDraftPreview','certificatePrintAuthorization','resolveSanadFormatting','sectionVersions'].includes(endpoint))return true;
  const actions:Record<string,string[]>={assetSource:['get','list'],additionalReadingSanads:['list'],additionalShaykhs:['list'],ijazahHoldings:['list'],mutoonHoldings:['list'],mutoonTemplates:['list'],personalWording:['list'],riwayahColors:['list'],sanadPrintStyle:['get'],sanadSections:['list'],shaykhPrintProfile:['get'],studentDirectory:['list']};
  return !!actions[endpoint]?.includes(String(input.action??'list'));
