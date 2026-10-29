@@ -1,3 +1,4 @@
+import {issuanceTargetScope} from '../../../../lib/issuance-target';
 import {NextResponse} from 'next/server';
 import {createClient} from '../../../../lib/supabase/server';
 import {requestContext} from '../../../../legacy/compat/context';
@@ -23,7 +24,8 @@ export async function POST(request:Request,{params}:{params:Promise<{endpoint:st
   const text=await request.text();if(text.length>15000000)return NextResponse.json({error:'Request too large'},{status:413});const body=JSON.parse(text);
   // Administrative directories use existing RLS grants, independently of list filters.
   const system=administrativeWorkspaceRequest(endpoint);
-  const scope=await resolveWorkspaceScope(client,{...account,auth_user_id:user.id},request,system);
+  let scope=await resolveWorkspaceScope(client,{...account,auth_user_id:user.id},request,system);
+  scope=await issuanceTargetScope(client,scope,account.role,endpoint,body);
   if(endpoint==='myCertificates')scope.certificateAccess='recipient';
   else if(['certificatePrintAuthorization','resolveSanadFormatting'].includes(endpoint))scope.certificateAccess='assigned-or-recipient';
   if(scope.readOnly&&!readOnlyWorkspaceRequest(endpoint,body))return NextResponse.json({error:'هذه المساحة للقراءة فقط. فعّل وضع التعديل من شريط المعاينة أولاً.'},{status:403});

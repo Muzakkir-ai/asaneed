@@ -157,7 +157,7 @@ function PrivateApp() {
             <CertificatesView scopeKey={directory.actorId+':'+target} administrativeView={inspecting} readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
           </TabsContent>
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
-          <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting}/></TabsContent>
+          <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting} onImported={()=>void load()}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
           {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}

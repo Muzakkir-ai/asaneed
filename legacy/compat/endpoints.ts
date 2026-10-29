@@ -1,3 +1,4 @@
+import receivedSanad from '../api/receivedSanad';
 import additionalReadingSanads from '../api/additionalReadingSanads';
 import additionalShaykhs from '../api/additionalShaykhs';
 import adminBackup from '../api/adminBackup';
@@ -28,4 +29,4 @@ import sectionVersions from '../api/sectionVersions';
 import shaykhPrintProfile from '../api/shaykhPrintProfile';
 import studentDirectory from '../api/studentDirectory';
 import verifyCertificate from '../api/verifyCertificate';
-export const endpoints={additionalReadingSanads,additionalShaykhs,adminBackup,assetSource,certificateDraftPreview,certificatePrintAuthorization,deleteCertificate,finalizeCertificate,getAdminAsaneed,getDashboard,ijazahHoldings,issueQiraah,manageAsaneed,manageUsers,mutoonHoldings,mutoonTemplates,myCertificates,narratorDirectory,personalWording,prepareIjazah,resolveSanadFormatting,riwayahColors,sanadPrintStyle,sanadSections,saveCertificate,saveProfile,sectionVersions,shaykhPrintProfile,studentDirectory,verifyCertificate};
+export const endpoints={receivedSanad,additionalReadingSanads,additionalShaykhs,adminBackup,assetSource,certificateDraftPreview,certificatePrintAuthorization,deleteCertificate,finalizeCertificate,getAdminAsaneed,getDashboard,ijazahHoldings,issueQiraah,manageAsaneed,manageUsers,mutoonHoldings,mutoonTemplates,myCertificates,narratorDirectory,personalWording,prepareIjazah,resolveSanadFormatting,riwayahColors,sanadPrintStyle,sanadSections,saveCertificate,saveProfile,sectionVersions,shaykhPrintProfile,studentDirectory,verifyCertificate};

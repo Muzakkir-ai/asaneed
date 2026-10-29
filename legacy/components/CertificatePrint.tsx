@@ -1,3 +1,4 @@
+import {certificateBalance} from '../lib/certificateBalance';
 import {certificateOverflows} from '../lib/printOverflow';
 import type {Artwork} from '../lib/artworkCatalog';
 import RegistrationNumber from './RegistrationNumber';
@@ -362,7 +363,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     setCenterFits(true);
     const page=printArea.current;
     if(page)page.style.setProperty('--certificate-center-shift','0px');
-  },[cert.id,activeSanad?.id,sanadBody,footerName]);
+  },[cert.id,activeSanad?.id,sanadBody,footerName,typography,styledPhrases]);
   useEffect(()=>{
     if(!centerFits)return;
     const page=printArea.current,header=headerArea.current,footer=footerArea.current;
@@ -370,19 +371,10 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     let frame=0;
     const center=()=>{
       const p=page.getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
-      const margin=p.width*12/297;
-      const occupied=b.bottom-a.top;
-      if(occupied>p.height-2*margin){
-        page.style.setProperty('--certificate-center-shift','0px');
-        setCenterFits(false);
-        return;
-      }
       const old=parseFloat(page.style.getPropertyValue('--certificate-center-shift'))||0;
-      let wanted=old+(p.top+p.height/2-(a.top+b.bottom)/2);
-      const minimum=old+p.top+margin-a.top;
-      const maximum=old+p.bottom-margin-b.bottom;
-      wanted=Math.max(minimum,Math.min(maximum,wanted));
-      if(Math.abs(wanted-old)>0.5)page.style.setProperty('--certificate-center-shift',wanted.toFixed(2)+'px');
+      const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old});
+      if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');setCenterFits(false);return;}
+      if(Math.abs(balanced.shift-old)>0.25)page.style.setProperty('--certificate-center-shift',balanced.shift.toFixed(2)+'px');
     };
     const request=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(center);};
     request();
@@ -468,7 +460,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft||!!previewPalette} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft||!!previewPalette} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
-          {isDraft&&<Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'معاينة PDF بدون اعتماد'}</Button>}
+          {isDraft&&<Button variant="default" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'معاينة PDF بدون اعتماد'}</Button>}
           {isDraft?<Button disabled={readOnly||!!previewPalette||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly||previewPalette?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
             <Button disabled={overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
             <Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>

@@ -1,3 +1,5 @@
+import {context as requestContext} from '../compat/context';
+import {personalIssuerName} from '../lib/issuerNames';
 import {readingIdentityFromHeading} from '../lib/riwayahSvgHeading';
 import {isAppAdmin} from '../lib/admin';
 import { z } from 'zod';
@@ -35,8 +37,15 @@ export default createEndpoint({
       zite.ijazahHoldings.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
       zite.shaykhPrintProfiles.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
     ]);
-    const accountNames=users.records.map(u=>({id:u.id,name:profiles.records.find(p=>p.ownerId===u.id)?.printedName||u.name||[u.firstName,u.lastName].filter(Boolean).join(' ')||u.email||'شيخ غير مسمى'}));
-    const shaykhs=accountNames.filter(u=>profiles.records.some(p=>p.ownerId===u.id)||holdings.records.some(h=>h.ownerId===u.id)||certs.some(c=>!c.additionalShaykh&&first(c.shaykh)===u.id));
+    const directoryAccounts=admin?await requestContext().client.rpc('list_application_accounts'):null;
+    if(directoryAccounts?.error)throw Error(directoryAccounts.error.message);
+    const directoryProfiles=admin?await requestContext().client.from('issuers').select('id,display_name,print_profile'):null;
+    if(directoryProfiles?.error)throw Error(directoryProfiles.error.message);
+    const directoryHoldings=admin?await requestContext().client.from('workspace_records').select('owner:payload->>ownerId').eq('kind','ijazahHoldings'):null;
+    if(directoryHoldings?.error)throw Error(directoryHoldings.error.message);
+    const allAccounts:{id:string;name:string;email?:string}[]=admin?(directoryAccounts?.data||[]).filter((a:any)=>a.active&&a.role!=='student').map((a:any)=>({id:a.auth_user_id,name:a.display_name,email:a.email})):users.records;
+    const accountNames=allAccounts.map(u=>({id:u.id,name:personalIssuerName(u.name||u.email||'',(directoryProfiles?.data||[]).find((i:any)=>i.print_profile?.personalAccount===(directoryAccounts?.data||[]).find((a:any)=>a.auth_user_id===u.id)?.id)?.print_profile?.printedName||profiles.records.find(p=>p.ownerId===u.id)?.printedName)}));
+    const shaykhs=accountNames.filter(u=>directoryHoldings?.data?.some((h:any)=>h.owner===u.id)||profiles.records.some(p=>p.ownerId===u.id)||holdings.records.some(h=>h.ownerId===u.id)||certs.some(c=>!c.additionalShaykh&&first(c.shaykh)===u.id));
     const issuerMap=new Map<string,string>(extras.records.map(g=>['guest:'+g.id,g.name||'شيخ إضافي'] as [string,string]));
     for(const u of shaykhs)issuerMap.set('user:'+u.id,u.name);
     const issuers=[...issuerMap].map(([id,name])=>({id,name})).sort((a,b)=>a.name.localeCompare(b.name,'ar'));

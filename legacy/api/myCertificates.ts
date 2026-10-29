@@ -13,7 +13,7 @@ const publishedCert=z.object({
 export default createEndpoint({
  description:'Return only finalized certificates expressly linked to the authenticated recipient',
  authenticated:true,inputSchema:z.object({}),
- outputSchema:z.object({certificates:z.array(publishedCert)}),
+ outputSchema:z.object({canBuildSanad:z.boolean(),importedCertificateIds:z.array(z.string()),certificates:z.array(publishedCert)}),
  execute:async({context})=>{
   const {records:all}=await zite.certificates.findAll({filters:{studentAccount:context.user.id},limit:2000});
   const mine=all.filter(c=>c.studentAccount===context.user.id&&c.publicationStatus==='final');
@@ -38,6 +38,7 @@ export default createEndpoint({
      shaykhId:first(c.shaykh),additionalShaykh:c.additionalShaykh||'',shaykhName:(()=>{try{const f=JSON.parse(snapshot.formatting||'{}');return f.footerProfile?.printedName||f.issuerDisplayName||(c.additionalShaykh&&guestNames.get(c.additionalShaykh))||'';}catch{return '';}})(),
      snapshotChain:snapshot.chain||'',snapshotHeading:snapshot.heading||'',snapshotFormatting:snapshot.formatting||''});
   }
-  return {certificates:list.sort((a,b)=>b.certificateNumber-a.certificateNumber)};
+  const {records:holdings}=context.account.role==='student'?{records:[]}:await zite.ijazahHoldings.findAll({filters:{ownerId:context.user.id},limit:2000});
+  return {canBuildSanad:context.account.role!=='student'&&!context.scope?.inspection,importedCertificateIds:holdings.map(h=>h.sourceCertificateId||'').filter(Boolean),certificates:list.sort((a,b)=>b.certificateNumber-a.certificateNumber)};
  }
 });

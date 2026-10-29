@@ -12,7 +12,7 @@ assert.equal(readOnlyWorkspaceRequest('assetSource',{refresh:true}),false);
 assert.equal(readOnlyWorkspaceRequest('assetSource',{action:'list',repository:'https://github.com/example/assets'}),false);
 assert.equal(readOnlyWorkspaceRequest('ijazahHoldings',{action:'save'}),false);
 const own=await resolveWorkspaceScope(fakeClient(),actor,request());
-assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer','additional-shaykh']);assert.equal(own.system,false);
+assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer','additional-shaykh','unassigned-personal']);assert.equal(own.system,false);
 const ignoredFilter=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-issuer':'other-issuer'}));
 assert.deepEqual(ignoredFilter,own,'An old/forged certificate filter must not change authorization or narrow other pages');
 for(const endpoint of ['additionalShaykhs','manageUsers','sanadSections','getAdminAsaneed','narratorDirectory'])assert.equal(administrativeWorkspaceRequest(endpoint),true);
@@ -22,6 +22,6 @@ const inspection=await resolveWorkspaceScope(fakeClient(),actor,request({'x-work
 assert.equal(inspection.authUserId,other.auth_user_id);assert.equal(inspection.readOnly,true);assert.deepEqual(inspection.issuerIds,['other-issuer']);
 const edit=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':other.id,'x-workspace-edit':'confirmed'}));assert.equal(edit.readOnly,false);
 const normal=await resolveWorkspaceScope(fakeClient(),{...actor,role:'shaykh'},request(),true);assert.equal(normal.system,false);assert.deepEqual(normal.issuerIds,['own-issuer'],'Normal users must not inherit administrator access to additional shaykhs');
-const secondAdmin=await resolveWorkspaceScope(fakeClient(),{...actor,id:'second-admin',auth_user_id:'second-auth'},request());assert.ok(secondAdmin.issuerIds.includes('additional-shaykh'));assert.ok(!secondAdmin.issuerIds.includes('unassigned-personal'));
+const secondAdmin=await resolveWorkspaceScope(fakeClient(),{...actor,id:'second-admin',auth_user_id:'second-auth'},request());assert.ok(secondAdmin.issuerIds.includes('additional-shaykh'));assert.ok(secondAdmin.issuerIds.includes('unassigned-personal'));
 await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':'missing'})),/unavailable/);
 console.log('PASS: personal admin default, verified issuer assignments, forged scope rejection, read-only inspection and explicit admin editing');

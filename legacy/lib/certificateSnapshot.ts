@@ -1,3 +1,4 @@
+import {extractTeacherTransmission} from './receivedTransmission';
 import {arabicSearchKey} from './arabicSearch';
 import {zite} from 'zitejs/db';
 import {context} from '../compat/context';
@@ -64,7 +65,9 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  const sourceHolding=holdings.find(h=>h.id===preps.find(p=>p.sanadId===sanadId)?.holdingId);
  const standardShatibi=arabicSearchKey(heading).endsWith('من طريقي الشاطبية والتيسير');
  const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSource:sourceHolding?.routeSource||sanad.routeSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
- return JSON.stringify({routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
+ let transmission:unknown=null;
+ try{transmission={chain:extractTeacherTransmission(chain,sourceHolding?.personalChain||'',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||'')),qariId:reading?.qariId||'',rawi:reading?.rawi||'',tariqNumber:sourceHolding?.tariqNumber||sanad.tariqNumber||'',tariqName:sourceHolding?.tariqName||sanad.tariqName||''};}catch{}
+ return JSON.stringify({transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
 }
 
 /** Resolve a draft afresh; old certificates with an unavailable original holding

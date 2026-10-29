@@ -1,3 +1,6 @@
+import type receivedSanadEndpoint from '../api/receivedSanad';
+export type ReceivedSanadOutputType=z.infer<typeof receivedSanadEndpoint.outputSchema>;
+export const receivedSanad=(input:z.input<typeof receivedSanadEndpoint.inputSchema>):Promise<ReceivedSanadOutputType>=>call('receivedSanad',input);
 import type {z} from 'zod';
 import {workspaceHeaders} from './workspaceSelection';
 import type additionalReadingSanadsEndpoint from '../api/additionalReadingSanads';

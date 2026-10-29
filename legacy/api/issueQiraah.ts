@@ -34,7 +34,7 @@ export default createEndpoint({
         ||holdings.find(h=>h.qariId===imam.id&&!h.rawi&&(h.tariqNumber||'')===input.tariqNumber);
       if(!holding||holding.ownerId!==owner||!canUsePersonalSanad(holding))
         throw new Error(`أكمل سند رواية ${rawi} قبل إصدار الشهادات`);
-      const assembled=assembleIjazah({tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+      const assembled=assembleIjazah({chainMode:holding.chainMode,tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
       if(assembled.missing.length)throw new Error(`سند ${rawi} غير مكتمل: ${assembled.missing.join('، ')}`);
       return {rawi,holding,assembled};
     });

@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {certificateBalance} from '../legacy/lib/certificateBalance';
+const layout={pageTop:0,pageBottom:800,pageWidth:1123,layoutWidth:1123,headerTop:55,footerBottom:690};
+const balanced=certificateBalance(layout);
+assert.ok(balanced.fits&&balanced.shift>0&&balanced.shift<30,'Gently use spare bottom space');
+const stable=certificateBalance({...layout,headerTop:layout.headerTop+balanced.shift,footerBottom:layout.footerBottom+balanced.shift,previousShift:balanced.shift});
+assert.ok(Math.abs(stable.shift-balanced.shift)<0.001,'No repeated drift');
+const scaled=certificateBalance({...layout,pageBottom:400,pageWidth:561.5,headerTop:27.5,footerBottom:345});
+assert.ok(Math.abs(scaled.shift-balanced.shift)<0.001,'Same print position at mobile preview scale');
+assert.equal(certificateBalance({...layout,footerBottom:795}).fits,false,'Long text must not be squeezed');
+console.log('PASS: restrained vertical balance, preview-scale independence, no drift and long-certificate fallback');

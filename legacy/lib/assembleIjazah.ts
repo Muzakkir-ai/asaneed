@@ -1,6 +1,6 @@
 import {QURRA,routeFor,readingText} from './qurra';
 import {vocalizeReadingLabel} from './vocalizedReading';
-export type AssemblyHolding={tariqNumber?:string;tariqName?:string;qariId:string;rawi?:string;personalChain:string;junction:string;introductionId?:string;wordingId?:string};
+export type AssemblyHolding={chainMode?:'junction'|'complete';tariqNumber?:string;tariqName?:string;qariId:string;rawi?:string;personalChain:string;junction:string;introductionId?:string;wordingId?:string};
 export type AssemblySection={id:string;title:string;body:string;sectionType:string;formatting?:string};
 const cleanEnd=(s:string)=>s.trim().replace(/[.،؛\s]+$/u,'');
 const joinChain=(parts:string[])=>parts.filter(x=>x.trim()).map((part,i,all)=>i===all.length-1?part.trim():cleanEnd(part)+(i===all.length-2?'.':'،')).join(' ');
@@ -16,11 +16,12 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
   used.push(item);return item.body.trim();
  };
  const customRoute=Boolean(holding.tariqNumber&&holding.tariqName);
- const rawis=customRoute?[]:narrators.map(r=>byTitle(`CHAIN:${imam.id}:${r}`,true));
- const sahaba=customRoute?'':byTitle(`CHAIN:${imam.id}:sahaba`,true);
- const prophet=customRoute?'':byTitle(`CHAIN:${imam.id}:prophet`,true);
- const common=!customRoute&&imam.family==='seven'?byTitle('من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة',true):'';
- const ubaidi=!customRoute&&holding.junction==='ubaydi'?byTitle('من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',true):'';
+ const completeChain=customRoute||holding.chainMode==='complete';
+ const rawis=completeChain?[]:narrators.map(r=>byTitle(`CHAIN:${imam.id}:${r}`,true));
+ const sahaba=completeChain?'':byTitle(`CHAIN:${imam.id}:sahaba`,true);
+ const prophet=completeChain?'':byTitle(`CHAIN:${imam.id}:prophet`,true);
+ const common=!completeChain&&imam.family==='seven'?byTitle('من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة',true):'';
+ const ubaidi=!completeChain&&holding.junction==='ubaydi'?byTitle('من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',true):'';
  const intro=holding.introductionId?sections.find(s=>s.id===holding.introductionId):undefined;
  const wording=holding.wordingId?sections.find(s=>s.id===holding.wordingId):undefined;
  const conclusion=sections.find(s=>s.sectionType==='conclusion'&&!!s.body?.trim());
@@ -30,7 +31,7 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  for(const x of [intro,wording,conclusion])if(x)used.push(x);
  const reading=readingText({qariId:imam.id,rawi:holding.rawi||undefined});
  const route=customRoute?'من طريق '+holding.tariqName:routeFor([imam.id]);
- if(customRoute&&holding.personalChain.trim().length<100)missing.push('السند الكامل لهذا الطريق إلى النبي ﷺ');
+ if(completeChain&&holding.personalChain.trim().length<100)missing.push('السند الكامل لهذا الطريق إلى النبي ﷺ');
  const heading=[reading,route].filter(Boolean).join(' ');
  const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,route].filter(Boolean).join(' ')));
  const isnad=joinChain([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]);

@@ -226,15 +226,17 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                   <SelectSeparator className="my-1"/>
                 </SelectGroup>)}
                 {!cert&&!isGuest&&readingGroups.map(({q,narrators})=>{
-                  const valid=narrators.every(x=>x.holding&&canUsePersonalSanad(x.holding));
+                  const choicesFor=(rawi:string)=>{const exact=routeHoldings.filter(h=>h.qariId===q.id&&h.rawi===rawi);return exact.length?exact:routeHoldings.filter(h=>h.qariId===q.id&&!h.rawi);};
+                  const ambiguous=narrators.some(n=>choicesFor(n.rawi).length>1);
+                  const valid=!ambiguous&&narrators.every(x=>x.holding&&canUsePersonalSanad(x.holding));
                   return <SelectGroup key={q.id}>
                     <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
                     {narrators.every(x=>x.holding)&&<SelectItem value={`qiraah:${q.id}`} disabled={!valid} className="font-semibold text-right py-2.5">
                       <span className="flex items-center gap-2"><span>القراءة كاملة</span><span className="text-xs font-normal text-muted-foreground">شهادتان · {q.rawis.map(r=>displayRawi(q.id,r)).join(' + ')}</span></span>
                     </SelectItem>}
-                    {narrators.filter(x=>x.holding).map(({rawi,holding})=><SelectItem key={rawi} value={`holding:${holding!.id}:${encodeURIComponent(rawi)}`} disabled={!canUsePersonalSanad(holding!)} className="text-right py-2">
-                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}</span>
-                    </SelectItem>)}
+                    {narrators.flatMap(({rawi})=>choicesFor(rawi).map(holding=><SelectItem key={holding.id+'-'+rawi} value={`holding:${holding!.id}:${encodeURIComponent(rawi)}`} disabled={!canUsePersonalSanad(holding!)} className="text-right py-2">
+                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
+                    </SelectItem>))}
                     <SelectSeparator className="my-1"/>
                   </SelectGroup>;
                 })}
