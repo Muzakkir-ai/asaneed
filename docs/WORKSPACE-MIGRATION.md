@@ -29,6 +29,8 @@ The riwayah color editor provides native swatches, complete HEX inputs, immediat
 
 Readex Pro is self-hosted for the application. Certificate fonts, metrics, templates, registration numbering, verification tokens and print overflow checks are retained.
 
+The obsolete `QurraPicker` and `SanadTitleText` components were removed after repository-wide searches found no references. Active sanad and certificate editors remain in use. Legacy account choices now deduplicate the same historical identity across differing old email/profile rows without deleting source records.
+
 ## Validation
 
 - Production build and TypeScript checks passed.
