@@ -33,13 +33,14 @@ const schema = z.object({
 type Props = { selectedIssuer?:string; cert: Cert | null; asaneed: Data['asaneed']; shaykhs:Data['shaykhs']; isAdmin:boolean; currentUserId:string; onClose: () => void; onSaved: () => void };
 
 export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs, isAdmin, currentUserId, onClose, onSaved }: Props) {
+  const preferredPersonal=selectedIssuer?.startsWith('user:')?selectedIssuer.slice(5):'';
   const [form, setForm] = useState({
     studentName: cert?.studentName ?? '',
     completionDate: cert?.completionDate ?? '',
     hijriDayOffset:cert?.hijriDayOffset ?? 0,
     sanadId: cert?.sanadId ?? '',
     notes: cert?.notes ?? '',
-    shaykhId:cert?.additionalShaykh ? 'guest:'+cert.additionalShaykh : cert?.shaykhId ?? (isAdmin?(shaykhs[0]?.id||''):currentUserId),
+    shaykhId:cert?.additionalShaykh ? 'guest:'+cert.additionalShaykh : cert?.shaykhId ?? (isAdmin?(shaykhs.some(s=>s.id===preferredPersonal)?preferredPersonal:shaykhs[0]?.id||''):currentUserId),
   });
   const [saving, setSaving] = useState(false);
   const [guestSheikhs,setGuestSheikhs]=useState<AdditionalShaykhsOutputType['sheikhs']>([]);
