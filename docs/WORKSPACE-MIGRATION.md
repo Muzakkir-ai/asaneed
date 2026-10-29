@@ -16,14 +16,14 @@ The baseline is an application-data rollback source, not an automatic destructiv
 ## Personal and administrative access
 
 - The workspace API defaults every account, including admins, to its own issuer assignments.
-- The selected issuer is checked on the server for every request; the browser's remembered choice grants no permissions.
+- The server authorizes against all assigned issuer profiles. The certificate page applies its remembered issuing-shaykh filter locally; it is never transmitted as a global request header.
 - Admin inspection resolves the target account on the server, opens read-only, and requires an explicit editing flag for changes. Record lookups and mutations are checked against the resolved scope.
 - User management and complete backup remain separate admin operations. Ordinary users cannot select another account or change assignments. Supabase RLS remains enabled; no service key is used by the application.
-- Shared student selection remains available to authorized staff. Primary workspace lists are scoped to the selected issuer.
+- Shared student selection remains available to authorized staff. Only the students/certificates list is filtered by its local selected issuer. Additional-shaykh, user and shared-sanad administration uses existing admin/RLS authorization independently of that filter. Personal holdings and received certificates remain account-specific.
 
 ## Interface
 
-Right sidebar with saved collapse preference, accessible mobile navigation drawer, explicit issuer selector, separate administration cards with counts and assignments, student summaries, mobile certificate cards, desktop certificate table, incremental narrator list, and larger mobile dialogs.
+Right sidebar with saved collapse preference, accessible mobile navigation drawer, certificate-page issuer selector, separate administration cards with counts and assignments, student summaries, mobile certificate cards, desktop certificate table, incremental narrator list, and larger mobile dialogs.
 
 The riwayah color editor provides 38 × 38 px native swatches beside 128 px HEX inputs, immediate rendering, validation, dirty indicators and reset to saved colors. The controls stack on narrow cards and sit side by side where space permits. It saves only when explicitly requested. The compact heading now shares the actual SVG renderer with the print view; the full preview opens an existing matching draft with unsaved colors in read-only mode. Historical finalized snapshots retain their own settings.
 
@@ -54,3 +54,8 @@ Google branding review/custom auth hostname is a separate provider-side process.
 - Certificate checksum remains `5e94aefd83bb5d4bc63d681678897f97` for all 33 records; the frozen-snapshot table remains empty. No certificates were created, deleted, published or renumbered during these checks. Published-snapshot cases are covered by fixtures because there are no finalized certificates in the live dataset.
 - Application releases: `f9ad06b970de954944d80017be0b66cdedda26c2` (filters/cards/shared heading) and `a7ab0f831ab4913917ebaf35fc4209c190e3de98` (compact color toolbar), both confirmed successful by Vercel.
 
+## Local certificate filter correction
+
+The global selected-issuer state, context field and request header were removed. Assigned issuer IDs remain authorization boundaries, not UI filter state. Administrative directory endpoints resolve their existing admin/RLS access independently; normal users and read-only inspection retain their restrictions. The certificate-only dropdown, count and chips persist across navigation. Creating a certificate can use that local choice as its initial issuer, passed explicitly to the form.
+
+Verified in production: select Zakaullah (33 certificates), navigate to all 3 additional profiles and both application accounts, then return to the same selected filter. The shared narrator registry loads 194 names; shared sanad management loads independently. The current database has 35 certificates and 29 sanads after intervening application use; all 35 certificates had matching before/after checksum `cd62aaf7ee7701492c6b8c48ad06061a` during this correction. No ownership, assignments, RLS policies or data were changed. Build, auth, management, numbering, filter, scope and database-adapter regression checks passed. Release: `e1b94913055ff7c51a81ef5d41f74f9a75635ca7`.
