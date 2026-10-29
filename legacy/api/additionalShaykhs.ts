@@ -13,7 +13,7 @@ const matn=z.object({name:z.string().trim().min(1).max(200),category:z.string().
 const shaykh=z.object({
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),
- junction:z.enum(['ubaydi','jazari']),readings:z.array(choice),email:z.string(),mutoon:z.array(matn),
+ routes:z.array(z.object({qariId:z.string(),rawi:z.string(),tariqNumber:z.string(),tariqName:z.string()})),junction:z.enum(['ubaydi','jazari']),readings:z.array(choice),email:z.string(),mutoon:z.array(matn),
 });
 export default createEndpoint({
  description:'Shared extra sheikh profiles and administrator-supervised sanad drafts',
@@ -24,7 +24,7 @@ export default createEndpoint({
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
    personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
-   qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
+   tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
  }),
  outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional()}),
@@ -32,11 +32,12 @@ export default createEndpoint({
   if(!(await isAppAdmin(context.user.email)))throw new Error('Permission denied');
   const {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
   const extensionFor=(id:string)=>extensions.find(e=>e.shaykhId===id);
+  const {records:routeRecords}=await zite.additionalShaykhReadingSanads.findAll({limit:2000});
   const serialize=(x:any)=>{
     let readings: {qariId:string;rawi:string}[]=[];
     try{readings=JSON.parse(x.readingsJson||'[]');}catch{}
     const extension=extensionFor(x.id);let mutoon: z.infer<typeof matn>[]=[];try{mutoon=matn.array().parse(JSON.parse(extension?.mutoonJson||'[]'));}catch{}
-    return {id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
+    return {routes:routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})),id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
       madrasaName:x.madrasaName||'',madrasaPlace:x.madrasaPlace||'',personalChain:x.personalChain||'',
       junction:(x.junction==='jazari'?'jazari':'ubaydi') as 'ubaydi'|'jazari',readings};
   };
@@ -76,12 +77,13 @@ export default createEndpoint({
    const {records:holdings}=await zite.ijazahHoldings.findAll({filters:{ownerId:'guest:'+guest.id},limit:2000});
    // Validate both riwayat before creating either draft.
    const entries=rawis.map(rawi=>{
-    const selected=specific.find(x=>x.qariId===imam.id&&x.rawi===rawi);
+    const selected=specific.find(x=>x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
+    if(input.tariqNumber&&!selected)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
     const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
     const chain=selected?.sanadText||known.personalChain;
     const junction=selected?.junction||known.junction;
-    if(!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
-    const assembled=assembleIjazah({qariId:imam.id,rawi,personalChain:chain,junction,
+    if(input.tariqNumber?chain.length<100:!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
+    const assembled=assembleIjazah({tariqNumber:input.tariqNumber,tariqName:selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
       introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id},
       all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})));
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));

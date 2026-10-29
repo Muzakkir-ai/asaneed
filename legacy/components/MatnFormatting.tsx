@@ -1,12 +1,15 @@
+import {currentArtwork,assetBase} from '../lib/assets';
+import {arabicSearchKey} from '../lib/arabicSearch';
 import {useState} from 'react';
 import {Button} from '@project/components/ui/button';
 import {Textarea} from '@project/components/ui/textarea';
 import {X} from 'lucide-react';
 export type MatnFormat={text:string;start:number;end:number;color:'primary'|'secondary'|'default';bold:boolean;center:boolean;indent:number};
 export const parseMatnFormat=(raw:string):MatnFormat[]=>{try{const x=JSON.parse(raw);return Array.isArray(x)?x.filter(y=>typeof y.start==='number'&&typeof y.end==='number'):[]}catch{return []}};
-export function MatnPreview({intro='',wording='',sanad='',end='',formats=[],introFormats=[],endFormats=[]}:{intro?:string;wording?:string;sanad:string;end?:string;formats?:MatnFormat[];introFormats?:MatnFormat[];endFormats?:MatnFormat[]}){
+export function MatnPreview({bookName='',intro='',wording='',sanad='',end='',formats=[],introFormats=[],endFormats=[]}:{bookName?:string;intro?:string;wording?:string;sanad:string;end?:string;formats?:MatnFormat[];introFormats?:MatnFormat[];endFormats?:MatnFormat[]}){
+ const bookArtwork=currentArtwork().find(a=>a.kind==='books'&&a.label&&arabicSearchKey(a.label)===arabicSearchKey(bookName));
  const render=(body:string,theseFormats:MatnFormat[])=><div className="whitespace-pre-wrap" dir="rtl">{body.split('\n').map((line,i)=>{const start=body.split('\n').slice(0,i).join('\n').length+(i?1:0);const spans=theseFormats.length?theseFormats.filter(f=>f.start>=start&&f.end<=start+line.length&&line.slice(f.start-start,f.end-start)===f.text).sort((a,b)=>a.start-b.start):[];let pos=0;const content:React.ReactNode[]=[];for(const f of spans){if(f.start-start<pos)continue;content.push(line.slice(pos,f.start-start));content.push(<span key={f.start} style={{fontWeight:f.bold?700:undefined,color:f.color==='primary'?'var(--matn-primary,#0f6469)':f.color==='secondary'?'var(--matn-secondary,#a08048)':undefined}}>{f.text}</span>);pos=f.end-start}content.push(line.slice(pos));const layout=spans.find(f=>f.center||f.indent);return <div key={i} style={{textAlign:layout?.center?'center':'right',paddingInlineStart:layout?.indent?layout.indent*16:0,minHeight:'1.6em'}}>{content}</div>})}</div>;
- return <div className="rounded-lg border bg-[#fffdf9] text-[#202020] p-5 leading-9 text-base space-y-3" style={{fontFamily:"'KSA Regular',serif"}}>{intro&&render(intro,introFormats)}{wording&&render(wording,[])}{render(sanad,formats)}{end&&render(end,endFormats)}</div>;
+ return <div className="rounded-lg border bg-[#fffdf9] text-[#202020] p-5 leading-9 text-base space-y-3" style={{fontFamily:"'KSA Regular',serif"}}>{bookArtwork&&<div role="img" aria-label={bookName} style={{width:'100%',height:'80px',backgroundColor:'var(--matn-primary,#0f6469)',WebkitMaskImage:'url("'+assetBase()+'/'+bookArtwork.path+'")',maskImage:'url("'+assetBase()+'/'+bookArtwork.path+'")',WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>}{intro&&render(intro,introFormats)}{wording&&render(wording,[])}{render(sanad,formats)}{end&&render(end,endFormats)}</div>;
 }
 export default function MatnFormatting({sanad,onChange,formats,onFormatsChange}:{sanad:string;onChange:(v:string)=>void;formats:MatnFormat[];onFormatsChange:(v:MatnFormat[])=>void}){
  const [selection,setSelection]=useState<{start:number;end:number;text:string}|null>(null);

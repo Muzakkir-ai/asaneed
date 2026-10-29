@@ -12,7 +12,7 @@ import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 export default createEndpoint({
   description:'Issue two distinct narrator certificates for one qiraah on the same completion date',
   authenticated:true,
-  inputSchema:z.object({qariId:z.string(),studentName:z.string().trim().min(2),completionDate:z.string().min(1),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
+  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),studentName:z.string().trim().min(2),completionDate:z.string().min(1),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
   outputSchema:z.object({ids:z.array(z.string())}),
   execute:async({input,context})=>{
     const admin=(await isAppAdmin(context.user.email));
@@ -30,11 +30,11 @@ export default createEndpoint({
     ]);
     // An individually saved riwayah takes precedence over a shared qiraah sanad.
     const entries=imam.rawis.map(rawi=>{
-      const holding=holdings.find(h=>h.qariId===imam.id&&h.rawi===rawi)
-        ||holdings.find(h=>h.qariId===imam.id&&!h.rawi);
+      const holding=holdings.find(h=>h.qariId===imam.id&&h.rawi===rawi&&(h.tariqNumber||'')===input.tariqNumber)
+        ||holdings.find(h=>h.qariId===imam.id&&!h.rawi&&(h.tariqNumber||'')===input.tariqNumber);
       if(!holding||holding.ownerId!==owner||!canUsePersonalSanad(holding))
         throw new Error(`أكمل سند رواية ${rawi} قبل إصدار الشهادات`);
-      const assembled=assembleIjazah({qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+      const assembled=assembleIjazah({tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
       if(assembled.missing.length)throw new Error(`سند ${rawi} غير مكتمل: ${assembled.missing.join('، ')}`);
       return {rawi,holding,assembled};
     });

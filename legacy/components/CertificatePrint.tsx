@@ -1,7 +1,8 @@
 import {certificateOverflows} from '../lib/printOverflow';
+import type {Artwork} from '../lib/artworkCatalog';
 import RegistrationNumber from './RegistrationNumber';
 import { useEffect, useRef, useState } from 'react';
-import {assetBase} from '../lib/assets';
+import {currentArtwork,currentArtworkBase,assetBase} from '../lib/assets';
 import { exportCertificatePdf } from '../lib/exportPdf';
 import { Toaster } from '@project/components/ui/sonner';
 import { Button } from '@project/components/ui/button';
@@ -251,7 +252,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const previewQrUrl='https://asaneed.vercel.app/verify/demo';
   const snapshotDetails=(()=>{
     if(isDraft||!cert.snapshotFormatting)return null;
-    try{return JSON.parse(cert.snapshotFormatting) as {footerProfile?:PrintProfile;issuerDisplayName?:string};}catch{return null;}
+    try{return JSON.parse(cert.snapshotFormatting) as {footerProfile?:PrintProfile;issuerDisplayName?:string;artworkSnapshot?:{base:string;artwork:Artwork[];issuerNumber:string}};}catch{return null;}
   })();
   const [finalFooterProfile,setFinalFooterProfile]=useState<PrintProfile>(blankPrintProfile);
   useEffect(()=>{
@@ -266,6 +267,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   },[cert.shaykhId,cert.additionalShaykh,cert.snapshotFormatting,isDraft]);
   const footerProfile=isDraft?(draftData?.footerProfile??blankPrintProfile):finalFooterProfile;
   const footerName=isDraft?(draftData?.issuerName||''):(footerProfile.printedName?.trim()||snapshotDetails?.issuerDisplayName||shaykhName);
+  const snapshotArtwork=snapshotDetails?.artworkSnapshot;
+  const activeArtwork=isDraft?currentArtwork():(snapshotArtwork?.artwork||[]);
+  const activeArtworkBase=isDraft?currentArtworkBase():(snapshotArtwork?.base||'');
+  const issuerNumber=isDraft?(cert.registrationNumber||'').slice(2,4):snapshotArtwork?.issuerNumber||'';
+  const issuerArtwork=activeArtwork.filter(a=>a.kind==='mashaykh'&&a.number===issuerNumber).sort((a,b)=>['name','line-02','line-03'].indexOf(a.line)-['name','line-02','line-03'].indexOf(b.line));
+  const hasNumberedArtwork=issuerArtwork.some(a=>a.line==='name');
   const zakaullahArtwork=!!cert.additionalShaykh&&cert.additionalShaykh==='64dd31bc-7105-4732-8646-148f27fe7fca'&&!!assetBase();
   const footerLineStyle=(line:'name'|'qualification'|'teaching'|'place'):React.CSSProperties=>{
     let configured:Record<string,{bold?:boolean,size?:number}>={};
@@ -467,7 +474,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <div className="certificate-print-viewport overflow-hidden"><div className="certificate-scale-box mx-auto" style={{width:`calc(297mm * ${previewScale})`,height:`calc(210mm * ${previewScale})`}}><div className="certificate-scale-inner" style={{transform:`scale(${previewScale})`,transformOrigin:"top left",width:"297mm"}}>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
-          <CertificateHeading ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft}/>
+          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           <div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (
@@ -496,7 +503,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                       </div>
                     </td>
                     <td className="certificate-footer-center certificate-footer-mujeez">
-                      {zakaullahArtwork?<div className="certificate-zakaullah-artwork" role="img" aria-label={footerName}>
+                      {hasNumberedArtwork?<div className="certificate-numbered-artwork" role="img" aria-label={footerName}>{issuerArtwork.map(a=><span key={a.path} aria-hidden="true" style={{display:'block',width:(a.width/issuerArtwork[0].height*10.5)+'mm',height:(a.height/issuerArtwork[0].height*10.5)+'mm',maxWidth:'100%',backgroundColor:a.line==='line-03'?accentColor:borderColor,WebkitMaskImage:'url("'+activeArtworkBase+'/'+a.path+'")',maskImage:'url("'+activeArtworkBase+'/'+a.path+'")',WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>)}</div>:zakaullahArtwork?<div className="certificate-zakaullah-artwork" role="img" aria-label={footerName}>
                         {['zakaullah.svg','zakaullah-02.svg','zakaullah-03.svg'].map((file,i)=><span key={file} aria-hidden="true" className={`certificate-zakaullah-line certificate-zakaullah-line-${i+1}`} style={{WebkitMaskImage:`url("${assetBase()}/svg/${file}")`,maskImage:`url("${assetBase()}/svg/${file}")`}}/>)}
                       </div>:<>
                       <div className="certificate-footer-name" style={footerLineStyle('name')}>{footerName}</div>
@@ -522,3 +529,4 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     </div>
   );
 }
+

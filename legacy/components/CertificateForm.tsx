@@ -86,16 +86,19 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
     ijazahHoldings({action:'list',ownerId:isAdmin?form.shaykhId:undefined}).then(r=>{if(active)setHoldings(r.holdings);}).catch(e=>{if(active)setHoldingsError(e instanceof Error?e.message:'تعذر تحميل الإجازات المحفوظة');}).finally(()=>{if(active)setHoldingsLoading(false);});
     return()=>{active=false;};},[form.shaykhId,isAdmin]);
   const availableAsaneed=asaneed.filter(s=>s.shaykhId===form.shaykhId);
+  const [selectedTariq,setSelectedTariq]=useState('');
+  const routeOptions=[...new Map((isGuest?selectedGuest?.routes||[]:holdings).filter(h=>h.tariqNumber).map(h=>[h.tariqNumber,h.tariqName])).entries()];
+  const routeHoldings=holdings.filter(h=>(h.tariqNumber||'')===selectedTariq);
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));
   const readingGroups=QURRA.map(q=>({
     q,
     narrators:q.rawis.map(rawi=>({
       rawi,
-      holding:holdings.find(h=>h.qariId===q.id&&h.rawi===rawi)||holdings.find(h=>h.qariId===q.id&&!h.rawi),
+      holding:routeHoldings.find(h=>h.qariId===q.id&&h.rawi===rawi)||routeHoldings.find(h=>h.qariId===q.id&&!h.rawi),
     })),
   })).filter(group=>group.narrators.some(r=>r.holding));
   const choosingQiraah=!cert&&!isGuest&&form.sanadId.startsWith('qiraah:');
-  const guestReadings=selectedGuest?.readings||[];
+  const guestReadings=selectedTariq?(selectedGuest?.routes||[]).filter(r=>r.tariqNumber===selectedTariq):selectedGuest?.readings||[];
   const guestChoices=QURRA.map(q=>({q,rawis:q.rawis.filter(rawi=>guestReadings.some(r=>r.qariId===q.id&&r.rawi===rawi))})).filter(item=>item.rawis.length);
   const [headingPreviewOpen,setHeadingPreviewOpen]=useState(false),[previewColors,setPreviewColors]=useState<RiwayahColorsOutputType['entries']|null>(null),[previewColorError,setPreviewColorError]=useState(false);
   useEffect(()=>{if(!headingPreviewOpen||previewColors)return;let active=true;riwayahColors({action:'list'}).then(r=>{if(active){setPreviewColors(r.entries);setPreviewColorError(false);}}).catch(()=>{if(active)setPreviewColorError(true);});return()=>{active=false;};},[headingPreviewOpen,previewColors]);
@@ -107,7 +110,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
    if(full)qariId=form.sanadId.slice(form.sanadId.indexOf(':')+1);
    else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
    else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
-   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+routeFor([qariId]))});
+   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq?'من طريق '+routeOptions.find(([n])=>n===selectedTariq)?.[1]:routeFor([qariId])))});
   }
 
   const [touched, setTouched] = useState(false);
@@ -128,7 +131,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
         const split=parsedChoice.indexOf(':');
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
-        await additionalShaykhs({action:'issue',id:selectedGuest.id,qariId,rawi,
+        await additionalShaykhs({action:'issue',tariqNumber:selectedTariq,id:selectedGuest.id,qariId,rawi,
           studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
@@ -136,7 +139,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
       }
       if(!cert&&choosingQiraah){
         const qariId=form.sanadId.slice('qiraah:'.length);
-        await issueQiraah({qariId,studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
+        await issueQiraah({tariqNumber:selectedTariq,qariId,studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
         toast.success('تم حفظ مسودتين للروايتين بتاريخ واحد');
         onSaved();
         return;
@@ -208,6 +211,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
           {guestError&&<p className="text-sm text-destructive">{guestError}</p>}
           {isGuest&&!selectedGuest&&<p className="text-sm text-muted-foreground">جارٍ تحميل إجازات الشيخ المختار…</p>}
           <div className="space-y-1.5">
+            {!cert&&routeOptions.length>0&&<label className="block space-y-1">الطريق<select className="w-full rounded border bg-background p-2" value={selectedTariq} onChange={e=>{setSelectedTariq(e.target.value);setForm(v=>({...v,sanadId:''}));}}><option value="">الطرق الأصلية (الشاطبية / الدرة)</option>{routeOptions.map(([number,name])=><option key={number} value={number}>{number} — {name}</option>)}</select></label>}
             <Label>القراءة أو الرواية</Label>
             <Select dir="rtl" disabled={!!cert} value={form.sanadId || undefined} onValueChange={(v) => setForm({ ...form, sanadId: v })}>
               <SelectTrigger><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>

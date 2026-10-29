@@ -1,4 +1,5 @@
-import {assetBase} from './assets';
+import type {Artwork} from './artworkCatalog';
+import {currentArtwork,assetBase} from './assets';
 import {QURRA,displayRawi} from './qurra';
 import readingCatalog from './readingCatalog.json';
 import {SVG_RIWAYAH_WIDTHS,SVG_RIWAYAH_VIEWBOX_HEIGHT} from './riwayahSvgAssets';
@@ -19,12 +20,13 @@ for(const q of readingCatalog.qurra){
 }
 for(const [name,path] of Object.entries(readingCatalog.common))
  legacyWidthKey[path]=name as keyof typeof SVG_RIWAYAH_WIDTHS;
-export const riwayahSvgWidthMm=(file:RiwayahSvgName)=>{
+export const riwayahSvgWidthMm=(file:RiwayahSvgName,catalog:Artwork[]=currentArtwork())=>{
+ const custom=catalog.find(a=>a.path===file);if(custom)return custom.width/custom.height*RIWAYAH_SVG_HEIGHT_MM;
  const key=legacyWidthKey[file];
  if(!key)throw new Error('Unknown canonical SVG: '+file);
  return SVG_RIWAYAH_WIDTHS[key]/SVG_RIWAYAH_VIEWBOX_HEIGHT*RIWAYAH_SVG_HEIGHT_MM;
 };
-export const riwayahSvgUrl=(file:RiwayahSvgName)=>`${assetBase()}/svg/riwayah-aimma/${file}`;
+export const riwayahSvgUrl=(file:RiwayahSvgName,base=assetBase())=>file.startsWith('svg/')?`${base}/${file}`:`${base}/svg/riwayah-aimma/${file}`;
 
 const qariMarker:Record<string,string>={
  nafi:'نافع',ibnkathir:'ابن كثير',abiamr:'عمرو البصري',
@@ -54,7 +56,9 @@ export function readingIdentityFromHeading(heading:string):{qariId:string;rawi:s
 }
 
 /** Five adjacent original SVGs, with names and roles from the shared catalog. */
-export function svgReadingParts(heading:string,{preserveHistoricalRoute=false}:{preserveHistoricalRoute?:boolean}={}):RiwayahSvgName[]|null{
+export function svgReadingParts(heading:string,{preserveHistoricalRoute=false,catalog=currentArtwork()}:{preserveHistoricalRoute?:boolean;catalog?:Artwork[]}={}):RiwayahSvgName[]|null{
+ const book=catalog.find(a=>a.kind==='books'&&a.label&&simple(a.label)===simple(heading));
+ if(book)return [book.path];
  const identity=readingIdentityFromHeading(heading);
  if(!identity)return null;
  const q=QURRA.find(q=>q.id===identity.qariId);
@@ -62,12 +66,14 @@ export function svgReadingParts(heading:string,{preserveHistoricalRoute=false}:{
  // A named non-standard route must not silently acquire a Shatibiyyah/Durrah image.
  // Existing finalized output retains its previous artwork selection.
  const route=simple(heading).match(/\s+من\s+طريق(?:ي|ين)?\s+(.+)$/u)?.[1];
- if(!preserveHistoricalRoute&&route){const expected=q.family==='seven'?['الشاطبية','التيسير']:['الدرة','التحبير'];if(!expected.every(name=>route.includes(simple(name))))return null;}
+ const routeName=(label:string)=>simple(label).replace(/^من طريقي? /u,'');
+ const customRoute=route?catalog.find(a=>a.kind==='turuq'&&a.label&&routeName(a.label)===routeName(route)):undefined;
+ if(!customRoute&&!preserveHistoricalRoute&&route){const expected=q.family==='seven'?['الشاطبية','التيسير']:['الدرة','التحبير'];if(!expected.every(name=>route.includes(simple(name))))return null;}
  const rawiSvg=(q.rawiSvgs as unknown as Record<string,string>)[identity.rawi];
  if(!rawiSvg)return null;
  return [readingCatalog.common.riwayah,
   rawiSvg,
   readingCatalog.common.imam,
   q.qariSvg,
-  q.family==='seven'?readingCatalog.common.shatbiyah:readingCatalog.common.durrah];
+  customRoute?.path||(q.family==='seven'?readingCatalog.common.shatbiyah:readingCatalog.common.durrah)];
 }

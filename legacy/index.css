@@ -752,3 +752,5 @@
   background-color:var(--certificate-secondary,#075f69) !important;
 }
 .certificate-footer-table .certificate-footer-head > td { vertical-align:bottom !important; padding-bottom:2mm; }
+
+.certificate-numbered-artwork{display:flex;flex-direction:column;align-items:center;gap:.58mm;max-width:100%;margin-inline:auto}

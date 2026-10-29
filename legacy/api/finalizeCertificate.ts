@@ -1,3 +1,5 @@
+import {artworkListSchema} from '../lib/artworkCatalog';
+import {cdnBase} from '../lib/assets';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
 import {isAppAdmin} from '../lib/admin';
 import {z} from 'zod';
@@ -47,7 +49,10 @@ export default createEndpoint({
   const issuerDisplayName=guest?.name||u?.name||[u?.firstName,u?.lastName].filter(Boolean).join(' ')||u?.email||'';
   const registrationNumber=await ensureCertificateRegistration(cert.id);
   const verificationToken=cert.verificationToken||crypto.randomUUID();
-  const formatting=JSON.stringify({phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
+  const {records:sources}=await zite.assetSources.findAll({filters:{key:'default'},limit:1});
+  const source=sources[0];
+  const artworkSnapshot={base:source?cdnBase(source.gitHubRepository||'',source.revision||source.branch||'main'):'',artwork:artworkListSchema.catch([]).parse(source?.artwork||[]),issuerNumber:registrationNumber.slice(2,4)};
+  const formatting=JSON.stringify({artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
   const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
   const record={name:'شهادة '+cert.id,certificateId:cert.id,ownerId:issuer,chain,heading,formatting,issuedAt:new Date().toISOString()};
   const {client}=requestContext();

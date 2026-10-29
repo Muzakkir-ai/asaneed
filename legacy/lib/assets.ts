@@ -1,6 +1,10 @@
+import type {Artwork} from './artworkCatalog';
 /** Fonts and artwork are not bundled with the site; they load from the admin-configured GitHub repo
  * (expected layout: fonts/*.ttf, svg/*.svg, svg/riwayah-aimma/**) via the jsDelivr CDN (CORS-friendly). */
 let base = '';
+let artwork:Artwork[]=[];
+export const currentArtwork=()=>artwork;
+export const currentArtworkBase=()=>base;
 export const assetBase = () => base;
 export const hasAssets = () => base !== '';
 
@@ -23,7 +27,8 @@ const FONTS: [string, string, string][] = [
   ['KFGQPC Symbols', 'kfgqpc-arabic-symbols-01-regular_ufonts.com.ttf', 'font-weight:400'],
 ];
 
-export function applyAssets(repository: string, branch: string, revision = '') {
+export function applyAssets(repository: string, branch: string, revision = '',catalog:Artwork[] = []) {
+  artwork=catalog;
   base = cdnBase(repository, /^[a-f0-9]{40}$/.test(revision)?revision:branch);
   let el = document.getElementById('remote-assets') as HTMLStyleElement | null;
   if (!el) { el = document.createElement('style'); el.id = 'remote-assets'; document.head.appendChild(el); }
