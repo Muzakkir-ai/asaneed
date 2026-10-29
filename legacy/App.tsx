@@ -54,15 +54,15 @@ function PrivateApp() {
   const [data, setData] = useState<Data | null>(null);
   const [directory,setDirectory]=useState<WorkspaceDirectory|null>(null);
   const [directoryError,setDirectoryError]=useState('');
-  const [target,setTarget]=useState(''),[issuer,setIssuer]=useState(''),[editInspection,setEditInspection]=useState(false);
+  const [target,setTarget]=useState(''),[editInspection,setEditInspection]=useState(false);
   const [active,setActive]=useState(user?.role==='student'?'mycerts':'certs');
   const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('asaneed-sidebar')==='collapsed');
   const scopeVersion=useRef(0);
   const person=directory?.accounts.find(a=>a.id===(target||directory.actorId));
   const inspecting=!!directory&&!!target&&target!==directory.actorId;
   const refreshDirectory=async()=>{try{const r=await fetch('/api/workspace-scope');if(!r.ok)throw Error('تعذر تحديث دليل الحسابات');setDirectory(await r.json());}catch(e){toast.error(e instanceof Error?e.message:'تعذر التحديث');}};
-  const changeScope=(accountId:string,issuerId:string,edit=false)=>{scopeVersion.current++;setWorkspaceSelection({accountId,issuerId,edit});setData(null);setPrinting(null);setTarget(accountId);setIssuer(issuerId);setEditInspection(edit);};
-  useEffect(()=>{if(!user)return;let current=true;fetch('/api/workspace-scope').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d as WorkspaceDirectory;}).then(d=>{if(!current)return;const own=d.accounts.find(a=>a.id===d.actorId);const remembered=localStorage.getItem('asaneed-issuer:'+d.actorId);const chosen=own?.issuers.find(i=>i.id===remembered)?.id||own?.issuers[0]?.id||'';changeScope(d.actorId,chosen);setDirectory(d);}).catch(e=>{if(current)setDirectoryError(e.message);});return()=>{current=false;};},[user?.id]);
+  const changeScope=(accountId:string,edit=false)=>{scopeVersion.current++;setWorkspaceSelection({accountId,edit});setData(null);setPrinting(null);setTarget(accountId);setEditInspection(edit);};
+  useEffect(()=>{if(!user)return;let current=true;fetch('/api/workspace-scope').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d as WorkspaceDirectory;}).then(d=>{if(!current)return;changeScope(d.actorId);setDirectory(d);}).catch(e=>{if(current)setDirectoryError(e.message);});return()=>{current=false;};},[user?.id]);
   const [printing, setPrinting] = useState<Cert | null>(null);
   const [profileName, setProfileName] = useState('');
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -94,7 +94,7 @@ function PrivateApp() {
     } catch(e) {
       if(activeUserId.current===requestedUser&&version===scopeVersion.current)setLoadError(e instanceof Error?e.message:'تعذّر تحميل البيانات');
     }finally{if(activeUserId.current===requestedUser&&version===scopeVersion.current)setRefreshing(false);}
-  }, [user?.id,directory,target,issuer,editInspection]);
+  }, [user?.id,directory,target,editInspection]);
   useEffect(() => {
     if (user) load();
   }, [user, load]);
@@ -150,18 +150,17 @@ function PrivateApp() {
         <div className="h-1 bg-accent" />
       </header>
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>changeScope(target,issuer,!editInspection)}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{const own=directory.accounts.find(a=>a.id===directory.actorId);const chosen=localStorage.getItem('asaneed-issuer:'+directory.actorId);changeScope(directory.actorId,own?.issuers.find(i=>i.id===chosen)?.id||own?.issuers[0]?.id||'');setActive('certs');}}>العودة إلى مساحتي</Button></section>}
-        {isStaff&&active!=='users'&&<div className="workspace-context mb-5 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-sm font-medium">المجيز:<select className="rounded-md border bg-background p-2 max-w-full" aria-label="المجيز الحالي" value={issuer} onChange={e=>{const id=e.target.value;if(!inspecting)localStorage.setItem('asaneed-issuer:'+directory.actorId,id);changeScope(target,id,editInspection);}}>{!person?.issuers.length&&<option value="">لم يُعيّن مجيز بعد</option>}{person?.issuers.map(i=><option key={i.id} value={i.id}>{i.name}</option>)}</select></label><span className="text-xs text-muted-foreground">{inspecting?'معاينة إدارية':'مساحتي'}</span></div>}
-        <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+issuer+':'+editInspection}>
+        {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>changeScope(target,!editInspection)}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{changeScope(directory.actorId);setActive('certs');}}>العودة إلى مساحتي</Button></section>}
+        <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+editInspection}>
           <TabsContent value="certs">
-            <CertificatesView scopeKey={directory.actorId+':'+target+':'+issuer} administrativeView={inspecting} readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
+            <CertificatesView scopeKey={directory.actorId+':'+target} administrativeView={inspecting} readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
           </TabsContent>
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
-          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={id=>{if(id)changeScope(target,id,editInspection);void refreshDirectory();void load();}}/></TabsContent>}
-          {isAdmin&&!inspecting&&<TabsContent value="users"><div className="space-y-8"><WorkspaceAccounts directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id,p.issuers[0]?.id||'');setActive('certs');}}/><UsersManager/></div></TabsContent>}
+          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="users"><div className="space-y-8"><WorkspaceAccounts directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/><UsersManager/></div></TabsContent>}
           <TabsContent value="profile"><div className="max-w-xl space-y-4"><div className="space-y-3 rounded-lg border p-5"><h2 className="text-xl font-bold">تعديل اسم المستخدم</h2><p className="text-sm text-muted-foreground">اسمك الحالي: {shaykhName}</p><Input placeholder="الاسم الجديد" value={profileName} onChange={e=>setProfileName(e.target.value)} /><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button></div><ShaykhPrintProfileForm key={user.id}/>{isAdmin&&<AssetSourcePanel/>}{isAdmin&&<DataBackupPanel/>}</div></TabsContent>
         </Tabs>
       </main>

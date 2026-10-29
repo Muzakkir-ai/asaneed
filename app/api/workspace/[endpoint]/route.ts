@@ -2,7 +2,7 @@ import {NextResponse} from 'next/server';
 import {createClient} from '../../../../lib/supabase/server';
 import {requestContext} from '../../../../legacy/compat/context';
 import {endpoints} from '../../../../legacy/compat/endpoints';
-import {resolveWorkspaceScope,readOnlyWorkspaceRequest} from '../../../../lib/workspace-scope';
+import {resolveWorkspaceScope,readOnlyWorkspaceRequest,administrativeWorkspaceRequest} from '../../../../lib/workspace-scope';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function POST(request:Request,{params}:{params:Promise<{endpoint:string}>}){
@@ -21,8 +21,11 @@ export async function POST(request:Request,{params}:{params:Promise<{endpoint:st
  if(account.role==='student'&&!['myCertificates','certificatePrintAuthorization','assetSource','getDashboard','saveProfile'].includes(endpoint))return NextResponse.json({error:'Staff access required'},{status:403});
  try{
   const text=await request.text();if(text.length>15000000)return NextResponse.json({error:'Request too large'},{status:413});const body=JSON.parse(text);
-  const system=['manageUsers','adminBackup'].includes(endpoint);
+  // Administrative directories use existing RLS grants, independently of list filters.
+  const system=administrativeWorkspaceRequest(endpoint);
   const scope=await resolveWorkspaceScope(client,{...account,auth_user_id:user.id},request,system);
+  if(endpoint==='myCertificates')scope.certificateAccess='recipient';
+  else if(['certificatePrintAuthorization','resolveSanadFormatting'].includes(endpoint))scope.certificateAccess='assigned-or-recipient';
   if(scope.readOnly&&!readOnlyWorkspaceRequest(endpoint,body))return NextResponse.json({error:'هذه المساحة للقراءة فقط. فعّل وضع التعديل من شريط المعاينة أولاً.'},{status:403});
   if(scope.inspection&&system)return NextResponse.json({error:'Return to your own administration area first'},{status:403});
   const result=await requestContext.run({client,user:{id:scope.authUserId,email:user.email??'',name:scope.name,image:null},account,scope},()=>endpoints[endpoint as keyof typeof endpoints].invoke(body));

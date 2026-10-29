@@ -22,7 +22,6 @@ import {CertificateHeadingPreview} from './CertificateHeading';
 import {readingIdentityFromHeading} from '../lib/riwayahSvgHeading';
 import {SelectGroup,SelectLabel,SelectSeparator} from '@project/components/ui/select';
 import {canUsePersonalSanad} from '../lib/personalSanadValidation';
-import {getWorkspaceSelection} from '../lib/workspaceSelection';
 
 const schema = z.object({
   shaykhId:z.string().min(1,'اختر المُجيز'),
@@ -31,9 +30,9 @@ const schema = z.object({
   sanadId: z.string().min(1, 'اختر القراءة'),
 });
 
-type Props = { cert: Cert | null; asaneed: Data['asaneed']; shaykhs:Data['shaykhs']; isAdmin:boolean; currentUserId:string; onClose: () => void; onSaved: () => void };
+type Props = { selectedIssuer?:string; cert: Cert | null; asaneed: Data['asaneed']; shaykhs:Data['shaykhs']; isAdmin:boolean; currentUserId:string; onClose: () => void; onSaved: () => void };
 
-export default function CertificateForm({ cert, asaneed, shaykhs, isAdmin, currentUserId, onClose, onSaved }: Props) {
+export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs, isAdmin, currentUserId, onClose, onSaved }: Props) {
   const [form, setForm] = useState({
     studentName: cert?.studentName ?? '',
     completionDate: cert?.completionDate ?? '',
@@ -48,10 +47,10 @@ export default function CertificateForm({ cert, asaneed, shaykhs, isAdmin, curre
   useEffect(()=>{
     if(!isAdmin)return;
     let active=true;
-    additionalShaykhs({action:'list'}).then(r=>{if(active){setGuestSheikhs(r.sheikhs);const selected=r.sheikhs.find(s=>s.id===getWorkspaceSelection().issuerId);if(!cert&&selected)setForm(p=>({...p,shaykhId:'guest:'+selected.id,sanadId:''}));}})
+    additionalShaykhs({action:'list'}).then(r=>{if(active){setGuestSheikhs(r.sheikhs);const selected=r.sheikhs.find(s=>s.id===(selectedIssuer||'').replace(/^guest:/,''));if(!cert&&selected)setForm(p=>({...p,shaykhId:'guest:'+selected.id,sanadId:''}));}})
       .catch(()=>{if(active)setGuestError('تعذر تحميل المشايخ الإضافيين');});
     return()=>{active=false;};
-  },[isAdmin]);
+  },[isAdmin,selectedIssuer]);
   const selectedGuestId=form.shaykhId.startsWith('guest:')?form.shaykhId.slice(6):'';
   const selectedGuest=guestSheikhs.find(g=>g.id===selectedGuestId);
   const isGuest=!!selectedGuestId;

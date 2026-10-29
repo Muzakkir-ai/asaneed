@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import type {SupabaseClient} from '@supabase/supabase-js';
-import {resolveWorkspaceScope,readOnlyWorkspaceRequest} from '../lib/workspace-scope.ts';
+import {resolveWorkspaceScope,readOnlyWorkspaceRequest,administrativeWorkspaceRequest} from '../lib/workspace-scope.ts';
 const actor={id:'own-account',auth_user_id:'own-auth',display_name:'Own',role:'admin'};
 const other={id:'other-account',auth_user_id:'other-auth',display_name:'Other',role:'shaykh'};
 function fakeClient(){return {from:(table:string)=>({select:()=>({eq:(_field:string,value:string)=>table==='accounts'?{single:async()=>({data:value===other.id?other:null,error:null})}:Promise.resolve({data:value===actor.id?[{issuer_id:'own-issuer'}]:[{issuer_id:'other-issuer'}],error:null})})})} as unknown as SupabaseClient;}
@@ -9,11 +9,14 @@ for(const endpoint of ['finalizeCertificate','saveCertificate','deleteCertificat
 assert.equal(readOnlyWorkspaceRequest('certificateDraftPreview',{}),true);
 assert.equal(readOnlyWorkspaceRequest('ijazahHoldings',{action:'save'}),false);
 const own=await resolveWorkspaceScope(fakeClient(),actor,request());
-assert.equal(own.accountId,actor.id);assert.equal(own.issuerId,'own-issuer');assert.equal(own.system,false);
-await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-issuer':'other-issuer'})),/not assigned/);
+assert.equal(own.accountId,actor.id);assert.deepEqual(own.issuerIds,['own-issuer']);assert.equal(own.system,false);
+const ignoredFilter=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-issuer':'other-issuer'}));
+assert.deepEqual(ignoredFilter,own,'An old/forged certificate filter must not change authorization or narrow other pages');
+for(const endpoint of ['additionalShaykhs','manageUsers','sanadSections','getAdminAsaneed','narratorDirectory'])assert.equal(administrativeWorkspaceRequest(endpoint),true);
+for(const endpoint of ['getDashboard','myCertificates','ijazahHoldings'])assert.equal(administrativeWorkspaceRequest(endpoint),false);
 await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),{...actor,role:'shaykh'},request({'x-workspace-account':other.id})),/Administrator required/);
 const inspection=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':other.id}));
-assert.equal(inspection.authUserId,other.auth_user_id);assert.equal(inspection.readOnly,true);assert.equal(inspection.issuerId,'other-issuer');
+assert.equal(inspection.authUserId,other.auth_user_id);assert.equal(inspection.readOnly,true);assert.deepEqual(inspection.issuerIds,['other-issuer']);
 const edit=await resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':other.id,'x-workspace-edit':'confirmed'}));assert.equal(edit.readOnly,false);
 const normal=await resolveWorkspaceScope(fakeClient(),{...actor,role:'shaykh'},request(),true);assert.equal(normal.system,false);
 await assert.rejects(()=>resolveWorkspaceScope(fakeClient(),actor,request({'x-workspace-account':'missing'})),/unavailable/);
