@@ -2,7 +2,7 @@ export type BuilderPerson={id:string;name:string;display_name:string;archived:bo
 export type BuilderBook={id:string;title:string;author_id:string;archived:boolean};
 export type BuilderNode={person_id:string;route_source:boolean};
 export type BuilderChain={id:string;book_id:string;book_chain_id:string|null;route_code:string;kind:'book'|'route';title:string;qari_id:string;rawi:string;continuation:string;confirmed:boolean;archived:boolean;revision:number;branches:BuilderNode[][]};
-export type BuilderLibrary={people:BuilderPerson[];books:BuilderBook[];chains:BuilderChain[];suggestions:string[];continuations:Record<string,string>};
+export type BuilderLibrary={people:BuilderPerson[];books:BuilderBook[];chains:BuilderChain[];suggestions:string[];continuations:Record<string,string>;prefixContinuations?:import('./builderPrefix').BuilderPrefixContinuation[]};
 export const builderNameKey=(s:string)=>s.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u0640\u06d6-\u06ed]/gu,'').replace(/[أإآٱ]/gu,'ا').replace(/ى/gu,'ي').replace(/\s+/gu,' ').trim();
 export function builderPreview(book:BuilderBook,parent:BuilderChain,route:BuilderChain,people:BuilderPerson[],prefix=''){
  const person=(id:string)=>{const p=people.find(p=>p.id===id);if(!p?.name.trim())throw Error('أكمل اسم الراوي');return p.name;};

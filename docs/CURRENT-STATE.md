@@ -14,6 +14,13 @@ Latest verified application release before this documentation handoff:
 
 There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
 
+## Saved route selection and al-Ubaydi completion — 30 October 2026
+
+- Selecting a saved book or book sanad shows its saved طرق first. Existing book sanads/routes open for editing through pencil controls; adding a book, book sanad or route uses explicit add actions. Choosing a route opens the independent-copy review panel, without opening its editor.
+- Personal prefixes may reach either إبراهيم العبيدي or ابن الجزري. The authenticated library exposes the existing shared `من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند` section; one available continuation is reused, multiple continuations require selection, and unavailable/incomplete continuations block attachment with an explanatory message. The stored text, including both textual branches, is retained verbatim. Already complete Ibn al-Jazari prefixes do not receive the continuation again.
+- Builder attachment and the ijazah saved-route picker use the same prefix resolver. Additional-shaykh profiles reuse the supplied personal chain. The attachment endpoint composes the chain server-side under existing RLS/target checks and rejects changed text when it differs from the reviewed preview supplied by the new client. Saving still requires explicit review; existing holdings and finalized certificates are not rewritten.
+- Verification: production build, final TypeScript check, prefix/builder/narrator/standard-route-source suites passed. Prefix tests cover missing/ambiguous sources, invalid selection, duplicate-anchor rejection, branch preservation and full route assembly. A read-only test against the actual shared continuation passed. A temporary jsdom integration harness with mocked requests passed for personal and additional-shaykh targets: browse first, pencil editing, explicit blank add, complete preview, confirmation and target payload. No real holdings/certificates were created. Hosted authenticated browser/mobile/physical-print checks remain unperformed for this release.
+
 ## Intelligent narrator selection — development change (30 October 2026)
 
 Released to production at commit `6d4a488d56aeedaf8ed0c9ac37f0d28d0bf1664b` (PR #1), deployment `dpl_4t4yEMsg88e7jnA8GK1B9hfM452r`, verified READY with `asaneed.vercel.app` assigned on 30 October 2026. The user explicitly requested production release. A cloud-browser smoke check reached the login page; authenticated narrator interactions remain unverified in this session.
