@@ -150,3 +150,11 @@ Removed upper/branch name inputs and per-person level selectors at user request.
 ### Connected narrators first on opening (30 October 2026)
 
 Narrator picker opening now ignores the current field text for its initial list, so recorded adjacent connections appear first. Typing applies all-person search as before. Groups distinguish connected suggestions from other saved names; removed repetitive no-connection wording and internal ID display. Stable IDs and directed saved-chain evidence remain unchanged; no inferred identity merges or new historical connections. Narrator ranking tests and production build checked; authenticated browser verification remains outstanding.
+
+### Requested Ali ibn Shuja identity merge (30 October 2026)
+
+User explicitly identified the short and «المعروف بـ صهر الشاطبي» names as the same person. Backed up the full application privately, tested the transaction with rollback, then repointed the single short-name builder node to the existing full-name identity under authenticated RLS. Preserved ordering, source roles and levels; incremented the affected chain revision and archived the now-unreferenced duplicate. Three nodes now share the surviving identity. Existing copies/certificates were not rewritten. No source deployment was needed for this data correction.
+
+### Book-first certificate route choices (30 October 2026)
+
+Certificate form groups saved custom routes by the book prefix of their saved label. Selecting المستنير shows its individual riwayah + route choices in the riwayah field, preserving each holding ID or additional-shaykh route number for issuance. Custom book choices select one explicit riwayah/route; the original Shatibiyyah/Durrah complete-reading option remains. Switching book or issuer clears the selection. Live saved mappings inspected; grouping/route parsing tests and production build pass. No certificate issued for testing; authenticated browser verification remains outstanding.

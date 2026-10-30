@@ -1,3 +1,4 @@
+import {certificateRouteBook as routeBook,certificateRouteDetail,guestRouteChoice} from '../lib/certificateRouteChoice';
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle} from '@project/components/ui/alert-dialog';
 import {matchesArabic} from '../lib/arabicSearch';
 import { useEffect,useState } from 'react';
@@ -88,9 +89,12 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
     return()=>{active=false;};},[form.shaykhId,isAdmin]);
   const availableAsaneed=asaneed.filter(s=>s.shaykhId===form.shaykhId);
   const [selectedTariq,setSelectedTariq]=useState('');
-  useEffect(()=>{setSelectedTariq('');},[form.shaykhId]);
+  const [selectedBook,setSelectedBook]=useState('');
+  useEffect(()=>{setSelectedTariq('');setSelectedBook('');},[form.shaykhId]);
   const routeOptions=[...new Map((isGuest?selectedGuest?.routes||[]:holdings).filter(h=>h.tariqNumber).map(h=>[h.tariqNumber,h.tariqName])).entries()];
-  const routeHoldings=holdings.filter(h=>(h.tariqNumber||'')===selectedTariq);
+  const bookOptions=[...new Set(routeOptions.map(([,name])=>routeBook(name)))];
+  const routeHoldings=holdings.filter(h=>selectedBook?!!h.tariqNumber&&routeBook(h.tariqName)===selectedBook:!h.tariqNumber);
+  const selectReading=(value:string)=>{setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));
   const readingGroups=QURRA.map(q=>({
     q,
@@ -100,7 +104,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
     })),
   })).filter(group=>group.narrators.some(r=>r.holding));
   const choosingQiraah=!cert&&!isGuest&&form.sanadId.startsWith('qiraah:');
-  const guestReadings=selectedTariq?(selectedGuest?.routes||[]).filter(r=>r.tariqNumber===selectedTariq):selectedGuest?.readings||[];
+  const guestReadings=selectedBook?(selectedGuest?.routes||[]).filter(r=>routeBook(r.tariqName)===selectedBook):selectedGuest?.readings||[];
   const guestChoices=QURRA.map(q=>({q,rawis:q.rawis.filter(rawi=>guestReadings.some(r=>r.qariId===q.id&&r.rawi===rawi))})).filter(item=>item.rawis.length);
   const [headingPreviewOpen,setHeadingPreviewOpen]=useState(false),[previewColors,setPreviewColors]=useState<RiwayahColorsOutputType['entries']|null>(null),[previewColorError,setPreviewColorError]=useState(false);
   useEffect(()=>{if(!headingPreviewOpen||previewColors)return;let active=true;riwayahColors({action:'list'}).then(r=>{if(active){setPreviewColors(r.entries);setPreviewColorError(false);}}).catch(()=>{if(active)setPreviewColorError(true);});return()=>{active=false;};},[headingPreviewOpen,previewColors]);
@@ -110,6 +114,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
    const full=form.sanadId.startsWith('guest-qiraah:')||form.sanadId.startsWith('qiraah:');
    let qariId='',rawi='';
    if(full)qariId=form.sanadId.slice(form.sanadId.indexOf(':')+1);
+   else if(form.sanadId.startsWith('guest-route:')){const choice=guestRouteChoice(form.sanadId);qariId=choice?.qariId||'';rawi=choice?.rawi||'';}
    else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
    else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
    const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq?'من طريق '+routeOptions.find(([n])=>n===selectedTariq)?.[1]:routeFor([qariId])))});
@@ -128,12 +133,13 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
       if(!cert&&isGuest){
         if(!selectedGuest)throw new Error('اختر شيخًا إضافيًا مسجلًا');
         const full=form.sanadId.startsWith('guest-qiraah:');
-        if(!full&&!form.sanadId.startsWith('guest-reading:'))throw new Error('اختر قراءة أو رواية لهذا الشيخ');
-        const parsedChoice=form.sanadId.slice(full?'guest-qiraah:'.length:'guest-reading:'.length);
+        if(!full&&!form.sanadId.startsWith('guest-reading:')&&!form.sanadId.startsWith('guest-route:'))throw new Error('اختر قراءة أو رواية لهذا الشيخ');
+        const routeChoice=guestRouteChoice(form.sanadId);
+        const parsedChoice=routeChoice?routeChoice.qariId+':'+encodeURIComponent(routeChoice.rawi):form.sanadId.slice(full?'guest-qiraah:'.length:'guest-reading:'.length);
         const split=parsedChoice.indexOf(':');
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
-        await additionalShaykhs({action:'issue',tariqNumber:selectedTariq,id:selectedGuest.id,qariId,rawi,
+        await additionalShaykhs({action:'issue',tariqNumber:routeChoice?.tariqNumber||selectedTariq,id:selectedGuest.id,qariId,rawi,
           studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
@@ -213,17 +219,15 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
           {guestError&&<p className="text-sm text-destructive">{guestError}</p>}
           {isGuest&&!selectedGuest&&<p className="text-sm text-muted-foreground">جارٍ تحميل إجازات الشيخ المختار…</p>}
           <div className="space-y-1.5">
-            {!cert&&routeOptions.length>0&&<label className="block space-y-1">الطريق<select className="w-full rounded border bg-background p-2" value={selectedTariq} onChange={e=>{setSelectedTariq(e.target.value);setForm(v=>({...v,sanadId:''}));}}><option value="">الطرق الأصلية (الشاطبية / الدرة)</option>{routeOptions.map(([number,name])=><option key={number} value={number}>{number} — {name}</option>)}</select></label>}
+            {!cert&&routeOptions.length>0&&<label className="block space-y-1">الكتاب / الطريق<select className="w-full rounded border bg-background p-2" value={selectedBook} onChange={e=>{setSelectedBook(e.target.value);setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">الطرق الأصلية (الشاطبية / الدرة)</option>{bookOptions.map(name=><option key={name} value={name}>{name}</option>)}</select></label>}
             <Label>القراءة أو الرواية</Label>
-            <Select dir="rtl" disabled={!!cert} value={form.sanadId || undefined} onValueChange={(v) => setForm({ ...form, sanadId: v })}>
+            <Select dir="rtl" disabled={!!cert} value={form.sanadId || undefined} onValueChange={selectReading}>
               <SelectTrigger><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>
               <SelectContent className="max-h-[340px] min-w-[300px]" dir="rtl">
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
                   <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
-                  {q.rawis.every(r=>rawis.includes(r))&&<SelectItem value={`guest-qiraah:${q.id}`} className="font-semibold">القراءة كاملة — شهادتان للروايتين</SelectItem>}
-                  {rawis.map(rawi=><SelectItem key={rawi} value={`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>
-                    رواية {displayRawi(q.id,rawi)}
-                  </SelectItem>)}
+                  {!selectedBook&&q.rawis.every(r=>rawis.includes(r))&&<SelectItem value={`guest-qiraah:${q.id}`} className="font-semibold">القراءة كاملة — شهادتان للروايتين</SelectItem>}
+                  {selectedBook?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&routeBook(r.tariqName)===selectedBook).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {certificateRouteDetail(r.tariqName)} · {r.tariqNumber}</SelectItem>):rawis.map(rawi=><SelectItem key={rawi} value={`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>)}
                   <SelectSeparator className="my-1"/>
                 </SelectGroup>)}
                 {!cert&&!isGuest&&readingGroups.map(({q,narrators})=>{
@@ -232,11 +236,11 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                   const valid=!ambiguous&&narrators.every(x=>x.holding&&canUsePersonalSanad(x.holding));
                   return <SelectGroup key={q.id}>
                     <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
-                    {narrators.every(x=>x.holding)&&<SelectItem value={`qiraah:${q.id}`} disabled={!valid} className="font-semibold text-right py-2.5">
+                    {!selectedBook&&narrators.every(x=>x.holding)&&<SelectItem value={`qiraah:${q.id}`} disabled={!valid} className="font-semibold text-right py-2.5">
                       <span className="flex items-center gap-2"><span>القراءة كاملة</span><span className="text-xs font-normal text-muted-foreground">شهادتان · {q.rawis.map(r=>displayRawi(q.id,r)).join(' + ')}</span></span>
                     </SelectItem>}
                     {narrators.flatMap(({rawi})=>choicesFor(rawi).map(holding=><SelectItem key={holding.id+'-'+rawi} value={`holding:${holding!.id}:${encodeURIComponent(rawi)}`} disabled={!canUsePersonalSanad(holding!)} className="text-right py-2">
-                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
+                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{selectedBook?' من طريق '+certificateRouteDetail(holding.tariqName)+' · '+holding.tariqNumber:''}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
                     </SelectItem>))}
                     <SelectSeparator className="my-1"/>
                   </SelectGroup>;
