@@ -27,3 +27,6 @@ assert.ok(canUsePersonalSanad(holding));
 assert.ok(assembleIjazah({...holding,personalChain:'قصير'},[]).missing.length);
 assert.ok(assembleIjazah({...holding,tariqNumber:'',tariqName:''},[]).missing.length,'Default route still requires its shared chain sections');
 console.log('PASS: numbered paths, viewBox validation, custom route SVG matching, pinned URLs, separate complete chains, unchanged default validation');
+
+const bookArtwork={kind:'books' as const,number:'03',line:'heading' as const,path:'svg/books/03/heading.svg',label:'المستنير',width:250,height:30};
+assert.equal(svgReadingParts(heading.replace('المصباح عن الفيل','المستنير وهي من طرق طيبة النشر'),{catalog:[bookArtwork]})?.at(-1),bookArtwork.path);

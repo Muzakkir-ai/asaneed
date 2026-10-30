@@ -1,4 +1,4 @@
-import {certificateRouteBook as routeBook,certificateRouteDetail,guestRouteChoice} from '../lib/certificateRouteChoice';
+import {certificateRouteBook as routeBook,certificateRouteDetail,guestRouteChoice,certificateRoutePhrase} from '../lib/certificateRouteChoice';
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle} from '@project/components/ui/alert-dialog';
 import {matchesArabic} from '../lib/arabicSearch';
 import { useEffect,useState } from 'react';
@@ -117,7 +117,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
    else if(form.sanadId.startsWith('guest-route:')){const choice=guestRouteChoice(form.sanadId);qariId=choice?.qariId||'';rawi=choice?.rawi||'';}
    else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
    else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
-   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq?'من طريق '+routeOptions.find(([n])=>n===selectedTariq)?.[1]:routeFor([qariId])))});
+   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
   }
 
   const [touched, setTouched] = useState(false);

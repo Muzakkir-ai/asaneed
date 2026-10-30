@@ -67,7 +67,7 @@ export function svgReadingParts(heading:string,{preserveHistoricalRoute=false,ca
  // Existing finalized output retains its previous artwork selection.
  const route=simple(heading).match(/\s+من\s+طريق(?:ي|ين)?\s+(.+)$/u)?.[1];
  const routeName=(label:string)=>simple(label).replace(/^من طريقي? /u,'');
- const customRoute=route?catalog.find(a=>a.kind==='turuq'&&a.label&&routeName(a.label)===routeName(route)):undefined;
+ const customRoute=route?(catalog.find(a=>a.kind==='turuq'&&a.label&&routeName(a.label)===routeName(route))||catalog.find(a=>a.kind==='books'&&a.label&&simple(a.label)===routeName(route).replace(/ وهي من طرق طيبة النشر$/u,''))):undefined;
  if(!customRoute&&!preserveHistoricalRoute&&route){const expected=q.family==='seven'?['الشاطبية','التيسير']:['الدرة','التحبير'];if(!expected.every(name=>route.includes(simple(name))))return null;}
  const rawiSvg=(q.rawiSvgs as unknown as Record<string,string>)[identity.rawi];
  if(!rawiSvg)return null;

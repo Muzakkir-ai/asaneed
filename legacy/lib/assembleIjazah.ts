@@ -1,3 +1,4 @@
+import {certificateRoutePhrase} from './certificateRouteChoice';
 import {QURRA,routeFor,readingText} from './qurra';
 import {vocalizeReadingLabel} from './vocalizedReading';
 export type AssemblyHolding={chainMode?:'junction'|'complete';tariqNumber?:string;tariqName?:string;qariId:string;rawi?:string;personalChain:string;junction:string;introductionId?:string;wordingId?:string};
@@ -30,7 +31,7 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  if(!holding.personalChain?.trim())missing.push('السند الشخصي');
  for(const x of [intro,wording,conclusion])if(x)used.push(x);
  const reading=readingText({qariId:imam.id,rawi:holding.rawi||undefined});
- const route=customRoute?'من طريق '+holding.tariqName:routeFor([imam.id]);
+ const route=customRoute?certificateRoutePhrase(holding.tariqName!):routeFor([imam.id]);
  if(completeChain&&holding.personalChain.trim().length<100)missing.push('السند الكامل لهذا الطريق إلى النبي ﷺ');
  const heading=[reading,route].filter(Boolean).join(' ');
  const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,route].filter(Boolean).join(' ')));

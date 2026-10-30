@@ -1,3 +1,4 @@
+import {certificateRoutePhrase} from '../lib/certificateRouteChoice';
 import SavedRoutePicker from './SavedRoutePicker';
 import BookTariqBuilder from './BookTariqBuilder';
 import {arabicDigits} from '../lib/arabicDigits';
@@ -120,7 +121,7 @@ export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
  const selectedImam=QURRA.find(q=>q.id===selectedChoice?.qariId);
  const selectedRawi=selectedChoice?.rawi||selectedImam?.rawis[0];
  const reading=selectedImam&&selectedRawi?readingText({qariId:selectedImam.id,rawi:selectedRawi}):'{{القراءة/الرواية}}';
- const route=tariqNumber&&tariqName?'من طريق '+tariqName:selectedImam?routeFor([selectedImam.id]):'';
+ const route=tariqNumber&&tariqName?certificateRoutePhrase(tariqName):selectedImam?routeFor([selectedImam.id]):'';
  const beforePersonal=[selectedIntro?.body,selectedWording?.body?.replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,route].filter(Boolean).join(' '))).replaceAll('mujeez','[اسم المُجيز]').replaceAll('mujaaz','[اسم المُجاز]')].filter(Boolean).join('\n\n');
  const afterPersonal=junction==='ubaydi'?'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند':selectedImam?.family==='seven'?'من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة':selectedImam&&selectedRawi?`CHAIN:${selectedImam.id}:${selectedRawi}`:'';
  const afterBody=sections.find(s=>s.title===afterPersonal)?.body||'';

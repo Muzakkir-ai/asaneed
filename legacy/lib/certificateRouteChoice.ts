@@ -6,3 +6,11 @@ export function guestRouteChoice(value:string){
  if(parts.length!==4||parts[0]!=='guest-route')return null;
  try{return {tariqNumber:decodeURIComponent(parts[1]),qariId:parts[2],rawi:decodeURIComponent(parts[3])};}catch{return null;}
 }
+
+/** Only explicitly identified kubra books receive the Tayyibah wording. */
+export function certificateRoutePhrase(name:string){
+ const book=certificateRouteBook(name);
+ const normalized=book.replace(/[\u064b-\u065f\u0670\u0640]/gu,'');
+ const kubra=['المستنير','المصباح'].includes(normalized);
+ return 'من طريق '+book+(kubra?' وهي من طرق طيبة النشر':'');
+}

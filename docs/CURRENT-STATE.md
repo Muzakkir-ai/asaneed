@@ -158,3 +158,7 @@ User explicitly identified the short and «المعروف بـ صهر الشاط
 ### Book-first certificate route choices (30 October 2026)
 
 Certificate form groups saved custom routes by the book prefix of their saved label. Selecting المستنير shows its individual riwayah + route choices in the riwayah field, preserving each holding ID or additional-shaykh route number for issuance. Custom book choices select one explicit riwayah/route; the original Shatibiyyah/Durrah complete-reading option remains. Switching book or issuer clears the selection. Live saved mappings inspected; grouping/route parsing tests and production build pass. No certificate issued for testing; authenticated browser verification remains outstanding.
+
+### Book-only custom route heading (30 October 2026)
+
+Newly assembled custom headings use the book prefix only, dropping the saved label’s dash suffix. Explicitly identified kubra books المستنير and المصباح append وهي من طرق طيبة النشر; unknown books are not automatically classified as kubra. Updated holding and certificate previews consistently. SVG route selection can use a matching numbered book asset, whose artwork must contain the complete route wording. Existing saved route identifiers, sanads and finalized snapshots are unchanged. Route wording/artwork tests and production build checked; authenticated browser verification outstanding. Fonts catalog inspected: books 01/02 occupied; 03 available for المستنير.
