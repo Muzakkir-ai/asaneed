@@ -146,3 +146,7 @@ Details: `BOOK-TARIQ-BUILDER.md` and the original `BOOK-TARIQ-BUILDER-REQUIREMEN
 ### Simplified route-source entry (30 October 2026)
 
 Removed upper/branch name inputs and per-person level selectors at user request. The صاحب الطريق checkbox remains; existing stored metadata is preserved when editing. Person membership shows صاحب الطريق without level labels. Missing narrator selection now identifies the typed name and the selection/creation action; empty rows explain how to fill or delete them. Production build verified; authenticated browser verification remains outstanding.
+
+### Connected narrators first on opening (30 October 2026)
+
+Narrator picker opening now ignores the current field text for its initial list, so recorded adjacent connections appear first. Typing applies all-person search as before. Groups distinguish connected suggestions from other saved names; removed repetitive no-connection wording and internal ID display. Stable IDs and directed saved-chain evidence remain unchanged; no inferred identity merges or new historical connections. Narrator ranking tests and production build checked; authenticated browser verification remains outstanding.

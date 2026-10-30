@@ -21,3 +21,8 @@ assert.deepEqual(observedLinks({...lib,chains:[parent]}),[{from:'c',to:'a',chain
 console.log('Narrator ranking, aliases, identity ambiguity, directed source references, boundaries and immutability: PASS');
 
 assert.ok(possibleNarratorDuplicates(people,'محمد الأول البصري').some(p=>p.id==='b'),'near duplicate review keeps identity explicit');
+
+const ordered=rankNarrators(people,'',links,'a');
+assert.equal(ordered[0].person.id,'b','opening with no search shows connected teachers first');
+assert.ok(ordered.slice(1).every(r=>!r.observed.length),'other saved names follow connected teachers');
+assert.equal(rankNarrators(people,'محمد الآخر',links,'a').length,2,'typing still searches unconnected people');
