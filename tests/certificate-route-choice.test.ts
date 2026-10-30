@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {certificateRouteBook,certificateRouteDetail,guestRouteChoice,certificateRoutePhrase,certificateRouteWording} from '../legacy/lib/certificateRouteChoice';
+import {certificateRouteBook,certificateRouteDetail,guestRouteChoice,certificateRoutePhrase,certificateRouteWording,currentPreservedRouteText} from '../legacy/lib/certificateRouteChoice';
 const routes=[{name:'المستنير — طريق ابن الخشنام',number:'1079',rawi:'رَوح'},{name:'المستنير — طريق الحمامي',number:'1078',rawi:'رُويس'}];
 assert.deepEqual([...new Set(routes.map(r=>certificateRouteBook(r.name)))],['المستنير']);
 assert.equal(certificateRouteDetail(routes[0].name),'ابن الخشنام');
@@ -15,3 +15,17 @@ assert.equal(certificateRoutePhrase('الشاطبية — قالون'),'من ط�
 assert.equal(certificateRoutePhrase('كتاب غير مصنف — طريق آخر'),'من طريق كتاب غير مصنف');
 
 assert.equal(certificateRouteWording('المستنير — طريق ابن الخشنام'),'من طريق المستنير وهي إحدى طرق طيبة النشر');
+
+const oldName='المستنير — طريق ابن الخشنام';
+const preserved='【بيان القراءة:رواية روح عن الإمام يعقوب من طريق '+oldName+'】\nأجزته من طريق '+oldName+'، كما أخذته عن الشيخ من طريق المستنير — طريق ابن الخشنام';
+const corrected=currentPreservedRouteText(preserved,oldName);
+assert.ok(corrected.startsWith('【بيان القراءة:رواية روح عن الإمام يعقوب من طريق المستنير】'));
+assert.ok(corrected.includes('أجزته من طريق المستنير وهي إحدى طرق طيبة النشر'));
+assert.equal(corrected.slice(corrected.indexOf('كما أخذته')),preserved.slice(preserved.indexOf('كما أخذته')));
+assert.equal(currentPreservedRouteText(corrected,oldName),corrected,'idempotent');
+assert.equal(currentPreservedRouteText('نص محفوظ بلا حد معروف',oldName),'نص محفوظ بلا حد معروف');
+
+const single='【بيان القراءة:من طريق المستنير】 أجزته من طريق المستنير، كما أخذته عن فلان';
+assert.equal(currentPreservedRouteText(currentPreservedRouteText(single,'المستنير'),'المستنير'),currentPreservedRouteText(single,'المستنير'));
+const vowels=preserved.replaceAll('من طريق','مِنْ طَرِيقِ').replaceAll('كما أخذته','كَمَا أَخَذْتُهُ');
+assert.ok(currentPreservedRouteText(vowels,oldName).includes('وهي إحدى طرق طيبة النشر'));

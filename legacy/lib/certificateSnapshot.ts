@@ -1,3 +1,4 @@
+import {currentPreservedRouteText} from './certificateRouteChoice';
 import {standardRouteSources} from './standardRouteSources';
 import {extractTeacherTransmission} from './receivedTransmission';
 import {arabicSearchKey} from './arabicSearch';
@@ -16,7 +17,7 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{pers
  if(sanad.additionalShaykh){
   const guest=await zite.additionalShaykhs.findOne({id:sanad.additionalShaykh});
   if(!guest||!sanad.chain||!(['ubaydi','jazari'] as const).some(junction=>reachesJunction({personalChain:sanad.chain,junction})))throw new Error(sanadBlockMessage);
-  return sanad.chain;
+  return sanad.tariqNumber&&sanad.tariqName?currentPreservedRouteText(sanad.chain,sanad.tariqName):sanad.chain;
  }
  const sourceOwner=uid;
  const {records:preps}=await zite.preparedIjazahs.findAll({filters:{ownerId:sourceOwner},limit:2000});

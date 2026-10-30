@@ -170,3 +170,11 @@ User clarified: heading contains only من طريق المستنير. Only the w
 ### Certificate list label polish
 
 List-only certificate summaries replace a dash before طريق with من: المستنير من طريق ابن الخشنام. Certificate headings, stored text and finalized snapshots are unchanged. Production build checked.
+
+### Mustanir SVG upload repair
+
+The uploaded filename was heading.svg.svg, skipped by exact-path discovery. Renamed the existing blob without changing SVG content to svg/turuq/01/heading.svg in fonts commit 4ca05d176e538091ea38c68e07758883c7ec02e3. Catalog label المستنير was already correct. Validated viewBox 95.98 x 28.35 and backed up/refreshed the asset-source catalog under authenticated RLS, retaining its nine existing assets and adding the route. No finalized snapshot changed. Full automated discovery fetch timed out; pinned SVG checked through GitHub tool instead.
+
+### Preserved additional-shaykh draft wording fix
+
+Root cause: getCurrentSanadForIssuance returned additional-shaykh preserved chains verbatim, bypassing new assembly wording. It now applies a narrow custom-route presentation correction to the marker and opening before كما أخذته, using that sanad’s own route metadata. The narrator-chain suffix is preserved byte-for-byte, and no stored sanad is rewritten. Finalized snapshots bypass this path. Missing opening boundary leaves preserved text unchanged. Tests cover heading/body separation, Arabic harakat, idempotence and unchanged chain suffix; build verified. Authenticated browser verification remains outstanding.
