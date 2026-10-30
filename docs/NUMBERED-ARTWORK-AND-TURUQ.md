@@ -14,4 +14,4 @@ The local fonts checkout is Documents/Codex/Asaneed-Fonts. Upload-Changes.cmd in
 
 Validation: production build; numbered-path and viewBox validation; route SVG selection and fallback; complete custom chain isolation; original Qalun/Warsh heading tests; local filter/permission and registration tests. Live UI checks are recorded in the task report. New routes still require the scholar's real chain and artwork before a real route-specific certificate can be checked end-to-end.
 
-For المستنير use `svg/books/03/heading.svg` and add `"03":"المستنير"` to the books catalog (01/02 are already occupied). For use in a reading heading the SVG must contain the full phrase «من طريق المستنير وهي من طرق طيبة النشر». Upload fonts/svg changes and refresh the website asset source. Book artwork number 03 is independent of saved route codes 1078/1079; both riwayat can reuse this book heading.
+For the riwayah heading المستنير use `svg/turuq/01/heading.svg` with catalog turuq entry `"01":"المستنير"`. Artwork contains only «من طريق المستنير». The phrase «وهي إحدى طرق طيبة النشر» belongs in كلمات الإجازة, not the heading SVG.

@@ -8,9 +8,10 @@ export function guestRouteChoice(value:string){
 }
 
 /** Only explicitly identified kubra books receive the Tayyibah wording. */
-export function certificateRoutePhrase(name:string){
+export function certificateRoutePhrase(name:string){return 'من طريق '+certificateRouteBook(name);}
+export function certificateRouteWording(name:string){
  const book=certificateRouteBook(name);
  const normalized=book.replace(/[\u064b-\u065f\u0670\u0640]/gu,'');
  const kubra=['المستنير','المصباح'].includes(normalized);
- return 'من طريق '+book+(kubra?' وهي من طرق طيبة النشر':'');
+ return 'من طريق '+book+(kubra?' وهي إحدى طرق طيبة النشر':'');
 }

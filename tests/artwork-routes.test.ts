@@ -30,3 +30,10 @@ console.log('PASS: numbered paths, viewBox validation, custom route SVG matching
 
 const bookArtwork={kind:'books' as const,number:'03',line:'heading' as const,path:'svg/books/03/heading.svg',label:'المستنير',width:250,height:30};
 assert.equal(svgReadingParts(heading.replace('المصباح عن الفيل','المستنير وهي من طرق طيبة النشر'),{catalog:[bookArtwork]})?.at(-1),bookArtwork.path);
+
+const separated=assembleIjazah({...holding,tariqName:'المستنير — طريق ابن الخشنام',wordingId:'words'},[{id:'words',title:'كلمات',body:'أجزته {{القراءة/الرواية}}',sectionType:'wording'}]);
+assert.ok(separated.heading.endsWith('من طريق المستنير'));
+assert.ok(!separated.heading.includes('طيبة'));
+const unvocalized=separated.chain.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u0640]/gu,'');
+assert.ok(unvocalized.includes('وهي إحدى طرق طيبة النشر'));
+assert.ok(!separated.chain.includes('ابن الخشنام'));

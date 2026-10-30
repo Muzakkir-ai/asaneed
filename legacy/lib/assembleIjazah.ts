@@ -1,4 +1,4 @@
-import {certificateRoutePhrase} from './certificateRouteChoice';
+import {certificateRoutePhrase,certificateRouteWording} from './certificateRouteChoice';
 import {QURRA,routeFor,readingText} from './qurra';
 import {vocalizeReadingLabel} from './vocalizedReading';
 export type AssemblyHolding={chainMode?:'junction'|'complete';tariqNumber?:string;tariqName?:string;qariId:string;rawi?:string;personalChain:string;junction:string;introductionId?:string;wordingId?:string};
@@ -34,7 +34,8 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  const route=customRoute?certificateRoutePhrase(holding.tariqName!):routeFor([imam.id]);
  if(completeChain&&holding.personalChain.trim().length<100)missing.push('السند الكامل لهذا الطريق إلى النبي ﷺ');
  const heading=[reading,route].filter(Boolean).join(' ');
- const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,route].filter(Boolean).join(' ')));
+ const wordingRoute=customRoute?certificateRouteWording(holding.tariqName!):route;
+ const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,wordingRoute].filter(Boolean).join(' ')));
  const isnad=joinChain([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]);
  const chain=`【بيان القراءة:${heading}】\n${[intro?.body,[words,isnad].filter(Boolean).join(' '),conclusion?.body].filter(Boolean).join('\n\n')}`;
  return {chain:missing.length?'':chain,heading,missing,sectionIds:[...new Set(used.map(s=>s.id))]};
