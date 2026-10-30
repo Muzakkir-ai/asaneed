@@ -68,7 +68,7 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  const customSource=sourceHolding?.routeSource||sanad.routeSource||'';
  const standardRoute=!sourceHolding?.tariqNumber&&!sanad.tariqNumber;
  const routeSources=customSource?customSource.split(/[،;؛\n]+/u).map(x=>x.trim()).filter(Boolean):standardRoute&&reading?standardRouteSources(reading.qariId,reading.rawi):[];
- const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSources,routeSource:customSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
+ const routeEmphasis={routeSourceFont:'Sakkal Kitab',bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSources,routeSource:customSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
  let transmission:unknown=null;
  try{transmission={chain:extractTeacherTransmission(chain,sourceHolding?.personalChain||'',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||'')),qariId:reading?.qariId||'',rawi:reading?.rawi||'',tariqNumber:sourceHolding?.tariqNumber||sanad.tariqNumber||'',tariqName:sourceHolding?.tariqName||sanad.tariqName||''};}catch{}
  return JSON.stringify({transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
