@@ -10,6 +10,6 @@ export async function verifyArtworkWorkflow(token:string){
  if(!key||!verify('RSA-SHA256',Buffer.from(parts[0]+'.'+parts[1]),createPublicKey({key,format:'jwk'}),Buffer.from(parts[2],'base64url')))throw Error('Invalid signature');
  const now=Date.now()/1000;
  if(payload.iss!=='https://token.actions.githubusercontent.com'||payload.aud!=='asaneed-artwork-refresh'||typeof payload.exp!=='number'||payload.exp<=now||typeof payload.iat!=='number'||payload.iat>now+30||payload.iat<now-600||typeof payload.nbf==='number'&&payload.nbf>now+30)throw Error('Invalid token lifetime');
- if(payload.repository!=='Muzakkir-ai/fonts'||payload.ref!=='refs/heads/main'||payload.sub!=='repo:Muzakkir-ai/fonts:ref:refs/heads/main'||payload.workflow_ref!=='Muzakkir-ai/fonts/.github/workflows/refresh-asaneed-artwork.yml@refs/heads/main'||!['push','workflow_dispatch'].includes(payload.event_name))throw Error('Workflow unavailable');
+ if(payload.repository_id!=='1420583732'||payload.repository!=='Muzakkir-ai/fonts'||payload.ref!=='refs/heads/main'||!['repo:Muzakkir-ai/fonts:ref:refs/heads/main','repo:Muzakkir-ai@123297158/fonts@1420583732:ref:refs/heads/main'].includes(payload.sub)||payload.workflow_ref!=='Muzakkir-ai/fonts/.github/workflows/refresh-asaneed-artwork.yml@refs/heads/main'||!['push','workflow_dispatch'].includes(payload.event_name))throw Error('Workflow unavailable');
  return payload;
 }
