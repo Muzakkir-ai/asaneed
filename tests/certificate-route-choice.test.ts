@@ -29,3 +29,9 @@ const single='【بيان القراءة:من طريق المستنير】 أج�
 assert.equal(currentPreservedRouteText(currentPreservedRouteText(single,'المستنير'),'المستنير'),currentPreservedRouteText(single,'المستنير'));
 const vowels=preserved.replaceAll('من طريق','مِنْ طَرِيقِ').replaceAll('كما أخذته','كَمَا أَخَذْتُهُ');
 assert.ok(currentPreservedRouteText(vowels,oldName).includes('، وهي من طرق طيبة النشر'));
+
+const previous='【بيان القراءة:رواية روح من طريق المستنير】 أجزته من طريق المستنير وهي إحدى طرق طيبة النشر، كما أخذته عن فلان';
+const updated=currentPreservedRouteText(previous,'المستنير — طريق ابن الخشنام');
+assert.ok(updated.includes('من طريق المستنير، وهي من طرق طيبة النشر'));
+assert.ok(!updated.includes('إحدى'));
+assert.equal(currentPreservedRouteText(updated,'المستنير — طريق ابن الخشنام'),updated);

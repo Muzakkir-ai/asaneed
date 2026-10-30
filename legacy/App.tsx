@@ -4,7 +4,7 @@ import {setSessionRefresher} from './lib/sessionRecovery';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useSession, loginWithRedirect, logout } from 'zitejs/auth';
 import { getDashboard, saveProfile, assetSource, GetDashboardOutputType } from './lib/api';
-import { applyAssets,currentArtworkBase } from './lib/assets';
+import { applyAssets } from './lib/assets';
 import AssetSourcePanel from './components/AssetSourcePanel';
 import SanadSectionEditor from './components/SanadSectionEditor';
 import RiwayahColorsEditor from './components/RiwayahColorsEditor';
@@ -101,25 +101,7 @@ function PrivateApp() {
   }, [user, load]);
 
   const isAdmin = !!directory?.isAdmin;
-  useEffect(()=>{
-    if(!isAdmin||inspecting)return;
-    let disposed=false,running=false;
-    const check=async()=>{
-      if(disposed||running||document.visibilityState==='hidden')return;
-      running=true;
-      try{
-        const r=await assetSource({checkForUpdates:true});
-        if(!disposed&&r.repository&&r.revision&&!currentArtworkBase().includes('@'+r.revision))applyAssets(r.repository,r.branch,r.revision,r.artwork);
-      }catch{/* Keep the last working artwork; retry on the next check. */}
-      finally{running=false;}
-    };
-    void check();
-    const timer=window.setInterval(()=>void check(),60000);
-    const onVisible=()=>void check();
-    document.addEventListener('visibilitychange',onVisible);
-    window.addEventListener('focus',onVisible);
-    return()=>{disposed=true;window.clearInterval(timer);document.removeEventListener('visibilitychange',onVisible);window.removeEventListener('focus',onVisible);};
-  },[isAdmin,inspecting]);
+
 
   if(sessionExpired)return <div className="min-h-screen grid place-items-center p-6" dir="rtl"><div role="alert" className="max-w-lg space-y-4 rounded-xl border p-6"><h1 className="text-xl font-bold">انتهت جلسة الدخول</h1><p>سجّل الدخول مرة أخرى للمتابعة. لم تُلغَ صلاحياتك ولم تُحذف بياناتك.</p><Button onClick={()=>loginWithRedirect()}>تسجيل الدخول والمتابعة</Button></div></div>;
   if (isLoading || !user) return <div className="min-h-screen grid place-items-center text-muted-foreground">جارٍ التحميل…</div>;
