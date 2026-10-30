@@ -21,6 +21,15 @@ if public.attach_builder_route(route,jsonb_build_object('ownerId','393ac60e-11fb
  begin perform public.save_builder_chain(record||jsonb_build_object('id',route,'revision',1,'branches',jsonb_build_array(jsonb_build_array(jsonb_build_object('person_id',(select id from builder_test_ids where k='hidden'))))));raise exception 'Private node accepted';exception when raise_exception then if sqlerrm='Private node accepted' then raise;end if;end;
  if (select count(*) from public.builder_nodes where chain_id=route)<>2 then raise exception 'Failed replacement was not atomic';end if;
 end $$;
+-- Explicitly distinct same-name people keep independent IDs and aliases.
+do $$ declare duplicate uuid:=gen_random_uuid(); saved uuid;begin
+ insert into public.builder_people(id,owner_id,name,display_name,search_key)
+ values(duplicate,(select id from builder_test_ids where k='owner'),'اسم اختبار','أبو الاختبار','test-owned #'||duplicate::text);
+ saved:=public.save_builder_chain(jsonb_build_object('book_id',(select id from builder_test_ids where k='book'),'kind','book','title','اختبار هوية مستقلة','branches',jsonb_build_array(jsonb_build_array(jsonb_build_object('person_id',duplicate)))));
+ if (select person_id from public.builder_nodes where chain_id=saved limit 1)<>duplicate then raise exception 'Selected identity replaced by matching name';end if;
+ if (select display_name from public.builder_people where id=duplicate)<>'أبو الاختبار' then raise exception 'Alias not preserved';end if;
+ if not exists(select 1 from public.builder_people where id=(select id from builder_test_ids where k='p')) then raise exception 'Original person changed';end if;
+end $$;
 reset role;
 update public.accounts set role='student' where id=(select id from builder_test_ids where k='owner');
 set local role authenticated;

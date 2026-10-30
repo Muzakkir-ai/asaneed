@@ -14,6 +14,18 @@ Latest verified application release before this documentation handoff:
 
 There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
 
+## Intelligent narrator selection — development change (30 October 2026)
+
+Implemented on a feature branch based on `85275cb78ab8ed80d2282f25f76ebde52ee28e98`; **not deployed to production** at this handoff.
+
+- Book and route chain fields retain the selected `builder_people.id` through editing, copying, reordering and saving. Unresolved text requires an explicit saved-person selection or inline creation; chain save no longer creates people by matching text.
+- All non-archived people returned by the authenticated, RLS-protected library remain searchable/selectable. Directed neighbors from saved active chains rank first, with `صلة مسجلة سابقًا — ملاحظة في سند`; other people show `لم يُعثر على صلة مسجلة`. These are observations, never historical verification. Chain references are retained and source titles appear in the indicator tooltip. Book-author boundaries are included; reverse edges are not inferred.
+- Search covers stored genitive names and the optional display name/kunyah, normalizes Arabic tashkīl/alif/ya and Abu/Abi search forms, and offers a bounded all-people list with more results. A review panel suggests possible duplicates without merging identities. Inline new-person entry accepts a genitive name and optional familiar name/alias.
+- Explicit same-name distinct people use an internal UUID suffix in `search_key`, retaining the existing `(owner_id, search_key)` uniqueness constraint. Original name/display text is unchanged. Editing preserves that discriminator. No schema migration or historical-data rewrite is needed.
+- رجال الأسانيد remains a derived text directory, not a database person registry. Its extracted names supplement review candidates; choosing one does not assert identity or transmission and requires explicit creation/reuse review. No automatic migration or alias merging was performed. Multiple structured aliases and reviewed relationship evidence remain future work.
+- Verification: production build and standalone narrator-selection/builder/route-source suites passed; final TypeScript check passed. Hosted rollback-only builder SQL passed, including same-name distinct identity/alias retention, personal/additional-shaykh attachment, stale revision rejection, atomic replacement, private-account isolation and student/anonymous denial. All fixtures and role changes rolled back. Security advisors showed only the previously documented notices.
+- Browser verification remains outstanding: no browser executable was installed and Chromium download failed. A temporary local UI harness was removed. No claim is made for pointer/keyboard/mobile behavior in an authenticated deployed session, or full normal/additional-shaykh browser flows. No certificate was issued/finalized and no permanent database writes were made.
+
 ## Working functionality
 
 ### Independent accounts and administration
