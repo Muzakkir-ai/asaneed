@@ -227,7 +227,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
                   <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
                   {!selectedBook&&q.rawis.every(r=>rawis.includes(r))&&<SelectItem value={`guest-qiraah:${q.id}`} className="font-semibold">القراءة كاملة — شهادتان للروايتين</SelectItem>}
-                  {selectedBook?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&routeBook(r.tariqName)===selectedBook).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {certificateRouteDetail(r.tariqName)} · {r.tariqNumber}</SelectItem>):rawis.map(rawi=><SelectItem key={rawi} value={`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>)}
+                  {selectedBook?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&routeBook(r.tariqName)===selectedBook).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {certificateRouteDetail(r.tariqName)}</SelectItem>):rawis.map(rawi=><SelectItem key={rawi} value={`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>)}
                   <SelectSeparator className="my-1"/>
                 </SelectGroup>)}
                 {!cert&&!isGuest&&readingGroups.map(({q,narrators})=>{
@@ -240,7 +240,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                       <span className="flex items-center gap-2"><span>القراءة كاملة</span><span className="text-xs font-normal text-muted-foreground">شهادتان · {q.rawis.map(r=>displayRawi(q.id,r)).join(' + ')}</span></span>
                     </SelectItem>}
                     {narrators.flatMap(({rawi})=>choicesFor(rawi).map(holding=><SelectItem key={holding.id+'-'+rawi} value={`holding:${holding!.id}:${encodeURIComponent(rawi)}`} disabled={!canUsePersonalSanad(holding!)} className="text-right py-2">
-                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{selectedBook?' من طريق '+certificateRouteDetail(holding.tariqName)+' · '+holding.tariqNumber:''}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
+                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{selectedBook?' من طريق '+certificateRouteDetail(holding.tariqName):''}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
                     </SelectItem>))}
                     <SelectSeparator className="my-1"/>
                   </SelectGroup>;

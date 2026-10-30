@@ -14,13 +14,13 @@ assert.equal(certificateRoutePhrase('المصباح — الفيل'),'من طر�
 assert.equal(certificateRoutePhrase('الشاطبية — قالون'),'من طريق الشاطبية');
 assert.equal(certificateRoutePhrase('كتاب غير مصنف — طريق آخر'),'من طريق كتاب غير مصنف');
 
-assert.equal(certificateRouteWording('المستنير — طريق ابن الخشنام'),'من طريق المستنير وهي إحدى طرق طيبة النشر');
+assert.equal(certificateRouteWording('المستنير — طريق ابن الخشنام'),'من طريق المستنير، وهي من طرق طيبة النشر');
 
 const oldName='المستنير — طريق ابن الخشنام';
 const preserved='【بيان القراءة:رواية روح عن الإمام يعقوب من طريق '+oldName+'】\nأجزته من طريق '+oldName+'، كما أخذته عن الشيخ من طريق المستنير — طريق ابن الخشنام';
 const corrected=currentPreservedRouteText(preserved,oldName);
 assert.ok(corrected.startsWith('【بيان القراءة:رواية روح عن الإمام يعقوب من طريق المستنير】'));
-assert.ok(corrected.includes('أجزته من طريق المستنير وهي إحدى طرق طيبة النشر'));
+assert.ok(corrected.includes('أجزته من طريق المستنير، وهي من طرق طيبة النشر'));
 assert.equal(corrected.slice(corrected.indexOf('كما أخذته')),preserved.slice(preserved.indexOf('كما أخذته')));
 assert.equal(currentPreservedRouteText(corrected,oldName),corrected,'idempotent');
 assert.equal(currentPreservedRouteText('نص محفوظ بلا حد معروف',oldName),'نص محفوظ بلا حد معروف');
@@ -28,4 +28,4 @@ assert.equal(currentPreservedRouteText('نص محفوظ بلا حد معروف',
 const single='【بيان القراءة:من طريق المستنير】 أجزته من طريق المستنير، كما أخذته عن فلان';
 assert.equal(currentPreservedRouteText(currentPreservedRouteText(single,'المستنير'),'المستنير'),currentPreservedRouteText(single,'المستنير'));
 const vowels=preserved.replaceAll('من طريق','مِنْ طَرِيقِ').replaceAll('كما أخذته','كَمَا أَخَذْتُهُ');
-assert.ok(currentPreservedRouteText(vowels,oldName).includes('وهي إحدى طرق طيبة النشر'));
+assert.ok(currentPreservedRouteText(vowels,oldName).includes('، وهي من طرق طيبة النشر'));

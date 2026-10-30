@@ -1,3 +1,4 @@
+import {routeBookDirectory,labelRouteBookArtwork} from '../legacy/lib/routeBookArtwork';
 import assert from 'node:assert/strict';
 import {numberedArtworkPath,svgDimensions} from '../legacy/lib/artworkCatalog';
 import {svgReadingParts,riwayahSvgWidthMm,riwayahSvgUrl} from '../legacy/lib/riwayahSvgHeading';
@@ -35,5 +36,12 @@ const separated=assembleIjazah({...holding,tariqName:'المستنير — طر�
 assert.ok(separated.heading.endsWith('من طريق المستنير'));
 assert.ok(!separated.heading.includes('طيبة'));
 const unvocalized=separated.chain.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u0640]/gu,'');
-assert.ok(unvocalized.includes('وهي إحدى طرق طيبة النشر'));
+assert.ok(unvocalized.includes('، وهي من طرق طيبة النشر'));
 assert.ok(!separated.chain.includes('ابن الخشنام'));
+
+const numberedBooks=[{title:'المستنير',artwork_number:'01',archived:false},{title:'مؤرشف',artwork_number:'02',archived:true}];
+assert.deepEqual(routeBookDirectory(numberedBooks),[{number:'01',name:'المستنير',path:'svg/turuq/01/heading.svg'}]);
+const unlabeled={...artwork[0],number:'01',path:'svg/turuq/01/heading.svg',label:''};
+assert.equal(labelRouteBookArtwork([unlabeled],numberedBooks)[0].label,'المستنير');
+assert.equal(labelRouteBookArtwork([bookArtwork],numberedBooks)[0].label,bookArtwork.label,'books namespace unaffected');
+assert.equal(unlabeled.label,'','catalog inputs immutable');

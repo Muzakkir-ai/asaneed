@@ -1,6 +1,6 @@
 import {reachesJunction} from './personalSanadValidation';
 export type BuilderPerson={id:string;name:string;display_name:string;archived:boolean};
-export type BuilderBook={id:string;title:string;author_id:string;archived:boolean};
+export type BuilderBook={artwork_number?:string;id:string;title:string;author_id:string;archived:boolean};
 export type BuilderNode={person_id:string;route_source:boolean;source_level?:'upper'|'branch'|null};
 export type BuilderChain={id:string;book_id:string;book_chain_id:string|null;route_code:string;kind:'book'|'route';title:string;qari_id:string;rawi:string;continuation:string;confirmed:boolean;archived:boolean;revision:number;upper_route_name?:string;branch_route_name?:string;reading_scope?:'unspecified'|'sughra'|'kubra';branches:BuilderNode[][]};
 export type BuilderLibrary={people:BuilderPerson[];books:BuilderBook[];chains:BuilderChain[];suggestions:string[];continuations:Record<string,string>;prefixContinuations?:import('./builderPrefix').BuilderPrefixContinuation[]};

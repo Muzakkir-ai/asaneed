@@ -178,3 +178,9 @@ The uploaded filename was heading.svg.svg, skipped by exact-path discovery. Rena
 ### Preserved additional-shaykh draft wording fix
 
 Root cause: getCurrentSanadForIssuance returned additional-shaykh preserved chains verbatim, bypassing new assembly wording. It now applies a narrow custom-route presentation correction to the marker and opening before كما أخذته, using that sanad’s own route metadata. The narrator-chain suffix is preserved byte-for-byte, and no stored sanad is rewritten. Finalized snapshots bypass this path. Missing opening boundary leaves preserved text unchanged. Tests cover heading/body separation, Arabic harakat, idempotence and unchanged chain suffix; build verified. Authenticated browser verification remains outstanding.
+
+### Automatic route-book artwork catalog and punctuation
+
+Each builder book now has a globally unique permanent artwork_number, allocated by a database sequence/trigger. المستنير retains 01; existing archived books retain reserved numbers. The builder and asset administration display svg/turuq/NN/heading.svg. Asset-source GET/refresh obtains catalog labels from authorized builder_books by number, so new route books need no manual svg/catalog.json entries. Upload SVG then use تحديث ملفات GitHub. The asset panel refresh now updates its displayed directory too. Internal route codes remain stored, but no longer appear in ordinary builder/picker/certificate choices; old manual fields remain under advanced settings. Wording now appends «، وهي من طرق طيبة النشر».
+
+Backed up builder books before additive migrations; tested authenticated allocation, attempted duplicate folder override, immutable numbering, rename/archive stability in a rollback transaction. Old privileged backup restore may retain recorded numbers; normal authenticated book creation always allocates its own. Generated database types inspected. Wording/artwork tests and production build passed; authenticated browser check outstanding.

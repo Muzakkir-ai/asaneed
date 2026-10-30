@@ -15,3 +15,5 @@ The local fonts checkout is Documents/Codex/Asaneed-Fonts. Upload-Changes.cmd in
 Validation: production build; numbered-path and viewBox validation; route SVG selection and fallback; complete custom chain isolation; original Qalun/Warsh heading tests; local filter/permission and registration tests. Live UI checks are recorded in the task report. New routes still require the scholar's real chain and artwork before a real route-specific certificate can be checked end-to-end.
 
 For the riwayah heading المستنير use `svg/turuq/01/heading.svg` with catalog turuq entry `"01":"المستنير"`. Artwork contains only «من طريق المستنير». The phrase «وهي إحدى طرق طيبة النشر» belongs in كلمات الإجازة, not the heading SVG.
+
+Route-book artwork folders are now allocated automatically by the website. Open the book in الكتب والطرق to see its permanent svg/turuq/NN/heading.svg path; no manual route-book JSON entry is required. Upload the heading SVG then refresh GitHub assets. Existing manual catalog entries remain fallback for unrelated artwork. Archived book numbers are never reused. «، وهي من طرق طيبة النشر» is only in كلمات الإجازة.

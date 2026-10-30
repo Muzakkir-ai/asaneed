@@ -46,6 +46,7 @@ export type Database = {
       }
       builder_books: {
         Row: {
+          artwork_number: string | null
           archived: boolean
           author_id: string
           id: string
@@ -53,6 +54,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          artwork_number?: string | null
           archived?: boolean
           author_id: string
           id?: string
@@ -60,6 +62,7 @@ export type Database = {
           title: string
         }
         Update: {
+          artwork_number?: string | null
           archived?: boolean
           author_id?: string
           id?: string
