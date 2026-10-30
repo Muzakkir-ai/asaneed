@@ -166,3 +166,7 @@ Newly assembled custom headings use the book prefix only, dropping the saved lab
 ### Heading versus ijazah wording correction
 
 User clarified: heading contains only من طريق المستنير. Only the words substituted into كلمات الإجازة append وهي إحدى طرق طيبة النشر for the identified kubra books. Artwork is the route heading at svg/turuq/01/heading.svg with catalog label المستنير; it should contain only من طريق المستنير. Earlier book/03 and full-clause artwork instructions are superseded. Existing finalized snapshots remain unchanged.
+
+### Certificate list label polish
+
+List-only certificate summaries replace a dash before طريق with من: المستنير من طريق ابن الخشنام. Certificate headings, stored text and finalized snapshots are unchanged. Production build checked.

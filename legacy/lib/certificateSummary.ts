@@ -9,5 +9,6 @@ export function certificateSummary(heading:string,qariId='',rawi=''){
  const imam=imams[qariId]||(single?.[2]||'').replace(/^(?:الإمام|الامام)\s+/u,'').replace(/\s+(?:المدني|المكي|البصري|الشامي|الكوفي|الزيات)$/u,'');
  const narrator=rawi?plain(rawi):single?.[1];
  const summary=single&&narrator&&imam?`${narrator} عن ${imam}`:body.replace(/^ب(?=قراءة)/u,'').replace(/^(?:الإمام|الامام)\s+/u,'');
- return [summary,route?.[1]].filter(Boolean).join(' · ');
+ const routeLabel=route?.[1]?.replace(/\s*[—–-]\s*(?=طريق\s)/gu,' من ');
+ return [summary,routeLabel].filter(Boolean).join(' · ');
 }
