@@ -16,7 +16,7 @@ There is no unfinished code task from the last request. Suggested follow-ups and
 
 ## Intelligent narrator selection — development change (30 October 2026)
 
-Implemented on a feature branch based on `85275cb78ab8ed80d2282f25f76ebde52ee28e98`; **not deployed to production** at this handoff.
+Released to production at commit `6d4a488d56aeedaf8ed0c9ac37f0d28d0bf1664b` (PR #1), deployment `dpl_4t4yEMsg88e7jnA8GK1B9hfM452r`, verified READY with `asaneed.vercel.app` assigned on 30 October 2026. The user explicitly requested production release. A cloud-browser smoke check reached the login page; authenticated narrator interactions remain unverified in this session.
 
 - Book and route chain fields retain the selected `builder_people.id` through editing, copying, reordering and saving. Unresolved text requires an explicit saved-person selection or inline creation; chain save no longer creates people by matching text.
 - All non-archived people returned by the authenticated, RLS-protected library remain searchable/selectable. Directed neighbors from saved active chains rank first, with `صلة مسجلة سابقًا — ملاحظة في سند`; other people show `لم يُعثر على صلة مسجلة`. These are observations, never historical verification. Chain references are retained and source titles appear in the indicator tooltip. Book-author boundaries are included; reverse edges are not inferred.
