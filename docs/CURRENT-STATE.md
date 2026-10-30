@@ -38,6 +38,8 @@ Released to production at commit `6d4a488d56aeedaf8ed0c9ac37f0d28d0bf1664b` (PR 
 
 ### Certificates and workspace UI
 
+- ألوان شهادات الروايات is collapsed by default; click its native disclosure heading to open/close the search, color controls and previews. Toggling keeps unsaved palette edits mounted. Production build checked; authenticated browser interaction not exercised in this release session.
+
 - الطلاب والشهادات has a local issuer filter, search, collapsible advanced filters, counts/chips/reset and compact student-first results. The filter is not a global authorization scope.
 - Native compact color pickers sit beside hex fields; real SVG heading previews use the same heading renderer as printing.
 - Draft PDF preview does not publish a certificate. Finalization preserves content, settings, colors, numbering and artwork through snapshots.
