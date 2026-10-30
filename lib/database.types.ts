@@ -491,7 +491,7 @@ export type Database = {
         Row: {
           account_id: string
           linked_at: string
-          student_id: string
+    student_id: string
         }
         Insert: {
           account_id: string
@@ -577,6 +577,10 @@ export type Database = {
           target_role: string
         }
         Returns: undefined
+      }
+      attach_builder_route: {
+        Args: { extra?: string; holding: Json; route_id: string }
+        Returns: string
       }
       create_issuer_profile: {
         Args: { new_name: string; personal?: boolean; profile: Json }
