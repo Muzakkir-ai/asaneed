@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {builderNameKey,builderPreview,type BuilderChain} from '../legacy/lib/bookBuilder';
+const people=['المؤلف','راوٍ أول','راوٍ ثانٍ'].map((name,i)=>({id:String(i),name,display_name:'',archived:false}));
+const book={id:'book',title:'الكتاب',author_id:'0',archived:false};
+const parent={id:'parent',branches:[[{person_id:'1',route_source:false},{person_id:'0',route_source:false}]]} as BuilderChain;
+const route={branches:[[{person_id:'2',route_source:true}],[{person_id:'1',route_source:true}]],continuation:'عن الراوي، عن الإمام، عن الصحابي'} as BuilderChain;
+const before=JSON.stringify({parent,route});
+const result=builderPreview(book,parent,route,people,'عن الإمام ابن الجزري');
+assert.equal(result.text.split('(ح)').length,2);
+assert.equal(result.text.match(/عن المؤلف/gu)?.length,2,'author once per complete branch');
+assert.deepEqual(result.sources,['راوٍ ثانٍ','راوٍ أول']);
+assert.equal(JSON.stringify({parent,route}),before,'preview never mutates saved references');
+assert.equal(builderNameKey('أَبِي عَمْـرٍو'),builderNameKey('ابي عمرو'));
+assert.throws(()=>builderPreview(book,parent,route,[]));
+console.log('Branched preview, author deduplication, multiple roles, Arabic search and immutable input: PASS');

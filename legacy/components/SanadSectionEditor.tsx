@@ -1,3 +1,4 @@
+import BookTariqBuilder from './BookTariqBuilder';
 import {useEffect,useState} from 'react';
 import {sanadSections,sectionVersions,type SanadSectionsOutputType,type SectionVersionsOutputType} from '../lib/api';
 import {Pencil,ChevronUp} from 'lucide-react';
@@ -44,7 +45,7 @@ export default function SanadSectionEditor(){
      setChanged(false);setId('');toast.success('تم حفظ النص والخط والحجم واللون في قاعدة البيانات والتحقق منها');
    }catch{toast.error('تعذر حفظ المقطع');}finally{setBusy(false);}
  };
- return <Card dir="rtl"><CardHeader><CardTitle>إدارة نصوص وأشكال الأسانيد المشتركة</CardTitle><p className="text-sm text-muted-foreground">اضغط أيقونة القلم لفتح المحرر أسفل المقطع مباشرة. يُحفظ تعديل المدير للمقاطع المشتركة عند تركيب أسانيد جديدة.</p></CardHeader><CardContent className="space-y-3">
+ return <Card dir="rtl"><CardHeader><CardTitle>إدارة نصوص وأشكال الأسانيد المشتركة</CardTitle><p className="text-sm text-muted-foreground">اضغط أيقونة القلم لفتح المحرر أسفل المقطع مباشرة. يُحفظ تعديل المدير للمقاطع المشتركة عند تركيب أسانيد جديدة.</p></CardHeader><CardContent className="space-y-3"><BookTariqBuilder/>
  {sections.filter(s=>s.sectionType!=='personal').map(s=><div key={s.id} className="rounded-lg border overflow-hidden">
    <div className="flex justify-between items-center gap-3 px-3 py-2"><div className="space-y-1"><span className="text-sm font-medium">{s.title}</span>{s.formatting&&<p className="text-xs text-muted-foreground">الخط المحفوظ: {parseFormatting(s.formatting).font} — {parseFormatting(s.formatting).size} pt</p>}</div><Button type="button" size="icon" variant={id===s.id?'default':'outline'} aria-label={`تعديل ${s.title}`} aria-expanded={id===s.id} title={id===s.id?'إغلاق التعديل':'تعديل'} onClick={()=>edit(s)}>{id===s.id?<ChevronUp className="h-4 w-4"/>:<Pencil className="h-4 w-4"/>}</Button></div>
    {id===s.id&&<div className="space-y-3 border-t p-3 bg-muted/20"><p className="font-semibold">تعديل: {s.title}</p><SanadTypographyEditor text={body} onTextChange={v=>{setBody(v);setChanged(true);}} formatting={formatting} onFormattingChange={v=>{setFormatting(v);setChanged(true);}}/>

@@ -44,6 +44,189 @@ export type Database = {
         }
         Relationships: []
       }
+      builder_books: {
+        Row: {
+          archived: boolean
+          author_id: string
+          id: string
+          owner_id: string
+          title: string
+        }
+        Insert: {
+          archived?: boolean
+          author_id: string
+          id?: string
+          owner_id: string
+          title: string
+        }
+        Update: {
+          archived?: boolean
+          author_id?: string
+          id?: string
+          owner_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_books_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "builder_people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_books_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_chains: {
+        Row: {
+          archived: boolean
+          book_chain_id: string | null
+          book_id: string
+          confirmed: boolean
+          continuation: string
+          id: string
+          kind: string
+          owner_id: string
+          qari_id: string
+          rawi: string
+          revision: number
+          route_code: string
+          title: string
+        }
+        Insert: {
+          archived?: boolean
+          book_chain_id?: string | null
+          book_id: string
+          confirmed?: boolean
+          continuation?: string
+          id?: string
+          kind: string
+          owner_id: string
+          qari_id?: string
+          rawi?: string
+          revision?: number
+          route_code?: string
+          title: string
+        }
+        Update: {
+          archived?: boolean
+          book_chain_id?: string | null
+          book_id?: string
+          confirmed?: boolean
+          continuation?: string
+          id?: string
+          kind?: string
+          owner_id?: string
+          qari_id?: string
+          rawi?: string
+          revision?: number
+          route_code?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_chains_book_chain_id_fkey"
+            columns: ["book_chain_id"]
+            isOneToOne: false
+            referencedRelation: "builder_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_chains_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "builder_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_chains_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_nodes: {
+        Row: {
+          branch: number
+          chain_id: string
+          person_id: string
+          position: number
+          route_source: boolean
+        }
+        Insert: {
+          branch: number
+          chain_id: string
+          person_id: string
+          position: number
+          route_source?: boolean
+        }
+        Update: {
+          branch?: number
+          chain_id?: string
+          person_id?: string
+          position?: number
+          route_source?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_nodes_chain_id_fkey"
+            columns: ["chain_id"]
+            isOneToOne: false
+            referencedRelation: "builder_chains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "builder_nodes_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "builder_people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      builder_people: {
+        Row: {
+          archived: boolean
+          display_name: string
+          id: string
+          name: string
+          owner_id: string
+          search_key: string
+        }
+        Insert: {
+          archived?: boolean
+          display_name?: string
+          id?: string
+          name: string
+          owner_id: string
+          search_key: string
+        }
+        Update: {
+          archived?: boolean
+          display_name?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          search_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_people_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_snapshots: {
         Row: {
           certificate_id: string
@@ -438,6 +621,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      save_builder_chain: { Args: { record: Json }; Returns: string }
       save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
       set_issuer_assignment: {
         Args: { enabled: boolean; issuer: string; target: string }

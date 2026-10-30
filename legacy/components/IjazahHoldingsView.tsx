@@ -1,3 +1,4 @@
+import BookTariqBuilder from './BookTariqBuilder';
 import {arabicDigits} from '../lib/arabicDigits';
 import {ijazahCoverage} from '../lib/ijazahCoverage';
 import {useEffect,useState} from 'react';
@@ -128,6 +129,7 @@ export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
  if(loading)return <p role="status" className="rounded-xl border p-6">جارٍ تحميل الأسانيد والإجازات…</p>;
  if(loadError)return <div role="alert" className="rounded-xl border p-6 space-y-3"><p>{loadError}</p><Button onClick={refresh}>إعادة المحاولة</Button></div>;
  return <div className="space-y-4" dir="rtl">
+  <BookTariqBuilder onSaved={()=>{void refresh();onSaved?.();}}/>
   {coverage.label&&<div className="rounded-xl border bg-primary/5 p-4"><strong>{coverage.label}</strong><p className="text-sm text-muted-foreground">المحفوظ من القراءات الكاملة: {arabicDigits(coverage.count)} من ١٠. {coverage.count===10?'اكتملت القراءات العشر.':coverage.label==='القراءات الثلاث من الدرة'?'اكتملت قراءات أبي جعفر ويعقوب وخلف؛ وقد توجد قراءات أخرى من السبع أدناه.':'هذا وصف للمجموعة المكتملة فقط؛ تبقى بقية القراءات ظاهرة أدناه.'}</p></div>}
   <Input aria-label="بحث أسانيدي" placeholder="ابحث عن القراءة أو الرواية…" value={search} onChange={e=>setSearch(e.target.value)}/>
   <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-bold">إجازاتي وأسانيدي الشخصية</h2></div><div className="flex gap-2"><Button onClick={()=>start()}><Plus className="h-4 w-4 me-1"/>إضافة إجازة</Button><Button variant="outline" disabled={busy} onClick={()=>{setDeleteAllPhrase('');setDeleteAllOpen(true);}}>حذف جميع الأسانيد</Button></div></div>
