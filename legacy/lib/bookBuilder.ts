@@ -1,3 +1,4 @@
+import {reachesJunction} from './personalSanadValidation';
 export type BuilderPerson={id:string;name:string;display_name:string;archived:boolean};
 export type BuilderBook={id:string;title:string;author_id:string;archived:boolean};
 export type BuilderNode={person_id:string;route_source:boolean;source_level?:'upper'|'branch'|null};
@@ -11,6 +12,8 @@ export function builderPreview(book:BuilderBook,parent:BuilderChain,route:Builde
  for(const a of parent.branches)for(const b of route.branches){
   const ids=[...a.map(n=>n.person_id),book.author_id,...b.map(n=>n.person_id)];
   const adjacent=ids.filter((id,i)=>!i||id!==ids[i-1]);
+  // al-Durrah's author is the junction itself; the personal prefix already includes him.
+  if(adjacent[0]===book.author_id&&/محمد بن محمد.*الجزري/u.test(builderNameKey(author))&&reachesJunction({personalChain:prefix,junction:'jazari'}))adjacent.shift();
   segments.push([prefix.trim().replace(/[،.\s]+$/u,''),adjacent.map(id=>'عن '+person(id)).join('، '),route.continuation.trim()].filter(Boolean).join('، '));
  }
  return {text:segments.join('\n\n(ح)\n\n'),author,sources:[...new Set(route.branches.flatMap(b=>b.filter(n=>n.route_source).map(n=>person(n.person_id))))]};

@@ -14,6 +14,14 @@ Latest verified application release before this documentation handoff:
 
 There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
 
+## Separate Shatibiyyah and Durrah import — 30 October 2026
+
+- User authorized separate العشر الصغرى books. Created الشاطبية with 14 route entries across 7 qiraat, and الدرة with 6 across 3 qiraat. Each has a book sanad and reusable narrator IDs. Both books remain separate from the existing المصباح library.
+- Import used the existing shared CHAIN sections and the saved Ibn al-Jazari → al-Dani text. Shatibiyyah's common chain is split at its explicitly named author. Al-Durrah's author is Ibn al-Jazari himself; the preview avoids repeating that junction after the personal prefix. Ishaq retains two explicitly stated initial-teacher paths; Idris retains both al-Qati‘i/al-Mutawwi‘i paths and both source roles. Branch prose from the rawi onward remains in the preserved continuation.
+- **All 20 imported routes are unconfirmed review drafts.** Upper/branch levels remain unclassified. These entries are organization of the user's stored text, not historical verification. The saved-route picker shows unconfirmed entries with a review label, disabled until reviewed through the library pencil editor. No shaykh holdings or certificates were created by this import.
+- Import ran under authenticated admin RLS/RPC scope after a private backup, with source-body hash checks, an advisory lock, exact normalized-name reuse and no updates to existing books/person names/chains. Private import provenance stores source IDs/hashes and book IDs. Dry-run rollback and a second rollback-only idempotency run passed; live counts verified 14/6, 7/3 qiraat, and two branches for Ishaq/Idris. Certificate/sanad fingerprints remained unchanged. Source exports and import SQL stay outside the public repository.
+- Validation: strict import-planning/branch tests, builder/prefix tests and production build passed. A transient Turbopack cache failure was resolved by moving only the generated cache and rebuilding. No authenticated browser review or scholarly approval is claimed.
+
 ## Book / upper / branch methodology — 30 October 2026
 
 - Shared texts are collapsed under **النصوص المشتركة — إعدادات متقدمة**. CHAIN lookup keys retain their persisted values but display Arabic reading/riwayah labels. Administrator pencil editing and version history remain available; no source text was deleted or renamed.
