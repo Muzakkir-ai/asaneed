@@ -1,0 +1,96 @@
+# Current Asaneed state
+
+Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
+
+## Where we are now
+
+Asaneed is running independently on Next.js/Vercel with Supabase authentication and database storage. The original Zite application remains unchanged. The active development objective is improving the migrated application in place, especially authentic certificate rendering, usable account/shaykh relationships and reusable books/طرق entry.
+
+Latest verified application release before this documentation handoff:
+
+- Commit `30f1945bf93879f06066ad233a148cdce36ed6c5`.
+- Production deployment READY at https://asaneed.vercel.app.
+- Change: themed Arabic narrator autocomplete, including matching the suggestion list to its input width.
+
+There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
+
+## Working functionality
+
+### Independent accounts and administration
+
+- Supabase login, Google sign-in and configured email confirmation/recovery delivery exist. Keep keys in their configured services/environment only.
+- Account administration, personal issuer profiles, additional shaykhs, students and recipient-account links are distinct.
+- Both administrators can manage authorized additional-shaykh profiles. Their personal issuance is distinguished from records they administer.
+- Admin account inspection is read-only by default, with an explicit edit context. It is separate from the local certificate filter.
+- Students can be linked to login accounts, including administrators who are also receiving ijazahs. Recipient links do not change issuer ownership.
+
+### Certificates and workspace UI
+
+- الطلاب والشهادات has a local issuer filter, search, collapsible advanced filters, counts/chips/reset and compact student-first results. The filter is not a global authorization scope.
+- Native compact color pickers sit beside hex fields; real SVG heading previews use the same heading renderer as printing.
+- Draft PDF preview does not publish a certificate. Finalization preserves content, settings, colors, numbering and artwork through snapshots.
+- Arabic-Indic registration display uses year-first YYSS-RRNN numbering. Existing finalized identifiers are preserved.
+- Printed certificates use actual artwork, separate certificate fonts and configurable palettes, gentle whole-page balancing and overflow protection.
+- Shared students, Arabic vowel-insensitive search, loading/error/empty distinctions and responsive navigation are implemented. Further polishing can follow actual use.
+
+### Received certificates versus personal asaneed
+
+`شهاداتي` contains finalized received certificates. `أسانيدي` contains editable holdings used for subsequent issuance. A staff recipient can explicitly use a received certificate as the basis of a personal sanad. The system checks actual recipient ownership, proposes the direct teacher plus preserved transmission, and saves an independent reviewed copy with provenance. Publication alone does not automatically create a holding.
+
+Future snapshots have a structured transmission field; older snapshots use cautious extraction and refuse incomplete/unsupported cases. See `RECEIVED-SANAD-FLOW.md`.
+
+### Shared book and branched-route builder
+
+One builder is available from:
+
+- أسانيدي → الكتب والطرق.
+- إدارة الأسانيد → الكتب والطرق.
+- A saved additional-shaykh profile → إجازات القراءات → الكتب والطرق.
+
+Stage 1 stores a book, author and one or more book sanads from Ibn al-Jazari. Stage 2 selects the existing qari/rawi catalog and stores route branches with reusable narrator references. Names are entered in the genitive form. Narrator insertion, removal, ordering, branch copying, route copying and save-and-add-another are implemented. New narrator identities are saved in batches rather than one request per name.
+
+The library uses `builder_people`, `builder_books`, `builder_chains` and `builder_nodes`, with foreign keys, ordering, RLS and archival flags. `save_builder_chain` is atomic and revision-checked; `attach_builder_route` is atomic and protects against duplicate retries. Full backups include these tables. The builder does not independently authenticate historical transmission.
+
+The current add-ijazah form now offers **اختيار طريق محفوظ** as its main route option. It reads the same library as administration. Selecting a route and supplying the personal prefix to Ibn al-Jazari loads the complete chain, qari/rawi, route code/name and emphasized people into the open form. **It does not save the ijazah until the user presses Save.** Manual route fields remain under collapsed **إدخال طريق يدوي / متقدم**. Typing a number in that manual section is not a library lookup.
+
+Narrator and book-author suggestions now use `NarratorAutocomplete`: a themed Radix popover with Readex Pro, RTL, gold active selection, input-matched width, Arabic-normalized search, pointer selection, arrow keys, Enter, Escape and support for freely typing a new name. Native browser datalists were removed from these builder fields. Other native selects elsewhere in the app were not globally replaced by this change.
+
+Details: `BOOK-TARIQ-BUILDER.md` and the original `BOOK-TARIQ-BUILDER-REQUIREMENTS.md`.
+
+### Route-source typography and SVGs
+
+- The user supplied route-source names for all twenty rawis. They are stored in `legacy/lib/standardRouteSources.json` and are display roles, not replacements for preserved chains.
+- Idris has **two** marked route sources: al-Mutawwi‘i and al-Qati‘i. Preserve both branches and roles.
+- Custom routes can mark more than one source. Drafts and new finalizations render صاحب الطريق in **Sakkal Kitab bold, primary color**, matching the other emphasized personal names. `routeSourceFont` is frozen for new snapshots; old finals without it keep the prior fallback.
+- The actual Sakkal fonts' Tatweel Extension 1 feature is `ss16`. No tatweel characters were injected.
+- Numbered artwork discovery, commit-pinned URLs and finalized artwork snapshots are implemented. Issuer folders use numeric codes, with `name.svg`, `line-02.svg`, `line-03.svg` and linked aspect-ratio scaling.
+- The user's local artwork files must be committed/uploaded before refreshing the website. A local-only file is not available to production.
+
+## Recent release landmarks
+
+| GitHub commit | Result |
+| --- | --- |
+| `732eaa856e02898afb377edf176335de7ad2f2c1` | User-reviewed route sources for twenty rawis, including both Idris sources. |
+| `30d7732e3f338696a0d35083dd1e81e934e0d060` | Shared two-stage book/route builder and protected library. |
+| `4ffd7d3c40dc22e61f2205660fea4c22a8473e9d` | Save-state preservation and archived-library restore safeguards. |
+| `3dc6dee40fc821930f226ae9bf1e8cab84e78013` | Batched narrator saving. |
+| `0e41c27631fd735a99aefab32640e66a22e69bc4` | Saved library route picker in ijazah forms; Sakkal route-source names. |
+| `8e570496c03e7b7f7ba6d75c2ef98a56021ada4a` | Themed editable narrator combobox. |
+| `30f1945bf93879f06066ad233a148cdce36ed6c5` | Suggestion width matched to its name field. |
+
+## Verification evidence and limits
+
+- Production builds passed, including Next.js/TypeScript checking.
+- Relevant standalone tests passed: builder branching/author deduplication, Arabic search, input preservation and all twenty rawi role mappings.
+- Hosted rollback-only SQL tests passed for builder save, branch retention, stale edit rejection, failed replacement rollback, personal/additional-shaykh attachment, retry idempotency, private-account isolation, student/anonymous denial and backup key coverage.
+- Signed-in browser tests exercised creating/reselecting a temporary book, multiple book sanads, narrator reuse, insertion/reordering/removal, branch/route copying, save-and-add-another and batch narrator creation. Fixtures were removed without changing real library records.
+- Saved-route selection was tested with a temporary route: the form received the reading and complete chain without saving a new holding or certificate. The temporary library rows were removed.
+- Actual draft print DOM reported Sakkal Kitab, weight 700 and the current primary color for the route sources, including ‘Ubayd ibn al-Sabbah in Hafs.
+- Autocomplete pointer and keyboard selection worked; Escape left the editor open. Settled desktop input/menu widths were both 820 px. At a 390 px mobile viewport, the menu stayed between x=30 and x=360, with no page-width overflow. Temporary viewport overrides were reset.
+- Before/after comparison during the builder rollout found zero changed certificate or sanad rows. The last certificate count checked was **39**; this is historical evidence, not a fixed invariant for future work.
+- No real certificate was finalized, issued or imported solely to test these changes. The received-certificate import/save flow still needs a genuine user-approved end-to-end case. Physical print/PDF and diverse historical finalized snapshots are not exhaustively validated by the latest UI checks.
+- The last database security-advisor check showed only pre-existing private-table deny-all policy INFO entries and the existing leaked-password-protection warning. Do not claim the entire application has had a comprehensive security audit.
+
+## Documentation cautions
+
+`TASK-STATUS.md`, `WORKSPACE-MIGRATION.md` and other dated reports remain useful historical context. Some earlier text predates admin visibility corrections, the builder, the saved-route picker or the new source font. Prefer this handoff and verified current behavior. Never use a historical record count or old user name as a reason to delete or reassign live data.

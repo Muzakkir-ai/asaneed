@@ -1,5 +1,7 @@
 # Asaneed task status — 29 October 2026
 
+> Historical report. For the latest handoff, read [AGENTS.md](../AGENTS.md), [current state](CURRENT-STATE.md), and [next steps](NEXT-STEPS.md). Later builder, picker, typography and visibility changes supersede older details here.
+
 | Task | Status and evidence |
 | --- | --- |
 | 1. Permanent migration and ownership | Implemented. Private full baseline and ownership audit retained; verified aliases migrated to current ownership; separate administrator preserved; unlink rollback test passed. |
