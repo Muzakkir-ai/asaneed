@@ -65,7 +65,7 @@ const jazariNormalEnd='\uE105';
 const emphasizeTitle=(s:string)=>titleStart+s+titleEnd;
 const ijazahLicensePhrase='فأجزته بعد ما رأيته أهلًا لذلك بأن يقرأ ويقرئ فى أي مكان شاء -بشروطه المعتبرة عند أرباب هذا الفن-';
 const jazariFullName='إِمَامِ المُقرِئِينَ أَبِي الخَيرِ مُحَمَّدِ بنِ مُحَمَّدٍ الجَزَرِيِّ';
-function highlightCertificateNames(chain:string,teacher:string,student:string,heading:string,routeEmphasis:{bookAuthor?:string;routeSource?:string}={}){
+function highlightCertificateNames(chain:string,teacher:string,student:string,heading:string,routeEmphasis:{bookAuthor?:string;routeSource?:string;routeSources?:string[]}={}){
   // Wrap every raawi / imam identification in print-only markers, including
   // old assembled sanad text and old certificate snapshots.
   // Older issued snapshots contain an unvoweled reading inside Kalimat al-Ijazah.
@@ -73,7 +73,7 @@ function highlightCertificateNames(chain:string,teacher:string,student:string,he
   const possibleReadings=heading?[heading,heading.replace(/^برواية/u,'رواية'),heading.replace(/^رواية/u,'برواية')].filter(Boolean):[];
   const oldReading=possibleReadings.find(value=>chain.includes(value));
   const updatedChain=oldReading?chain.replace(oldReading,vocalizeReadingLabel(oldReading)):chain;
-  const sources=scholarlyNameRanges(updatedChain,[routeEmphasis.routeSource||'']);
+  const sources=scholarlyNameRanges(updatedChain,[...new Set([routeEmphasis.routeSource||'',...(routeEmphasis.routeSources||[])])]);
   const ranges=[...sanadTitleRanges(updatedChain),...scholarlyNameRanges(updatedChain),...scholarlyNameRanges(updatedChain,[routeEmphasis.bookAuthor||''])].filter(r=>!sources.some(t=>r.start<t.end&&t.start<r.end))
     .sort((a,b)=>a.start-b.start);
   let withTitles=updatedChain;

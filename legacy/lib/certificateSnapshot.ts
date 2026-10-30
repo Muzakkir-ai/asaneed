@@ -1,3 +1,4 @@
+import {standardRouteSources} from './standardRouteSources';
 import {extractTeacherTransmission} from './receivedTransmission';
 import {arabicSearchKey} from './arabicSearch';
 import {zite} from 'zitejs/db';
@@ -64,7 +65,10 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  const {records:preps}=await zite.preparedIjazahs.findAll({filters:{ownerId:sourceOwner},limit:2000});
  const sourceHolding=holdings.find(h=>h.id===preps.find(p=>p.sanadId===sanadId)?.holdingId);
  const standardShatibi=arabicSearchKey(heading).endsWith('من طريقي الشاطبية والتيسير');
- const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSource:sourceHolding?.routeSource||sanad.routeSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
+ const customSource=sourceHolding?.routeSource||sanad.routeSource||'';
+ const standardRoute=!sourceHolding?.tariqNumber&&!sanad.tariqNumber;
+ const routeSources=customSource?customSource.split(/[،;؛\n]+/u).map(x=>x.trim()).filter(Boolean):standardRoute&&reading?standardRouteSources(reading.qariId,reading.rawi):[];
+ const routeEmphasis={bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSources,routeSource:customSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
  let transmission:unknown=null;
  try{transmission={chain:extractTeacherTransmission(chain,sourceHolding?.personalChain||'',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||'')),qariId:reading?.qariId||'',rawi:reading?.rawi||'',tariqNumber:sourceHolding?.tariqNumber||sanad.tariqNumber||'',tariqName:sourceHolding?.tariqName||sanad.tariqName||''};}catch{}
  return JSON.stringify({transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
