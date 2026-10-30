@@ -14,6 +14,12 @@ Latest verified application release before this documentation handoff:
 
 There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
 
+## Shatibiyyah author-boundary correction — 30 October 2026
+
+- The initial importer incorrectly selected صهر الشاطبي by matching the word الشاطبي within his affiliation. Corrected the book author reference to the existing person إِمَامِ القُرَّاءِ أَبِي مُحَمَّدٍ القَاسِـمِ بنِ فِيرُّهْ الشَّاطِبِيِّ. صهر الشاطبي remains a distinct narrator before the author in the book sanad; no person was renamed or merged.
+- A backed-up, authenticated RPC transaction moved the boundary for the parent and 14 unconfirmed routes, preserving their IDs, full ordered person/source-role sequences and continuation text. A before/after equality assertion passed in both rollback and committed runs. No copied holdings were present. Draft revision counters were advanced normally.
+- The importer now requires the explicit القاسم / فيره / الشاطبي identity and rejects ambiguous/missing authors. A regression fixture includes صهر الشاطبي before the actual author; import and builder tests passed. This correction is not scholarly approval of the remaining drafts.
+
 ## Separate Shatibiyyah and Durrah import — 30 October 2026
 
 - User authorized separate العشر الصغرى books. Created الشاطبية with 14 route entries across 7 qiraat, and الدرة with 6 across 3 qiraat. Each has a book sanad and reusable narrator IDs. Both books remain separate from the existing المصباح library.

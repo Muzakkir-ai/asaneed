@@ -18,7 +18,11 @@ function linear(text:string):string[]{
 export function planSughraImport(sections:ImportSection[]):PlannedBook[]{
  const get=(title:string)=>{const matches=sections.filter(s=>s.title===title&&s.body.trim());if(matches.length!==1)throw Error('Missing or ambiguous source: '+title);return matches[0];};
  const common=get('من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة');
- const commonNames=linear(common.body),authorIndex=commonNames.findIndex(n=>builderNameKey(n).includes('الشاطبي'));
+ const commonNames=linear(common.body);
+ // An affiliation such as صهر الشاطبي names another narrator, not the author.
+ const authorMatches=commonNames.map((name,index)=>({key:builderNameKey(name),index})).filter(({key})=>key.includes('القاسم')&&key.includes('فيره')&&key.endsWith('الشاطبي')&&!key.includes('صهر'));
+ if(authorMatches.length!==1)throw Error('Shatibi author identity missing or ambiguous');
+ const authorIndex=authorMatches[0].index;
  if(authorIndex<1||authorIndex>=commonNames.length-1)throw Error('Shatibi boundary missing');
  const bridge=get('من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند');
  const jazari=bridge.body.match(/إِمَامِ المُقرِئِينَ[^،]+الجَزَرِيِّ/u)?.[0];

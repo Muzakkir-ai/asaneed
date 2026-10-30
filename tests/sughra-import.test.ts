@@ -4,7 +4,7 @@ import {QURRA} from '../legacy/lib/qurra';
 import {standardRouteSources} from '../legacy/lib/standardRouteSources';
 import {builderPreview,type BuilderChain} from '../legacy/lib/bookBuilder';
 // Synthetic transmission fixtures test parsing, not historical scholarship.
-const sections:ImportSection[]=[{id:'common',title:'من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة',body:'عن راو قبل الكتاب، عن الإمام الشاطبي، عن راو بعد الكتاب، عن الإمام الداني'},{id:'bridge',title:'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',body:'عن راو، عن إِمَامِ المُقرِئِينَ أَبِي الخَيرِ مُحَمَّدِ بنِ مُحَمَّدٍ الجَزَرِيِّ'}];
+const sections:ImportSection[]=[{id:'common',title:'من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة',body:'عن راو قبل الكتاب، عن أبي الحسن علي بن شجاع المعروف بـ صهر الشـاطبي، عن إِمَامِ القُرَّاءِ أَبِي مُحَمَّدٍ القَاسِـمِ بنِ فِيرُّهْ الشَّاطِبِيِّ، عن راو بعد الكتاب، عن الإمام الداني'},{id:'bridge',title:'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',body:'عن راو، عن إِمَامِ المُقرِئِينَ أَبِي الخَيرِ مُحَمَّدِ بنِ مُحَمَّدٍ الجَزَرِيِّ'}];
 for(const q of QURRA){
  for(const rawi of q.rawis){const roles=standardRouteSources(q.id,rawi);let prefix=roles.map(n=>'عن '+n).join('، ');
  if(q.id==='khalaf'&&rawi==='إسحاق')prefix='عن تلميذ أول، وأبي تلميذ ثان، وهما قرءا على راو مشترك، '+prefix;
@@ -14,7 +14,7 @@ for(const q of QURRA){
  for(const suffix of ['sahaba','prophet'])sections.push({id:q.id+suffix,title:`CHAIN:${q.id}:${suffix}`,body:suffix==='sahaba'?'عن الصحابي المحفوظ':'قرأ على رسول الله ﷺ'});
 }
 const before=JSON.stringify(sections),books=planSughraImport(sections);
-assert.equal(books[0].title,'الشاطبية');assert.equal(books[0].routes.length,14);assert.equal(books[1].title,'الدرة');assert.equal(books[1].routes.length,6);
+assert.equal(books[0].title,'الشاطبية');assert.ok(books[0].author.includes('القَاسِـمِ'));assert.ok(!books[0].author.includes('صهر'));assert.ok(books[0].parent.at(-1)?.includes('صهر'));assert.ok(!books[0].routes[0].branches[0][0].includes('القَاسِـمِ'));assert.equal(books[0].routes.length,14);assert.equal(books[1].title,'الدرة');assert.equal(books[1].routes.length,6);
 for(const r of books.flatMap(b=>b.routes))assert.ok(r.continuation.includes('صاحب الرواية')&&r.continuation.includes('رسول الله ﷺ'));
 assert.equal(books[1].routes.find(r=>r.rawi==='إدريس')?.branches.length,2);
 assert.equal(books[1].routes.find(r=>r.rawi==='إسحاق')?.branches.length,2);
