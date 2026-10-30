@@ -142,3 +142,7 @@ Details: `BOOK-TARIQ-BUILDER.md` and the original `BOOK-TARIQ-BUILDER-REQUIREMEN
 ## Documentation cautions
 
 `TASK-STATUS.md`, `WORKSPACE-MIGRATION.md` and other dated reports remain useful historical context. Some earlier text predates admin visibility corrections, the builder, the saved-route picker or the new source font. Prefer this handoff and verified current behavior. Never use a historical record count or old user name as a reason to delete or reassign live data.
+
+### Simplified route-source entry (30 October 2026)
+
+Removed upper/branch name inputs and per-person level selectors at user request. The صاحب الطريق checkbox remains; existing stored metadata is preserved when editing. Person membership shows صاحب الطريق without level labels. Missing narrator selection now identifies the typed name and the selection/creation action; empty rows explain how to fill or delete them. Production build verified; authenticated browser verification remains outstanding.

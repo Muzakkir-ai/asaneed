@@ -30,9 +30,9 @@ Updated 30 October 2026. These are **suggestions and verification gaps**, not cl
 
 ## Follow-up for structured Sughra and route levels
 
-- Review the 20 imported Shatibiyyah (14) and Durrah (6) drafts in the library. They are unconfirmed and not attached to any shaykh. Preserve both Ishaq/Idris paths; review upper/branch assignments before classifying them.
-- Review a real source with the user before classifying existing records as upper/branch or converting old Sughra text into stable person nodes. The structured editor now supports both scopes, but no bulk historical conversion was performed.
-- Check the new additional-shaykh saved-route flow and hierarchy controls in authenticated desktop/mobile sessions; mocked DOM checks and rollback-only SQL do not substitute for those sessions.
+- Review the 20 imported Shatibiyyah (14) and Durrah (6) drafts in the library. They are unconfirmed and not attached to any shaykh. Preserve both Ishaq/Idris paths and review the صاحب الطريق selections.
+- The user removed upper/branch classification controls; keep the simple صاحب الطريق selection. Existing level metadata is preserved for compatibility. Review a real source before converting further old text into stable person nodes.
+- Check the new additional-shaykh saved-route flow and simplified route controls in authenticated desktop/mobile sessions; mocked DOM checks and rollback-only SQL do not substitute for those sessions.
 
 ## Verification to prioritize before claiming full coverage
 
