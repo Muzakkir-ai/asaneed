@@ -14,6 +14,10 @@ Latest verified application release before this documentation handoff:
 
 There is no unfinished code task from the last request. Suggested follow-ups and known verification gaps are in `NEXT-STEPS.md`; they are not automatically authorized new work.
 
+## Inline route editing — 30 October 2026
+
+- In the saved-route list, a pencil expands the existing route editor directly inside that route/riwayah card, below its controls. Only one route editor is displayed; the selected pencil exposes its expanded state and can close it. New/copy forms remain in the separate creation area. Save and library APIs are unchanged. Production build checked; authenticated visual browser verification not claimed.
+
 ## Shatibiyyah author-boundary correction — 30 October 2026
 
 - The initial importer incorrectly selected صهر الشاطبي by matching the word الشاطبي within his affiliation. Corrected the book author reference to the existing person إِمَامِ القُرَّاءِ أَبِي مُحَمَّدٍ القَاسِـمِ بنِ فِيرُّهْ الشَّاطِبِيِّ. صهر الشاطبي remains a distinct narrator before the author in the book sanad; no person was renamed or merged.
