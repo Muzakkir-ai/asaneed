@@ -28,6 +28,11 @@ Updated 30 October 2026. These are **suggestions and verification gaps**, not cl
 
 **Acceptance checks:** Search a previously connected narrator; select an existing unconnected narrator; search by kunyah and alternate/genitive spellings; search without tashkīl; warn on a near-duplicate and reuse the selected person ID; create a genuinely new person; save a chain and confirm the pair is suggested as *observed*, not *verified*; test both a normal sanad and an additional-shaykh sanad; confirm existing records and permissions remain intact.
 
+## Follow-up for structured Sughra and route levels
+
+- Review a real source with the user before classifying existing records as upper/branch or converting old Sughra text into stable person nodes. The structured editor now supports both scopes, but no bulk historical conversion was performed.
+- Check the new additional-shaykh saved-route flow and hierarchy controls in authenticated desktop/mobile sessions; mocked DOM checks and rollback-only SQL do not substitute for those sessions.
+
 ## Verification to prioritize before claiming full coverage
 
 - A real received finalized certificate → recipient account → reviewed editable holding → subsequent draft issuance flow, with the user's explicit approval for any real publication. Current extraction/permission tests do not substitute for that complete live story.

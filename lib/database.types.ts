@@ -88,6 +88,7 @@ export type Database = {
           archived: boolean
           book_chain_id: string | null
           book_id: string
+          branch_route_name: string
           confirmed: boolean
           continuation: string
           id: string
@@ -95,14 +96,17 @@ export type Database = {
           owner_id: string
           qari_id: string
           rawi: string
+          reading_scope: string
           revision: number
           route_code: string
           title: string
+          upper_route_name: string
         }
         Insert: {
           archived?: boolean
           book_chain_id?: string | null
           book_id: string
+          branch_route_name?: string
           confirmed?: boolean
           continuation?: string
           id?: string
@@ -110,14 +114,17 @@ export type Database = {
           owner_id: string
           qari_id?: string
           rawi?: string
+          reading_scope?: string
           revision?: number
           route_code?: string
           title: string
+          upper_route_name?: string
         }
         Update: {
           archived?: boolean
           book_chain_id?: string | null
           book_id?: string
+          branch_route_name?: string
           confirmed?: boolean
           continuation?: string
           id?: string
@@ -125,9 +132,11 @@ export type Database = {
           owner_id?: string
           qari_id?: string
           rawi?: string
+          reading_scope?: string
           revision?: number
           route_code?: string
           title?: string
+          upper_route_name?: string
         }
         Relationships: [
           {
@@ -160,6 +169,7 @@ export type Database = {
           person_id: string
           position: number
           route_source: boolean
+          source_level: string | null
         }
         Insert: {
           branch: number
@@ -167,6 +177,7 @@ export type Database = {
           person_id: string
           position: number
           route_source?: boolean
+          source_level?: string | null
         }
         Update: {
           branch?: number
@@ -174,6 +185,7 @@ export type Database = {
           person_id?: string
           position?: number
           route_source?: boolean
+          source_level?: string | null
         }
         Relationships: [
           {
@@ -491,7 +503,7 @@ export type Database = {
         Row: {
           account_id: string
           linked_at: string
-    student_id: string
+          student_id: string
         }
         Insert: {
           account_id: string
