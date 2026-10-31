@@ -202,3 +202,7 @@ Live verification: fonts GitHub Actions run 41110410974 attempt 2 completed succ
 ### Homepage login and language hover (31 October 2026)
 
 Added a prominent localized /login link next to the homepage language controls. Excluded language buttons from the general dark hover rule, preserving their gold selected state and header hover styling. Responsive wrapping retained. Production build checked.
+
+### Homepage button text clarification (31 October 2026)
+
+User clarified the dark lettering itself was unwanted. Header login and selected/hovered language controls now use white lettering on teal with gold borders/selection outlines. Future-date report investigated: no future completion_date rows were found; latest draft is saved as 2026-02-07. No dates changed without identifying the intended record/date.
