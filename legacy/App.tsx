@@ -12,7 +12,7 @@ import { Input } from '@project/components/ui/input';
 import { Toaster } from '@project/components/ui/sonner';
 import { Button } from '@project/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@project/components/ui/tabs';
-import { LogOut, BookOpen, Moon, Sun, Languages } from 'lucide-react';
+import { LogOut, BookOpen, Moon, Sun, Languages, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import CertificatesView from './components/CertificatesView';
 import IjazahHoldingsView from './components/IjazahHoldingsView';
@@ -66,6 +66,7 @@ function PrivateApp() {
   useEffect(()=>{if(!user)return;let current=true;fetch('/api/workspace-scope').then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);return d as WorkspaceDirectory;}).then(d=>{if(!current)return;changeScope(d.actorId);setDirectory(d);}).catch(e=>{if(current)setDirectoryError(e.message);});return()=>{current=false;};},[user?.id]);
   const [printing, setPrinting] = useState<Cert | null>(null);
   const [profileName, setProfileName] = useState('');
+  const [editingName,setEditingName]=useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [dark,setDark]=useState(()=>typeof localStorage!=='undefined'&&localStorage.getItem('asaneed-theme')==='dark');
@@ -114,7 +115,7 @@ function PrivateApp() {
   const changeName = async () => {
     if (profileName.trim().length < 2) return toast.error('أدخل اسماً صحيحاً');
     setSavingProfile(true);
-    try { await saveProfile({ name: profileName.trim() }); setDisplayName(profileName.trim());void refreshDirectory();void load(); toast.success('تم تحديث الاسم'); }
+    try { await saveProfile({ name: profileName.trim() }); setDisplayName(profileName.trim());setEditingName(false);void refreshDirectory();void load(); toast.success('تم تحديث الاسم'); }
     catch { toast.error('تعذر تحديث الاسم'); }
     finally { setSavingProfile(false); }
   };
@@ -167,9 +168,9 @@ function PrivateApp() {
           {isAdmin&&!inspecting&&<TabsContent value="users"><SystemAdministration directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/></TabsContent>}
           <TabsContent value="profile"><div className="max-w-3xl space-y-5" dir="rtl">
             <div><h1 className="text-2xl font-bold">الملف الشخصي والإعدادات</h1><p className="mt-1 text-sm text-muted-foreground">إدارة حسابك وأمانه وبيانات ظهورك في الشهادات.</p></div>
-            <section aria-labelledby="account-settings-title" className="space-y-3 rounded-lg border p-5"><h2 id="account-settings-title" className="text-lg font-bold">بيانات الحساب</h2><p className="text-sm text-muted-foreground">اسمك الحالي: {shaykhName}</p><p className="text-sm text-muted-foreground">البريد الإلكتروني: <span dir="ltr">{user.email}</span></p><label className="block space-y-1"><span className="text-sm font-medium">اسم المستخدم</span><Input placeholder="الاسم الجديد" value={profileName} onChange={e=>setProfileName(e.target.value)} /></label><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button></section>
+            <section aria-labelledby="account-settings-title" className="space-y-3 rounded-lg border p-5"><h2 id="account-settings-title" className="text-lg font-bold">بيانات الحساب</h2><div className="flex items-center justify-between gap-3"><p className="text-sm">اسم المستخدم: <strong>{shaykhName}</strong></p>{!editingName&&<Button variant="outline" size="icon" aria-label="تعديل اسم المستخدم" onClick={()=>{setProfileName(shaykhName);setEditingName(true);}}><Pencil className="h-4 w-4"/></Button>}</div><p className="text-sm text-muted-foreground">البريد الإلكتروني: <span dir="ltr">{user.email}</span></p>{editingName&&<div className="space-y-3"><label className="block space-y-1"><span className="text-sm font-medium">اسم المستخدم</span><Input autoFocus value={profileName} onChange={e=>setProfileName(e.target.value)} /></label><div className="flex gap-2"><Button disabled={savingProfile} onClick={changeName}>حفظ الاسم</Button><Button variant="outline" disabled={savingProfile} onClick={()=>setEditingName(false)}>إلغاء</Button></div></div>}</section>
             <section aria-labelledby="security-settings-title" className="space-y-3 rounded-lg border p-5"><h2 id="security-settings-title" className="text-lg font-bold">كلمة المرور والأمان</h2><p className="text-sm text-muted-foreground">عيّن كلمة مرور لحساب الأسانيد أو غيّرها. يمكنك الاستمرار في الدخول باستخدام Google أيضًا. كلمة المرور لا تغيّر كلمة مرور بريدك الإلكتروني.</p><Button asChild><a href="/reset-password">تعيين / إعادة تعيين كلمة المرور</a></Button><p className="text-xs text-muted-foreground">٨ أحرف على الأقل. بعد الحفظ، سجّل الدخول بكلمة المرور الجديدة.</p></section>
-            <section aria-labelledby="certificate-settings-title" className="space-y-3"><h2 id="certificate-settings-title" className="text-lg font-bold">ظهورك في الشهادات</h2><ShaykhPrintProfileForm key={user.id} onSaved={()=>{void refreshDirectory();void load();}}/></section>
+            <section aria-labelledby="certificate-settings-title" className="space-y-3"><h2 id="certificate-settings-title" className="text-lg font-bold">ظهورك في الشهادات</h2><ShaykhPrintProfileForm displayName={shaykhName} issuerNumber={directory.accounts.find(a=>a.id===directory.actorId)?.personalIssuerCode} key={user.id} onSaved={()=>{void refreshDirectory();void load();}}/></section>
             {isAdmin&&<details className="rounded-lg border p-5"><summary className="cursor-pointer font-bold">أدوات المشرف</summary><p className="mt-2 text-sm text-muted-foreground">ملفات الخطوط والصور والنسخ الاحتياطي للمنصة.</p><div className="mt-4 space-y-4"><AssetSourcePanel/><DataBackupPanel/></div></details>}
           </div></TabsContent>
         </Tabs>

@@ -224,3 +224,7 @@ Verified rollback-only authenticated tests for 99→100, cross-year retention, d
 ### Account settings and eight-character passwords (31 October 2026)
 
 Changed shared server password validation and signup/reset browser minimums to eight characters, with matching Arabic/Urdu/English hints and errors. Settings now group account name/email, password/security, certificate appearance and collapsed admin artwork/backup tools. Password action links directly to the existing authenticated /reset-password form, which updates the same user and signs out after success; Google identity remains linked. Seven-character rejection/eight-character acceptance, auth redirect/translation suite and production build pass. No real user password was changed for testing. Authenticated browser/password submission remains unverified.
+
+### Settings display-first editing (31 October 2026)
+
+Username now reads اسم المستخدم with a labeled pencil action; input/save/cancel appear only during editing and successful saving closes it. Certificate profile defaults to a teal/gold illustrative preview with actual personal issuer numbered artwork where present, matching text fallbacks/visibility and saved text sizes/weights. A pencil opens fields and save/cancel; cancel restores saved values. Removed optional center-stamp text control without deleting existing stored content or historical snapshots. Load failures disable editing to avoid overwriting unloaded profiles. Build/type checks passed; authenticated browser visual checks remain outstanding.
