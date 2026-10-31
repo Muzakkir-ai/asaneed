@@ -139,6 +139,12 @@ html[lang=ur] .auth-panel p,html[lang=ur] .auth-panel .auth-links,html[lang=ur] 
 .language-switcher,.site-header .language-switcher,.auth-brand .language-switcher { display:inline-flex; flex-wrap:nowrap; gap:0; padding:0; border:0; border-radius:999px; background:#086875; }
 .language-switcher button { min-height:44px; padding:8px 20px; border-radius:999px; font-weight:600; white-space:nowrap; }
 .language-switcher button,.site-header .language-switcher button,.auth-brand .language-switcher button { color:#fff; background:transparent; box-shadow:none; }
-.language-switcher button[aria-pressed=true],.site-header .language-switcher button[aria-pressed=true],.auth-brand .language-switcher button[aria-pressed=true] { background:var(--gold); color:#064e59; box-shadow:none; }
+.language-switcher button[aria-pressed=true],.site-header .language-switcher button[aria-pressed=true],.auth-brand .language-switcher button[aria-pressed=true] { background:var(--gold); color:#fff; box-shadow:none; }
 .language-switcher button:hover:not(:disabled):not([aria-pressed=true]),.site-header .language-switcher button:hover:not(:disabled):not([aria-pressed=true]),.auth-brand .language-switcher button:hover:not(:disabled):not([aria-pressed=true]) { background:#ffffff12; color:#fff; }
 @media(max-width:380px) { .language-switcher button { padding-inline:14px; } }
+
+.homepage-header { display:grid; grid-template-columns:minmax(0,1fr) auto auto; direction:ltr; gap:20px; }
+.homepage-header .brand { min-width:0; }
+.homepage-header .homepage-login { justify-self:end; gap:8px; padding:8px 18px; min-height:42px; border:0; border-radius:12px; font-size:.9rem; box-shadow:none; white-space:nowrap; }
+.homepage-login svg { width:18px; height:18px; flex-shrink:0; }
+@media(max-width:700px) { .homepage-header { grid-template-columns:minmax(0,1fr) auto; gap:18px 12px; } .homepage-header .site-header-actions { grid-row:2; grid-column:1/-1; } .homepage-header .homepage-login { grid-row:1; grid-column:2; } }
