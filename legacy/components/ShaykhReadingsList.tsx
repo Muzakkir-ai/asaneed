@@ -7,7 +7,7 @@ type Reading={qariId:string;rawi:string};
 type Route=Reading&{tariqNumber:string;tariqName:string;sanadText?:string};
 export default function ShaykhReadingsList({readings,routes,onEdit,labelRoute,generalPrefix=''}:{readings:Reading[];routes:Route[];onEdit?:(r:Reading)=>void;labelRoute:(number:string,name:string)=>string;generalPrefix?:string}){
  const complete=ijazahCoverage(readings).count===10;
- const extra=routes.filter(r=>!['الشاطبية والتيسير','الدرة والتحبير'].includes(compactRouteBook(r.tariqName)));
+ const extra=routes.filter(r=>!!r.tariqNumber&&!['الشاطبية والتيسير','الدرة والتحبير'].includes(compactRouteBook(r.tariqName)));
  const normalized=(text:string)=>text.trim().replace(/[،.\s]+$/u,'');
  const specific=(r:Reading)=>routes.some(t=>!t.tariqNumber&&t.qariId===r.qariId&&t.rawi===r.rawi&&t.sanadText&&generalPrefix&&normalized(t.sanadText)!==normalized(generalPrefix));
  const row=(r:Reading,label?:string,key=r.qariId+'|'+r.rawi)=><div key={key} className="rounded-xl border bg-card p-3 flex items-center justify-between gap-3"><div><p className="font-medium text-sm">{shortReadingLabel(r.qariId,r.rawi)}</p>{(label||specific(r))&&<p className="text-xs text-muted-foreground">{label||'سند مختلف لهذه الرواية'}</p>}</div>{onEdit&&<Button type="button" variant="outline" size="sm" onClick={()=>onEdit(r)}><PenLine className="h-4 w-4"/>تعديل السند</Button>}</div>;
