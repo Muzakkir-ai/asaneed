@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {shaykhPrintProfile,type ShaykhPrintProfileOutputType} from '../lib/api';
 import {Input} from '@project/components/ui/input';
 import {Pencil} from 'lucide-react';
-import {currentArtwork,currentArtworkBase} from '../lib/assets';
+import IssuerProfilePreview from './IssuerProfilePreview';
 import {Button} from '@project/components/ui/button';
 import {Checkbox} from '@project/components/ui/checkbox';
 import {toast} from 'sonner';
@@ -23,16 +23,8 @@ export default function ShaykhPrintProfileForm({onSaved,displayName='',issuerNum
  const getStyles=()=>{try{return JSON.parse(profile.footerLineStyles||'{}') as Record<string,{bold?:boolean,size?:number}>;}catch{return {} as Record<string,{bold?:boolean,size?:number}>;}};
  const changeLineStyle=(line:string,patch:{bold?:boolean,size?:number})=>{const current=getStyles();setProfile(p=>({...p,footerLineStyles:JSON.stringify({...current,[line]:{...current[line],...patch}})}));};
  const save=async()=>{setBusy(true);try{await shaykhPrintProfile({action:'save',profile});setSaved(profile);setEditing(false);toast.success('تم حفظ بيانات المجيز');onSaved?.();}catch{toast.error('تعذر حفظ بيانات الشهادة');}finally{setBusy(false);}};
- const artwork=currentArtwork().filter(a=>a.kind==='mashaykh'&&a.number===issuerNumber).sort((a,b)=>['name','line-02','line-03'].indexOf(a.line)-['name','line-02','line-03'].indexOf(b.line));
- const hasArtwork=artwork.some(a=>a.line==='name');
- const lineStyle=(line:string)=>{const settings=getStyles()[line]||{};return {fontSize:`${Math.min(18,Math.max(7,settings.size??(line==='name'?11:9)))}pt`,fontWeight:settings.bold?700:400};};
- const teaching=[profile.showTeachingRole?profile.teachingRole.trim():'',profile.showMadrasaName?profile.madrasaName.trim():''].filter(Boolean).join(' ');
  return <div className="space-y-3 rounded-lg border p-5" dir="rtl"><div className="flex items-center justify-between gap-3"><h2 className="text-lg font-bold">بيانات المجيز في الشهادة</h2>{!editing&&<Button variant="outline" size="icon" disabled={!loaded} aria-label="تعديل بيانات المجيز في الشهادة" onClick={()=>setEditing(true)}><Pencil className="h-4 w-4"/></Button>}</div>
- {!loaded?<p role="status">{loadFailed?'تعذر تحميل بيانات المجيز. أعد فتح الصفحة للمحاولة.':'جارٍ التحميل…'}</p>:<div className="rounded-lg border bg-white p-5 text-center" aria-label="معاينة ظهور المجيز في الشهادة"><div className="mx-auto flex flex-col items-center" style={{fontFamily:"'Sakkal Kitab',serif",color:'#075f69'}}>
- {hasArtwork?artwork.map(a=><span key={a.path} role="img" aria-label={a.line==='name'?(profile.printedName.trim()||displayName):a.line==='line-02'?'الصفة العلمية':'بيانات التدريس'} style={{display:'block',width:`${a.width/artwork[0].height*10.5}mm`,height:`${a.height/artwork[0].height*10.5}mm`,maxWidth:'100%',backgroundColor:a.line==='line-03'?'#926e35':'#075f69',maskImage:`url("${currentArtworkBase()}/${a.path}")`,WebkitMaskImage:`url("${currentArtworkBase()}/${a.path}")`,maskSize:'contain',WebkitMaskSize:'contain',maskRepeat:'no-repeat',WebkitMaskRepeat:'no-repeat',maskPosition:'center',WebkitMaskPosition:'center'}}/>):<div style={lineStyle('name')}>{profile.printedName.trim()||displayName}</div>}
- {(!hasArtwork||!artwork.some(a=>a.line==='line-02'))&&profile.showScientificQualification&&profile.scientificQualification.trim()&&<div style={lineStyle('qualification')}>{profile.scientificQualification.trim()}</div>}
- {(!hasArtwork||!artwork.some(a=>a.line==='line-03'))&&<div style={{color:'#926e35'}}>{teaching&&<div style={lineStyle('teaching')}>{teaching}</div>}{profile.showMadrasaPlace&&profile.madrasaPlace.trim()&&<div style={lineStyle('place')}>{profile.madrasaPlace.trim()}</div>}</div>}
- </div><p className="mt-3 text-xs text-gray-500" style={{fontFamily:'inherit'}}>معاينة بلونين توضيحيين؛ تستخدم الشهادة ألوانها المختارة.{hasArtwork?' تُعرض صور الاسم المحفوظة عند توفرها.':''}</p></div>}
+ {!loaded?<p role="status">{loadFailed?'تعذر تحميل بيانات المجيز. أعد فتح الصفحة للمحاولة.':'جارٍ التحميل…'}</p>:<IssuerProfilePreview profile={profile} displayName={displayName} issuerNumber={issuerNumber}/>}
  {editing&&<div className="space-y-3"><p className="text-xs text-muted-foreground">هذه البيانات لظهورك في الشهادة. يُستخدم اسم المستخدم إذا تُرك اسم الطباعة فارغًا.</p>
  {field('printedName','اسم المجيز للطباعة','اسم المجيز')}
  {optionalField('scientificQualification','showScientificQualification','الصفة العلمية / الإجازات','المجاز بالقراءات...')}

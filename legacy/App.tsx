@@ -164,7 +164,7 @@ function PrivateApp() {
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting} onImported={()=>void load()}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
-          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
+          {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage issuers={directory.issuers} onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
           {isAdmin&&!inspecting&&<TabsContent value="users"><SystemAdministration directory={directory} onUpdated={refreshDirectory} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/></TabsContent>}
           <TabsContent value="profile"><div className="max-w-3xl space-y-5" dir="rtl">
             <div><h1 className="text-2xl font-bold">الملف الشخصي والإعدادات</h1><p className="mt-1 text-sm text-muted-foreground">إدارة حسابك وأمانه وبيانات ظهورك في الشهادات.</p></div>

@@ -1,3 +1,4 @@
+import IssuerProfilePreview from './IssuerProfilePreview';
 import SavedRoutePicker from './SavedRoutePicker';
 import BookTariqBuilder from './BookTariqBuilder';
 import {ijazahCoverage,compactReadingCount} from '../lib/ijazahCoverage';
@@ -10,7 +11,7 @@ import {Input} from '@project/components/ui/input';
 import {Textarea} from '@project/components/ui/textarea';
 import {Card,CardContent} from '@project/components/ui/card';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@project/components/ui/dialog';
-import {BookOpen,GraduationCap,Plus,PenLine,UserRound,Mail} from 'lucide-react';
+import {BookOpen,GraduationCap,Plus,PenLine,UserRound,Mail,Eye} from 'lucide-react';
 import {toast} from 'sonner';
 type Sheikh=AdditionalShaykhsOutputType['sheikhs'][number];
 type Reading={qariId:string;rawi:string};
@@ -18,10 +19,11 @@ type Matn={name:string;category:string;sanadText:string;wordingText:string;intro
 type Template={id:string;name:string;kind:string;body:string;formatting:string};
 const emptyMatn=():Matn=>({name:'',category:'',sanadText:'',wordingText:'',introductionId:'',conclusionId:'',sanadFormatting:'[]'});
 const blank={email:'',mutoon:[] as Matn[],name:'',qualification:'',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'ubaydi' as 'ubaydi'|'jazari',readings:[] as Reading[]};
-export default function AdditionalShaykhsPage({onSaved}:{onSaved:(issuerId?:string)=>void}){
+export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(issuerId?:string)=>void;issuers?:{id:string;number?:string}[]}){
  const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState('');
  const [items,setItems]=useState<Sheikh[]>([]);
  const [selected,setSelected]=useState('');
+ const [viewing,setViewing]=useState<Sheikh|null>(null);
  const [form,setForm]=useState(blank);
  const [saving,setSaving]=useState(false);
  const [editingOpen,setEditingOpen]=useState(false);
@@ -59,7 +61,7 @@ export default function AdditionalShaykhsPage({onSaved}:{onSaved:(issuerId?:stri
   return {...x,readings:exists?x.readings.filter(r=>r.qariId!==qariId||r.rawi!==rawi):[...x.readings,{qariId,rawi}]};
  });
  const save=async()=>{
-  setSaving(true);try{const result=await additionalShaykhs({action:'save',id:selected||undefined,...form});toast.success('حُفظ الشيخ وأسانيده وإجازاته');const savedId=selected||result.sheikhs.find(s=>s.name===form.name.trim())?.id;onSaved(savedId);setEditingOpen(false);}
+  setSaving(true);try{const result=await additionalShaykhs({action:'save',id:selected||undefined,...form});toast.success('حُفظ الشيخ وأسانيده وإجازاته');setItems(result.sheikhs);const savedId=selected||result.sheikhs.find(s=>s.name===form.name.trim())?.id;onSaved(savedId);setEditingOpen(false);}
   catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ');}finally{setSaving(false);}
  };
  const editor=(label:string,key:'name'|'qualification'|'teachingRole'|'madrasaName'|'madrasaPlace')=>
@@ -67,14 +69,23 @@ export default function AdditionalShaykhsPage({onSaved}:{onSaved:(issuerId?:stri
  return <div className="space-y-5" dir="rtl">
   <div><h2 className="text-xl font-bold">المشايخ الإضافيون</h2><p className="text-sm text-muted-foreground">حفظ مشايخ آخرين وأسانيدهم وإجازاتهم لكلا المديرين. لإنشاء شهادة باسم الشيخ اختره من زر إضافة طالب في الصفحة الرئيسية.</p></div>
   <div className="flex justify-end"><Button onClick={()=>select()}><Plus className="h-4 w-4 me-2"/>إضافة شيخ جديد</Button></div>
-  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(s=><Card key={s.id} className="overflow-hidden transition-shadow hover:shadow-md"><CardContent className="p-5 space-y-4"><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><UserRound className="h-6 w-6"/></div><div className="min-w-0 flex-1"><h3 className="font-bold text-lg leading-relaxed">{s.name}</h3><p className="text-xs text-muted-foreground truncate">{s.qualification||s.teachingRole||'ملف الشيخ'}</p></div></div><div className="flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><BookOpen className="w-3.5 h-3.5"/>{compactReadingCount(s.readings)}</span><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><GraduationCap className="w-3.5 h-3.5"/>{s.mutoon.length} متن</span></div>{s.email&&<p dir="ltr" className="flex items-center gap-2 text-xs text-muted-foreground truncate"><Mail className="h-3.5 w-3.5 shrink-0"/>{s.email}</p>}<Button variant="outline" className="w-full gap-2" onClick={()=>select(s)}><PenLine className="h-4 w-4"/>عرض وتعديل الملف</Button></CardContent></Card>)}</div>
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{items.map(s=><Card key={s.id} className="overflow-hidden transition-shadow hover:shadow-md"><CardContent className="p-5 space-y-4"><div className="flex items-start gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><UserRound className="h-6 w-6"/></div><div className="min-w-0 flex-1"><h3 className="font-bold text-lg leading-relaxed">{s.name}</h3><p className="text-xs text-muted-foreground truncate">{s.qualification||s.teachingRole||'ملف الشيخ'}</p></div></div><div className="flex flex-wrap gap-2 text-xs"><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><BookOpen className="w-3.5 h-3.5"/>{compactReadingCount(s.readings)}</span><span className="rounded-full bg-muted px-3 py-1 inline-flex gap-1 items-center"><GraduationCap className="w-3.5 h-3.5"/>{s.mutoon.length} متن</span></div>{s.email&&<p dir="ltr" className="flex items-center gap-2 text-xs text-muted-foreground truncate"><Mail className="h-3.5 w-3.5 shrink-0"/>{s.email}</p>}<div className="flex gap-2"><Button variant="outline" className="flex-1 gap-2" onClick={()=>setViewing(s)}><Eye className="h-4 w-4"/>عرض</Button><Button variant="outline" className="flex-1 gap-2" onClick={()=>select(s)}><PenLine className="h-4 w-4"/>تعديل</Button></div></CardContent></Card>)}</div>
   {loading&&<p role="status" className="rounded-xl border p-6">جارٍ تحميل المشايخ الإضافيين…</p>}
   {loadError&&<div role="alert" className="rounded-xl border p-6 space-y-3"><p>{loadError}</p><Button variant="outline" onClick={load}>إعادة المحاولة</Button></div>}
   {!loading&&!loadError&&items.length===0&&<div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">لا يوجد مشايخ إضافيون بعد. اختر إضافة شيخ جديد للبدء.</div>}
+  <Dialog open={!!viewing} onOpenChange={v=>{if(!v)setViewing(null)}}><DialogContent dir="rtl" className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{viewing?.name}</DialogTitle></DialogHeader>{viewing&&<div className="space-y-5">
+   <div className="rounded-lg border p-4 space-y-2"><h3 className="font-bold">بيانات الشيخ</h3>{viewing.qualification&&<p>{viewing.qualification}</p>}{(viewing.teachingRole||viewing.madrasaName)&&<p>{[viewing.teachingRole,viewing.madrasaName].filter(Boolean).join(' ')}</p>}{viewing.madrasaPlace&&<p className="text-sm text-muted-foreground">{viewing.madrasaPlace}</p>}{viewing.email&&<p dir="ltr" className="text-sm">{viewing.email}</p>}</div>
+   <section className="space-y-2"><h3 className="font-bold">ظهور المجيز في الشهادة</h3><IssuerProfilePreview displayName={viewing.name} issuerNumber={issuers.find(i=>i.id===viewing.id)?.number} profile={{footerLineStyles:'',printedName:viewing.name,scientificQualification:viewing.qualification,showScientificQualification:true,teachingRole:viewing.teachingRole,madrasaName:viewing.madrasaName,madrasaPlace:viewing.madrasaPlace,showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true,centerStampText:''}}/></section>
+   <section className="space-y-3"><h3 className="font-bold">إجازات القراءات — {compactReadingCount(viewing.readings)}</h3>{viewing.readings.length===0&&<p className="text-sm text-muted-foreground">لم تُضف إجازات قراءات بعد.</p>}{viewing.readings.map(r=><div key={r.qariId+'|'+r.rawi} className="rounded-lg border p-3"><p className="font-medium">{QURRA.find(q=>q.id===r.qariId)?.reading} — {displayRawi(r.qariId,r.rawi)}</p>{viewing.routes.filter(t=>t.qariId===r.qariId&&t.rawi===r.rawi).map((t,i)=><p key={i} className="text-sm text-muted-foreground">{t.tariqName}</p>)}</div>)}</section>
+   {viewing.personalChain&&<details className="rounded-lg border p-3"><summary className="cursor-pointer font-semibold">السند العام للشيخ</summary><p className="mt-3 whitespace-pre-wrap font-sanad">{viewing.personalChain}</p></details>}
+   <section className="space-y-3"><h3 className="font-bold">المتون العلمية — {viewing.mutoon.length}</h3>{viewing.mutoon.length===0&&<p className="text-sm text-muted-foreground">لم تُضف متون بعد.</p>}{viewing.mutoon.map((m,i)=><details key={i} className="rounded-lg border p-3"><summary className="cursor-pointer font-medium">{m.name}{m.category?' — '+m.category:''}</summary><div className="mt-3"><MatnPreview bookName={m.name} intro={templates.find(t=>t.id===m.introductionId)?.body||''} wording={m.wordingText} sanad={m.sanadText} end={templates.find(t=>t.id===m.conclusionId)?.body||''} formats={parseMatnFormat(m.sanadFormatting)} introFormats={parseMatnFormat(templates.find(t=>t.id===m.introductionId)?.formatting||'[]')} endFormats={parseMatnFormat(templates.find(t=>t.id===m.conclusionId)?.formatting||'[]')}/></div></details>)}</section>
+   <Button variant="outline" className="gap-2" onClick={()=>{setViewing(null);select(viewing)}}><PenLine className="h-4 w-4"/>تعديل الملف</Button>
+  </div>}</DialogContent></Dialog>
   <Dialog open={editingOpen} onOpenChange={v=>{if(!v&&!saving){setEditingOpen(false);setReadingOpen(false)}}}><DialogContent dir="rtl" className="w-[95vw] max-w-3xl max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>{selected?form.name||'تعديل الشيخ':'إضافة شيخ جديد'}</DialogTitle></DialogHeader>
   <div className="flex flex-wrap gap-2 border-b pb-3">{([{key:'profile',label:'بيانات الشيخ'},{key:'qiraat',label:'إجازات القراءات'},{key:'mutoon',label:'المتون العلمية'}] as const).map(t=><Button key={t.key} type="button" size="sm" variant={section===t.key?'default':'outline'} onClick={()=>setSection(t.key)}>{t.label}</Button>)}</div>
   <div className="space-y-4">
   {section==='profile'&&<>
+   <IssuerProfilePreview displayName={form.name} issuerNumber={issuers.find(i=>i.id===selected)?.number} profile={{footerLineStyles:'',printedName:form.name,scientificQualification:form.qualification,showScientificQualification:true,teachingRole:form.teachingRole,madrasaName:form.madrasaName,madrasaPlace:form.madrasaPlace,showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true,centerStampText:''}}/>
    <div className="grid sm:grid-cols-2 gap-3">
     <label className="block space-y-1 text-sm">البريد الإلكتروني (ربط لاحق بمعرفة المدير)<Input dir="ltr" type="email" value={form.email} onChange={e=>setField('email',e.target.value)} placeholder="name@example.com"/><span className="block text-xs text-muted-foreground">إضافة البريد لا تنشئ حسابًا ولا تمنح صلاحيات الدخول؛ الربط يتطلب التحقق من هوية المستخدم.</span></label>
     {editor('اسم الشيخ / المُجيز','name')}
