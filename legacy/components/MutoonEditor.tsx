@@ -1,5 +1,5 @@
 import {matchesArabic} from '../lib/arabicSearch';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useState} from 'react';
 import {mutoonHoldings,mutoonTemplates} from '../lib/api';
 import {Popover,PopoverContent,PopoverTrigger} from '@project/components/ui/popover';
 import {ScrollArea} from '@project/components/ui/scroll-area';
@@ -11,12 +11,10 @@ import {toast} from 'sonner';
 import MatnFormatting,{MatnPreview,parseMatnFormat,type MatnFormat} from './MatnFormatting';
 type Holding={id:string;name:string;category:string;sanadText:string;wordingText:string;introductionId:string;conclusionId:string;sanadFormatting:string};
 type Template={id:string;name:string;kind:string;body:string;formatting:string};
-const tokens=[{label:'اسم المجيز',value:'{{mujeez}}'},{label:'اسم المجاز',value:'{{mujaaz}}'},{label:'اسم المتن',value:'{{kitab_name}}'}];
 export default function MutoonEditor(){
  const [rows,setRows]=useState<Holding[]>([]),[id,setId]=useState(''),[name,setName]=useState(''),[category,setCategory]=useState(''),[sanad,setSanad]=useState(''),[wording,setWording]=useState(''),[saving,setSaving]=useState(false);
  const [formats,setFormats]=useState<MatnFormat[]>([]);
  const [previewOpen,setPreviewOpen]=useState(false);
- const wordingRef=useRef<HTMLTextAreaElement>(null);
  const [templates,setTemplates]=useState<Template[]>([]);
  const [introductionId,setIntroductionId]=useState(''),[conclusionId,setConclusionId]=useState('');
  const [templateKind,setTemplateKind]=useState<'introduction'|'conclusion'|null>(null);
@@ -30,7 +28,6 @@ export default function MutoonEditor(){
  
  const refresh=async()=>{try{setRows((await mutoonHoldings({action:'list'})).holdings)}catch{toast.error('تعذر تحميل المتون')}};
  useEffect(()=>{void refresh();void refreshTemplates()},[]);
- const insertToken=(token:string)=>{const el=wordingRef.current;const start=el?.selectionStart??wording.length,end=el?.selectionEnd??wording.length;setWording(w=>w.slice(0,start)+token+w.slice(end));requestAnimationFrame(()=>{el?.focus();el?.setSelectionRange(start+token.length,start+token.length)})};
  const clear=()=>{setId('');setName('');setCategory('');setSanad('');setWording('');setIntroductionId('');setConclusionId('');setFormats([])};
  const save=async()=>{if(!name.trim()||!category.trim()||!sanad.trim()){toast.error('أدخل اسم المتن والتصنيف والسند كاملا');return}setSaving(true);try{await mutoonHoldings({action:'save',id:id||undefined,name,category,sanadText:sanad,wordingText:wording,introductionId,conclusionId,sanadFormatting:JSON.stringify(formats)});toast.success('تم حفظ المتن والسند');clear();await refresh()}catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ')}finally{setSaving(false)}};
  return <div dir="rtl" className="space-y-4">
@@ -40,7 +37,7 @@ export default function MutoonEditor(){
  <MatnFormatting sanad={sanad} onChange={setSanad} formats={formats.filter(f=>f.target!=='wording')} onFormatsChange={v=>setFormats(old=>[...old.filter(f=>f.target==='wording'),...v])}/>
  <Button variant="outline" type="button" onClick={()=>setPreviewOpen(v=>!v)}>{previewOpen?'إخفاء معاينة السند':'معاينة السند المركّب'}</Button>
  {previewOpen&&<MatnPreview bookName={name} intro={templates.find(t=>t.id===introductionId)?.body||''} wording={wording.replaceAll('{{mujeez}}','[المجيز]').replaceAll('{{mujaaz}}','[المجاز]').replaceAll('{{kitab_name}}',name||'[المتن]')} sanad={sanad} end={templates.find(t=>t.id===conclusionId)?.body||''} formats={formats} introFormats={parseMatnFormat(templates.find(t=>t.id===introductionId)?.formatting||'[]')} endFormats={parseMatnFormat(templates.find(t=>t.id===conclusionId)?.formatting||'[]')}/>}
- <div className="space-y-2"><strong className="text-sm">كلمات الإجازة</strong><p className="text-xs text-muted-foreground">اضغط على اسم المتغير لإدراجه في موضع المؤشر. سيستبدله النظام عند إعداد الشهادة تلقائيا، ويمكن استخدامه لاحقا مع الذكاء الاصطناعي.</p><div className="flex flex-wrap gap-2">{tokens.map(t=><Button key={t.value} type="button" size="sm" variant="outline" onClick={()=>insertToken(t.value)}>{t.label} <span dir="ltr" className="ms-2 text-xs opacity-70">{t.value}</span></Button>)}</div><MatnFormatting label="كلمات الإجازة" inputRef={wordingRef} sanad={wording} onChange={setWording} formats={formats.filter(f=>f.target==='wording')} onFormatsChange={v=>setFormats(old=>[...old.filter(f=>f.target!=='wording'),...v.map(f=>({...f,target:'wording' as const}))])}/><div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap">{wording.replaceAll('{{mujeez}}','[اسم المجيز]').replaceAll('{{mujaaz}}','[اسم المجاز]').replaceAll('{{kitab_name}}',name||'[اسم المتن]')||'معاينة الكلمات بعد إدراج المتغيرات'}</div></div>
+ <div className="space-y-2"><strong className="text-sm">كلمات الإجازة</strong><p className="text-xs text-muted-foreground">يمكن إدراج اسم المجيز والمُجاز واسم المتن من أزرار المحرر.</p><MatnFormatting label="كلمات الإجازة" sanad={wording} onChange={setWording} formats={formats.filter(f=>f.target==='wording')} onFormatsChange={v=>setFormats(old=>[...old.filter(f=>f.target!=='wording'),...v.map(f=>({...f,target:'wording' as const}))])}/></div>
  <div className="flex gap-2"><Button disabled={saving} onClick={save}>{id?'حفظ التعديلات':'حفظ المتن والإسناد'}</Button>{id&&<Button variant="outline" onClick={clear}>إلغاء التعديل</Button>}</div>
  {rows.length>0&&<div className="space-y-2"><h3 className="font-semibold">المتون المحفوظة</h3>{rows.map(r=><div key={r.id} className="flex items-center justify-between rounded-lg border p-3"><div><strong>{r.name}</strong><p className="text-xs text-muted-foreground">{r.category}</p></div><Button variant="outline" size="sm" onClick={()=>{setId(r.id);setName(r.name);setCategory(r.category);setSanad(r.sanadText);setWording(r.wordingText);setIntroductionId(r.introductionId);setConclusionId(r.conclusionId);setFormats(parseMatnFormat(r.sanadFormatting))}}>تعديل</Button></div>)}</div>}
  </div>;
