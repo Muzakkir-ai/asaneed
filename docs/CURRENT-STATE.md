@@ -196,3 +196,9 @@ Removed admin minute/focus polling at user request. The fonts repository workflo
 Fixed the remaining إحدى text: preserved sanad metadata still held the full path name, but the stored opening was already shortened to the book name. Matching now accepts both representations and replaces the prior clause once, preserving everything from كما أخذته onward. Regression covers the exact shortened-book + prior clause case.
 
 GitHub live workflow verification exposed the newer ID-qualified OIDC subject format (owner@ID/repo@ID). Verifier now accepts that exact subject and the legacy subject, while requiring immutable repository ID 1420583732, repository name, main ref and workflow path. Regression tests cover both subject formats and wrong repository-ID denial.
+
+Live verification: fonts GitHub Actions run 41110410974 attempt 2 completed successfully against production Vercel deployment 0381b91127099316e9f6c22afbdd8084b08b0159. Anonymous unsigned HTTP refresh returns 401. All three live saved Mustanir sanads tested locally produce the corrected clause without إحدى while preserving the transmission suffix. No real certificate was finalized for testing.
+
+### Homepage login and language hover (31 October 2026)
+
+Added a prominent localized /login link next to the homepage language controls. Excluded language buttons from the general dark hover rule, preserving their gold selected state and header hover styling. Responsive wrapping retained. Production build checked.
