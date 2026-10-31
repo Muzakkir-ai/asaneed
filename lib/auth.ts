@@ -1,7 +1,7 @@
 export const authPaths = ['/login','/register','/forgot-password','/reset-password','/manage','/studio','/control','/privacy'] as const;
 export function authReturnPath(value: unknown) { return typeof value==='string' && (authPaths as readonly string[]).includes(value) ? value : '/'; }
 export function validEmail(value:string) { return value.length<=254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value); }
-export function validPassword(value:string) { return value.length>=12 && value.length<=1024; }
+export function validPassword(value:string) { return value.length>=8 && value.length<=1024; }
 // Fixed canonical origin prevents Host-header redirects in confirmation and recovery emails.
 export const appOrigin = 'https://asaneed.vercel.app';
 export async function googleEnabled() {

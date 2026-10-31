@@ -11,6 +11,6 @@ export default async function ResetPassword({searchParams}:{searchParams:Promise
  const [locale,{error}]=await Promise.all([getLocale(),searchParams]);const a=authMessages[locale];
  return <AuthShell path="/reset-password"><h1>{a.resetTitle}</h1>
  {error&&<p className="error" role="alert">{error==='mismatch'?a.mismatch:error==='invalid'?a.invalid:a.requestError}</p>}
- <form action={updatePassword}><label htmlFor="password">{a.newPassword}</label><input id="password" name="password" type="password" autoComplete="new-password" dir="ltr" required minLength={12} maxLength={1024} aria-describedby="password-hint"/><p id="password-hint" className="field-hint">{a.passwordHint}</p>
- <label htmlFor="confirmPassword">{a.confirmPassword}</label><input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" dir="ltr" required minLength={12} maxLength={1024}/><SubmitButton pendingLabel={a.working}>{a.savePassword}</SubmitButton></form></AuthShell>;
+ <form action={updatePassword}><label htmlFor="password">{a.newPassword}</label><input id="password" name="password" type="password" autoComplete="new-password" dir="ltr" required minLength={8} maxLength={1024} aria-describedby="password-hint"/><p id="password-hint" className="field-hint">{a.passwordHint}</p>
+ <label htmlFor="confirmPassword">{a.confirmPassword}</label><input id="confirmPassword" name="confirmPassword" type="password" autoComplete="new-password" dir="ltr" required minLength={8} maxLength={1024}/><SubmitButton pendingLabel={a.working}>{a.savePassword}</SubmitButton></form></AuthShell>;
 }

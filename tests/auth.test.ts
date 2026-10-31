@@ -7,6 +7,8 @@ assert.ok(validEmail('user@example.com'));
 for(const value of ['bad','user@','a b@example.com','a'.repeat(255)+'@example.com'])assert.ok(!validEmail(value));
 assert.ok(validPassword('long-enough-password'));
 assert.ok(!validPassword('short'));
+assert.ok(!validPassword('1234567'));
+assert.ok(validPassword('12345678'));
 assert.ok(!validPassword('x'.repeat(1025)));
 const keys=Object.keys(authMessages.en).sort();
 for(const locale of ['ar','ur','en'] as const) {
