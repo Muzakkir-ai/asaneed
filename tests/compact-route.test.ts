@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {builderCompactRouteName,compactRouteBook,type BuilderChain} from '../legacy/lib/bookBuilder.ts';
+const route={reading_scope:'kubra',branches:[[{person_id:'p',route_source:true}]]} as BuilderChain;
+const people=[{id:'p',name:'أبي جعفر أحمد بن محمد البغدادي الملقب بالفيل',display_name:'الفيل',archived:false}];
+const book={id:'b',title:'المستنير',author_id:'a',archived:false};
+assert.equal(builderCompactRouteName(book,route,people),'المستنير عن الفيل');
+assert.equal(builderCompactRouteName(book,route,[{...people[0],display_name:''}]),'المستنير');
+assert.equal(compactRouteBook('الشاطبية — اسم طويل — رواية'),'الشاطبية والتيسير');
+assert.equal(compactRouteBook('الدرة — اسم طويل'),'الدرة والتحبير');
+assert.equal(people[0].name,'أبي جعفر أحمد بن محمد البغدادي الملقب بالفيل');
+console.log('PASS: compact Sughra/Kubra labels and unchanged full names');

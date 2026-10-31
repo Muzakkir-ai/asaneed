@@ -20,3 +20,11 @@ export function builderPreview(book:BuilderBook,parent:BuilderChain,route:Builde
 }
 
 export const builderRouteName=(book:BuilderBook,route:BuilderChain)=>[book.title,route.upper_route_name,route.branch_route_name,route.title].filter((v,i,all)=>v&&all.indexOf(v)===i).join(' — ');
+
+/** Compact UI labels only; full stored names remain unchanged for sanad/print. */
+export function compactRouteBook(title:string){const book=title.split(/\s*[—–]\s*/u)[0].trim();const key=builderNameKey(book);return key.includes('الشاطبية')?'الشاطبية والتيسير':key.includes('الدرة')?'الدرة والتحبير':book;}
+export function builderCompactRouteName(book:BuilderBook,route:BuilderChain,people:BuilderPerson[]){
+ const title=compactRouteBook(book.title);if(route.reading_scope==='sughra')return title;
+ const sources=[...new Set(route.branches.flatMap(b=>b.filter(n=>n.route_source).map(n=>people.find(p=>p.id===n.person_id)?.display_name.trim()||'')).filter(Boolean))];
+ return title+(sources.length?' عن '+sources.join(' و'):'');
+}

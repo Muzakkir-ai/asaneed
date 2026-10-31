@@ -67,3 +67,7 @@ Update `CURRENT-STATE.md` after a meaningful completed change. Record the deploy
 ## Current registration numbering
 
 YYSS-NNRR is now live: NN is a permanent lifetime serial per issuer across years and riwayat. Do not restore per-year/riwayah allocation or assume an eight-digit upper bound. Existing finalized identifiers remain immutable unless a future explicit correction is separately authorized and backed up.
+
+## Scope-first reading workflow follow-up
+
+Verify Sughra/Kubra selection in authenticated additional-shaykh, personal-holding and issuance sessions, including automatic original-route selection and full-qiraah issuance. Review the six Durrah drafts before enabling their attachment; do not silently confirm them. Requested Shatibiyyah attachments were limited to existing issuer riwayat (14/4/1), not expanded ijazah eligibility. Short route-source labels are edited on the source narrator; full sanad names remain independent.
