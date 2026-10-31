@@ -60,7 +60,7 @@ The user prefers direct implementation, brief plain-language updates and minimal
 - Arabic RTL and Readex Pro for application UI. Keep the current teal theme and secondary `#D4A75B`; retain dark-mode support. Certificate palettes are independent and user-configurable.
 - Respect existing Urdu typography and use Readex for Arabic spans within Urdu text where appropriate.
 - Arabic search should ignore harakat/tatweel and supported alif/ya variants while preserving the exact original text for display and print.
-- Registration format: **YYSS-RRNN** — completion year, issuer code, riwayah code, per-issuer/year/riwayah sequence. Display Arabic-Indic digits with correct left-to-right group order. Finalized numbers do not change retroactively.
+- Registration format: **YYSS-NNRR** — completion year, issuer code, lifetime per-issuer serial across all years/riwayat, then riwayah code. NN has at least two digits and expands after 99; deleted drafts do not release allocated serials. Display Arabic-Indic digits with correct left-to-right group order. Finalized numbers do not change retroactively.
 - Stable issuer codes currently assigned: 01 Zakaullah, 02 Owais, 03 Muzakkir, 04 Umar, 05 Sharaf; future issuer allocation starts at 06. Check the live directory rather than guessing ownership from a name.
 - Use real `ijazah.svg`, `basmalah.svg` and the existing imam/rawi/route artwork pipeline. Do not substitute emojis or generic headings.
 - Numbered issuer artwork: `svg/mashaykh/04/name.svg`, `line-02.svg`, `line-03.svg`. ASCII digits in filenames. Name and line 02 use primary color; line 03 uses secondary. Preserve linked scaling and aspect ratios.

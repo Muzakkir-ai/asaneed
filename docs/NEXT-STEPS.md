@@ -63,3 +63,7 @@ Updated 30 October 2026. These are **suggestions and verification gaps**, not cl
 ## How to leave the next handoff
 
 Update `CURRENT-STATE.md` after a meaningful completed change. Record the deployed commit, exact verified flows, any test-data cleanup and remaining limits. Keep private artifacts outside this public repository. If a proposed feature remains incomplete, say so explicitly rather than marking the entire backlog complete.
+
+## Current registration numbering
+
+YYSS-NNRR is now live: NN is a permanent lifetime serial per issuer across years and riwayat. Do not restore per-year/riwayah allocation or assume an eight-digit upper bound. Existing finalized identifiers remain immutable unless a future explicit correction is separately authorized and backed up.

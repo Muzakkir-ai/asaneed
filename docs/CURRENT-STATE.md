@@ -214,3 +214,9 @@ Homepage sign-in now uses the user’s reference gold fill, white text, rounded 
 ### Compact right-corner sign-in and white selected pills
 
 Selected public/auth language pill text is white as requested. Homepage sign-in is a compact gold icon/text action in the physical right header corner; language controls occupy their own slot and move to a second row on narrow screens. Production build checked.
+
+### Lifetime issuer numbering — YYSS-NNRR (31 October 2026)
+
+User confirmed NN continues across all years, across all riwayat, per issuer, and explicitly authorized updating unprinted finalized numbers. Live inspection found 44 drafts, zero finalized Qur’an certificates and zero snapshots; only drafts needed renumbering. An exclusive-lock migration took a private full backup and recorded an old/new mapping, allocated initial issuer serials in created_at/id order, and changed only registration_number (preimage equality asserted). New private lifetime counters and per-certificate allocations retain deleted serials. Reservations remain idempotent across year/riwayah changes; finalization uses the same reservation. The counter expands after 99 without truncation. Old per-year counters remain as historical backup data. Full backup/restore now includes the lifetime counters/allocations and preserves maximum counters.
+
+Verified rollback-only authenticated tests for 99→100, cross-year retention, deletion/no-reuse, cross-riwayah continuation, finalization retaining the reserved number, longer-number public lookup and finalized mutation protection. No test certificate remains; 44 allocations/certificates and zero snapshots remain. Registration normalization and validation support extended NN; build checked. A PostgreSQL snapshot guard initially used the wrong key and failed atomically; corrected to certificate_id before the successful migration. Authenticated browser verification remains outstanding.
