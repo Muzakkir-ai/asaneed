@@ -206,3 +206,7 @@ Added a prominent localized /login link next to the homepage language controls. 
 ### Homepage button text clarification (31 October 2026)
 
 User clarified the dark lettering itself was unwanted. Header login and selected/hovered language controls now use white lettering on teal with gold borders/selection outlines. Future-date report investigated: no future completion_date rows were found; latest draft is saved as 2026-02-07. No dates changed without identifying the intended record/date.
+
+### Reference-matched homepage buttons and language pills
+
+Homepage sign-in now uses the user’s reference gold fill, white text, rounded corners and subtle shadow. Public/auth language selector is a compact borderless teal capsule with a gold selected pill and teal selected text, matching the supplied fourth image. Removed the preceding outlined treatment. Production build checked; language action semantics unchanged.
