@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import type { Cert, Data } from '../App';
 import { fromIso, toIso } from '../lib/date';
 import {certificateDate,hijriOffsetChoices} from '../lib/certificateDates';
-import {QURRA,displayRawi,readingText,routeFor} from '../lib/qurra';
+import {QURRA,displayRawi,readingText,routeFor,shortQariName} from '../lib/qurra';
 import {riwayahColors,type RiwayahColorsOutputType} from '../lib/api';
 import {vocalizeReadingLabel} from '../lib/vocalizedReading';
 import {CertificateHeadingPreview} from './CertificateHeading';
@@ -234,7 +234,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
               <SelectTrigger><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>
               <SelectContent className="max-h-[340px] min-w-[300px]" dir="rtl">
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
-                  <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
+                  <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{shortQariName(q.id)}</SelectLabel>
                   {readingScope==='sughra'&&q.rawis.every(r=>rawis.includes(r))&&<SelectItem value={`guest-qiraah:${q.id}`} className="font-semibold">القراءة كاملة — شهادتان للروايتين</SelectItem>}
                   {readingScope==='kubra'?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&!sughraBook(r.tariqName)&&(!selectedBook||routeBook(r.tariqName)===selectedBook)).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {compactLabel(r.tariqNumber,r.tariqName)}</SelectItem>):rawis.map(rawi=>{const original=selectedGuest?.routes.find(r=>r.qariId===q.id&&r.rawi===rawi&&sughraBook(r.tariqName));return <SelectItem key={rawi} value={original?`guest-route:${encodeURIComponent(original.tariqNumber)}:${q.id}:${encodeURIComponent(rawi)}`:`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>})}
                   <SelectSeparator className="my-1"/>
@@ -244,7 +244,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                   const ambiguous=narrators.some(n=>choicesFor(n.rawi).length>1);
                   const valid=!ambiguous&&narrators.every(x=>x.holding&&canUsePersonalSanad(x.holding));
                   return <SelectGroup key={q.id}>
-                    <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{q.imam}</SelectLabel>
+                    <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{shortQariName(q.id)}</SelectLabel>
                     {readingScope==='sughra'&&narrators.every(x=>x.holding)&&<SelectItem value={`qiraah:${q.id}`} disabled={!valid} className="font-semibold text-right py-2.5">
                       <span className="flex items-center gap-2"><span>القراءة كاملة</span><span className="text-xs font-normal text-muted-foreground">شهادتان · {q.rawis.map(r=>displayRawi(q.id,r)).join(' + ')}</span></span>
                     </SelectItem>}

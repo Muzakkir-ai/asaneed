@@ -15,8 +15,11 @@ export const routeFor = (ids: string[]) => {
 export type ReadingSelection = {qariId:string; rawi?:string};
 /** Display-only distinction: both readers retain the same historical rāwī
  * identifier in the database, but Abu Amr calls him الدوري in headings. */
-export const displayRawi=(qariId:string,rawi:string)=>
-  ((QURRA.find(q=>q.id===qariId)?.displayRawis||{}) as Record<string,string>)[rawi]||rawi;
+export const displayRawi=(qariId:string,rawi:string)=>{
+ if(qariId==='abiamr'&&(rawi==='حفص الدوري'||rawi==='الدوري'))return 'الدوري';
+ if(qariId==='kisai'&&(rawi==='حفص الدوري'||rawi==='الدوري'))return 'حفص الدوري';
+ return ((QURRA.find(q=>q.id===qariId)?.displayRawis||{}) as Record<string,string>)[rawi]||rawi;
+};
 /** Also normalize old unvowelled certificate headings without changing the sanad text. */
 export const displayReadingLabel=(label:string)=>{
   if(!/(?:الإمام أبو عمرو البصري|أبي عمرو البصري|الإِمَامِ أَبِي عَمْرٍو البَصْرِيِّ)/u.test(label))return label;
@@ -29,3 +32,7 @@ export const readingText=(s:ReadingSelection) => {
   if(s.rawi) return `برواية ${displayRawi(q.id,s.rawi)} عن ${q.imam}`;
   return `بقراءة ${q.reading} بروايتي ${displayRawi(q.id,q.rawis[0])} و${displayRawi(q.id,q.rawis[1])}`;
 };
+
+/** Permanent compact UI names; scholarly text and stable catalog keys stay intact. */
+export const shortQariName=(id:string)=>({nafi:'نافع',ibnkathir:'ابن كثير',abiamr:'أبي عمرو',ibnamir:'ابن عامر',asim:'عاصم',hamza:'حمزة',kisai:'الكسائي',abujafar:'أبي جعفر',yaqub:'يعقوب',khalaf:'خلف البزار'} as Record<string,string>)[id]||QURRA.find(q=>q.id===id)?.reading||id;
+export const shortReadingLabel=(id:string,rawi:string)=>`${displayRawi(id,rawi)} عن ${shortQariName(id)}`;

@@ -59,6 +59,7 @@ The user prefers direct implementation, brief plain-language updates and minimal
 
 - Arabic RTL and Readex Pro for application UI. Keep the current teal theme and secondary `#D4A75B`; retain dark-mode support. Certificate palettes are independent and user-configurable.
 - Respect existing Urdu typography and use Readex for Arabic spans within Urdu text where appropriate.
+- Compact reading UI labels use shortReadingLabel/shortQariName from legacy/lib/qurra.ts: الدوري with Abu Amr, حفص الدوري with Kisai; خلف as rawi and خلف البزار as qari. Keep stable stored IDs/full scholarly names. Complete 20-riwayah Sughra coverage is grouped under القراءات العشر الصغرى; other routes remain listed separately.
 - Arabic search should ignore harakat/tatweel and supported alif/ya variants while preserving the exact original text for display and print.
 - Registration format: **YYSS-NNRR** — completion year, issuer code, lifetime per-issuer serial across all years/riwayat, then riwayah code. NN has at least two digits and expands after 99; deleted drafts do not release allocated serials. Display Arabic-Indic digits with correct left-to-right group order. Finalized numbers do not change retroactively.
 - Stable issuer codes currently assigned: 01 Zakaullah, 02 Owais, 03 Muzakkir, 04 Umar, 05 Sharaf; future issuer allocation starts at 06. Check the live directory rather than guessing ownership from a name.

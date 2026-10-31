@@ -1,6 +1,6 @@
 /** List-only text. Never use this shortened copy in a certificate or snapshot. */
 const plain=(text:string)=>text.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u06d6-\u06ed\u0640]/gu,'').replace(/\s+/gu,' ').trim();
-const imams:Record<string,string>={nafi:'نافع',ibnkathir:'ابن كثير',abiamr:'أبي عمرو',ibnamir:'ابن عامر',asim:'عاصم',hamza:'حمزة',kisai:'الكسائي',abujafar:'أبي جعفر',yaqub:'يعقوب',khalaf:'خلف العاشر'};
+const imams:Record<string,string>={nafi:'نافع',ibnkathir:'ابن كثير',abiamr:'أبي عمرو',ibnamir:'ابن عامر',asim:'عاصم',hamza:'حمزة',kisai:'الكسائي',abujafar:'أبي جعفر',yaqub:'يعقوب',khalaf:'خلف البزار'};
 export function certificateSummary(heading:string,qariId='',rawi=''){
  const text=plain(heading).replace(/^【بيان القراءة:/u,'').replace(/】$/u,'');
  const route=text.match(/\s+من\s+طريق(?:ي|ين)?\s+(.+)$/u);
