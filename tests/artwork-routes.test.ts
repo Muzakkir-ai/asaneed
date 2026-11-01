@@ -45,3 +45,8 @@ const unlabeled={...artwork[0],number:'01',path:'svg/turuq/01/heading.svg',label
 assert.equal(labelRouteBookArtwork([unlabeled],numberedBooks)[0].label,'المستنير');
 assert.equal(labelRouteBookArtwork([bookArtwork],numberedBooks)[0].label,bookArtwork.label,'books namespace unaffected');
 assert.equal(unlabeled.label,'','catalog inputs immutable');
+
+assert.equal(numberedArtworkPath('svg/books/01/line-02.svg')?.line,'line-02');
+assert.equal(numberedArtworkPath('svg/books/01/line-03.svg'),null);
+assert.equal(numberedArtworkPath('svg/turuq/01/line-02.svg'),null);
+assert.deepEqual(svgReadingParts('المستنير',{catalog:[{...bookArtwork,line:'line-02',path:'svg/books/03/line-02.svg'},bookArtwork]}),[bookArtwork.path]);

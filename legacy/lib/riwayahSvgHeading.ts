@@ -57,7 +57,7 @@ export function readingIdentityFromHeading(heading:string):{qariId:string;rawi:s
 
 /** Five adjacent original SVGs, with names and roles from the shared catalog. */
 export function svgReadingParts(heading:string,{preserveHistoricalRoute=false,catalog=currentArtwork()}:{preserveHistoricalRoute?:boolean;catalog?:Artwork[]}={}):RiwayahSvgName[]|null{
- const book=catalog.find(a=>a.kind==='books'&&a.label&&simple(a.label)===simple(heading));
+ const book=catalog.find(a=>a.kind==='books'&&a.line==='heading'&&a.label&&simple(a.label)===simple(heading));
  if(book)return [book.path];
  const identity=readingIdentityFromHeading(heading);
  if(!identity)return null;
@@ -67,7 +67,7 @@ export function svgReadingParts(heading:string,{preserveHistoricalRoute=false,ca
  // Existing finalized output retains its previous artwork selection.
  const route=simple(heading).match(/\s+من\s+طريق(?:ي|ين)?\s+(.+)$/u)?.[1];
  const routeName=(label:string)=>simple(label).replace(/^من طريقي? /u,'');
- const customRoute=route?(catalog.find(a=>a.kind==='turuq'&&a.label&&routeName(a.label)===routeName(route))||catalog.find(a=>a.kind==='books'&&a.label&&simple(a.label)===routeName(route).replace(/ وهي من طرق طيبة النشر$/u,''))):undefined;
+ const customRoute=route?(catalog.find(a=>a.kind==='turuq'&&a.label&&routeName(a.label)===routeName(route))||catalog.find(a=>a.kind==='books'&&a.line==='heading'&&a.label&&simple(a.label)===routeName(route).replace(/ وهي من طرق طيبة النشر$/u,''))):undefined;
  if(!customRoute&&!preserveHistoricalRoute&&route){const expected=q.family==='seven'?['الشاطبية','التيسير']:['الدرة','التحبير'];if(!expected.every(name=>route.includes(simple(name))))return null;}
  const rawiSvg=(q.rawiSvgs as unknown as Record<string,string>)[identity.rawi];
  if(!rawiSvg)return null;
