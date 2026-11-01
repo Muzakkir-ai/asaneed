@@ -125,7 +125,10 @@
 
 /* Mobile account controls lead the navigation drawer. */
 .zite-app .mobile-account-actions{display:grid;gap:8px;margin-top:18px;padding-bottom:16px;border-bottom:1px solid hsl(var(--border))}
-.zite-app .mobile-account-actions button{display:flex;gap:10px;justify-content:flex-start;min-height:44px;width:100%}
+.zite-app .mobile-account-actions button{display:flex;gap:8px;justify-content:center;min-height:38px;height:38px;padding:6px 10px;font-size:13px;box-shadow:none}
+.zite-app .mobile-account-actions .mobile-account-logout{width:auto;justify-self:start;justify-content:flex-start}
+.zite-app .mobile-account-preferences{display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
+.zite-app .mobile-account-preferences button{width:100%;min-width:0}
 @media screen and (max-width:1023px){
  .zite-app .studio-header-actions{display:none}
 }
