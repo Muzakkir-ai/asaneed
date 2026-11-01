@@ -30,3 +30,17 @@ export function builderCompactRouteName(book:BuilderBook,route:BuilderChain,peop
  const sources=[...new Set(route.branches.flatMap(b=>b.filter(n=>n.route_source).map(n=>people.find(p=>p.id===n.person_id)?.display_name.trim()||'')).filter(Boolean))];
  return title+(sources.length?' عن '+sources.join(' و'):'');
 }
+
+/** Preserve selected narrator identities when previewing unsaved route edits. */
+export function builderDraftPreviewNodes(people:BuilderPerson[],draft:{name:string;personId?:string;source:boolean}[][]){
+ const previewPeople=[...people];
+ const branches=draft.map((branch,bi)=>branch.map((node,ni)=>{
+  const saved=node.personId?people.find(p=>p.id===node.personId&&!p.archived):undefined;
+  if(saved)return {person_id:saved.id,route_source:node.source};
+  // Freely typed matching names are not proof of shared identity.
+  const id=`draft-${bi}-${ni}`;
+  previewPeople.push({id,name:node.name,display_name:'',archived:false});
+  return {person_id:id,route_source:node.source};
+ }));
+ return {people:previewPeople,branches};
+}
