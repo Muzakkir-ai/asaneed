@@ -135,7 +135,7 @@ function PrivateApp() {
   return (
     <div className={'min-h-screen workspace-shell '+(collapsed?'sidebar-collapsed':'')}>
       <Toaster />
-      <WorkspaceSidebar active={active} onSelect={setActive} admin={isAdmin&&!inspecting} staff={isStaff} collapsed={collapsed} onCollapse={()=>setCollapsed(v=>{localStorage.setItem('asaneed-sidebar',v?'expanded':'collapsed');return !v;})} onLogout={()=>logout()} english={language==='en'}/>
+      <WorkspaceSidebar active={active} onSelect={setActive} admin={isAdmin&&!inspecting} staff={isStaff} collapsed={collapsed} onCollapse={()=>setCollapsed(v=>{localStorage.setItem('asaneed-sidebar',v?'expanded':'collapsed');return !v;})} onLogout={()=>logout()} english={language==='en'} dark={dark} onTheme={()=>setDark(v=>!v)} onLanguage={()=>setLanguage(v=>v==='ar'?'en':'ar')}/>
       <header className="studio-header bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4">
           <div className="studio-header-brand flex items-center gap-3 min-w-0">

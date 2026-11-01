@@ -122,3 +122,10 @@
  .zite-app .matn-editor-hint{font-size:11px;line-height:1.7}
  .zite-app .matn-rich-editor [contenteditable]{padding:10px;font-size:18px;line-height:2;max-height:55dvh;min-height:180px}
 }
+
+/* Mobile account controls lead the navigation drawer. */
+.zite-app .mobile-account-actions{display:grid;gap:8px;margin-top:18px;padding-bottom:16px;border-bottom:1px solid hsl(var(--border))}
+.zite-app .mobile-account-actions button{display:flex;gap:10px;justify-content:flex-start;min-height:44px;width:100%}
+@media screen and (max-width:1023px){
+ .zite-app .studio-header-actions{display:none}
+}
