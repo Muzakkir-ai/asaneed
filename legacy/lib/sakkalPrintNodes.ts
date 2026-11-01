@@ -1,4 +1,4 @@
-import {Children,cloneElement,createElement,isValidElement,type CSSProperties,type ReactNode} from 'react';
+import {Children,cloneElement,isValidElement,type CSSProperties,type ReactNode} from 'react';
 import {sakkalInitialBa} from './sakkalInitialBa';
 import {cleanAllahSpelling} from './sanadPunctuation';
 
@@ -7,8 +7,7 @@ export function sakkalPrintNodes(nodes:ReactNode,inherited=false,routeFont='Sakk
  return Children.map(nodes,node=>{
   if(typeof node==='string'){
    const clean=inheritedFont.includes('KSA Regular')?cleanAllahSpelling(node):node,text=inherited?sakkalInitialBa(clean):clean;
-   if(!inheritedFont.includes('KSA Regular'))return text;
-   return text.split(/(الله)/u).map((part,i)=>part==='الله'?createElement('span',{key:i,style:{fontFeatureSettings:'"liga" 0'}},part):part);
+   return text;
   }
   if(!isValidElement<{style?:CSSProperties;className?:string;children?:ReactNode}>(node))return node;
   let font=node.props.style?.fontFamily;
