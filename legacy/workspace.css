@@ -132,3 +132,17 @@
 @media screen and (max-width:1023px){
  .zite-app .studio-header-actions{display:none}
 }
+
+/* Full-height mobile dialogs must not distribute spare height among form rows. */
+@media screen and (max-width:767px){
+ .zite-app [role=dialog]:not(.workspace-drawer){align-content:start;gap:16px;overscroll-behavior:contain;padding-bottom:max(20px,env(safe-area-inset-bottom))}
+ .zite-app [role=dialog]>:not(button){min-width:0}
+ .zite-app [role=dialog]>div:first-child{padding-inline:28px}
+ .zite-app .additional-profile-tabs{align-self:start;align-items:start;padding:0 0 12px}
+ .zite-app .additional-profile-tabs button{height:44px;min-height:44px;align-self:start}
+ .zite-app .matn-list-header{flex-wrap:wrap;align-items:flex-start;gap:10px}
+ .zite-app .matn-list-header>div{flex:1 1 180px;min-width:0}
+ .zite-app .matn-saved-row{align-items:flex-start}
+ .zite-app .matn-saved-row>span{flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
+ .zite-app .matn-saved-row>div{flex-wrap:wrap}
+}
