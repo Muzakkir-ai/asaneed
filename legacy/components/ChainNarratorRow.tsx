@@ -1,3 +1,4 @@
+import NarratorLinkStatus from './NarratorLinkStatus';
 import {useId,useState} from 'react';
 import {ArrowUp,ArrowDown,Trash2,Pencil,ChevronUp} from 'lucide-react';
 import {Button} from '@project/components/ui/button';
@@ -6,14 +7,16 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import NarratorPicker from './NarratorPicker';
 import NarratorShortName from './NarratorShortName';
 type Node={editorKey?:string;name:string;source:boolean;personId?:string;sourceLevel?:'upper'|'branch'|null};
-export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,onChange,onCreate,onShortName,onMove,onRemove}:{node:Node;index:number;count:number;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void}){
+export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,connected,onChange,onCreate,onShortName,onMove,onRemove}:{node:Node;index:number;count:number;number?:number;connected:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void}){
+ const ordinal=number??index+1;
  const [editing,setEditing]=useState(!node.personId),panel=useId();
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
  return <article className={`min-w-0 rounded-lg border bg-background ${editing?'border-primary/40':''}`} dir="rtl">
  <div className="flex min-w-0 items-center gap-2 p-2 sm:p-3">
- <span aria-label={`الراوي ${index+1}`} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-sm font-bold text-primary">{arabicDigits(index+1)}</span>
+ <span aria-label={`الراوي ${ordinal}`} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-sm font-bold text-primary">{arabicDigits(ordinal)}</span>
  <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{node.name||'اختر الراوي'}</p>{node.source&&<span className="whitespace-nowrap text-xs text-primary">صاحب الطريق</span>}</div>
- <Button type="button" variant={editing?'secondary':'ghost'} size="sm" aria-label={`${editing?'إغلاق تعديل':'تعديل'} الراوي ${index+1}`} aria-expanded={editing} aria-controls={panel} onClick={()=>setEditing(v=>!v)}>{editing?<ChevronUp aria-hidden="true" className="h-4 w-4"/>:<Pencil aria-hidden="true" className="h-4 w-4"/>}</Button>
+ {person&&<NarratorLinkStatus connected={connected}/>}
+ <Button type="button" variant={editing?'secondary':'ghost'} size="sm" aria-label={`${editing?'إغلاق تعديل':'تعديل'} الراوي ${ordinal}`} aria-expanded={editing} aria-controls={panel} onClick={()=>setEditing(v=>!v)}>{editing?<ChevronUp aria-hidden="true" className="h-4 w-4"/>:<Pencil aria-hidden="true" className="h-4 w-4"/>}</Button>
  </div>
  {editing&&<div id={panel} className="space-y-3 border-t p-3">
  <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>onChange({...node,...value})}/>
