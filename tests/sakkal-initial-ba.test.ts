@@ -12,3 +12,8 @@ const html=renderToStaticMarkup(sakkalPrintNodes(tree));
 assert.ok(html.includes('ﺑ\u0640ن'));assert.ok(html.includes('>بكر<'));
 assert.ok(renderToStaticMarkup(tree).includes('>بن '));
 console.log('Sakkal initial ba glyph and font scope tests passed');
+
+const allahHtml=renderToStaticMarkup(sakkalPrintNodes(createElement('span',{style:{fontFamily:'Sakkal Kitab'}},'عبد اللّٰه بن محمد')));
+assert.ok(allahHtml.includes('font-feature-settings:&quot;liga&quot; 0'));
+assert.ok(allahHtml.includes('>الله</span>'));
+assert.ok(!allahHtml.includes('ّ'));assert.ok(!allahHtml.includes('ٰ'));

@@ -1,10 +1,14 @@
-import {Children,cloneElement,isValidElement,type CSSProperties,type ReactNode} from 'react';
+import {Children,cloneElement,createElement,isValidElement,type CSSProperties,type ReactNode} from 'react';
 import {sakkalInitialBa} from './sakkalInitialBa';
+import {cleanAllahSpelling} from './sanadPunctuation';
 
 /** Apply the glyph only to text inheriting Sakkal; explicit other fonts opt out. */
 export function sakkalPrintNodes(nodes:ReactNode,inherited=false,routeFont='Sakkal Kitab',prophet=false):ReactNode{
  return Children.map(nodes,node=>{
-  if(typeof node==='string')return inherited?sakkalInitialBa(node):node;
+  if(typeof node==='string'){
+   const clean=cleanAllahSpelling(node),text=inherited?sakkalInitialBa(clean):clean;
+   return text.split(/(الله)/u).map((part,i)=>part==='الله'?createElement('span',{key:i,style:{fontFeatureSettings:'"liga" 0'}},part):part);
+  }
   if(!isValidElement<{style?:CSSProperties;className?:string;children?:ReactNode}>(node))return node;
   let font=node.props.style?.fontFamily;
   if(font?.includes('--certificate-route-source-font'))font=routeFont;
