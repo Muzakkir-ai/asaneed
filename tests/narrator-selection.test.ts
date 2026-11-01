@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {observedLinks,rankNarrators,possibleNarratorDuplicates} from '../legacy/lib/narratorSelection';
+import {observedLinks,rankNarrators,possibleNarratorDuplicates,unresolvedNarratorSuggestions} from '../legacy/lib/narratorSelection';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
 const people=[{id:'a',name:'أَبِي عَمْـرٍو',display_name:'الإمام البصري',archived:false},{id:'b',name:'محمد الأول',display_name:'أبو زيد',archived:false},{id:'c',name:'محمد الآخر',display_name:'',archived:false},{id:'d',name:'محمد الآخر',display_name:'',archived:false},{id:'hidden',name:'محمد',display_name:'',archived:true}];
 const chain={id:'chain',kind:'route',book_id:'book',archived:false,branches:[[{person_id:'b',route_source:false},{person_id:'c',route_source:false}]]} as BuilderChain;
@@ -26,3 +26,8 @@ const ordered=rankNarrators(people,'',links,'a');
 assert.equal(ordered[0].person.id,'b','opening with no search shows connected teachers first');
 assert.ok(ordered.slice(1).every(r=>!r.observed.length),'other saved names follow connected teachers');
 assert.equal(rankNarrators(people,'محمد الآخر',links,'a').length,2,'typing still searches unconnected people');
+
+const suggestions=['أبي عمرو','أبو زيد','محمد الأول','اسم غير محفوظ'];
+assert.deepEqual(unresolvedNarratorSuggestions(people,suggestions,''),['اسم غير محفوظ'],'saved canonical names and aliases do not appear as unreviewed suggestions');
+assert.deepEqual(unresolvedNarratorSuggestions(people,suggestions,'غير'),['اسم غير محفوظ']);
+assert.equal(people.filter(p=>p.name==='محمد الآخر').length,2,'suggestion filtering never merges identities');

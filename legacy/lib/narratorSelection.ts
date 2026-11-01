@@ -21,3 +21,10 @@ export function possibleNarratorDuplicates(people:BuilderPerson[],query:string){
  if(!key)return [];
  return people.filter(p=>!p.archived&&[p.name,p.display_name].some(n=>{const candidate=narratorSearchKey(n||'');const parts=candidate.split(' ');return candidate.includes(key)||key.includes(candidate)&&candidate.length>2||tokens.length>=2&&tokens.filter(t=>parts.includes(t)).length>=Math.max(2,Math.ceil(tokens.length*.6));}));
 }
+
+/** Text-derived suggestions already represented by saved names/aliases need no creation review. */
+export function unresolvedNarratorSuggestions(people:BuilderPerson[],suggestions:string[],query:string){
+ const saved=new Set(people.filter(p=>!p.archived).flatMap(p=>[p.name,p.display_name].filter(Boolean).map(narratorSearchKey)));
+ const key=narratorSearchKey(query);
+ return [...new Set(suggestions)].filter(name=>!saved.has(narratorSearchKey(name))&&narratorSearchKey(name).includes(key));
+}
