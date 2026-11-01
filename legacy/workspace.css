@@ -146,3 +146,8 @@
  .zite-app .matn-saved-row>span{flex:1 1 160px;min-width:0;overflow-wrap:anywhere}
  .zite-app .matn-saved-row>div{flex-wrap:wrap}
 }
+
+@media screen and (max-width:767px){
+ .zite-app .matn-history-button .matn-toolbar-label{display:inline;font-size:11px}
+ .zite-app .matn-toolbar-main .matn-history-button{gap:3px;padding:4px}
+}
