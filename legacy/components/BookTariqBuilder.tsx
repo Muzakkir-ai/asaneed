@@ -1,11 +1,10 @@
 import ChainNarratorRow from './ChainNarratorRow';
-import {observedLinks} from '../lib/narratorSelection';
 import NarratorManagement from './NarratorManagement';
 import BuilderPrefixInput from './BuilderPrefixInput';
 import {resolveBuilderPrefix} from '../lib/builderPrefix';
 import NarratorAutocomplete from './NarratorAutocomplete';
 import {arabicDigits} from '../lib/arabicDigits';
-import {useEffect,useMemo,useState} from 'react';
+import {useEffect,useState} from 'react';
 import {Button} from '@project/components/ui/button';
 import {Input} from '@project/components/ui/input';
 import {Textarea} from '@project/components/ui/textarea';
@@ -21,10 +20,9 @@ const blank=():Draft=>({title:'',qari:'nafi',rawi:'قالون',continuation:'',c
 async function api(body?:unknown):Promise<any>{const r=await fetch('/api/book-builder',{method:body?'POST':'GET',headers:{'content-type':'application/json',...workspaceHeaders()},...(body?{body:JSON.stringify(body)}:{})});const data=await r.json();if(!r.ok)throw Error(data.error||'تعذر الحفظ');return data;}
 function ChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,start,end,roles=false}:{onShortName?:(id:string,value:string)=>Promise<void>;lib:BuilderLibrary;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<import('../lib/bookBuilder').BuilderPerson>;startId?:string;endId?:string;branches:DraftNode[][];onChange:(v:DraftNode[][])=>void;start:string;end:string;roles?:boolean}){
  const change=(b:number,nodes:DraftNode[])=>onChange(branches.map((v,i)=>i===b?nodes:v));
- const links=useMemo(()=>observedLinks(lib),[lib]);
  return <div className="space-y-3" dir="rtl">{branches.map((nodes,b)=><section key={b} className="space-y-2 rounded-lg border p-3"><div className="flex items-start justify-between gap-2"><strong className="text-sm">الفرع {arabicDigits(b+1)}: {start}</strong>{branches.length>1&&<Button type="button" variant="ghost" size="sm" onClick={()=>onChange(branches.filter((_,i)=>i!==b))}>إزالة الفرع</Button>}</div>
  {Array.from({length:nodes.length+1},(_,i)=>{const node=nodes[i],previous=i?nodes[i-1]?.personId:startId,next=nodes[i+1]?.personId||endId;return <div key={node?.editorKey||i} className="space-y-2"><div className="flex justify-start ps-2 sm:ps-3"><Button type="button" size="sm" variant="outline" className="h-8 w-8 rounded-full p-0" title={i===0?'إضافة راوٍ في البداية':'إضافة راوٍ بعده'} aria-label={i===0?'إضافة راوٍ في البداية':`إضافة راوٍ بعد الراوي ${i}`} onClick={()=>change(b,[...nodes.slice(0,i),{editorKey:crypto.randomUUID(),name:'',source:false},...nodes.slice(i)])}><Plus aria-hidden="true" className="h-4 w-4"/></Button></div>
- {node&&<ChainNarratorRow node={node} index={i} count={nodes.length} lib={lib} previous={previous} next={next} connected={!!node.personId&&links.some(l=>l.from===previous&&l.to===node.personId||l.from===node.personId&&l.to===next)} roles={roles} onCreate={onCreate} onShortName={onShortName} onChange={value=>change(b,nodes.map((n,j)=>j===i?value:n))} onMove={direction=>{const moved=[...nodes];[moved[i],moved[i+direction]]=[moved[i+direction],moved[i]];change(b,moved);}} onRemove={()=>change(b,nodes.filter((_,j)=>j!==i))}/>}
+ {node&&<ChainNarratorRow node={node} index={i} count={nodes.length} lib={lib} previous={previous} next={next} roles={roles} onCreate={onCreate} onShortName={onShortName} onChange={value=>change(b,nodes.map((n,j)=>j===i?value:n))} onMove={direction=>{const moved=[...nodes];[moved[i],moved[i+direction]]=[moved[i+direction],moved[i]];change(b,moved);}} onRemove={()=>change(b,nodes.filter((_,j)=>j!==i))}/>}
  </div>})}<p className="border-t pt-2 text-sm font-semibold">{end}</p></section>)}<div className="flex flex-wrap gap-2"><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,[]])}>إضافة فرع آخر</Button><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,branches[branches.length-1].map(n=>({...n}))])}><Copy className="h-3 w-3 me-1"/>نسخ الفرع</Button></div></div>;
 
 }
