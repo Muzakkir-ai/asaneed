@@ -165,6 +165,6 @@
 }
 
 /* Compact card gaps; insertion controls float outside the left border without layout space. */
-.zite-app .chain-narrator-stack{position:relative;display:grid;row-gap:12px;min-width:0}
+.zite-app .chain-narrator-stack{position:relative;display:grid;row-gap:12px;min-width:0;padding-left:52px;}
 .zite-app .chain-insertion-overlays{position:absolute;inset:0;pointer-events:none;z-index:10}
 .zite-app .chain-add-narrator-overlay{position:absolute;right:auto;transform:translate(calc(-100% - 8px),-50%);margin:0;pointer-events:auto}
