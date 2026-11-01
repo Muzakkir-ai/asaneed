@@ -45,3 +45,14 @@ export function builderDraftPreviewNodes(people:BuilderPerson[],draft:{name:stri
  }));
  return {people:previewPeople,branches};
 }
+
+/** Infer a new-route default only when existing book classification is unambiguous. */
+export function builderBookScope(book:BuilderBook|undefined,chains:BuilderChain[]):'unspecified'|'sughra'|'kubra'{
+ if(!book)return 'unspecified';
+ const scopes=[...new Set(chains.filter(c=>c.book_id===book.id&&!c.archived).map(c=>c.reading_scope).filter((s):s is 'sughra'|'kubra'=>s==='sughra'||s==='kubra'))];
+ if(scopes.length===1)return scopes[0];
+ if(scopes.length>1)return 'unspecified';
+ const title=compactRouteBook(book.title);
+ return title==='الشاطبية والتيسير'||title==='الدرة والتحبير'?'sughra':'unspecified';
+}
+export function builderParentSelection(parents:Pick<BuilderChain,'id'>[],current:string){return parents.some(p=>p.id===current)?current:parents.length===1?parents[0].id:'';}

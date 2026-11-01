@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {builderBookScope,builderParentSelection,type BuilderChain} from '../legacy/lib/bookBuilder';
+const book={id:'book',title:'كتاب',author_id:'author',archived:false};
+const route=(scope:'sughra'|'kubra'|'unspecified',archived=false)=>({id:scope,kind:'route',book_id:'book',reading_scope:scope,archived} as BuilderChain);
+assert.equal(builderBookScope(book,[route('sughra')]),'sughra');
+assert.equal(builderBookScope(book,[route('kubra')]),'kubra');
+assert.equal(builderBookScope(book,[route('sughra'),route('kubra')]),'unspecified','mixed books must not guess');
+assert.equal(builderBookScope(book,[route('sughra'),route('kubra',true)]),'sughra');
+assert.equal(builderBookScope({...book,title:'الدرة'},[]),'sughra');
+assert.equal(builderBookScope(book,[]),'unspecified');
+assert.equal(builderParentSelection([{id:'only'}],''),'only');
+assert.equal(builderParentSelection([{id:'a'},{id:'b'}],''),'');
+assert.equal(builderParentSelection([{id:'a'},{id:'b'}],'b'),'b');
+assert.equal(builderParentSelection([{id:'a'}],'archived'),'a');
+assert.equal(builderParentSelection([],'archived'),'');
+console.log('Shared book scope inheritance and sole/multiple/archived parent selection: PASS');
