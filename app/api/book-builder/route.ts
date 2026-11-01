@@ -1,3 +1,4 @@
+import {cleanSanadPunctuation,cleanSanadPartStart} from '../../../legacy/lib/sanadPunctuation';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {NextResponse} from 'next/server';
 import {z} from 'zod';
@@ -17,7 +18,7 @@ async function library(client:SupabaseClient):Promise<BuilderLibrary>{
  async function all(table:string){const rows:any[]=[];for(let n=0;;n+=1000){const page=check(await client.from(table).select('*').range(n,n+999))||[];rows.push(...page);if(page.length<1000)break;}return rows;}
  const [people,books,chains,nodes,sections]=await Promise.all([all('builder_people'),all('builder_books'),all('builder_chains'),all('builder_nodes'),client.from('workspace_records').select('id,payload').eq('kind','sanadSections')]);
  const text=(check(sections)||[]).map(s=>s.payload as Record<string,string>).filter(s=>!s.ownerId);
- const continuations:Record<string,string>={};for(const q of QURRA)for(const rawi of q.rawis){const source=text.find(s=>s.title===`CHAIN:${q.id}:${rawi}`)?.body||'';const range=sanadTitleRanges(source)[0];if(range)continuations[q.id+'|'+rawi]=['عن '+source.slice(range.start),text.find(s=>s.title===`CHAIN:${q.id}:sahaba`)?.body,text.find(s=>s.title===`CHAIN:${q.id}:prophet`)?.body].filter(Boolean).join(' ');}
+ const continuations:Record<string,string>={};for(const q of QURRA)for(const rawi of q.rawis){const source=text.find(s=>s.title===`CHAIN:${q.id}:${rawi}`)?.body||'';const range=sanadTitleRanges(source)[0];if(range)continuations[q.id+'|'+rawi]=cleanSanadPunctuation(['عن '+source.slice(range.start),text.find(s=>s.title===`CHAIN:${q.id}:sahaba`)?.body,text.find(s=>s.title===`CHAIN:${q.id}:prophet`)?.body].filter((part):part is string=>!!part).map(cleanSanadPartStart).join(' '));}
  const suggestions=[...new Set(text.filter(s=>s.title?.startsWith('CHAIN:')).flatMap(s=>(s.body||'').split(/(?:^|[،.])\s*عن\s+/u)).map(s=>s.trim().replace(/[،.]+$/u,'')).filter(s=>s.length>=8&&s.length<180&&!/[\n؛]|وقرأ|وهم|وهما|صاحب القراءة|صاحب الرواية/u.test(s)))];
  return {prefixContinuations:(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>({id:s.id,title:s.payload.title,body:s.payload.body||''})),people,books,chains:chains.map(c=>({...c,branches:[...new Set<number>(nodes.filter(n=>n.chain_id===c.id).map(n=>n.branch))].sort((a,b)=>a-b).map(b=>nodes.filter(n=>n.chain_id===c.id&&n.branch===b).sort((a,b)=>a.position-b.position).map(n=>({person_id:n.person_id,route_source:n.route_source,source_level:n.source_level}))),...(!nodes.some(n=>n.chain_id===c.id)?{branches:[[]]}:{})})),suggestions:[...new Set([...suggestions,...buildNarratorDirectory(text.map((s,i)=>({id:String(i),title:s.title||'',body:s.body||''}))).people.map(p=>p.name)])],continuations};
 }

@@ -1,3 +1,4 @@
+import {cleanSanadPunctuation} from './sanadPunctuation';
 import {renderBranchedSanad,sanadSubjectName} from './branchedSanad';
 import {reachesJunction} from './personalSanadValidation';
 export type BuilderPerson={id:string;name:string;display_name:string;archived:boolean};
@@ -18,7 +19,7 @@ export function builderPreview(book:BuilderBook,parent:BuilderChain,route:Builde
   paths.push(adjacent);
  }
  const subject=(id:string)=>sanadSubjectName(people.find(p=>p.id===id)?.display_name.trim()||person(id));
- return {text:renderBranchedSanad(paths,person,subject,prefix,route.continuation),author,sources:[...new Set(route.branches.flatMap(b=>b.filter(n=>n.route_source).map(n=>person(n.person_id))))]};
+ return {text:cleanSanadPunctuation(renderBranchedSanad(paths,person,subject,prefix,route.continuation)),author,sources:[...new Set(route.branches.flatMap(b=>b.filter(n=>n.route_source).map(n=>person(n.person_id))))]};
 }
 
 export const builderRouteName=(book:BuilderBook,route:BuilderChain)=>[book.title,route.upper_route_name,route.branch_route_name,route.title].filter((v,i,all)=>v&&all.indexOf(v)===i).join(' — ');
