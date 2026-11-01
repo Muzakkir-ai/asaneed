@@ -20,3 +20,13 @@ assert.ok(unrelated.includes('\n\n(ح)\n\n'),'no unproven common pivot');
 assert.equal(renderBranchedSanad([first],name,subject,'','عن إدريس'),'عن ابن الجزري، عن أبي محمد سبط الخياط، عن أبي المعالي ثابت، عن الواسطي، عن القطيعي، عن إدريس');
 assert.ok(renderBranchedSanad([first,second],name,subject,'','نص حر').includes('\n\n(ح)\n\n'));
 console.log('Branch change wording, structured/textual convergence, source preservation and safe fallbacks: PASS');
+
+const repeated=[['j','b','a','q','i'],['j','c','a','m','i']];
+const repeatedText=renderBranchedSanad(repeated,name,subject,'','عن خلف');
+assert.equal(repeatedText.match(/سبط الخياط/g)?.length,1);
+assert.ok(repeatedText.includes('وهما قرآ على أبي محمد سبط الخياط'));
+assert.ok(repeatedText.includes('عن القطيعي، والمطوعي، وهما قرآ على إدريس'));
+assert.ok(!repeatedText.includes('(ح)'));
+const mixed=renderBranchedSanad([['j','b','a','c','q'],['j','d','a','e','m']],name,subject,'','عن إدريس');
+assert.ok(mixed.includes('وهما قرآ على أبي محمد سبط الخياط'));
+assert.ok(mixed.includes('(ح). وقرأ سبط الخياط أيضًا على'));

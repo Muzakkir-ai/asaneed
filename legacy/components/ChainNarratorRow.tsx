@@ -7,7 +7,7 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import NarratorPicker from './NarratorPicker';
 import NarratorShortName from './NarratorShortName';
 type Node={editorKey?:string;name:string;source:boolean;personId?:string;sourceLevel?:'upper'|'branch'|null};
-export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,connected,onChange,onCreate,onShortName,onMove,onRemove}:{node:Node;index:number;count:number;number?:number;connected:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void}){
+export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,connected,onChange,onCreate,onShortName,onMove,onRemove,onParallel}:{node:Node;index:number;count:number;number?:number;connected:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
  const ordinal=number??index+1;
  const [editing,setEditing]=useState(!node.personId),panel=useId();
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
@@ -25,7 +25,7 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  <Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأعلى" disabled={index===0} onClick={()=>onMove(-1)}><ArrowUp aria-hidden="true" className="h-4 w-4"/></Button>
  <Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأسفل" disabled={index===count-1} onClick={()=>onMove(1)}><ArrowDown aria-hidden="true" className="h-4 w-4"/></Button>
  <Button type="button" size="sm" variant="ghost" aria-label="حذف الراوي" onClick={onRemove}><Trash2 aria-hidden="true" className="h-4 w-4"/></Button>
- <Button type="button" size="sm" variant="outline" onClick={()=>setEditing(false)}>تم</Button>
+ {onParallel&&<Button type="button" size="sm" variant="outline" onClick={onParallel}>إضافة شيخ موازٍ</Button>}<Button type="button" size="sm" variant="outline" onClick={()=>setEditing(false)}>تم</Button>
  </div></div>}
  </article>;
 }

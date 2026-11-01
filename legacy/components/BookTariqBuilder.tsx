@@ -1,3 +1,4 @@
+import ConnectedChainEditor from './ConnectedChainEditor';
 import BranchPersonCard from './BranchPersonCard';
 import {observedLinks} from '../lib/narratorSelection';
 import ChainNarratorRow from './ChainNarratorRow';
@@ -29,7 +30,7 @@ function NarratorInsertionOverlays({count,onInsert}:{count:number;onInsert:(posi
  },[count]);
  return <div ref={layer} className="chain-insertion-overlays">{points.map((point,i)=><Button key={i} type="button" size="sm" variant="outline" className="chain-add-narrator-overlay h-9 w-9 rounded-full p-0" style={{top:point.top,left:point.left}} title="إضافة راوٍ بين الاسمين" aria-label={`إضافة راوٍ بين الراوي ${i+2} والراوي ${i+3}`} onClick={()=>onInsert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/></Button>)}</div>;
 }
-function ChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,start,end,roles=false}:{onShortName?:(id:string,value:string)=>Promise<void>;lib:BuilderLibrary;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<import('../lib/bookBuilder').BuilderPerson>;startId?:string;endId?:string;branches:DraftNode[][];onChange:(v:DraftNode[][])=>void;start:string;end:string;roles?:boolean}){
+function SeparateChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,start,end,roles=false}:{onShortName?:(id:string,value:string)=>Promise<void>;lib:BuilderLibrary;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<import('../lib/bookBuilder').BuilderPerson>;startId?:string;endId?:string;branches:DraftNode[][];onChange:(v:DraftNode[][])=>void;start:string;end:string;roles?:boolean}){
  const change=(b:number,nodes:DraftNode[])=>onChange(branches.map((v,i)=>i===b?nodes:v));
  const [collapsed,setCollapsed]=useState<Set<number>>(()=>new Set()),id=useId();
  const links=useMemo(()=>observedLinks(lib),[lib]);
@@ -51,6 +52,10 @@ function ChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,s
  <div data-chain-narrator-card><BranchPersonCard name={endName} label={roles?'صاحب الرواية':'صاحب الكتاب'} number={nodes.length+2}/></div><NarratorInsertionOverlays count={nodes.length} onInsert={position=>change(b,[...nodes.slice(0,position),{editorKey:crypto.randomUUID(),name:'',source:false},...nodes.slice(position)])}/></div>
  </div></section>})}<div className="flex flex-wrap gap-2"><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,[]])}>إضافة فرع آخر</Button><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,branches[branches.length-1].map(n=>({...n,editorKey:crypto.randomUUID()}))])}><Copy className="h-3 w-3 me-1"/>نسخ الفرع</Button></div></div>;
 
+}
+function ChainEditor(props:Parameters<typeof ConnectedChainEditor>[0]){
+ const [separate,setSeparate]=useState(false);
+ return <div className="space-y-2"><Button type="button" variant="outline" size="sm" onClick={()=>setSeparate(v=>!v)}>{separate?'عرض السند المتصل':'عرض الفروع المنفصلة'}</Button>{separate?<SeparateChainEditor {...props}/>:<ConnectedChainEditor {...props}/>}</div>;
 }
 export default function BookTariqBuilder({shaykhId='',shaykhName='',initialPrefix='',onSaved,triggerLabel='الكتب والطرق',onLibraryChange}:{shaykhId?:string;shaykhName?:string;initialPrefix?:string;onSaved?:()=>void;triggerLabel?:string;onLibraryChange?:()=>void}){
  const [open,setOpen]=useState(false),[lib,setLib]=useState<BuilderLibrary|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
