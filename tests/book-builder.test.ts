@@ -7,7 +7,7 @@ const route={branches:[[{person_id:'2',route_source:true}],[{person_id:'1',route
 const before=JSON.stringify({parent,route});
 const result=builderPreview(book,parent,route,people,'عن الإمام ابن الجزري');
 assert.equal(result.text.split('(ح)').length,2);
-assert.equal(result.text.match(/عن المؤلف/gu)?.length,2,'author once per complete branch');
+assert.equal(result.text.match(/عن المؤلف/gu)?.length,1,'shared author appears once');
 assert.deepEqual(result.sources,['راوٍ ثانٍ','راوٍ أول']);
 assert.equal(JSON.stringify({parent,route}),before,'preview never mutates saved references');
 assert.equal(builderNameKey('أَبِي عَمْـرٍو'),builderNameKey('ابي عمرو'));
