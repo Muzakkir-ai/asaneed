@@ -163,3 +163,9 @@
  .zite-app .certificate-viewer,.zite-app .certificate-pan-stage{display:block!important;width:297mm!important;height:210mm!important;padding:0!important;margin:0!important;border:0!important}
  .zite-app .certificate-scale-inner{position:static!important;transform:none!important}
 }
+
+/* Preserve the former card-to-card distance: 8px + 36px control + 8px.
+   Controls now overlay that same existing 52px gap and contribute no layout size. */
+.zite-app .chain-narrator-stack{display:grid;row-gap:52px;min-width:0}
+.zite-app .chain-add-narrator-overlay{position:absolute;top:calc(100% + 26px);right:25px;transform:translate(50%,-50%);margin:0;z-index:10}
+@media(min-width:640px){.zite-app .chain-add-narrator-overlay{right:29px}}
