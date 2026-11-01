@@ -1,3 +1,4 @@
+import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import CertificateViewport from './CertificateViewport';
 import {certificateBalance} from '../lib/certificateBalance';
 import {certificateOverflows} from '../lib/printOverflow';
@@ -398,7 +399,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const captureSelection=()=>{
     const selection=window.getSelection();
     if(!selection||selection.isCollapsed||!sanadElement.current)return;
-    const text=selection.toString().trim();
+    const text=selection.toString().replace(/\uFE91\u0640?/gu,'ب').trim();
     if(!text||text.length>300||!sanadBody?.includes(text))return;
     const range=selection.getRangeAt(0);
     if(!sanadElement.current.contains(range.commonAncestorContainer))return;
@@ -471,7 +472,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
           <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
-          <div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
+          {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (
               <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
@@ -516,7 +517,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                 </tbody>
               </table>
             </div>
-          </div>
+          </div>,false,isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?'Sakkal Kitab':'KSA Regular')}
         </div>
       </CertificateViewport>
       <AlertDialog open={confirmFinal} onOpenChange={v=>{if(!finalizing)setConfirmFinal(v);}}>
