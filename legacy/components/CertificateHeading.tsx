@@ -1,3 +1,4 @@
+import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import type {Artwork} from '../lib/artworkCatalog';
 import {forwardRef,useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
 import {svgReadingParts,riwayahSvgWidthMm,riwayahSvgUrl,RIWAYAH_SVG_HEIGHT_MM} from '../lib/riwayahSvgHeading';
@@ -14,7 +15,7 @@ const CertificateHeading=forwardRef<HTMLDivElement,Props>(function CertificateHe
  return <div ref={ref} className="certificate-header-art" aria-label="البسملة وشهادة الإجازة" style={{'--certificate-primary':primary,'--certificate-secondary':secondary} as CSSProperties}>
   <div className="certificate-basmalah-svg" role="img" aria-label="بسم الله الرحمن الرحيم" style={artworkBase?{WebkitMaskImage:`url("${artworkBase}/svg/basmalah.svg")`,maskImage:`url("${artworkBase}/svg/basmalah.svg")`}:undefined}/>
   <div className="certificate-ijazah-svg" role="img" aria-label="شهادة إجازة" style={{backgroundColor:primary,...(artworkBase?{WebkitMaskImage:`url("${artworkBase}/svg/ijazah.svg")`,maskImage:`url("${artworkBase}/svg/ijazah.svg")`}:{})}}/>
-  {heading&&(pieces?<div className="certificate-reading-svg-line" role="img" aria-label={heading} dir="rtl">{pieces.map((glyph,index)=><span key={glyph+'-'+index} aria-hidden="true" className="certificate-reading-svg-piece" style={{width:`${riwayahSvgWidthMm(glyph,artwork)}mm`,height:`${RIWAYAH_SVG_HEIGHT_MM}mm`,WebkitMaskImage:`url("${riwayahSvgUrl(glyph,artworkBase)}")`,maskImage:`url("${riwayahSvgUrl(glyph,artworkBase)}")`}}/>)}</div>:<div className="certificate-reading-label" style={{fontFamily:"'Sakkal Kitab',serif",fontSize:'11pt',color:secondary,...readingStyle}} dir="rtl">{readingLine(heading)}</div>)}
+  {heading&&(pieces?<div className="certificate-reading-svg-line" role="img" aria-label={heading} dir="rtl">{pieces.map((glyph,index)=><span key={glyph+'-'+index} aria-hidden="true" className="certificate-reading-svg-piece" style={{width:`${riwayahSvgWidthMm(glyph,artwork)}mm`,height:`${RIWAYAH_SVG_HEIGHT_MM}mm`,WebkitMaskImage:`url("${riwayahSvgUrl(glyph,artworkBase)}")`,maskImage:`url("${riwayahSvgUrl(glyph,artworkBase)}")`}}/>)}</div>:<div className="certificate-reading-label" style={{fontFamily:"'Sakkal Kitab',serif",fontSize:'11pt',color:secondary,...readingStyle}} dir="rtl">{sakkalPrintNodes(readingLine(heading),!readingStyle?.fontFamily||readingStyle.fontFamily.includes('Sakkal Kitab'))}</div>)}
  </div>;
 });
 export default CertificateHeading;
