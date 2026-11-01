@@ -9,7 +9,7 @@ import {reachesJunction} from '../lib/personalSanadValidation';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
-const matn=z.object({name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().trim().min(1).max(60000),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
+const matn=z.object({name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
 const shaykh=z.object({
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),

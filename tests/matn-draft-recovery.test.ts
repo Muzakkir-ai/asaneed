@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {matnDraftKey,parseMatnDraft} from '../legacy/lib/matnDraftRecovery';
+assert.notEqual(matnDraftKey('one','holding','السند'),matnDraftKey('two','holding','السند'));
+assert.notEqual(matnDraftKey('one','holding','السند'),matnDraftKey('one','holding','كلمات الإجازة'));
+assert.equal(parseMatnDraft('invalid'),null);
+assert.equal(parseMatnDraft(JSON.stringify({version:2,text:'a',formats:[],updatedAt:1})),null);
+const draft=parseMatnDraft(JSON.stringify({version:1,text:'أحمد',updatedAt:1,formats:[{text:'أحمد',start:0,end:4,bold:true,color:'primary',center:false,indent:0}]}));
+assert.equal(draft?.formats[0].text,'أحمد');
+assert.equal(parseMatnDraft(JSON.stringify({version:1,text:'محمد',updatedAt:1,formats:[{text:'أحمد',start:0,end:4}]}))?.formats.length,0);
+console.log('PASS: recovery isolation, version/malformed rejection, exact formatting retained and stale spans dropped');

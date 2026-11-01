@@ -11,8 +11,8 @@ export default createEndpoint({
   if(input.action==='save'){
    const previous=input.id?await zite.mutoonTextTemplates.findOne({id:input.id}).catch(()=>null):null;
    if(input.id&&(!previous||previous.ownerId!==ownerId))throw new ZiteError({code:'NOT_FOUND',message:'Template not found'});
-   const name=(input.name??previous?.name??'').trim(),body=(input.body??previous?.body??'').trim(),kind=input.kind??previous?.kind,formatting=input.formatting??previous?.formatting??'[]';
-   if(!name||!body||!kind||name.length>150||body.length>30000)throw new Error('Name and template body are required');
+   const name=(input.name??previous?.name??'').trim(),body=(input.body??previous?.body??''),kind=input.kind??previous?.kind,formatting=input.formatting??previous?.formatting??'[]';
+   if(!name||!body.trim()||!kind||name.length>150||body.length>30000)throw new Error('Name and template body are required');
    if(previous)await zite.mutoonTextTemplates.update({id:previous.id,record:{name,body,kind,ownerId,formatting}});
    else await zite.mutoonTextTemplates.create({record:{name,body,kind,ownerId,formatting}});
   }

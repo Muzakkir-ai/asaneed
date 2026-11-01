@@ -15,8 +15,8 @@ export default createEndpoint({
    if(input.action==='delete'){if(!existing)throw new Error('Not found');await zite.mutoonHoldings.delete({id:existing.id});}
    if(input.action==='save'){
     const name=(input.name??existing?.name??'').trim(), category=(input.category??existing?.category??'').trim();
-    const sanadText=(input.sanadText??existing?.sanadText??'').trim(),wordingText=(input.wordingText??existing?.wordingText??'').trim();
-    if(!name||!category||!sanadText)throw new Error('Matn name, category and complete sanad are required');
+    const sanadText=(input.sanadText??existing?.sanadText??''),wordingText=(input.wordingText??existing?.wordingText??'');
+    if(!name||!category||!sanadText.trim())throw new Error('Matn name, category and complete sanad are required');
     if(name.length>200||category.length>120||sanadText.length>60000||wordingText.length>30000)throw new Error('Text too long');
     const record={name,category,sanadText,wordingText,introductionId:input.introductionId??existing?.introductionId??'',conclusionId:input.conclusionId??existing?.conclusionId??'',sanadFormatting:input.sanadFormatting??existing?.sanadFormatting??'',ownerId,createdAtText:existing?.createdAtText||new Date().toISOString()};
     if(existing)await zite.mutoonHoldings.update({id:existing.id,record});
