@@ -257,8 +257,8 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
                 {cert&&<SelectItem value={cert.sanadId}>{availableAsaneed.find(s=>s.id===cert.sanadId)?.qiraahName||cert.qiraahName||'الرواية المحفوظة'}</SelectItem>}
               </SelectContent>
             </Select>
-            {!cert&&!isGuest&&holdings.length>0&&eligibleHoldings.length===0&&<p className="text-sm text-destructive">أكمل السند إلى العُبيدي أو ابن الجزري.</p>}
-            {!cert&&isGuest&&selectedGuest&&!guestError&&guestChoices.length===0&&<p className="text-sm text-destructive">لم تُضف لهذا الشيخ أي رواية. أضف الإجازات في تبويب المشايخ الإضافيين أولًا.</p>}
+            {!cert&&readingScope&&!isGuest&&holdings.length>0&&eligibleHoldings.length===0&&<p className="text-sm text-destructive">أكمل السند إلى العُبيدي أو ابن الجزري.</p>}
+            {!cert&&readingScope&&isGuest&&selectedGuest&&!guestError&&guestChoices.length===0&&<p className="text-sm text-destructive">لم تُضف لهذا الشيخ أي رواية. أضف الإجازات في تبويب المشايخ الإضافيين أولًا.</p>}
             {choosingQiraah&&<p className="text-xs text-muted-foreground">شهادتان مستقلتان بنفس تاريخ الختم</p>}
             {err('sanadId')}
           </div>
