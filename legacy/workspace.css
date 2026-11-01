@@ -79,3 +79,46 @@
  .zite-app main{min-width:0}
 }
 @media print{.zite-app .workspace-sidebar,.zite-app .mobile-nav-button,.zite-app .inspection-banner{display:none!important}.zite-app .workspace-shell{padding:0!important}}
+
+/* Mobile mutoon editing: preserve text width and compact the sticky controls. */
+.zite-app .matn-toolbar-main button{gap:6px}
+.zite-app .matn-save-mobile{display:none}
+.zite-app .matn-toolbar-extras{display:flex;flex-wrap:wrap;gap:8px 18px}
+.zite-app .matn-toolbar-extras details{min-width:0;max-width:100%}
+.zite-app .matn-template-choice>label{display:block}
+.zite-app .matn-template-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:8px}
+.zite-app .matn-template-actions button{width:100%;min-width:0}
+@media screen and (max-width:767px){
+ .zite-app [role=dialog].additional-shaykh-dialog{padding:18px 10px}
+ .zite-app .additional-shaykh-dialog h2{font-size:20px;line-height:1.6;padding-inline:26px;overflow-wrap:anywhere}
+ .zite-app .additional-profile-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ .zite-app .additional-profile-tabs button{padding:7px 3px;font-size:12px;white-space:normal;line-height:1.5;height:auto;min-width:0;box-shadow:none}
+ .zite-app .additional-mutoon-panel{padding:8px}
+ .zite-app .additional-matn-editor{padding:8px;border:0;background:transparent}
+ .zite-app .matn-list-header{gap:8px;align-items:start}
+ .zite-app .matn-list-header>div{min-width:0}
+ .zite-app .matn-list-header h3{font-size:16px}
+ .zite-app .matn-list-header p{font-size:12px;line-height:1.7}
+ .zite-app .matn-list-header>button{padding:7px 10px;font-size:13px;flex-shrink:0}
+ .zite-app .matn-saved-row{flex-wrap:wrap;gap:8px;padding:10px}
+ .zite-app .matn-saved-row>span{flex:1 1 150px;overflow-wrap:anywhere}
+ .zite-app .matn-saved-row>div{margin-inline-start:auto;display:flex;gap:6px}
+ .zite-app .matn-template-grid{gap:12px}
+ .zite-app .matn-template-actions button{font-size:13px;padding:6px 10px;box-shadow:none}
+ .zite-app .matn-rich-editor{padding:8px;min-width:0}
+ .zite-app .matn-rich-toolbar{padding:6px;box-shadow:0 2px 6px #00000012}
+ .zite-app .matn-toolbar-main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .zite-app .matn-toolbar-main>select{grid-column:span 2;order:-1;width:100%;font-size:14px;padding:6px;height:42px}
+ .zite-app .matn-toolbar-main>button{min-width:0;min-height:42px;height:42px;padding:6px;box-shadow:none}
+ .zite-app .matn-toolbar-label{display:none}
+ .zite-app .matn-save-button{order:-1;gap:4px;padding:4px}
+ .zite-app .matn-save-mobile{display:inline;font-size:12px}
+ .zite-app .matn-save-status{grid-column:1/-1;order:2;font-size:11px;line-height:1.5}
+ .zite-app .matn-save-status:empty{display:none}
+ .zite-app .matn-toolbar-extras{gap:5px 12px;margin-top:5px;font-size:12px}
+ .zite-app .matn-toolbar-extras summary{font-size:12px;line-height:1.8}
+ .zite-app .matn-toolbar-extras details[open]{flex-basis:100%}
+ .zite-app .matn-toolbar-extras button{font-size:12px;padding:6px 9px;box-shadow:none}
+ .zite-app .matn-editor-hint{font-size:11px;line-height:1.7}
+ .zite-app .matn-rich-editor [contenteditable]{padding:10px;font-size:18px;line-height:2;max-height:55dvh;min-height:180px}
+}
