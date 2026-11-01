@@ -1,4 +1,4 @@
-import {cleanSanadPunctuation,cleanSanadPartStart} from './sanadPunctuation';
+import {cleanSanadPunctuation,cleanSanadPartStart,cleanAllahSpelling} from './sanadPunctuation';
 import {certificateRoutePhrase,certificateRouteWording} from './certificateRouteChoice';
 import {QURRA,routeFor,readingText} from './qurra';
 import {vocalizeReadingLabel} from './vocalizedReading';
@@ -38,6 +38,6 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  const wordingRoute=customRoute?certificateRouteWording(holding.tariqName!):route;
  const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,wordingRoute].filter(Boolean).join(' ')));
  const isnad=cleanSanadPunctuation(joinChain([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]));
- const chain=`【بيان القراءة:${heading}】\n${[intro?.body,[words,isnad].filter(Boolean).join(' '),conclusion?.body].filter(Boolean).join('\n\n')}`;
+ const chain=cleanAllahSpelling(`【بيان القراءة:${heading}】\n${[intro?.body,[words,isnad].filter(Boolean).join(' '),conclusion?.body].filter(Boolean).join('\n\n')}`);
  return {chain:missing.length?'':chain,heading,missing,sectionIds:[...new Set(used.map(s=>s.id))]};
 }
