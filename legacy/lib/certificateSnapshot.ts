@@ -1,3 +1,4 @@
+import {currentRouteEmphasis} from './currentRouteEmphasis';
 import {currentPreservedRouteText} from './certificateRouteChoice';
 import {standardRouteSources} from './standardRouteSources';
 import {extractTeacherTransmission} from './receivedTransmission';
@@ -70,6 +71,13 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  const standardRoute=!sourceHolding?.tariqNumber&&!sanad.tariqNumber;
  const routeSources=customSource?customSource.split(/[،;؛\n]+/u).map(x=>x.trim()).filter(Boolean):standardRoute&&reading?standardRouteSources(reading.qariId,reading.rawi):[];
  const routeEmphasis={routeSourceFont:'Sakkal Kitab',bookAuthor:sourceHolding?.bookAuthor||sanad.bookAuthor||(standardShatibi?'إمام القراء أبي محمد القاسم بن فيره الشاطبي':''),routeSources,routeSource:customSource||(standardShatibi?'الحافظ أبي عمرو عثمان بن سعيد الداني':'')};
+ if(reading){
+  const client=context().client;
+  async function all(table:string){const rows:any[]=[];for(let offset=0;;offset+=1000){const {data,error}=await client.from(table).select('*').range(offset,offset+999);if(error)throw error;rows.push(...(data||[]));if(!data||data.length<1000)return rows;}}
+  const [books,chains,people,nodes]=await Promise.all([all('builder_books'),all('builder_chains'),all('builder_people'),all('builder_nodes')]);
+  const current=currentRouteEmphasis({books,chains,people,nodes},{routeId:(sourceHolding as typeof sourceHolding & {builderRouteId?:string})?.builderRouteId,routeCode:sourceHolding?.tariqNumber||sanad.tariqNumber,qariId:reading.qariId,rawi:reading.rawi});
+  if(current)Object.assign(routeEmphasis,current);
+ }
  let transmission:unknown=null;
  try{transmission={chain:extractTeacherTransmission(chain,sourceHolding?.personalChain||'',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||'')),qariId:reading?.qariId||'',rawi:reading?.rawi||'',tariqNumber:sourceHolding?.tariqNumber||sanad.tariqNumber||'',tariqName:sourceHolding?.tariqName||sanad.tariqName||''};}catch{}
  return JSON.stringify({transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
