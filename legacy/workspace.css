@@ -166,6 +166,6 @@
 
 /* Preserve the former card-to-card distance: 8px + 36px control + 8px.
    Controls now overlay that same existing 52px gap and contribute no layout size. */
-.zite-app .chain-narrator-stack{display:grid;row-gap:52px;min-width:0}
-.zite-app .chain-add-narrator-overlay{position:absolute;top:calc(100% + 26px);right:25px;transform:translate(50%,-50%);margin:0;z-index:10}
-@media(min-width:640px){.zite-app .chain-add-narrator-overlay{right:29px}}
+.zite-app .chain-narrator-stack{position:relative;display:grid;row-gap:52px;min-width:0}
+.zite-app .chain-insertion-overlays{position:absolute;inset:0;pointer-events:none;z-index:10}
+.zite-app .chain-add-narrator-overlay{position:absolute;right:auto;transform:translate(-100%,-50%);margin:0;pointer-events:auto}

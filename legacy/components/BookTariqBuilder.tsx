@@ -6,7 +6,7 @@ import BuilderPrefixInput from './BuilderPrefixInput';
 import {resolveBuilderPrefix} from '../lib/builderPrefix';
 import NarratorAutocomplete from './NarratorAutocomplete';
 import {arabicDigits} from '../lib/arabicDigits';
-import {useEffect,useMemo,useState,useId} from 'react';
+import {useEffect,useMemo,useState,useId,useLayoutEffect,useRef} from 'react';
 import {Button} from '@project/components/ui/button';
 import {Input} from '@project/components/ui/input';
 import {Textarea} from '@project/components/ui/textarea';
@@ -20,6 +20,15 @@ type DraftNode={editorKey?:string;name:string;source:boolean;personId?:string;so
 type Draft={id?:string;revision?:number;title:string;qari:string;rawi:string;continuation:string;confirmed:boolean;upper:string;branch:string;scope:'unspecified'|'sughra'|'kubra';branches:DraftNode[][]};
 const blank=():Draft=>({title:'',qari:'nafi',rawi:'قالون',continuation:'',confirmed:false,upper:'',branch:'',scope:'unspecified',branches:[[]]});
 async function api(body?:unknown):Promise<any>{const r=await fetch('/api/book-builder',{method:body?'POST':'GET',headers:{'content-type':'application/json',...workspaceHeaders()},...(body?{body:JSON.stringify(body)}:{})});const data=await r.json();if(!r.ok)throw Error(data.error||'تعذر الحفظ');return data;}
+function NarratorInsertionOverlays({count,onInsert}:{count:number;onInsert:(position:number)=>void}){
+ const layer=useRef<HTMLDivElement>(null),[points,setPoints]=useState<{top:number;left:number}[]>([]);
+ useLayoutEffect(()=>{
+  const stack=layer.current?.parentElement;if(!stack)return;
+  const measure=()=>{const origin=stack.getBoundingClientRect();const cards=Array.from(stack.querySelectorAll<HTMLElement>(':scope > [data-chain-narrator-card]'));const next=cards.slice(0,count).flatMap((card,i)=>{const following=cards[i+1];if(!following||!origin.width)return [];const a=card.getBoundingClientRect(),b=following.getBoundingClientRect();return [{top:(a.bottom+b.top)/2-origin.top,left:a.left-origin.left}];});setPoints(current=>JSON.stringify(current)===JSON.stringify(next)?current:next);};
+  measure();const observer=new ResizeObserver(measure);observer.observe(stack);stack.querySelectorAll<HTMLElement>(':scope > [data-chain-narrator-card]').forEach(card=>observer.observe(card));return()=>observer.disconnect();
+ },[count]);
+ return <div ref={layer} className="chain-insertion-overlays">{points.map((point,i)=><Button key={i} type="button" size="sm" variant="outline" className="chain-add-narrator-overlay h-9 w-9 rounded-full p-0" style={{top:point.top,left:point.left}} title="إضافة راوٍ بين الاسمين" aria-label={`إضافة راوٍ بين الراوي ${i+2} والراوي ${i+3}`} onClick={()=>onInsert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/></Button>)}</div>;
+}
 function ChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,start,end,roles=false}:{onShortName?:(id:string,value:string)=>Promise<void>;lib:BuilderLibrary;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<import('../lib/bookBuilder').BuilderPerson>;startId?:string;endId?:string;branches:DraftNode[][];onChange:(v:DraftNode[][])=>void;start:string;end:string;roles?:boolean}){
  const change=(b:number,nodes:DraftNode[])=>onChange(branches.map((v,i)=>i===b?nodes:v));
  const [collapsed,setCollapsed]=useState<Set<number>>(()=>new Set()),id=useId();
@@ -38,8 +47,8 @@ function ChainEditor({branches,onChange,lib,onCreate,onShortName,startId,endId,s
  <div id={id+'-'+b} hidden={folded} className="space-y-2">
  <BranchPersonCard name={startName} label={roles?'صاحب الكتاب':'بداية السند'} number={1}/>
  <div className="flex justify-start"><Button type="button" size="sm" variant="outline" onClick={()=>change(b,[{editorKey:crypto.randomUUID(),name:'',source:false},...nodes])}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ في البداية</Button></div>
- <div className="chain-narrator-stack">{nodes.map((node,i)=>{const previous=i?nodes[i-1]?.personId:startId,next=nodes[i+1]?.personId||endId;return <div key={node.editorKey||i} className="relative min-w-0"><div className="min-w-0"><ChainNarratorRow node={node} index={i} number={i+2} count={nodes.length} lib={lib} previous={previous} next={next} connected={linked(nodes,i)} roles={roles} onCreate={onCreate} onShortName={onShortName} onChange={value=>change(b,nodes.map((n,j)=>j===i?value:n))} onMove={direction=>{const moved=[...nodes];[moved[i],moved[i+direction]]=[moved[i+direction],moved[i]];change(b,moved);}} onRemove={()=>change(b,nodes.filter((_,j)=>j!==i))}/></div><Button type="button" size="sm" variant="outline" className="chain-add-narrator-overlay h-9 w-9 rounded-full p-0" title="إضافة راوٍ بعده" aria-label={`إضافة راوٍ بعد الراوي ${i+2}`} onClick={()=>change(b,[...nodes.slice(0,i+1),{editorKey:crypto.randomUUID(),name:'',source:false},...nodes.slice(i+1)])}><Plus aria-hidden="true" className="h-4 w-4"/></Button></div>})}
- <BranchPersonCard name={endName} label={roles?'صاحب الرواية':'صاحب الكتاب'} number={nodes.length+2}/></div>
+ <div className="chain-narrator-stack">{nodes.map((node,i)=>{const previous=i?nodes[i-1]?.personId:startId,next=nodes[i+1]?.personId||endId;return <div key={node.editorKey||i} data-chain-narrator-card className="min-w-0"><div className="min-w-0"><ChainNarratorRow node={node} index={i} number={i+2} count={nodes.length} lib={lib} previous={previous} next={next} connected={linked(nodes,i)} roles={roles} onCreate={onCreate} onShortName={onShortName} onChange={value=>change(b,nodes.map((n,j)=>j===i?value:n))} onMove={direction=>{const moved=[...nodes];[moved[i],moved[i+direction]]=[moved[i+direction],moved[i]];change(b,moved);}} onRemove={()=>change(b,nodes.filter((_,j)=>j!==i))}/></div></div>})}
+ <div data-chain-narrator-card><BranchPersonCard name={endName} label={roles?'صاحب الرواية':'صاحب الكتاب'} number={nodes.length+2}/></div><NarratorInsertionOverlays count={nodes.length} onInsert={position=>change(b,[...nodes.slice(0,position),{editorKey:crypto.randomUUID(),name:'',source:false},...nodes.slice(position)])}/></div>
  </div></section>})}<div className="flex flex-wrap gap-2"><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,[]])}>إضافة فرع آخر</Button><Button size="sm" type="button" variant="outline" onClick={()=>onChange([...branches,branches[branches.length-1].map(n=>({...n,editorKey:crypto.randomUUID()}))])}><Copy className="h-3 w-3 me-1"/>نسخ الفرع</Button></div></div>;
 
 }
