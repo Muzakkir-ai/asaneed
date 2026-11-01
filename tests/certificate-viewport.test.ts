@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {fitCertificate,zoomScroll,PAPER_WIDTH,PAPER_HEIGHT,clampCertificateZoom} from '../legacy/lib/certificateViewport';
+assert.ok(fitCertificate(1900,800)>1,'wide screens enlarge paper');
+assert.ok(fitCertificate(390,600)*PAPER_WIDTH<=390,'mobile fits width');
+const page=fitCertificate(390,600,true);
+assert.ok(page*PAPER_WIDTH<=390&&page*PAPER_HEIGHT<=600);
+assert.equal(zoomScroll(100,200,1,2),400,'zoom retains anchor');
+assert.equal(clampCertificateZoom(10),4);
+assert.equal(clampCertificateZoom(.01),.15);
+console.log('Desktop expansion, mobile/page fit and zoom anchor: PASS');

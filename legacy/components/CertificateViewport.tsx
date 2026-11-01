@@ -1,0 +1,25 @@
+import {useEffect,useLayoutEffect,useRef,useState,type ReactNode} from 'react';
+import {Button} from '@project/components/ui/button';
+import {PAPER_WIDTH,PAPER_HEIGHT,clampCertificateZoom,fitCertificate,zoomScroll} from '../lib/certificateViewport';
+export default function CertificateViewport({children}:{children:ReactNode}){
+ const viewport=useRef<HTMLDivElement>(null),scaleRef=useRef(1),pending=useRef<{left:number;top:number}|null>(null);
+ const [scale,setScale]=useState(1),[fit,setFit]=useState<'width'|'page'|null>('width'),[pan,setPan]=useState(true);
+ const points=useRef(new Map<number,{x:number;y:number}>()),gesture=useRef<{distance:number;scale:number}|null>(null);
+ const zoom=(value:number,x?:number,y?:number)=>{const box=viewport.current;if(!box)return;const next=clampCertificateZoom(value),old=scaleRef.current;pending.current={left:zoomScroll(box.scrollLeft,x??box.clientWidth/2,old,next),top:zoomScroll(box.scrollTop,y??box.clientHeight/2,old,next)};scaleRef.current=next;setFit(null);setScale(next);};
+ useLayoutEffect(()=>{if(viewport.current&&pending.current){viewport.current.scrollLeft=pending.current.left;viewport.current.scrollTop=pending.current.top;pending.current=null;}},[scale]);
+ useEffect(()=>{const box=viewport.current;if(!box||!fit)return;const update=()=>{const next=fitCertificate(box.clientWidth,box.clientHeight,fit==='page');scaleRef.current=next;setScale(next);box.scrollTo(0,0);};update();const observer=new ResizeObserver(update);observer.observe(box);return()=>observer.disconnect();},[fit]);
+ useEffect(()=>{const box=viewport.current;if(!box)return;const wheel=(event:WheelEvent)=>{if(!event.ctrlKey&&!event.metaKey)return;event.preventDefault();const rect=box.getBoundingClientRect();zoom(scaleRef.current*Math.exp(-event.deltaY*.002),event.clientX-rect.left,event.clientY-rect.top);};box.addEventListener('wheel',wheel,{passive:false});return()=>box.removeEventListener('wheel',wheel);},[]);
+ const resetGesture=()=>{const p=[...points.current.values()];gesture.current=p.length===2?{distance:Math.max(1,Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)),scale:scaleRef.current}:null;};
+ return <section className="certificate-viewer" aria-label="معاينة الشهادة">
+ <div className="certificate-viewer-tools no-print flex flex-wrap items-center justify-center gap-2 rounded-lg border bg-background p-2" dir="rtl">
+ <Button type="button" size="sm" variant={fit==='width'?'default':'outline'} onClick={()=>{pending.current=null;setFit('width');}}>ملاءمة العرض</Button><Button type="button" size="sm" variant={fit==='page'?'default':'outline'} onClick={()=>{pending.current=null;setFit('page');}}>كامل الشهادة</Button>
+ <Button type="button" size="sm" variant="outline" aria-label="تصغير الشهادة" onClick={()=>zoom(scaleRef.current/1.2)}>−</Button><output className="min-w-12 text-center text-sm" aria-label="نسبة التكبير" dir="ltr">{Math.round(scale*100)}%</output><Button type="button" size="sm" variant="outline" aria-label="تكبير الشهادة" onClick={()=>zoom(scaleRef.current*1.2)}>+</Button>
+ <Button type="button" size="sm" variant={pan?'default':'outline'} aria-pressed={pan} onClick={()=>{points.current.clear();gesture.current=null;setPan(v=>!v);}}>{pan?'تحريك الشهادة':'تحديد النص'}</Button><span className="text-xs text-muted-foreground">{pan?'اسحب للتحريك · قرّب بإصبعين للتكبير':'يمكنك تحديد النص للتنسيق'}</span>
+ </div>
+ <div ref={viewport} className="certificate-print-viewport certificate-interactive-viewport" dir="ltr" tabIndex={0} aria-label="الشهادة — تكبير وتحريك" style={{touchAction:pan?'none':'auto',cursor:pan?'grab':'auto',userSelect:pan?'none':'text'}} onKeyDown={e=>{if(e.target!==e.currentTarget)return;if(e.key==='+'||e.key==='='){e.preventDefault();zoom(scaleRef.current*1.2);}if(e.key==='-'){e.preventDefault();zoom(scaleRef.current/1.2);}}}
+ onPointerDown={e=>{if(!pan||e.button!==0)return;e.preventDefault();e.currentTarget.focus({preventScroll:true});e.currentTarget.setPointerCapture(e.pointerId);points.current.set(e.pointerId,{x:e.clientX,y:e.clientY});resetGesture();}}
+ onPointerMove={e=>{if(!pan||!points.current.has(e.pointerId))return;const old=points.current.get(e.pointerId)!;points.current.set(e.pointerId,{x:e.clientX,y:e.clientY});const p=[...points.current.values()],box=viewport.current!;if(p.length===2&&gesture.current){const rect=box.getBoundingClientRect();zoom(gesture.current.scale*Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)/gesture.current.distance,(p[0].x+p[1].x)/2-rect.left,(p[0].y+p[1].y)/2-rect.top);}else if(p.length===1){box.scrollLeft-=e.clientX-old.x;box.scrollTop-=e.clientY-old.y;}}}
+ onPointerUp={e=>{points.current.delete(e.pointerId);resetGesture();}} onPointerCancel={e=>{points.current.delete(e.pointerId);resetGesture();}}>
+ <div className="certificate-pan-stage"><div className="certificate-scale-box" style={{position:'relative',width:PAPER_WIDTH*scale,height:PAPER_HEIGHT*scale,marginInline:'auto'}}><div className="certificate-scale-inner" style={{position:'absolute',left:0,top:0,transform:`scale(${scale})`,transformOrigin:'top left',width:'297mm'}}>{children}</div></div></div>
+ </div></section>;
+}

@@ -1,3 +1,4 @@
+import CertificateViewport from './CertificateViewport';
 import {certificateBalance} from '../lib/certificateBalance';
 import {certificateOverflows} from '../lib/printOverflow';
 import type {Artwork} from '../lib/artworkCatalog';
@@ -411,7 +412,6 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     window.getSelection()?.removeAllRanges();
   };
 
-  const [previewScale,setPreviewScale]=useState(1);
   const [exporting,setExporting]=useState(false);
   // Native print/PDF preserves selectable Arabic text and vector SVG masks.
   // The older html-to-image -> PNG -> PDF path rasterized the entire A4 page.
@@ -435,7 +435,6 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     }catch(e){console.error(e);toast.error('تعذّر فتح نافذة الطباعة');}
     finally{printArea.current?.classList.remove('certificate-export-original-paper');setExporting(false);}
   };
-  useEffect(()=>{const fit=()=>setPreviewScale(Math.min(1,(window.innerWidth-16)/1123));fit();window.addEventListener("resize",fit);return()=>window.removeEventListener("resize",fit);},[]);
   const areaStyle=(area:Area):React.CSSProperties=>({fontFamily:`'${typography[area].font}', serif`,fontWeight:typography[area].font==='Sakkal Kitab'?700:undefined,fontSynthesis:typography[area].font==='Sakkal Kitab'?'none':undefined,fontSize:area==='sanad'?'9.5pt':`${+(typography[area].size*1.1).toFixed(2)}pt`,...(area==='sanad'?{lineHeight:'16pt'}:{}),color:resolvedColor(typography[area].color,borderColor,accentColor)});
   const approveFinal=async()=>{
     if(readOnly||previewPalette||!isDraft||printPermission!=='allowed')return;
@@ -468,7 +467,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         </div>
       </div>
       {overflow&&<div role="alert" className="no-print container mx-auto px-4 mb-4"><div className="rounded-lg border border-destructive bg-background p-4 text-destructive" dir="rtl"><strong>تنبيه: محتوى الشهادة يتجاوز المساحة الآمنة للطباعة.</strong><p>السند طويل أو يتداخل مع العنوان أو التذييل. راجع حجم الخط والمسافات قبل الاعتماد أو الطباعة؛ لن يُصغّر النص تلقائيًا.</p></div></div>}
-      <div className="certificate-print-viewport overflow-hidden"><div className="certificate-scale-box mx-auto" style={{width:`calc(297mm * ${previewScale})`,height:`calc(210mm * ${previewScale})`}}><div className="certificate-scale-inner" style={{transform:`scale(${previewScale})`,transformOrigin:"top left",width:"297mm"}}>
+      <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
           <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
@@ -519,7 +518,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
             </div>
           </div>
         </div>
-      </div></div></div>
+      </CertificateViewport>
       <AlertDialog open={confirmFinal} onOpenChange={v=>{if(!finalizing)setConfirmFinal(v);}}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader className="text-right"><AlertDialogTitle>اعتماد الشهادة نهائيًا؟</AlertDialogTitle><AlertDialogDescription>سيُحفظ النص والألوان والتنسيق وبيانات المُجيز كما تظهر الآن، ولن تتغير مع التعديلات اللاحقة.</AlertDialogDescription></AlertDialogHeader>
