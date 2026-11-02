@@ -399,7 +399,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const captureSelection=()=>{
     const selection=window.getSelection();
     if(!selection||selection.isCollapsed||!sanadElement.current)return;
-    const text=selection.toString().replace(/\uFE91\u0640?/gu,'ب').trim();
+    const text=selection.toString().replace(/\uFE91\u0640?/gu,'ب').replace(/ب\u0640(?=\p{M})/gu,'ب').trim();
     if(!text||text.length>300||!sanadBody?.includes(text))return;
     const range=selection.getRangeAt(0);
     if(!sanadElement.current.contains(range.commonAncestorContainer))return;

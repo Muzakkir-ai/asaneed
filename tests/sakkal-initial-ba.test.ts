@@ -24,3 +24,10 @@ assert.ok(!sakkalAllahHtml.includes('&quot;liga&quot; 0'));
 
 assert.equal(sakkalInitialBa('بِّسْم'), 'ﺑـِّسْم');
 assert.equal(sakkalInitialBa('ﺑِـسْم'), 'ﺑـِسْم');
+assert.equal(sakkalInitialBa('بِأَنْ يَقْرَأَ وَبِرِوَايَةِ'), 'ﺑـِأَنْ يَقْرَأَ وَبـِرِوَايَةِ');
+assert.equal(sakkalInitialBa('أَرْبَابِ هَذَا الْفَنِّ'), 'أَرْبـَابِ هَذَا الْفَنِّ');
+assert.equal(sakkalInitialBa(sakkalInitialBa('وَبِّرِوَايَةِ')), 'وَبـِّرِوَايَةِ');
+const wordingHtml=renderToStaticMarkup(sakkalPrintNodes(createElement('span',{style:{fontFamily:'Sakkal Kitab'}},'بِأَنْ وَبِرِوَايَةِ')));
+assert.ok(wordingHtml.includes('ﺑـِأَنْ وَبـِرِوَايَةِ'));
+const ksaWordingHtml=renderToStaticMarkup(sakkalPrintNodes(createElement('span',{style:{fontFamily:'KSA Regular'}},'بِأَنْ وَبِرِوَايَةِ')));
+assert.ok(ksaWordingHtml.includes('بِأَنْ وَبِرِوَايَةِ'));
