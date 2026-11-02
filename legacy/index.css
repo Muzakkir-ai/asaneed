@@ -191,7 +191,7 @@
   transform:translateY(var(--certificate-center-shift,0px));
 }
 .print-area.certificate-auto-center-fit .certificate-footer {
-  margin-top:5mm !important;
+  margin-top:3mm !important;
 }
 /* Five original vector glyphs form ONE centered heading beneath ijazah.svg.
    No flex gap, letter spacing, text shaping, or SVG overlap adjustments;

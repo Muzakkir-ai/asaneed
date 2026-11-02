@@ -349,7 +349,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       const header=headerArea.current;
       if(!page||!header)return;
       const a=page.getBoundingClientRect(), b=header.getBoundingClientRect();
-      if(a.width){const mm=(header.offsetTop+header.offsetHeight)/page.offsetWidth*297+4;setTextTopMm(Math.max(43,mm));}
+      if(a.width){const mm=(header.offsetTop+header.offsetHeight)/page.offsetWidth*297+2;setTextTopMm(Math.max(43,mm));}
     };
     update();
     const observer=new ResizeObserver(update);
