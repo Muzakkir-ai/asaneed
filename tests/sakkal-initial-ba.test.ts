@@ -14,9 +14,13 @@ assert.ok(renderToStaticMarkup(tree).includes('>بن '));
 console.log('Sakkal initial ba glyph and font scope tests passed');
 
 const allahHtml=renderToStaticMarkup(sakkalPrintNodes(createElement('span',{style:{fontFamily:'KSA Regular'}},'عبد اللّٰه بن محمد')));
-assert.ok(!allahHtml.includes('font-feature-settings'));
+assert.ok(!allahHtml.includes('&quot;ss14&quot; 1'));
 assert.ok(allahHtml.includes('عبد الله بن محمد'));
 assert.ok(!allahHtml.includes('ّ'));assert.ok(!allahHtml.includes('ٰ'));
 
 const sakkalAllahHtml=renderToStaticMarkup(sakkalPrintNodes(createElement('span',{style:{fontFamily:'Sakkal Kitab'}},'الله')));
-assert.ok(!sakkalAllahHtml.includes('font-feature-settings'));
+assert.ok(sakkalAllahHtml.includes('&quot;ss14&quot; 1'));
+assert.ok(!sakkalAllahHtml.includes('&quot;liga&quot; 0'));
+
+assert.equal(sakkalInitialBa('بِّسْم'), 'ﺑـِّسْم');
+assert.equal(sakkalInitialBa('ﺑِـسْم'), 'ﺑـِسْم');

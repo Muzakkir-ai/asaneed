@@ -17,6 +17,6 @@ export function sakkalPrintNodes(nodes:ReactNode,inherited=false,routeFont='Sakk
   const exempt=classes.some(c=>['certificate-symbol','certificate-qcf','certificate-ayah-marker','certificate-verse-bracket'].includes(c));
   const active=exempt?false:forced||classes.includes('certificate-footer-name')||classes.includes('certificate-salawat')?true:font?font.includes('Sakkal Kitab'):inherited;
   if(node.props.children===undefined)return node;
-  return cloneElement(node,{},sakkalPrintNodes(node.props.children,active,routeFont,forced&&!exempt,active?'Sakkal Kitab':font||inheritedFont));
+  return cloneElement(node,active?{style:{...node.props.style,fontFeatureSettings:'"ss14" 1, "ss16" 1'}}:font?{style:{...node.props.style,fontFeatureSettings:node.props.style?.fontFeatureSettings||'normal'}}:{},sakkalPrintNodes(node.props.children,active,routeFont,forced&&!exempt,active?'Sakkal Kitab':font||inheritedFont));
  });
 }
