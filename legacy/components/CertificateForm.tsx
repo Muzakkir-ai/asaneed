@@ -178,7 +178,7 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent dir="rtl" className="text-right">
-        <DialogHeader className="text-right"><DialogTitle className="font-display text-2xl">{cert ? 'تعديل بيانات الطالب' : 'إضافة طالب'}</DialogTitle></DialogHeader>
+        <DialogHeader className="text-right"><DialogTitle className="font-display text-2xl">{cert ? 'تعديل بيانات الشهادة' : 'إضافة شهادة'}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>اسم الطالب</Label>
