@@ -12,7 +12,7 @@ async function main(){
  admin=true;
  await assert.rejects(()=>call({action:'create',name:'Actor',email:'actor@example.test',password:'test-password'}),/حساب بالفعل/);assert.equal(signupCalls,0);
  const result=await call({action:'create',name:'New',email:'new@example.test',password:'test-password',username:'new_user',role:'Shaykh'});
- assert.equal(signupCalls,1);assert.equal(result.createdUserId,'new-account');assert.equal(result.users.find(u=>u.id==='new-account').username,'new_user');assert.equal(records[1].role,'Shaykh');assert.equal(ctx.user.id,'actor-auth');
+ assert.equal(signupCalls,1);assert.equal(result.createdUserId,'new-account');assert.equal(result.users.find(u=>u.id==='new-account').username,'new_user');assert.equal(records[1].role,'Shaykh');assert.equal(records[1].active,false);assert.equal(result.confirmationRequired,true);assert.equal(ctx.user.id,'actor-auth');
  await call({action:'username',id:'new-account',username:'changed_name'});assert.equal(rows[1].username,'changed_name');
  console.log('PASS: admin-only account creation, duplicate protection, role/username assignment and unchanged administrator session');
 }

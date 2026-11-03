@@ -10,10 +10,10 @@ export default createEndpoint({
  description:'Administrator directory of stable user identities and roles',
  authenticated:true,
  inputSchema:z.object({action:z.enum(['list','update','create','username']).default('list'),id:z.string().optional(),email:z.string().trim().email().max(254).optional(),password:z.string().min(8).max(1024).optional(),username:z.string().trim().toLowerCase().regex(/^(?:[a-z][a-z0-9_]{2,29})?$/).optional(),name:z.string().optional(),role:z.enum(['Admin','Shaykh','Student']).optional(),active:z.boolean().optional(),authUserId:z.string().optional(),transferOwnership:z.boolean().optional(),legacyUserId:z.string().optional()}),
- outputSchema:z.object({createdUserId:z.string().optional(),warning:z.string().optional(),legacyProfiles:z.array(z.object({id:z.string(),name:z.string(),email:z.string()})),users:z.array(z.object({id:z.string(),stableId:z.string(),name:z.string(),email:z.string(),username:z.string(),role:z.string(),active:z.boolean(),authUserId:z.string(),legacyUserId:z.string()}))}),
+ outputSchema:z.object({createdUserId:z.string().optional(),confirmationRequired:z.boolean().optional(),warning:z.string().optional(),legacyProfiles:z.array(z.object({id:z.string(),name:z.string(),email:z.string()})),users:z.array(z.object({id:z.string(),stableId:z.string(),name:z.string(),email:z.string(),username:z.string(),role:z.string(),active:z.boolean(),authUserId:z.string(),legacyUserId:z.string()}))}),
  execute:async({input,context})=>{
   if(!await isAppAdmin(context.user.email))throw new ZiteError({code:'FORBIDDEN',message:'Admins only'});
-  let createdUserId:string|undefined,warning:string|undefined;
+  let createdUserId:string|undefined,warning:string|undefined,confirmationRequired:boolean|undefined;
   if(input.action==='username'){
    if(!input.id||input.username===undefined)throw Error('اختر الحساب وأدخل اسم الدخول');
    const {error}=await requestContext().client.rpc('admin_set_account_username',{target_account:input.id,new_username:input.username});
@@ -34,8 +34,10 @@ export default createEndpoint({
    const account=await requestContext().client.from('accounts').select('id').eq('auth_user_id',data.user.id).single();
    if(account.error||!account.data)throw Error('أُنشئ حساب الدخول؛ حدّث قائمة المستخدمين لإكمال تفعيله');
    const newAccountId=String(account.data.id);createdUserId=newAccountId;
+   const requestedActive=input.active??true;
+   confirmationRequired=requestedActive&&!data.user.email_confirmed_at;
    try{
-    await zite.appUsers.update({id:newAccountId,record:{name:input.name.trim(),role:input.role||'Student',active:input.active??true}});
+    await zite.appUsers.update({id:newAccountId,record:{name:input.name.trim(),role:input.role||'Student',active:requestedActive&&!confirmationRequired}});
     if(input.username){const result=await requestContext().client.rpc('admin_set_account_username',{target_account:newAccountId,new_username:input.username});if(result.error)throw result.error;}
    }catch{warning='أُنشئ الحساب، لكن لم تُحفظ جميع إعداداته. افتح إدارة الحساب لإكمالها.';}
   }
@@ -85,6 +87,6 @@ export default createEndpoint({
   const legacy=await requestContext().client.rpc('legacy_identity_choices');if(legacy.error)throw new Error(legacy.error.message);
   const aliases=await requestContext().client.from('accounts').select('id,username');if(aliases.error)throw aliases.error;
   const usernames=new Map((aliases.data||[]).map(a=>[a.id,a.username||'']));
-  return {createdUserId,warning,legacyProfiles:legacy.data,users:records.map(u=>({id:u.id,stableId:u.stableId||'',name:u.name||'',email:u.email||'',username:usernames.get(u.id)||'',role:u.role||'Shaykh',active:u.active===true,authUserId:u.authUserId||'',legacyUserId:u.legacyUserId||''}))};
+  return {createdUserId,confirmationRequired,warning,legacyProfiles:legacy.data,users:records.map(u=>({id:u.id,stableId:u.stableId||'',name:u.name||'',email:u.email||'',username:usernames.get(u.id)||'',role:u.role||'Shaykh',active:u.active===true,authUserId:u.authUserId||'',legacyUserId:u.legacyUserId||''}))};
  }
 });
