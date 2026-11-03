@@ -40,7 +40,7 @@ export default createEndpoint({
     if (!sanad || !owns(sanad.shaykh, uid)) throw new ZiteError({ code: 'NOT_FOUND', message: 'Invalid sanad', userFacingMessage: 'السند غير متاح لك' });
     // Defense in depth: never issue a NEW certificate for a combined qiraah,
     // including via direct endpoint calls with a manually saved sanad ID.
-    if(!input.id){
+    if(!input.id&&!sanad.matnCode){
       const heading=(sanad.chain||'').match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
       const matches=QURRA.flatMap(q=>q.rawis.map(r=>({imam:q.imam,rawi:r,label:displayRawi(q.id,r)})))
         .filter(v=>(heading.includes('رواية '+v.label)||heading.includes('رواية '+v.rawi))&&heading.includes(v.imam));

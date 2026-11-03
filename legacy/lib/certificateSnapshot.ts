@@ -1,3 +1,4 @@
+import {matnFormats} from './matnCertificate';
 import {currentRouteEmphasis} from './currentRouteEmphasis';
 import {currentPreservedRouteText} from './certificateRouteChoice';
 import {standardRouteSources} from './standardRouteSources';
@@ -13,6 +14,11 @@ const one=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{persist=true}:{persist?:boolean}={}){
  const sanad=await zite.asaneed.findOne({id:sanadId}).catch(()=>null);
  if(!sanad||one(sanad.shaykh)!==uid)throw new Error('السند غير موجود لهذا الحساب');
+ if(sanad.matnCode){
+  const {data,error}=await context().client.from('certificate_subjects').select('kind').eq('code',sanad.matnCode).single();
+  if(error||data?.kind!=='matn'||!sanad.chain?.trim())throw Error('سند المتن غير مكتمل');
+  return sanad.chain;
+ }
  // Additional-shaykh drafts use the chain validated when they were created or
  // transferred. Previewing must not rewrite their preserved sanad.
  if(sanad.additionalShaykh){
@@ -36,6 +42,16 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{pers
 }
 export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:string){
  const sanad=await zite.asaneed.findOne({id:sanadId});
+ if(sanad.matnCode){
+  const metadata=JSON.parse(sanad.matnFormatting||'{}');
+  const phrases:{text:string;font:string;size:number;color:string}[]=[];
+  for(const formats of [matnFormats(metadata.formats),matnFormats(metadata.introFormats),matnFormats(metadata.endFormats)]){
+   if(Array.isArray(formats))for(const f of formats)if(typeof f.text==='string'&&chain.includes(f.text))phrases.push({text:f.text,font:f.bold?'Sakkal Kitab':'KSA Regular',size:9,color:f.color==='primary'||f.color==='secondary'?f.color:'charcoal'});
+  }
+  const {records:styles}=await zite.sanadPrintStyles.findAll({filters:{sanadId},limit:50});
+  let settings:unknown=null;try{settings=JSON.parse(styles.find(s=>s.ownerId===uid)?.settings||'null');}catch{}
+  return JSON.stringify({matnDocument:metadata.document,transmission:null,routeEmphasis:{},phrases,settings,palette:null});
+ }
  const sourceOwner=sanad?.additionalShaykh?'guest:'+sanad.additionalShaykh:uid;
  const [{records:sections},{records:holdings},{records:styles}]=await Promise.all([
   zite.sanadSections.findAll({limit:2000}),

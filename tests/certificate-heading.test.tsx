@@ -19,3 +19,7 @@ assert.equal(svgReadingParts(nonstandard),null,'Do not display an unrelated rout
 assert.equal(svgReadingParts(nonstandard,{preserveHistoricalRoute:true})?.[4],'common/shatbiyah.svg','Preserve the existing finalized artwork selection');
 assert.equal(svgReadingParts('Unrecognized historical heading'),null);
 console.log('PASS: authentic Qalun/Warsh SVGs, paired qiraah headings, route selection, original dimensions, colors and frozen historical fallback');
+
+const matn=renderToStaticMarkup(<CertificateHeading heading="إجازة في المقدمة الجزرية" primary="#123456" secondary="#654321"/>);
+assert.ok(matn.includes('إجازة بالسند')&&matn.includes('المقدمة الجزرية'));
+assert.ok(!matn.includes('certificate-ijazah-svg'),'Matn certificates must not show Quran ijazah artwork');

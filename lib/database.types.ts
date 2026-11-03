@@ -46,24 +46,24 @@ export type Database = {
       }
       builder_books: {
         Row: {
-          artwork_number: string | null
           archived: boolean
+          artwork_number: string | null
           author_id: string
           id: string
           owner_id: string
           title: string
         }
         Insert: {
-          artwork_number?: string | null
           archived?: boolean
+          artwork_number?: string | null
           author_id: string
           id?: string
           owner_id: string
           title: string
         }
         Update: {
-          artwork_number?: string | null
           archived?: boolean
+          artwork_number?: string | null
           author_id?: string
           id?: string
           owner_id?: string
@@ -242,6 +242,35 @@ export type Database = {
           },
         ]
       }
+      builder_person_merges: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          snapshot: Json
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          snapshot: Json
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "builder_person_merges_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_snapshots: {
         Row: {
           certificate_id: string
@@ -267,6 +296,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      certificate_subjects: {
+        Row: {
+          code: string
+          created_at: string
+          display_name: string
+          kind: string
+          name_key: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          display_name: string
+          kind: string
+          name_key: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          display_name?: string
+          kind?: string
+          name_key?: string
+        }
+        Relationships: []
       }
       certificates: {
         Row: {
@@ -337,13 +390,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "certificates_riwayah_code_fkey"
-            columns: ["riwayah_code"]
-            isOneToOne: false
-            referencedRelation: "riwayat"
-            referencedColumns: ["code"]
-          },
-          {
             foreignKeyName: "certificates_sanad_id_fkey"
             columns: ["sanad_id"]
             isOneToOne: false
@@ -356,6 +402,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_subject_code_fkey"
+            columns: ["riwayah_code"]
+            isOneToOne: false
+            referencedRelation: "certificate_subjects"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -617,10 +670,22 @@ export type Database = {
       full_application_backup: { Args: never; Returns: Json }
       legacy_identity_choices: { Args: never; Returns: Json }
       list_application_accounts: { Args: never; Returns: Json }
+      merge_builder_people: {
+        Args: { expected_token?: string; source_id: string; target_id: string }
+        Returns: Json
+      }
       normalize_arabic: { Args: { value: string }; Returns: string }
       read_legacy_library: {
         Args: { page_number?: number; source_name?: string }
         Returns: Json
+      }
+      refresh_github_artwork: {
+        Args: { p_artwork: Json; p_revision: string; p_secret: string }
+        Returns: Json
+      }
+      register_matn_subject: {
+        Args: { matn_name: string; target_issuer: string }
+        Returns: string
       }
       reserve_certificate_number: {
         Args: { certificate_id: string }

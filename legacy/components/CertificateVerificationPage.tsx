@@ -28,8 +28,8 @@ export default function CertificateVerificationPage(){
      <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">رقم الشهادة</dt><dd><RegistrationNumber value={c.registrationNumber||c.certificateNumber}/></dd></div>
      <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">اسم المُجاز</dt><dd>{c.studentName}</dd></div>
      <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">اسم المُجيز</dt><dd>{c.issuerName}</dd></div>
-     <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">الرواية والقراءة والطريق</dt><dd>{c.reading}</dd></div>
-     <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">تاريخ الختم</dt><dd>{c.completionDate}</dd></div>
+     <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">{c.reading.startsWith('إجازة في ')?'المتن':'الرواية والقراءة والطريق'}</dt><dd>{c.reading}</dd></div>
+     <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">{c.reading.startsWith('إجازة في ')?'تاريخ الإتمام':'تاريخ الختم'}</dt><dd>{c.completionDate}</dd></div>
      <div className="py-3 flex justify-between gap-4"><dt className="text-muted-foreground">تاريخ الاعتماد</dt><dd>{new Date(c.publishedAt).toLocaleDateString('ar-SA')}</dd></div>
     </dl>
     <p className="text-sm text-muted-foreground">هذه الصفحة تؤكد تسجيل الشهادة في منصة الأسانيد والإجازات، ولا تُعدّ بديلًا عن الشهادة الأصلية.</p>

@@ -1,3 +1,4 @@
+import {isMatnHeading} from '../lib/matnCertificate';
 import {receivedSanad,type ReceivedSanadOutputType} from '../lib/api';
 import {Textarea} from '@project/components/ui/textarea';
 import {toast} from 'sonner';
@@ -34,7 +35,7 @@ export default function MyCertificatesPage({onPrint,onImported}:{onPrint:(c:Cert
      <p className="certificate-card-summary">{certificateSummary(c.qiraahName,c.qariId,c.rawi)}</p>
      <div className="certificate-card-meta"><RegistrationNumber value={c.registrationNumber||c.certificateNumber}/><time dateTime={c.completionDate}>{arDate(c.completionDate)}</time></div>
      <div className="flex items-center gap-2"><Button size="sm" variant="outline" onClick={()=>onPrint(c)}><Printer className="size-4 ml-2"/> عرض الشهادة</Button><CertificateRecordMenu name={c.studentName} onDetails={()=>setDetails(c)}/></div>
-     {canBuild&&<Button size="sm" variant="outline" disabled={!!importing||imported.includes(c.id)} onClick={()=>review(c)}>{imported.includes(c.id)?'مضافة إلى أسانيدي':importing===c.id?'جارٍ إعداد السند…':'استخدام في أسانيدي'}</Button>}
+     {canBuild&&!isMatnHeading(c.snapshotHeading||c.qiraahName)&&<Button size="sm" variant="outline" disabled={!!importing||imported.includes(c.id)} onClick={()=>review(c)}>{imported.includes(c.id)?'مضافة إلى أسانيدي':importing===c.id?'جارٍ إعداد السند…':'استخدام في أسانيدي'}</Button>}
    </CardContent></Card>;
   })}</div>{rows.filter(c=>matchesArabic([c.registrationNumber,c.shaykhName,c.qiraahName].join(' '),search)).length>(page+1)*12&&<Button variant="outline" onClick={()=>setPage(p=>p+1)}>عرض المزيد</Button>}
   <Dialog open={!!candidate} onOpenChange={v=>{if(!v&&!importing)setCandidate(null);}}><DialogContent dir="rtl" className="max-w-3xl max-h-[90vh] overflow-y-auto"><DialogTitle>مراجعة السند المنقول إلى أسانيدي</DialogTitle><p>المجيز: {candidate?.teacherName}</p><p className="text-sm text-muted-foreground">تُضاف عبارة «كما أخذته عن الشيخ» واسم مُجيزك قبل بقية سنده. راجع النص قبل الحفظ. الشهادة المستلمة تبقى محفوظة كما هي، وهذه نسخة شخصية قابلة للتعديل.</p><Textarea aria-label="السند المنقول" dir="rtl" rows={12} value={chain} onChange={e=>setChain(e.target.value)}/><Button disabled={!!importing||chain.trim().length<100} onClick={saveCopy}>تأكيد وحفظ في أسانيدي</Button></DialogContent></Dialog>

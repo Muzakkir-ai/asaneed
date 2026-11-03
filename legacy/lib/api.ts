@@ -124,3 +124,7 @@ export type VerifyCertificateInputType=z.input<typeof verifyCertificateEndpoint.
 export type VerifyCertificateOutputType=z.infer<typeof verifyCertificateEndpoint.outputSchema>;
 export const verifyCertificate=(input:VerifyCertificateInputType):Promise<VerifyCertificateOutputType>=>call('verifyCertificate',input);
 async function call<T>(name:string,input:unknown):Promise<T>{const response=await fetch('/api/workspace/'+name,{method:'POST',headers:{'content-type':'application/json',...workspaceHeaders()},body:JSON.stringify(input)});const data=await response.json();if(response.status===401)window.dispatchEvent(new Event('asaneed-session-expired'));if(!response.ok)throw new Error(data.error||'Unable to complete request');return data;}
+
+import type matnCertificatesEndpoint from '../api/matnCertificates';
+export type MatnCertificatesOutputType=z.infer<typeof matnCertificatesEndpoint.outputSchema>;
+export const matnCertificates=(input:z.input<typeof matnCertificatesEndpoint.inputSchema>):Promise<MatnCertificatesOutputType>=>call('matnCertificates',input);

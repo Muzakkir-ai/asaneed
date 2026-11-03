@@ -81,7 +81,8 @@ async function write(kind:string,id:string|undefined,record:Record<string,unknow
   const sanadId=first(record.sanad)||old?.sanad_id;let sanadQuery=await client.from('sanads').select('*').eq('id',sanadId).maybeSingle();if(sanadQuery.error)throw new Error(sanadQuery.error.message);if(!sanadQuery.data){const source=checked(await client.from('workspace_records').select('payload').eq('kind','asaneed').eq('id',sanadId).single());if(first(source.payload.shaykh)!==user.id)throw Error('Sanad owner must be verified');await write('asaneed',sanadId,{title:source.payload.title,chain:source.payload.chain});sanadQuery=await client.from('sanads').select('*').eq('id',sanadId).single();}const sanad=checked(sanadQuery);
   if(old&&old.issuer_id!==sanad.issuer_id)throw Error('Issuer cannot change');
   const identity=readingIdentityFromHeading((sanad.body.chain??'').match(/^【بيان القراءة:([^】]+)】/)?.[1]??'');
-  const code=identity&&RIWAYAH_CODES[identity.qariId+'|'+identity.rawi];if(!code)throw Error('A single riwayah is required');
+  const code=sanad.body?.editor?.matnCode||(identity&&RIWAYAH_CODES[identity.qariId+'|'+identity.rawi]);if(!code)throw Error('A certificate subject is required');
+  if(sanad.body?.editor?.matnCode){const subject=checked(await client.from('certificate_subjects').select('kind').eq('code',code).single());if(subject.kind!=='matn')throw Error('Invalid matn code');}
   const editor={...old?.draft?.editor,...record};const studentId=record.studentName?await rememberStudent(String(record.studentName)):old?.student_id;
   const patch={student_id:studentId,sanad_id:sanadId,riwayah_code:code,completion_date:record.completionDate??old?.completion_date,draft:{...old?.draft,editor,studentName:record.studentName??old?.draft?.studentName}};
   const data=old?checked(await client.from('certificates').update(patch).eq('id',id).select().single()):checked(await client.from('certificates').insert({...patch,issuer_id:sanad.issuer_id}).select().single());

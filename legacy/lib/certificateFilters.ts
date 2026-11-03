@@ -1,9 +1,9 @@
-export type CertificateFilters={query:string;issuer:string;qari:string;rawi:string;year:string;status:string;sort:'added'|'completion'|'name'};
+export type CertificateFilters={query:string;issuer:string;qari:string;rawi:string;year:string;status:string;sort:'added'|'completion'|'completion-desc'|'name'};
 export const defaultCertificateFilters:CertificateFilters={query:'',issuer:'all',qari:'all',rawi:'all',year:'all',status:'all',sort:'completion'};
 const TTL=4*60*60*1000;
 export function decodeCertificateFilters(value:string|null,now=Date.now()):CertificateFilters{
  try{const stored=JSON.parse(value||'null');if(![1,2].includes(stored?.version)||typeof stored.savedAt!=='number'||now-stored.savedAt>TTL||stored.savedAt>now)return {...defaultCertificateFilters};const f=stored.filters;
- return {query:typeof f.query==='string'?f.query.slice(0,200):'',issuer:typeof f.issuer==='string'?f.issuer:'all',qari:typeof f.qari==='string'?f.qari:'all',rawi:typeof f.rawi==='string'?f.rawi:'all',year:typeof f.year==='string'?f.year:'all',status:['draft','final'].includes(f.status)?f.status:'all',sort:['added','completion','name'].includes(f.sort)?f.sort:'completion'};
+ return {query:typeof f.query==='string'?f.query.slice(0,200):'',issuer:typeof f.issuer==='string'?f.issuer:'all',qari:typeof f.qari==='string'?f.qari:'all',rawi:typeof f.rawi==='string'?f.rawi:'all',year:typeof f.year==='string'?f.year:'all',status:['draft','final'].includes(f.status)?f.status:'all',sort:['added','completion','completion-desc','name'].includes(f.sort)?f.sort:'completion'};
  }catch{return {...defaultCertificateFilters};}
 }
 export function encodeCertificateFilters(filters:CertificateFilters,now=Date.now()){return JSON.stringify({version:2,savedAt:now,filters});}

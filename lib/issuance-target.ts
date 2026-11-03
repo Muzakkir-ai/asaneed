@@ -2,9 +2,16 @@ import type {SupabaseClient} from '@supabase/supabase-js';
 import type {WorkspaceScope} from '../legacy/compat/context';
 /** Explicit per-operation target, never a global workspace selection. */
 export async function issuanceTargetScope(client:SupabaseClient,scope:WorkspaceScope,actorRole:string,endpoint:string,input:Record<string,unknown>){
+ if(endpoint==='matnCertificates'&&typeof input.issuerKey==='string'&&input.issuerKey.startsWith('guest:')){
+  if(actorRole!=='admin'||scope.inspection||scope.readOnly)throw Error('Administrator workspace required');
+  const id=input.issuerKey.slice(6);
+  const {data,error}=await client.from('issuers').select('id,print_profile').eq('id',id).single();
+  if(error||!data||data.print_profile?.personalAccount)throw Error('Additional issuer unavailable');
+  return {...scope,issuerIds:[id],system:false};
+ }
  const certificateOperation=['certificateDraftPreview','finalizeCertificate','certificatePrintAuthorization'].includes(endpoint);
- const supported=certificateOperation||endpoint==='ijazahHoldings'&&(input.action??'list')==='list'||['prepareIjazah','issueQiraah','saveCertificate'].includes(endpoint);
- let owner=endpoint==='saveCertificate'?input.shaykhId:input.ownerId;
+ const supported=certificateOperation||endpoint==='ijazahHoldings'&&(input.action??'list')==='list'||['prepareIjazah','issueQiraah','saveCertificate','matnCertificates'].includes(endpoint);
+ let owner=endpoint==='matnCertificates'&&typeof input.issuerKey==='string'?input.issuerKey.replace(/^user:/,''):endpoint==='saveCertificate'?input.shaykhId:input.ownerId;
  if(certificateOperation&&actorRole==='admin'&&typeof input.certificateId==='string'){
   const {data:certificate,error}=await client.from('certificates').select('issuer_id').eq('id',input.certificateId).single();
   if(error||!certificate)throw Error('Certificate unavailable');

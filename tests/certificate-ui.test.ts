@@ -15,3 +15,6 @@ assert.equal(certificateSummary('برواية ورش عن الإمام نافع 
 assert.equal(certificateSummary('بقراءة نافع المدني بروايتي قالون وورش من طريقي الشاطبية والتيسير'),'قراءة نافع المدني بروايتي قالون وورش · الشاطبية والتيسير');
 assert.equal(certificateSummary('برواية حفص عن الإمام عاصم الكوفي من طريق المصباح عن الفيل','asim','حفص'),'حفص عن عاصم · المصباح عن الفيل');
 console.log('PASS: scoped filter persistence/expiry, stale choices, dependent rawi reset, and concise summaries preserving the selected route');
+
+const newestCompletion={...defaultCertificateFilters,sort:'completion-desc' as const};
+assert.equal(decodeCertificateFilters(encodeCertificateFilters(newestCompletion)).sort,'completion-desc');

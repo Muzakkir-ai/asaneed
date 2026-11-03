@@ -6,6 +6,12 @@ const client:any={from:(table:string)=>({select:()=>({eq:()=>table==='accounts'?
 async function main(){
  const scope=await issuanceTargetScope(client,base,'admin','ijazahHoldings',{action:'list',ownerId:'umar-auth'});
  assert.equal(scope.authUserId,'umar-auth');assert.deepEqual(scope.issuerIds,['04']);
+ const matn=await issuanceTargetScope(client,base,'admin','matnCertificates',{issuerKey:'user:umar-auth'});
+ assert.equal(matn.authUserId,'umar-auth');
+ const guestClient:any={from:()=>({select:()=>({eq:()=>({single:async()=>({data:{id:'guest-id',print_profile:{}},error:null})})})})};
+ const guest=await issuanceTargetScope(guestClient,base,'admin','matnCertificates',{issuerKey:'guest:guest-id'});
+ assert.deepEqual(guest.issuerIds,['guest-id']);
+ await assert.rejects(()=>issuanceTargetScope(guestClient,base,'shaykh','matnCertificates',{issuerKey:'guest:guest-id'}),/Administrator/);
  assert.equal(base.authUserId,'actor-auth','Operation must not change the global selection');
  await assert.rejects(()=>issuanceTargetScope(client,base,'shaykh','prepareIjazah',{ownerId:'umar-auth'}),/Administrator/);
  await assert.rejects(()=>issuanceTargetScope(client,{...base,inspection:true,readOnly:true},'admin','prepareIjazah',{ownerId:'umar-auth'}),/Return/);

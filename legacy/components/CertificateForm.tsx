@@ -33,9 +33,9 @@ const schema = z.object({
   sanadId: z.string().min(1, 'اختر القراءة'),
 });
 
-type Props = { selectedIssuer?:string; cert: Cert | null; asaneed: Data['asaneed']; shaykhs:Data['shaykhs']; isAdmin:boolean; currentUserId:string; onClose: () => void; onSaved: () => void };
+type Props = { fixedIssuer?:boolean;onBack?:()=>void;selectedIssuer?:string; cert: Cert | null; asaneed: Data['asaneed']; shaykhs:Data['shaykhs']; isAdmin:boolean; currentUserId:string; onClose: () => void; onSaved: () => void };
 
-export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs, isAdmin, currentUserId, onClose, onSaved }: Props) {
+export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssuer, cert, asaneed, shaykhs, isAdmin, currentUserId, onClose, onSaved }: Props) {
   const preferredPersonal=selectedIssuer?.startsWith('user:')?selectedIssuer.slice(5):'';
   const [form, setForm] = useState({
     studentName: cert?.studentName ?? '',
@@ -178,38 +178,13 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent dir="rtl" className="text-right">
+        {onBack&&<Button variant="outline" size="sm" onClick={onBack}>رجوع إلى المُجيز</Button>}
         <DialogHeader className="text-right"><DialogTitle className="font-display text-2xl">{cert ? 'تعديل بيانات الشهادة' : 'إضافة شهادة'}</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>اسم الطالب</Label>
-            <div className="space-y-2">
-              {!addingStudent&&<div className="relative">
-                <button type="button" aria-expanded={studentListOpen} aria-label="اختر الطالب" onClick={()=>{setStudentListOpen(v=>!v);setStudentSearch('');}} className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-background px-3 text-right shadow-sm hover:bg-muted/40">
-                  <span className={form.studentName?'min-w-0 truncate':'text-muted-foreground'}>{form.studentName||'اختر الطالب'}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground"/>
-                </button>
-                {studentListOpen&&<div className="mt-2 w-full overflow-hidden rounded-lg border bg-background shadow-sm">
-                  {savedStudents.length>0&&<div className="relative border-b px-2 py-1"><Search className="absolute right-4 top-3.5 h-4 w-4 text-muted-foreground"/><Input className="border-0 pr-9 shadow-none focus-visible:ring-0" placeholder="ابحث عن طالب" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/></div>}
-                  {studentsLoading&&<p role="status" className="p-3 text-sm">جارٍ تحميل قائمة الطلاب المشتركة…</p>}
-                  {studentsError&&<div role="alert" className="p-3 text-sm"><p>{studentsError}</p><Button variant="outline" size="sm" onClick={()=>setStudentsAttempt(v=>v+1)}>إعادة المحاولة</Button></div>}
-                  <div className="max-h-44 overflow-y-auto p-1" role="listbox" aria-label="الطلاب المحفوظون">
-                    {savedStudents.filter(name=>matchesArabic(name,studentSearch)).map(name=><div key={name} className="flex items-center gap-1">
-                      <button type="button" role="option" aria-selected={form.studentName===name} onClick={()=>{setForm(prev=>({...prev,studentName:name}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{name}</span>{form.studentName===name&&<Check className="h-4 w-4 shrink-0"/>}</button>
-                      {isAdmin&&<Button type="button" size="icon" variant="ghost" disabled={!studentEntries.find(row=>row.name===name)?.canDelete} aria-label={'حذف الطالب '+name} title={studentEntries.find(row=>row.name===name)?.canDelete?'حذف الاسم من القائمة':'لدى الطالب إجازة محفوظة؛ لا يمكن حذف اسمه'} onClick={()=>setStudentToDelete(name)}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
-                    </div>)}
-                    {isAdmin&&savedStudents.length>0&&<p className="px-3 py-2 text-xs text-muted-foreground">حذف الاسم متاح فقط إذا لم توجد للطالب إجازة محفوظة.</p>}
-                    {!studentsLoading&&!studentsError&&savedStudents.filter(name=>matchesArabic(name,studentSearch)).length===0&&<p className="px-3 py-3 text-center text-sm text-muted-foreground">لا يوجد طالب محفوظ</p>}
-                  </div>
-                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:''}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
-                </div>}
-              </div>}
-              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
-            </div>
-            {err('studentName')}
-          </div>
+          {fixedIssuer&&!isAdmin&&<p className="rounded border p-3">المُجيز: {shaykhs.find(s=>s.id===form.shaykhId)?.name||'إجازاتي'}</p>}
           {isAdmin&&<div className="space-y-1.5">
             <Label>المُجيز (الشيخ صاحب الإجازة)</Label>
-            <Select dir="rtl" disabled={!!cert} value={form.shaykhId} onValueChange={v=>setForm(prev=>({...prev,shaykhId:v,sanadId:''}))}>
+            <Select dir="rtl" disabled={!!cert||fixedIssuer} value={form.shaykhId} onValueChange={v=>setForm(prev=>({...prev,shaykhId:v,sanadId:''}))}>
               <SelectTrigger><SelectValue placeholder="اختر المُجيز" /></SelectTrigger>
               <SelectContent>
                 <SelectGroup><SelectLabel>مشايخ لهم إجازات في حساباتهم</SelectLabel>
@@ -263,6 +238,33 @@ export default function CertificateForm({ selectedIssuer, cert, asaneed, shaykhs
             {err('sanadId')}
           </div>
           {previewChoices.length>0&&<details className="rounded-lg border p-3" onToggle={e=>setHeadingPreviewOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-semibold">معاينة عنوان الإجازة قبل الحفظ</summary>{headingPreviewOpen&&<div className="space-y-3 mt-3">{previewChoices.length>1&&<p className="text-xs text-muted-foreground">القراءة كاملة: تُنشأ شهادتان مستقلتان، وهذه معاينة عنوان كل رواية.</p>}{previewColorError?<p role="alert" className="text-sm text-destructive">تعذر تحميل ألوان الروايات. أغلق المعاينة وافتحها لإعادة المحاولة.</p>:!previewColors?<p role="status">جارٍ تحميل المعاينة…</p>:previewChoices.map(choice=>{const colors=previewColors.find(c=>c.qariId===choice.qariId&&c.rawi===choice.rawi);return <div key={choice.heading} className="rounded border bg-white"><CertificateHeadingPreview heading={choice.heading} primary={colors?.primaryColor||'#926e35'} secondary={colors?.secondaryColor||'#075f69'}/></div>;})}</div>}</details>}
+          <div className="space-y-1.5">
+            <Label>اسم الطالب</Label>
+            <div className="space-y-2">
+              {!addingStudent&&<div className="relative">
+                <button type="button" aria-expanded={studentListOpen} aria-label="اختر الطالب" onClick={()=>{setStudentListOpen(v=>!v);setStudentSearch('');}} className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-background px-3 text-right shadow-sm hover:bg-muted/40">
+                  <span className={form.studentName?'min-w-0 truncate':'text-muted-foreground'}>{form.studentName||'اختر الطالب'}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground"/>
+                </button>
+                {studentListOpen&&<div className="mt-2 w-full overflow-hidden rounded-lg border bg-background shadow-sm">
+                  {savedStudents.length>0&&<div className="relative border-b px-2 py-1"><Search className="absolute right-4 top-3.5 h-4 w-4 text-muted-foreground"/><Input className="border-0 pr-9 shadow-none focus-visible:ring-0" placeholder="ابحث عن طالب" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/></div>}
+                  {studentsLoading&&<p role="status" className="p-3 text-sm">جارٍ تحميل قائمة الطلاب المشتركة…</p>}
+                  {studentsError&&<div role="alert" className="p-3 text-sm"><p>{studentsError}</p><Button variant="outline" size="sm" onClick={()=>setStudentsAttempt(v=>v+1)}>إعادة المحاولة</Button></div>}
+                  <div className="max-h-44 overflow-y-auto p-1" role="listbox" aria-label="الطلاب المحفوظون">
+                    {savedStudents.filter(name=>matchesArabic(name,studentSearch)).map(name=><div key={name} className="flex items-center gap-1">
+                      <button type="button" role="option" aria-selected={form.studentName===name} onClick={()=>{setForm(prev=>({...prev,studentName:name}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{name}</span>{form.studentName===name&&<Check className="h-4 w-4 shrink-0"/>}</button>
+                      {isAdmin&&<Button type="button" size="icon" variant="ghost" disabled={!studentEntries.find(row=>row.name===name)?.canDelete} aria-label={'حذف الطالب '+name} title={studentEntries.find(row=>row.name===name)?.canDelete?'حذف الاسم من القائمة':'لدى الطالب إجازة محفوظة؛ لا يمكن حذف اسمه'} onClick={()=>setStudentToDelete(name)}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                    </div>)}
+                    {isAdmin&&savedStudents.length>0&&<p className="px-3 py-2 text-xs text-muted-foreground">حذف الاسم متاح فقط إذا لم توجد للطالب إجازة محفوظة.</p>}
+                    {!studentsLoading&&!studentsError&&savedStudents.filter(name=>matchesArabic(name,studentSearch)).length===0&&<p className="px-3 py-3 text-center text-sm text-muted-foreground">لا يوجد طالب محفوظ</p>}
+                  </div>
+                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:''}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
+                </div>}
+              </div>}
+              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
+            </div>
+            {err('studentName')}
+          </div>
           <div className="space-y-1.5">
             <Label>تاريخ الختم</Label>
             <DatePicker inlineCalendar value={fromIso(form.completionDate)} onChange={(d) => setForm({ ...form, completionDate: d ? toIso(d) : '' })} />
