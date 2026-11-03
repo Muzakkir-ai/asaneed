@@ -10,7 +10,7 @@ import {getDraftSanadForCertificate,collectSnapshotFormatting} from '../lib/cert
 
 const font=z.enum(['KSA Regular','Sakkal Kitab','Majalla','Bahij Muna','Amiri']);
 const color=z.enum(['primary','secondary','charcoal']);
-const typography=z.object({font,size:z.number().min(6).max(30),color,scalePercent:z.number().min(50).max(150).optional(),lineSpacing:z.number().min(1).max(3).optional(),paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional(),alignment:z.enum(['right','center','justify']).optional()});
+const typography=z.object({font,size:z.number().min(6).max(30),color,headingGapMm:z.number().min(0).max(20).optional(),lastLineAlignment:z.enum(['right','center']).optional(),svgHeightPt:z.number().min(5).max(100).optional(),scalePercent:z.number().min(50).max(150).optional(),lineSpacing:z.number().min(1).max(3).optional(),paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional(),alignment:z.enum(['right','center','justify']).optional()});
 const style=z.object({borderColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),accentColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),typography:z.object({reading:typography,sanad:typography,conclusion:typography,shaykh:typography}),phrases:z.array(z.object({text:z.string().min(1).max(300),font,size:z.number().min(6).max(30),color})).max(80)});
 const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 

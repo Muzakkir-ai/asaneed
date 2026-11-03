@@ -42,3 +42,12 @@ assert.ok(historical.includes('إجازة بالسند')&&!historical.includes('
 const partial=renderToStaticMarkup(<CertificateHeading {...bookProps} artwork={bookCatalog.slice(0,1)}/>);
 assert.ok(partial.includes('/books/02/heading.svg')&&!partial.includes('/books/02/line-02.svg'));
 console.log('PASS: numbered book SVG lookup, shared aspect-preserving scaling, pinned source, missing-line and frozen historical fallback');
+
+const fifteen=renderToStaticMarkup(<CertificateHeading {...bookProps} matnHeightPt={15}/>);
+const dims15=[...fifteen.matchAll(/width:([\d.]+)mm;height:([\d.]+)mm/g)].map(m=>[Number(m[1]),Number(m[2])]);
+assert.ok(Math.abs(dims15[0][1]-15*25.4/72)<1e-8,'Upper matn SVG has exact 15pt height');
+assert.ok(Math.abs(dims15[1][0]/dims15[0][0]-184.97/186.29)<1e-8,'Lower SVG shares upper scale');
+const thirty=renderToStaticMarkup(<CertificateHeading {...bookProps} matnHeightPt={30}/>);
+const dims30=[...thirty.matchAll(/width:([\d.]+)mm;height:([\d.]+)mm/g)].map(m=>[Number(m[1]),Number(m[2])]);
+assert.ok(Math.abs(dims30[1][1]/dims15[1][1]-2)<1e-8);
+console.log('PASS: 15pt matn SVG height and linked resizing of both artwork lines');

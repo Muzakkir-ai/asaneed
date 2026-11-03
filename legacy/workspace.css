@@ -178,7 +178,7 @@
 /* User-selected khatimah alignment overrides the historical centered default. */
 .zite-app .certificate-composed-sanad .certificate-conclusion {
  text-align: var(--certificate-alignment, center) !important;
- text-align-last: var(--certificate-alignment, center) !important;
+ text-align-last: var(--certificate-last-alignment, var(--certificate-alignment, center)) !important;
 }
 
 .zite-app .certificate-composed-sanad .certificate-qcf,

@@ -11,6 +11,10 @@ async function main(){
  assert.ok(html.includes('text-align:center')&&html.includes('padding-inline-start:16px')&&html.includes('font-weight:700'));
  assert.ok(!html.includes('p-5')&&!html.includes('{{'));
  assert.equal(f.text,'سند');
+ const justified=renderToStaticMarkup(React.createElement(mod.exports.MatnPreview,{bare:true,justifyParagraphs:true,sanad:'سند محفوظ',formats:[f],end:'الخاتمة',conclusionStyle:{textAlign:'justify',textAlignLast:'center'}}));
+ assert.ok(justified.includes('text-align:justify;text-align-last:center'));
+ const rightLast=renderToStaticMarkup(React.createElement(mod.exports.MatnPreview,{bare:true,justifyParagraphs:true,sanad:'سند محفوظ',bodyStyle:{textAlign:'justify',textAlignLast:'right'}}));
+ assert.ok(rightLast.includes('text-align-last:right')); 
  assert.ok(html.includes('font-size:85%')&&html.includes('line-height:1.4')&&html.includes('margin-block-end:8pt')&&html.includes('text-indent:6mm'));
  const endHtml=renderToStaticMarkup(React.createElement(mod.exports.MatnPreview,{bare:true,sanad:'سند',end:'الخاتمة',conclusionStyle:{textAlign:'right',lineHeight:1.2}}));
  assert.ok(endHtml.includes('text-align:right')&&endHtml.includes('line-height:1.2')); 
