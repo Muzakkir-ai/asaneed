@@ -23,6 +23,7 @@ export type Database = {
           id: string
           legacy_auth_id: string | null
           role: string
+          username: string | null
         }
         Insert: {
           active?: boolean
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           legacy_auth_id?: string | null
           role: string
+          username?: string | null
         }
         Update: {
           active?: boolean
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           legacy_auth_id?: string | null
           role?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -668,6 +671,7 @@ export type Database = {
         Returns: string
       }
       full_application_backup: { Args: never; Returns: Json }
+      get_account_username: { Args: never; Returns: string }
       legacy_identity_choices: { Args: never; Returns: Json }
       list_application_accounts: { Args: never; Returns: Json }
       merge_builder_people: {
@@ -691,6 +695,10 @@ export type Database = {
         Args: { certificate_id: string }
         Returns: string
       }
+      resolve_account_username: {
+        Args: { login_username: string; lookup_key: string }
+        Returns: string
+      }
       restore_application_backup: {
         Args: { data: Json; overwrite?: boolean }
         Returns: Json
@@ -707,6 +715,7 @@ export type Database = {
       }
       save_builder_chain: { Args: { record: Json }; Returns: string }
       save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
+      set_account_username: { Args: { new_username: string }; Returns: string }
       set_issuer_assignment: {
         Args: { enabled: boolean; issuer: string; target: string }
         Returns: undefined

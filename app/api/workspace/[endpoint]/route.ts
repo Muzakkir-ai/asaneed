@@ -19,7 +19,7 @@ export async function POST(request:Request,{params}:{params:Promise<{endpoint:st
  if(error||!user)return NextResponse.json({error:'Sign in required'},{status:401});
  const {data:account,error:accountError}=await client.from('accounts').select('id,display_name,role,active').eq('auth_user_id',user.id).maybeSingle();
  if(accountError||!account?.active)return NextResponse.json({error:'Account activation required'},{status:403});
- if(account.role==='student'&&!['myCertificates','certificatePrintAuthorization','assetSource','getDashboard','saveProfile'].includes(endpoint))return NextResponse.json({error:'Staff access required'},{status:403});
+ if(account.role==='student'&&!['accountUsername','myCertificates','certificatePrintAuthorization','assetSource','getDashboard','saveProfile'].includes(endpoint))return NextResponse.json({error:'Staff access required'},{status:403});
  try{
   const text=await request.text();if(text.length>15000000)return NextResponse.json({error:'Request too large'},{status:413});const body=JSON.parse(text);
   // Administrative directories use existing RLS grants, independently of list filters.

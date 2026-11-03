@@ -128,3 +128,6 @@ async function call<T>(name:string,input:unknown):Promise<T>{const response=awai
 import type matnCertificatesEndpoint from '../api/matnCertificates';
 export type MatnCertificatesOutputType=z.infer<typeof matnCertificatesEndpoint.outputSchema>;
 export const matnCertificates=(input:z.input<typeof matnCertificatesEndpoint.inputSchema>):Promise<MatnCertificatesOutputType>=>call('matnCertificates',input);
+
+import type accountUsernameEndpoint from '../api/accountUsername';
+export const accountUsername=(input:z.input<typeof accountUsernameEndpoint.inputSchema>):Promise<z.infer<typeof accountUsernameEndpoint.outputSchema>>=>call('accountUsername',input);

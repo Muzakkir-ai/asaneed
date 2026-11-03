@@ -1,12 +1,15 @@
 'use server';
+import {loginEmail} from '../../lib/username-login';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../lib/supabase/server';
 import { appOrigin, googleEnabled, validEmail, validPassword } from '../../lib/auth';
 export async function login(form: FormData) {
-  const email = String(form.get('email') ?? '').trim();
+  const identifier = String(form.get('email') ?? '').trim();
   const password = String(form.get('password') ?? '');
-  if (!validEmail(email) || !password || password.length > 1024) redirect('/login?error=invalid');
+  if (!identifier || identifier.length>254 || !password || password.length > 1024) redirect('/login?error=invalid');
   const client = await createClient();
+  const email=await loginEmail(client,identifier);
+  if(!email)redirect('/login?error=invalid');
   const { error } = await client.auth.signInWithPassword({ email, password });
   if (error) redirect('/login?error=invalid');
   redirect('/studio');
@@ -29,9 +32,11 @@ export async function register(form: FormData) {
  redirect('/login?notice=signup');
 }
 export async function requestReset(form: FormData) {
- const email=String(form.get('email')??'').trim();
- if(!validEmail(email))redirect('/forgot-password?error=invalid');
+ const identifier=String(form.get('email')??'').trim();
+ if(!identifier||identifier.length>254)redirect('/forgot-password?error=invalid');
  const client=await createClient();
+ const email=await loginEmail(client,identifier);
+ if(!email)redirect('/forgot-password?notice=sent');
  const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:`${appOrigin}/auth/callback?flow=recovery`});
  if(error)redirect('/forgot-password?error=request');
  redirect('/forgot-password?notice=sent');
