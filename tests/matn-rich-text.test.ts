@@ -17,3 +17,18 @@ const inserted=editMatnFormats('abcd','abXcd',setMatnStyle('abcd',[],0,4,style))
 const unrelated=editMatnFormats('one two three','one TWO three',setMatnStyle('one two three',[],8,13,style));assert.equal(unrelated[0].text,'three');
 assert.deepEqual(editMatnFormats(before,before,f),f);
 console.log('PASS: edits preserve/split styles, Arabic repeated names, insert/delete/replace, no unrelated drift');
+
+// Paragraph layout must preserve differently styled scholarly names.
+const mixed='أحمد عن محمد';
+const colored=setMatnStyle(mixed,[],0,4,style);
+const {applyMatnPatch}=require('../legacy/lib/matnRichText');
+const laidOut=applyMatnPatch(mixed,colored,0,mixed.length,{sizePercent:85,lineSpacing:1.4,paragraphSpacing:8,firstLineIndent:6,alignment:'right'});
+assert.equal(laidOut[0].color,'primary');assert.equal(laidOut[0].bold,true);
+assert.equal(laidOut.at(-1).color,'default');
+for(const span of laidOut){assert.equal(span.sizePercent,85);assert.equal(span.lineSpacing,1.4);assert.equal(span.paragraphSpacing,8);assert.equal(span.firstLineIndent,6);assert.equal(span.alignment,'right');}
+const reopened=JSON.parse(JSON.stringify(laidOut));
+const edited=editMatnFormats(mixed,'ثم '+mixed,reopened);
+assert.equal(edited[0].firstLineIndent,6);assert.equal(edited[0].text,'ثم أحمد');
+const restyled=applyMatnPatch(mixed,reopened,0,4,{color:'secondary'});
+assert.equal(restyled[0].sizePercent,85);assert.equal(restyled[0].paragraphSpacing,8);
+console.log('PASS: percentage/paragraph layout survives save, edits and color changes without losing mixed emphasis');

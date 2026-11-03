@@ -23,3 +23,22 @@ console.log('PASS: authentic Qalun/Warsh SVGs, paired qiraah headings, route sel
 const matn=renderToStaticMarkup(<CertificateHeading heading="إجازة في المقدمة الجزرية" primary="#123456" secondary="#654321"/>);
 assert.ok(matn.includes('إجازة بالسند')&&matn.includes('المقدمة الجزرية'));
 assert.ok(!matn.includes('certificate-ijazah-svg'),'Matn certificates must not show Quran ijazah artwork');
+
+const bookCatalog:import('../legacy/lib/artworkCatalog').Artwork[]=[
+ {kind:'books',number:'02',line:'heading',path:'svg/books/02/heading.svg',label:'المقدمة الجزرية',width:186.29,height:48.19},
+ {kind:'books',number:'02',line:'line-02',path:'svg/books/02/line-02.svg',label:'المقدمة الجزرية',width:184.97,height:19.84},
+];
+const bookProps={heading:'إجازة في المُقدّمة الجزرية',primary:'#123456',secondary:'#654321',artwork:bookCatalog,artworkBase:'https://cdn.example/pinned'};
+const art=renderToStaticMarkup(<CertificateHeading {...bookProps}/>);
+assert.ok(art.includes('/pinned/svg/books/02/heading.svg')&&art.includes('/pinned/svg/books/02/line-02.svg'));
+assert.ok(!art.includes('إجازة بالسند'));assert.ok(art.includes('background-color:#123456')&&art.includes('background-color:#654321'));
+const dimensions=[...art.matchAll(/width:([\d.]+)mm;height:([\d.]+)mm/g)].map(m=>[Number(m[1]),Number(m[2])]);
+assert.ok(Math.abs(dimensions[0][0]/dimensions[0][1]-186.29/48.19)<1e-8);
+assert.ok(Math.abs(dimensions[1][0]/dimensions[0][0]-184.97/186.29)<1e-8);
+const smaller=renderToStaticMarkup(<CertificateHeading {...bookProps} scalePercent={80}/>);
+assert.ok(Math.abs(Number(smaller.match(/width:([\d.]+)mm/)![1])-98.0244*.8)<1e-8);
+const historical=renderToStaticMarkup(<CertificateHeading {...bookProps} useMatnArtwork={false}/>);
+assert.ok(historical.includes('إجازة بالسند')&&!historical.includes('/books/02/'));
+const partial=renderToStaticMarkup(<CertificateHeading {...bookProps} artwork={bookCatalog.slice(0,1)}/>);
+assert.ok(partial.includes('/books/02/heading.svg')&&!partial.includes('/books/02/line-02.svg'));
+console.log('PASS: numbered book SVG lookup, shared aspect-preserving scaling, pinned source, missing-line and frozen historical fallback');

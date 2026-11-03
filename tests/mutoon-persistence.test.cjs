@@ -6,7 +6,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),Module=require('modu
  require.extensions['.ts']=(m,p)=>m._compile(swc.transformSync(fs.readFileSync(p,'utf8'),{filename:p,jsc:{parser:{syntax:'typescript'}},module:{type:'commonjs'}}).code,p);
  try{
   const template=require('../legacy/api/mutoonTemplates.ts').default,holding=require('../legacy/api/mutoonHoldings.ts').default;
-  const context={user:{id:'owner'}},text=' \nأحمد عن محمد\n ',format=JSON.stringify([{start:2,end:6,text:'أحمد',bold:true,color:'primary',center:false,indent:0}]);
+  const context={user:{id:'owner'}},text=' \nأحمد عن محمد\n ',format=JSON.stringify([{start:2,end:6,text:'أحمد',bold:true,color:'primary',center:false,indent:0,sizePercent:85,lineSpacing:1.4,paragraphSpacing:8,firstLineIndent:6,alignment:'right'}]);
   await template.execute({context,input:{action:'save',name:'Test',kind:'introduction',body:text,formatting:format}});
   assert.equal(rows.templates[0].body,text);assert.equal(rows.templates[0].formatting,format);
   await template.execute({context,input:{action:'save',id:rows.templates[0].id,body:text+'next',formatting:format}});

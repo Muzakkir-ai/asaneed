@@ -20,7 +20,7 @@ import { sanadTitleRanges,scholarlyNameRanges,lightVocalizeTitle } from '../lib/
 import CertificateQR from './CertificateQR';
 import { prophetChainRanges } from '../lib/prophetChainRanges';
 import { ijazahWordingRanges } from '../lib/ijazahWordingRanges';
-import { shaykhPrintProfile, certificatePrintAuthorization, certificateDraftPreview, finalizeCertificate, type ShaykhPrintProfileOutputType } from '../lib/api';
+import { shaykhPrintProfile, certificatePrintAuthorization, certificateDraftPreview, sanadPrintStyle, finalizeCertificate, type ShaykhPrintProfileOutputType } from '../lib/api';
 import { toast } from 'sonner';
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle} from '@project/components/ui/alert-dialog';
 type PrintProfile=ShaykhPrintProfileOutputType['profile'];
@@ -139,7 +139,7 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
       // Sakkal Kitab Bold face. The separately highlighted ijazah wording
       // keeps its previous normal weight.
       const isImamName=isTitle;
-      fragments.push(<span key={i++} className={isRouteSource?'certificate-route-source':isRouteNarrator?'certificate-route-narrator':isPlainName?'certificate-jazari-normal':isPersonalName?'certificate-personal-name':isImamName?'certificate-aimma-name':'certificate-emphasized-name'} style={isPlainName?{fontFamily:"'KSA Regular', serif",fontSize:'9.9pt',fontWeight:400}: {fontFamily:isRouteSource?"var(--certificate-route-source-font, 'Sakkal Kitab'), serif":isRouteNarrator?"'KSA Regular', serif":"'Sakkal Kitab', serif",fontSize:'10pt',fontWeight:700,fontSynthesis:'none',...(isRouteNarrator?{color:secondaryColor}:{}),...((isRouteSource||isTitle||isPersonalName)?{color:primaryColor}:{})}}>{renderSanadText(printedInner,primaryColor,secondaryColor)}</span>);
+      fragments.push(<span key={i++} className={isRouteSource?'certificate-route-source':isRouteNarrator?'certificate-route-narrator':isPlainName?'certificate-jazari-normal':isPersonalName?'certificate-personal-name':isImamName?'certificate-aimma-name':'certificate-emphasized-name'} style={isPlainName?{fontFamily:"'KSA Regular', serif",fontSize:'calc(9.9pt * var(--certificate-text-scale, 1))',fontWeight:400}: {fontFamily:isRouteSource?"var(--certificate-route-source-font, 'Sakkal Kitab'), serif":isRouteNarrator?"'KSA Regular', serif":"'Sakkal Kitab', serif",fontSize:'calc(10pt * var(--certificate-text-scale, 1))',fontWeight:700,fontSynthesis:'none',...(isRouteNarrator?{color:secondaryColor}:{}),...((isRouteSource||isTitle||isPersonalName)?{color:primaryColor}:{})}}>{renderSanadText(printedInner,primaryColor,secondaryColor)}</span>);
       remaining=remaining.slice(end+closing.length);
     }
     return fragments;
@@ -157,16 +157,16 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
       }
       if(!hit){output.push(<span key={`rest-${cursor}`}>{renderSanadText(text.slice(cursor),primaryColor,secondaryColor)}</span>);break;}
       if(hit.index>cursor)output.push(<span key={`prefix-${cursor}`}>{renderSanadText(text.slice(cursor,hit.index),primaryColor,secondaryColor)}</span>);
-      output.push(<span key={`styled-${hit.index}`} style={{fontFamily:`'${hit.phrase.font}', serif`,fontWeight:hit.phrase.font==='Sakkal Kitab'?700:undefined,fontSynthesis:hit.phrase.font==='Sakkal Kitab'?'none':undefined,fontSize:`${+(hit.phrase.size*1.1).toFixed(2)}pt`,color:resolvedColor(hit.phrase.color,primaryColor,secondaryColor)}}>{renderSanadText(hit.phrase.text,primaryColor,secondaryColor,targets.filter(p=>p!==hit!.phrase&&hit!.phrase.text.includes(p.text)))}</span>);
+      output.push(<span key={`styled-${hit.index}`} style={{fontFamily:`'${hit.phrase.font}', serif`,fontWeight:hit.phrase.font==='Sakkal Kitab'?700:undefined,fontSynthesis:hit.phrase.font==='Sakkal Kitab'?'none':undefined,fontSize:`calc(${+(hit.phrase.size*1.1).toFixed(2)}pt * var(--certificate-text-scale, 1))`,color:resolvedColor(hit.phrase.color,primaryColor,secondaryColor)}}>{renderSanadText(hit.phrase.text,primaryColor,secondaryColor,targets.filter(p=>p!==hit!.phrase&&hit!.phrase.text.includes(p.text)))}</span>);
       cursor=hit.index+hit.phrase.text.length;
     }
     return output;
   }
 
   return text.split(styledPartsPattern).map((part, i) => {
-    if (part==='ﲃﲄﲅﲆ'||part==='ﲈﲉﲊﲋ') return <span key={i} className="certificate-qcf" style={{fontFamily:'QCF2',fontSize:'9.9pt',color:primaryColor}}>{part}</span>;
-    if (versePattern.test(part)) return <span key={i} className="certificate-verse-inline" style={{color:primaryColor}}><span className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'8.8pt',color:primaryColor}}>﴿</span>{renderQuranGlyphs(quranicVerse)}<span className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'8.8pt',color:primaryColor}}>﴾</span></span>;
-    if(part==='﴿'||part==='﴾')return <span key={i} className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'8.8pt',color:primaryColor}}>{part}</span>;
+    if (part==='ﲃﲄﲅﲆ'||part==='ﲈﲉﲊﲋ') return <span key={i} className="certificate-qcf" style={{fontFamily:'QCF2',fontSize:'calc(9.9pt * var(--certificate-text-scale, 1))',color:primaryColor}}>{part}</span>;
+    if (versePattern.test(part)) return <span key={i} className="certificate-verse-inline" style={{color:primaryColor}}><span className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'calc(8.8pt * var(--certificate-text-scale, 1))',color:primaryColor}}>﴿</span>{renderQuranGlyphs(quranicVerse)}<span className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'calc(8.8pt * var(--certificate-text-scale, 1))',color:primaryColor}}>﴾</span></span>;
+    if(part==='﴿'||part==='﴾')return <span key={i} className="certificate-verse-bracket" style={{fontFamily:'Traditional Arabic',fontSize:'calc(8.8pt * var(--certificate-text-scale, 1))',color:primaryColor}}>{part}</span>;
     if (hadiths.includes(part)) return <span key={i} style={{color:primaryColor,fontFamily:"'Sakkal Kitab', serif",fontWeight:700,fontSynthesis:'none'}}>{part}</span>;
     if (/^\(\s*ح\s*\)$/.test(part)) return <span key={i} className="certificate-route-switch" style={{color:secondaryColor}}>{part}</span>;
     if (/^[bcjkhn]$/.test(part)) return <span key={i} className="certificate-symbol" style={{color:secondaryColor}}>{part}</span>;
@@ -190,7 +190,7 @@ function renderSanadWithConclusion(text: string, primaryColor: string, secondary
     }
     const after=part.slice(cursor);
     if(after)pieces.push(<span key={`${i}-tail`}>{renderSanadText(after,primaryColor,secondaryColor,phrases)}</span>);
-    return <div className="certificate-sanad-paragraph" key={i}>{pieces.length?pieces:renderSanadText(part,primaryColor,secondaryColor,phrases)}</div>;
+    return <div className="certificate-sanad-paragraph" style={{marginBlockEnd:"var(--certificate-paragraph-gap)",textIndent:"var(--certificate-first-indent)",textAlign:'var(--certificate-alignment, justify)' as React.CSSProperties['textAlign'],textAlignLast:'var(--certificate-alignment, right)' as React.CSSProperties['textAlignLast']}} key={i}>{pieces.length?pieces:renderSanadText(part,primaryColor,secondaryColor,phrases)}</div>;
   });
   const closingIndex = text.lastIndexOf('هذا، وأوصيه');
   if (closingIndex < 0) return <>{paragraphs(text)}</>;
@@ -201,7 +201,7 @@ function renderSanadWithConclusion(text: string, primaryColor: string, secondary
 }
 type Area = 'reading' | 'sanad' | 'conclusion' | 'shaykh';
 type FontChoice = 'KSA Regular' | 'Sakkal Kitab' | 'Majalla' | 'Bahij Muna' | 'Amiri';
-type Typography = { font: FontChoice; size: number; color:ColorChoice };
+type Typography = { font: FontChoice; size: number; color:ColorChoice;scalePercent?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify' };
 const labels: Record<Area,string> = {reading:'القراءة والرواية والطريق', sanad:'متن السند', conclusion:'الخاتمة', shaykh:'اسم المُجيز'};
 const choices: {value:FontChoice;label:string}[] = [
   {value:'KSA Regular',label:'KSA Regular'},
@@ -290,6 +290,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     return {'--footer-line-font-size':`${size}pt`,'--footer-line-font-weight':settings.bold?700:400} as React.CSSProperties;
   };
   const matnDocument=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').matnDocument;}catch{return null;}})();
+  const modernMatnLayout=isDraft||!!(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').matnHeadingArtwork;}catch{return false;}})();
   const routeEmphasis=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').routeEmphasis||{};}catch{return {};}})();
   const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'',routeEmphasis) : undefined;
   const hijriDate=certificateDate(cert.completionDate,'islamic-umalqura',cert.hijriDayOffset);
@@ -297,7 +298,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [borderColor,setBorderColor]=useState('#926e35');
   const [accentColor,setAccentColor]=useState('#075f69');
   const [typography,setTypography]=useState<Record<Area,Typography>>(defaults);
-  const [activeArea,setActiveArea]=useState<Area|null>(null);
+  const [activeArea,setActiveArea]=useState<Area>('sanad');
+  const [savingFormat,setSavingFormat]=useState(false);
   const sanadElement=useRef<HTMLDivElement>(null);
   const [styledPhrases,setStyledPhrases]=useState<StyledPhrase[]>([]);
   const [sharedPhrases,setSharedPhrases]=useState<StyledPhrase[]>([]);
@@ -438,7 +440,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     }catch(e){console.error(e);toast.error('تعذّر فتح نافذة الطباعة');}
     finally{printArea.current?.classList.remove('certificate-export-original-paper');setExporting(false);}
   };
-  const areaStyle=(area:Area):React.CSSProperties=>({fontFamily:`'${typography[area].font}', serif`,fontWeight:typography[area].font==='Sakkal Kitab'?700:undefined,fontSynthesis:typography[area].font==='Sakkal Kitab'?'none':undefined,fontSize:area==='sanad'?'9.5pt':`${+(typography[area].size*1.1).toFixed(2)}pt`,...(area==='sanad'?{lineHeight:'16pt'}:{}),color:resolvedColor(typography[area].color,borderColor,accentColor)});
+  const areaStyle=(area:Area):React.CSSProperties=>{const t=typography[area],scale=(t.scalePercent??100)/100;return {fontFamily:`'${t.font}', serif`,fontWeight:t.font==='Sakkal Kitab'?700:undefined,fontSynthesis:t.font==='Sakkal Kitab'?'none':undefined,fontSize:`${(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`,lineHeight:t.lineSpacing??(area==='sanad'?`${16*scale}pt`:undefined),color:resolvedColor(t.color,borderColor,accentColor),textAlign:t.alignment??(area==='conclusion'?'center':undefined),textIndent:t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined,'--certificate-text-scale':scale,'--certificate-paragraph-gap':t.paragraphSpacing!==undefined?`${t.paragraphSpacing}pt`:undefined,'--certificate-alignment':t.alignment??(area==='conclusion'?'center':undefined),'--certificate-line-height':t.lineSpacing?`${t.lineSpacing*(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`:undefined,'--certificate-first-indent':t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined} as React.CSSProperties;};
+  const saveFormat=async()=>{if(!activeSanad?.id||!isDraft||readOnly||previewPalette)return;setSavingFormat(true);try{await sanadPrintStyle({action:'save',sanadId:activeSanad.id,settings:{borderColor,accentColor,typography,phrases:styledPhrases}});toast.success('حُفظ تنسيق الشهادة');}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ التنسيق');}finally{setSavingFormat(false);}};
   const approveFinal=async()=>{
     if(readOnly||previewPalette||!isDraft||printPermission!=='allowed')return;
     if(measureOverflow()){toast.error('لا يمكن اعتماد الشهادة قبل معالجة تجاوز مساحة الطباعة.');return;}
@@ -469,15 +472,16 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           </>}
         </div>
       </div>
+      {isDraft&&<details className="no-print container mx-auto px-4 mb-4" dir="rtl"><summary className="cursor-pointer font-semibold">تنسيق</summary><fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3"><label>الجزء <select aria-label="جزء الشهادة" className="rounded border bg-background p-2" value={activeArea} onChange={e=>setActiveArea(e.target.value as Area)}>{Object.entries(labels).filter(([key])=>key!=='shaykh').map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>{([{key:'scalePercent',label:'الحجم ٪',min:50,max:150,step:1,value:100},{key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},{key:'paragraphSpacing',label:'تباعد الفقرات (نقطة)',min:0,max:30,step:1,value:matnDocument?6:3},{key:'firstLineIndent',label:'إزاحة أول سطر من اليمين (مم)',min:0,max:25,step:1,value:0}] as const).filter(c=>activeArea!=='reading'||c.key==='scalePercent').map(c=><label key={c.key} className="text-sm">{c.label}<input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2" type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const value=Math.max(c.min,Math.min(c.max,e.target.valueAsNumber));setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],[c.key]:value}}));}}/></label>)}{activeArea!=='reading'&&<label>المحاذاة <select aria-label="المحاذاة" className="rounded border bg-background p-2" value={typography[activeArea].alignment||(activeArea==='conclusion'?'center':matnDocument?'right':'justify')} onChange={e=>setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],alignment:e.target.value as Typography['alignment']}}))}><option value="right">يمين</option><option value="center">وسط</option><option value="justify">ضبط</option></select></label>}<Button disabled={savingFormat} onClick={()=>void saveFormat()}>{savingFormat?'جارٍ الحفظ…':'حفظ التنسيق'}</Button></fieldset></details>}
       {overflow&&<div role="alert" className="no-print container mx-auto px-4 mb-4"><div className="rounded-lg border border-destructive bg-background p-4 text-destructive" dir="rtl"><strong>تنبيه: محتوى الشهادة يتجاوز المساحة الآمنة للطباعة.</strong><p>السند طويل أو يتداخل مع العنوان أو التذييل. راجع حجم الخط والمسافات قبل الاعتماد أو الطباعة؛ لن يُصغّر النص تلقائيًا.</p></div></div>}
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
-          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
+          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} scalePercent={typography.reading.scalePercent} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (
-              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
+              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:typography.sanad.alignment}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
             ) : (
               <>
                 <p className="mt-6">الحمد لله الذي أنزل القرآن، والصلاة والسلام على من أُرسل بالهدى والفرقان، أما بعد:</p>
