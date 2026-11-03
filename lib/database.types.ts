@@ -641,6 +641,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_account_username: {
+        Args: { new_username: string; target_account: string }
+        Returns: string
+      }
       approve_account: {
         Args: {
           target_account: string
