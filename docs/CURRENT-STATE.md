@@ -2,6 +2,20 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Primary-color cards — review branch, 4 November 2026
+
+Branch feat/primary-color-cards adapts Telawah card feedback to Asaneed's existing teal theme. Shared-text categories and saved-book cards use tinted icon tiles, primary hover/focus borders, white icons on filled tiles, directional arrows and subtle lift. Touch remains responsive and reduced-motion disables transforms. No certificate, artwork, database or print styles changed. Verified typecheck, production build and actual browser checks at 1280/390/320px, including dark contrast, Arabic typing, keyboard focus, touch and reduced motion. This styling is pending review and is not released to production.
+
+## Production release — 4 November 2026
+
+User explicitly approved the exact production schema migration, merge and Jazarīyah move. PR #6 is merged; production main commit is 22c983c31ce973c3cbbb7ceb7642bb8928b449b7. Vercel production is READY and asaneed.vercel.app points to this commit. The unified-sanad schema migration is applied.
+
+Migration fingerprints verified unchanged certificates, snapshots, old workspace records and original builder-chain fields. Existing security advisor counts did not increase. A private application backup was created before release.
+
+المقدمة الجزرية is published in the shared المتون العلمية catalog, category التجويد, author الإمام ابن الجزري, original artwork 02. Creation was performed through the signed-in administrator workspace. Its one existing additional-shaykh personal entry was backed up and linked by catalogId. Assertions verified every other personal field, exact scholarly text, wording, formatting and ownership remained unchanged. Certificates, all legacy snapshots, original chains and every other workspace record compare unchanged after the move.
+
+Nine route comparisons still require review. No bulk sanad conversion, historical approval or certificate rewrite was performed. Older draft/migration-pending sections below are historical and superseded by this release note.
+
 ## Unified sanad architecture — draft PR #6, 4 November 2026
 
 Continued the existing management branch after fetching PR #6 follow-up fixes. One shared composition core serves builder previews and legacy holding/certificate adapters. New explicit route references flow through personal preparation, qiraah issuance, additional-shaykh issuance and draft snapshot resolution. Shared saves no longer rewrite copied holdings, prepared sanads or snapshots.

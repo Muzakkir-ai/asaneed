@@ -1,3 +1,7 @@
+# Release update — 4 November 2026
+
+PR #6 is merged and live at main 22c983c. The approved unified-sanad migration is applied; Jazarīyah is published under المتون العلمية / التجويد and its existing personal entry is linked without text/formatting changes. The nine unmatched route comparisons remain pending. Earlier migration-pending notes below are historical; do not reapply the migration. See CURRENT-STATE.md.
+
 # Asaneed resume checkpoint — 4 November 2026
 
 Continue draft PR #6 on feat/unified-management-redesign. Do not start over. Read [SANAD-UNIFICATION.md](SANAD-UNIFICATION.md), [CURRENT-STATE.md](CURRENT-STATE.md) and [NEXT-STEPS.md](NEXT-STEPS.md) for the implementation and remaining work.
