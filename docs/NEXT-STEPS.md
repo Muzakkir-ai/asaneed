@@ -1,3 +1,7 @@
+# Editor workflow follow-up — 4 November 2026
+
+The current user requested consistent full-page editing and authorized publication. See CURRENT-STATE.md and EDITOR-WORKFLOW.md. Verify normal/admin/additional-shaykh workflows in authenticated production sessions, native mobile typing/selection and physical printing. Do not infer that older production-approval requirements below revoke this explicit session authorization.
+
 # Release update — 4 November 2026
 
 PR #6 is merged and live at main 22c983c. The approved unified-sanad migration is applied; Jazarīyah is published under المتون العلمية / التجويد and its existing personal entry is linked without text/formatting changes. The nine unmatched route comparisons remain pending. Earlier migration-pending notes below are historical; do not reapply the migration. See CURRENT-STATE.md.
