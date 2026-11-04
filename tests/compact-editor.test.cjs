@@ -43,6 +43,8 @@ async function main(){
  await click('غامق');assert.equal(value.formats.filter(f=>f.bold).length,2);assert.equal(value.formats[0].color,'primary');
  await click('تراجع');assert.deepEqual(value.formats,initial);
  await act(async()=>select(0));await click('توسيط');assert.equal(value.formats[0].alignment,'center');assert.equal(window.getSelection().toString(),'','paragraph operation preserves caret');
+ for(const [label,last] of [['ضبط — آخر سطر وسط','center'],['ضبط — آخر سطر يمين','right']]){await click(label);assert.equal(value.formats[0].alignment,'justify');assert.equal(value.formats[0].lastLineAlignment,last);assert.equal(window.getSelection().toString(),'');const output=renderToStaticMarkup(React.createElement(MatnPreview,{bare:true,sanad:source,formats:value.formats}));assert.ok(output.includes('text-align:justify;text-align-last:'+last));await act(async()=>box().dispatchEvent(new dom.window.MouseEvent('mouseup',{bubbles:true})));assert.equal(document.querySelector(`button[aria-label="${label}"]`).getAttribute('aria-pressed'),'true');}
+ await click('تراجع');await click('تراجع');
  await act(async()=>select(source.length));await click('غامق');const beforeTyping=value.text;
  await act(async()=>box().dispatchEvent(new dom.window.KeyboardEvent('keyup',{bubbles:true,key:'Shift'})));
  await act(async()=>box().dispatchEvent(new InputEvent('beforeinput',{bubbles:true,cancelable:true,inputType:'insertText',data:' بَ'})));
