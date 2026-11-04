@@ -9,7 +9,7 @@ import {isAppAdmin} from '../lib/admin';
 export default createEndpoint({
  description:'Administrator directory of stable user identities and roles',
  authenticated:true,
- inputSchema:z.object({action:z.enum(['list','update','create','username','delete','restore']).default('list'),id:z.string().optional(),confirmName:z.string().optional(),email:z.string().trim().email().max(254).optional(),password:z.string().min(8).max(1024).optional(),username:z.string().trim().toLowerCase().regex(/^(?:[a-z][a-z0-9_]{2,29})?$/).optional(),name:z.string().optional(),role:z.enum(['Admin','Shaykh','Student']).optional(),active:z.boolean().optional(),authUserId:z.string().optional(),transferOwnership:z.boolean().optional(),legacyUserId:z.string().optional()}),
+ inputSchema:z.object({action:z.enum(['list','update','create','username','delete','restore']).default('list'),id:z.string().optional(),confirmation:z.string().trim().toLowerCase().optional(),email:z.string().trim().email().max(254).optional(),password:z.string().min(8).max(1024).optional(),username:z.string().trim().toLowerCase().regex(/^(?:[a-z][a-z0-9_]{2,29})?$/).optional(),name:z.string().optional(),role:z.enum(['Admin','Shaykh','Student']).optional(),active:z.boolean().optional(),authUserId:z.string().optional(),transferOwnership:z.boolean().optional(),legacyUserId:z.string().optional()}),
  outputSchema:z.object({createdUserId:z.string().optional(),confirmationRequired:z.boolean().optional(),warning:z.string().optional(),legacyProfiles:z.array(z.object({id:z.string(),name:z.string(),email:z.string()})),users:z.array(z.object({id:z.string(),stableId:z.string(),name:z.string(),email:z.string(),username:z.string(),role:z.string(),active:z.boolean(),deleted:z.boolean(),authUserId:z.string(),legacyUserId:z.string()}))}),
  execute:async({input,context})=>{
   if(!await isAppAdmin(context.user.email))throw new ZiteError({code:'FORBIDDEN',message:'Admins only'});
@@ -20,7 +20,7 @@ export default createEndpoint({
   if(input.id&&deletedIds.has(input.id)&&!['list','restore','delete'].includes(input.action))throw Error('استعد الحساب المحذوف قبل تعديله');
   if(input.action==='delete'||input.action==='restore'){
    if(!input.id)throw Error('اختر المستخدم');
-   if(input.action==='delete'){const target=await zite.appUsers.findOne({id:input.id});if(!target||input.confirmName!==target.name)throw Error('اكتب اسم المستخدم كما يظهر لتأكيد الحذف');}
+   if(input.action==='delete'&&input.confirmation!=='confirm')throw Error('اكتب confirm لتأكيد الحذف');
    const {error}=await client.rpc('set_account_deleted',{target_account:input.id,deleted:input.action==='delete'});if(error)throw Error(error.message);
    requestContext().cache?.clear();
    const current=await client.rpc('account_deletion_ids');if(current.error)throw current.error;deletedIds=new Set(current.data||[]);

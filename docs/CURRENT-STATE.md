@@ -1,3 +1,17 @@
+## Preview controls and permissions polish — 5 November 2026
+
+The issuance-capability panel uses the app card/background/teal tokens, compact correctly aligned checkboxes, role badges and a responsive grid. Saving logic and access checks are unchanged.
+
+## Simpler deletion confirmation — 5 November 2026
+
+User deletion now asks for the word `confirm` (case-insensitive, surrounding spaces ignored), rather than the account name. The server enforces the same confirmation; administrator protection and recoverable removal remain in place.
+
+## Live text layout on the matn preview — 5 November 2026
+
+Personal and additional-shaykh matn editors now show width and overall text scale directly above the bordered A4 page on the «المعاينة» tab. These reuse the same saved presentation values and update the preview immediately. The duplicate layout group is hidden from their heading tab; shared catalog defaults and per-certificate controls retain access to it. Editing width preserves heading/border settings and text formatting, and the existing Save action persists it.
+
+Validation: shared-editor interaction test changes width from preview, switches tabs and verifies retention of width, border and heading values. Existing layout/render tests and production build pass. No database or finalized-record changes. Authenticated browser and physical-print review remain unverified.
+
 ## Recoverable user deletion — 5 November 2026
 
 Active administrators can remove non-admin users with exact-name confirmation. Removal sets the application account inactive and marks it in a private deletion registry. The default users list hides removed accounts; «المستخدمون المحذوفون» offers restore. Restoration leaves access inactive until separately activated. Certificates, scholarly records and login identities are retained; this is not permanent Supabase Auth erasure.
