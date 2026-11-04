@@ -169,12 +169,6 @@
 .zite-app .chain-insertion-overlays{position:absolute;inset:0;pointer-events:none;z-index:10}
 .zite-app .chain-add-narrator-overlay{position:absolute;right:auto;transform:translate(calc(-100% - 8px),-50%);margin:0;pointer-events:auto}
 
-/* Keep nested labels readable on gold hover/focus surfaces. */
-.zite-app button[class~="hover:bg-accent"]:is(:hover,:focus-visible){color:#fff}
-.zite-app button[class~="hover:bg-accent"]:is(:hover,:focus-visible) .text-primary{color:rgb(255 255 255 / .92)}
-.zite-app button[class~="hover:bg-accent"]:is(:hover,:focus-visible) .text-muted-foreground{color:rgb(255 255 255 / .8)}
-
-
 /* User-selected khatimah alignment overrides the historical centered default. */
 .zite-app .certificate-composed-sanad .certificate-conclusion {
  text-align: var(--certificate-alignment, center) !important;
@@ -262,4 +256,51 @@
 @media(prefers-reduced-motion:reduce){
  .zite-app .workspace-action-card,.zite-app .workspace-action-card::before,.zite-app .workspace-card-icon,.zite-app .workspace-card-title,.zite-app .workspace-card-arrow{transition:none}
  .zite-app .workspace-action-card:not(:disabled):is(:hover,:active),.zite-app .workspace-action-card:not(:disabled):hover .workspace-card-icon,.zite-app .workspace-card-arrow{transform:none}
+}
+/* Consistent workspace interaction language. Screen-only: certificate output is independent. */
+@media screen {
+ .zite-app{--workspace-icon-fill:color-mix(in srgb,hsl(var(--primary)) 72%,black)}
+ .zite-app .sidebar-link{gap:10px;border:1px solid transparent;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
+ .zite-app .sidebar-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:34px;height:34px;border-radius:10px;background:hsl(var(--primary)/.09);color:hsl(var(--primary));transition:background .2s ease,color .2s ease,transform .2s ease}
+ .zite-app .sidebar-link:is([aria-current=page],:focus-visible){background:hsl(var(--primary)/.1);color:hsl(var(--primary));border-color:hsl(var(--primary)/.25)}
+ .zite-app .sidebar-link:is([aria-current=page],:focus-visible) .sidebar-icon{background:var(--workspace-icon-fill);color:#fff}
+ .zite-app .sidebar-link:focus-visible{outline:2px solid hsl(var(--primary));outline-offset:2px}
+ .zite-app .workspace-drawer>h2{padding-inline:32px}
+ .zite-app .workspace-sidebar.is-collapsed .sidebar-link{justify-content:center;padding:8px 0}
+ .zite-app :is([data-workspace-button], [data-workspace-tab]){transition:background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease}
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive){color:hsl(var(--foreground))}
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive)>svg:not(.text-destructive){color:hsl(var(--primary));transition:color .2s ease,background .2s ease;box-sizing:content-box;padding:3px;border-radius:6px;background:hsl(var(--primary)/.08)}
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):is(:focus-visible,[aria-pressed=true],[data-state=open]){background:hsl(var(--primary)/.1);border-color:hsl(var(--primary)/.45);color:hsl(var(--primary));box-shadow:0 3px 10px hsl(var(--primary)/.1)}
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):is(:focus-visible,[aria-pressed=true],[data-state=open])>svg:not(.text-destructive){background:var(--workspace-icon-fill);color:#fff}
+ .zite-app [data-workspace-button]:focus-visible{outline:2px solid hsl(var(--primary));outline-offset:3px}
+ .zite-app [data-workspace-tab][data-state=active]{background:var(--workspace-icon-fill);color:#fff;box-shadow:0 3px 10px hsl(var(--primary)/.18)}
+ .zite-app :is([data-workspace-card],.workspace-record-card,.mobile-record-card){transition:border-color .2s ease,box-shadow .2s ease}
+ .zite-app :is([data-workspace-card],.workspace-record-card,.mobile-record-card):focus-within{border-color:hsl(var(--primary)/.5);box-shadow:0 5px 18px hsl(var(--primary)/.1)}
+ .zite-app :is([data-workspace-card],.workspace-record-card):focus-within .workspace-card-icon{background:var(--workspace-icon-fill);color:#fff}
+ .zite-app :is(.certificate-menu-item,.matn-menu-panel button):not(.text-destructive):focus-visible{background:hsl(var(--primary)/.1);color:hsl(var(--primary));outline:2px solid hsl(var(--primary));outline-offset:-2px}
+ .zite-app [role=option][data-highlighted],.zite-app [role=menuitem]:not(.text-destructive)[data-highlighted]{background:hsl(var(--primary)/.1);color:hsl(var(--primary))}
+ .zite-app .certificate-menu-item:not(.text-destructive)>svg{color:hsl(var(--primary))}
+ .zite-app .matn-primary-toolbar .matn-icon{color:hsl(var(--primary))}
+ .zite-app .matn-primary-toolbar .matn-icon[aria-pressed=true],.zite-app .matn-menu[open]>.matn-icon{background:var(--workspace-icon-fill);color:#fff}
+ .zite-app summary:not(.matn-icon){border-radius:6px;transition:color .2s ease,background .2s ease}
+ .zite-app summary:not(.matn-icon):focus-visible{outline:2px solid hsl(var(--primary));outline-offset:3px;color:hsl(var(--primary))}
+ .zite-app :is(input,textarea,select):not([type=color]):not(.print-area *):focus-visible{outline:2px solid hsl(var(--primary));outline-offset:2px}
+ @media(hover:hover) and (pointer:fine){
+  .zite-app button[class~="hover:bg-accent"]:not(.text-destructive):not([data-workspace-button=destructive]):hover{background:hsl(var(--primary)/.09);color:hsl(var(--primary))}
+  .zite-app .sidebar-link:hover{background:hsl(var(--primary)/.08);border-color:hsl(var(--primary)/.22);color:hsl(var(--primary));box-shadow:0 3px 12px hsl(var(--primary)/.07)}
+  .zite-app .sidebar-link:hover .sidebar-icon{background:var(--workspace-icon-fill);color:#fff;transform:scale(1.06)}
+  .zite-app [data-workspace-button]:not(:disabled):not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):hover{background:hsl(var(--primary)/.09);color:hsl(var(--primary));border-color:hsl(var(--primary)/.45);box-shadow:0 3px 10px hsl(var(--primary)/.1)}
+  .zite-app [data-workspace-button]:not(:disabled):not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):hover>svg:not(.text-destructive){background:var(--workspace-icon-fill);color:#fff}
+  .zite-app [data-workspace-button=default]:not(:disabled):hover{box-shadow:0 5px 16px hsl(var(--primary)/.22)}
+  .zite-app [data-workspace-tab]:not(:disabled):not([data-state=active]):hover{background:hsl(var(--primary)/.1);color:hsl(var(--primary))}
+  .zite-app :is([data-workspace-card],.workspace-record-card,.mobile-record-card):hover{border-color:hsl(var(--primary)/.4);box-shadow:0 6px 20px hsl(var(--primary)/.1)}
+  .zite-app :is([data-workspace-card],.workspace-record-card):hover .workspace-card-icon{background:var(--workspace-icon-fill);color:#fff;transform:scale(1.04)}
+  .zite-app :is(.certificate-menu-item,.matn-menu-panel button):not(.text-destructive):hover{background:hsl(var(--primary)/.1);color:hsl(var(--primary))}
+  .zite-app .matn-primary-toolbar .matn-icon:hover{background:var(--workspace-icon-fill);color:#fff}
+  .zite-app summary:not(.matn-icon):hover{color:hsl(var(--primary));background:hsl(var(--primary)/.05)}
+ }
+ @media(prefers-reduced-motion:reduce){
+  .zite-app :is(.sidebar-link,.sidebar-icon,[data-workspace-button],[data-workspace-button]>svg,[data-workspace-tab],[data-workspace-card],.workspace-record-card,.mobile-record-card,summary){transition:none}
+  .zite-app .sidebar-link:hover .sidebar-icon,.zite-app :is([data-workspace-card],.workspace-record-card):hover .workspace-card-icon{transform:none}
+ }
 }

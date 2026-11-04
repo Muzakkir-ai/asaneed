@@ -2,6 +2,12 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Workspace-wide primary-color treatment — PR #7 follow-up
+
+The review branch now applies the same primary-color interaction language through shared button/card/tab primitives, desktop/collapsed/mobile navigation, certificate actions/menus, scientific-matn and account records, shaykh cards and certificate-section choices. Navigation uses tinted icon tiles with filled hover/current/focus states. Outline/ghost actions use primary icons and hover/focus feedback; destructive actions retain red, primary/secondary button semantics remain, and headers retain their white controls. The matn toolbar keeps its compact dimensions and gets consistent primary active states. All new theme rules are screen-only; no artwork, typography, certificate snapshot or database changes.
+
+Added npm run test:workspace-theme: isolated real-component browser fixture with mocked APIs, desktop/mobile navigation, keyboard tab behavior, disabled/destructive actions, dark filled-icon contrast (5.20:1), focus and reduced motion. Passed at 1280/390/320px. Existing Arabic typing/tashkil, selection/undo, heading geometry, overflow and two-paragraph print browser checks also passed; production build passed. Screenshots reviewed on desktop, dark and mobile. These are representative component fixtures, not a claim to inspect every production account/page. Pending preview review; production is unchanged.
+
 ## Primary-color cards — review branch, 4 November 2026
 
 Branch feat/primary-color-cards adapts Telawah card feedback to Asaneed's existing teal theme. Shared-text categories and saved-book cards use tinted icon tiles, primary hover/focus borders, white icons on filled tiles, directional arrows and subtle lift. Touch remains responsive and reduced-motion disables transforms. No certificate, artwork, database or print styles changed. Verified typecheck, production build and actual browser checks at 1280/390/320px, including dark contrast, Arabic typing, keyboard focus, touch and reduced motion. This styling is pending review and is not released to production.

@@ -7,6 +7,7 @@
     "build": "node scripts/build-studio.cjs && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "test:workspace-theme": "node tests/workspace-theme-browser.test.cjs",
     "test:editor": "node tests/compact-editor.test.cjs",
     "test:editor:browser": "node tests/editor-browser.test.cjs",
     "test:matn-heading": "tsc --ignoreConfig tests/matn-heading.test.tsx tests/certificate-heading.test.tsx legacy/lib/matnCertificate.ts --outDir .vercel/matn-tests --module commonjs --target es2022 --jsx react-jsx --resolveJsonModule --esModuleInterop --skipLibCheck --types node --noEmitOnError --rewriteRelativeImportExtensions && node .vercel/matn-tests/tests/matn-heading.test.js && node .vercel/matn-tests/tests/certificate-heading.test.js && node tests/matn-heading-snapshot.test.cjs && node tests/certificate-format-settings.test.cjs && node tests/mutoon-persistence.test.cjs && node tests/matn-certificate-api.test.cjs && node tests/matn-certificate-render.test.cjs",
