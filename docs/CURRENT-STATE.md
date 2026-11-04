@@ -1,3 +1,9 @@
+## Linked matn footer width — 5 November 2026
+
+Matn draft certificates now give the centered lower issuer/signature/date/verification table the same effective width as the main text box. Its three existing percentage columns contract together. Date insets decrease proportionally and date tokens can wrap at narrow widths; text font sizes remain independent of width. New finalizations store `footerWidthLinked:true`, freezing this behavior with their saved heading/width settings. Older finalized snapshots keep their original footer geometry.
+
+Validation: TypeScript, build and actual draft/finalization fixture pass, including the new frozen layout flag. No record migration or historical rewrite. Physical printing and authenticated browser review remain unverified.
+
 ## Preview controls and permissions polish — 5 November 2026
 
 The issuance-capability panel uses the app card/background/teal tokens, compact correctly aligned checkboxes, role badges and a responsive grid. Saving logic and access checks are unchanged.

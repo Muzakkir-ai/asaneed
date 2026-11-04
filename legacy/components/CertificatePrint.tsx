@@ -303,6 +303,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   };
   const matnDocument=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').matnDocument;}catch{return null;}})();
   const fixedHeader=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').headerPosition==='fixed';}catch{return false;}})();
+  const linkedFooter=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').footerWidthLinked===true;}catch{return false;}})();
   const modernMatnLayout=isDraft||!!(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').matnHeadingArtwork;}catch{return false;}})();
   const routeEmphasis=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').routeEmphasis||{};}catch{return {};}})();
   const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'',routeEmphasis) : undefined;
@@ -507,7 +508,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
               </>
             )}
             {cert.notes && <p className="mt-2">{cert.notes}</p>}
-            <div ref={footerArea} className="certificate-footer mt-auto" dir="rtl">
+            <div ref={footerArea} className={`certificate-footer mt-auto ${matnDocument&&linkedFooter?'certificate-footer-linked':''}`} dir="rtl" style={matnDocument&&linkedFooter?{width:`${resolvedHeading.bodyWidthMm??265}mm`,maxWidth:'100%',marginInline:'auto','--footer-date-inset':`${8*(resolvedHeading.bodyWidthMm??265)/265}mm`} as React.CSSProperties:undefined}>
               <table className="certificate-footer-table" role="presentation"><colgroup><col style={{width:'33.333333%'}}/><col style={{width:'33.333334%'}}/><col style={{width:'33.333333%'}}/></colgroup>
                 <tbody>
                   <tr className="certificate-footer-head">
