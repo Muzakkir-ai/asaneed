@@ -1,3 +1,19 @@
+## Recoverable user deletion — 5 November 2026
+
+Active administrators can remove non-admin users with exact-name confirmation. Removal sets the application account inactive and marks it in a private deletion registry. The default users list hides removed accounts; «المستخدمون المحذوفون» offers restore. Restoration leaves access inactive until separately activated. Certificates, scholarly records and login identities are retained; this is not permanent Supabase Auth erasure.
+
+Database RPCs reject self/admin deletion and non-admin callers. An account trigger prevents reactivation or promotion while deleted. Private marker storage has RLS and no direct client grants; invoker API wrappers call narrowly granted private functions with explicit admin checks. Inspection remains read-only; user-management edits require restoring deleted accounts first.
+
+Validation: real local PostgreSQL migration tests cover admin allow/deny, protected accounts, private-table denial, reactivation guard, inactive restoration and unchanged certificate fixtures. A hosted transactional fixture verified the deployed RPC and rolled back; zero accounts are marked deleted. UI tests cover exact-name confirmation, hiding and restore; backend tests cover confirmation, inspection denial and mutation guards. Types regenerated. Private-table default-deny RLS advisor information is expected. No actual user was deleted.
+
+## Point sizing and matn text layout — 5 November 2026
+
+Editor toolbar shows point size; relative selection sizing remains under More to keep the primary row compact. A size change without selected text applies to the current paragraph instead of silently affecting only future typing. Selected text retains its precise range. Absolute `sizePt` is optional and survives the rich adapter, section schema, editor repaint, source saves, matn preview and rich certificate rendering. Existing percentage-only records retain their relative behavior. Clear/presets reset absolute sizing.
+
+Matn presentation settings add optional centered text-box width (100–265mm) and overall body scale (50–200%) under a collapsed «مساحة النص وحجمه» group. Text scaling includes source point-sized spans and certificate phrase overrides; the SVG heading/basmalah stays independent. Missing settings retain the old layout, and existing finalized snapshots are not rewritten. Width/scale participate in existing matn defaults/overrides and snapshot persistence. The editor tab is now labeled «تنسيق الشهادة».
+
+Validation: compact editor tests cover selection/current-paragraph resizing, point-size adapter/schema/render persistence and rich print size. Matn layout fixtures cover centered width and overall scaling, including absolute point sizes. Hosted authenticated use and physical printing remain unverified.
+
 ## Draft matn source refresh and shaykh cards — 5 November 2026
 
 Draft matn preview and finalization now resolve the current saved matn source, including sanad, wording, introduction/conclusion templates and formatting, for personal holdings and additional mashaykh. Both paths pass the same resolved document into snapshot formatting so the visible document and frozen chain agree. No read-time source rewrite or bulk migration. Finalized certificates continue to use their immutable snapshots.

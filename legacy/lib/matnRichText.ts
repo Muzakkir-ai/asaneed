@@ -1,6 +1,6 @@
-export type MatnFormat={font?:'KSA Regular'|'Sakkal Kitab'|'Majalla'|'Bahij Muna'|'Amiri';preset?:string;text:string;start:number;end:number;color:'primary'|'secondary'|'default';bold:boolean;center:boolean;indent:number;target?:'sanad'|'wording';lastLineAlignment?:'right'|'center';sizePercent?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify'};
+export type MatnFormat={font?:'KSA Regular'|'Sakkal Kitab'|'Majalla'|'Bahij Muna'|'Amiri';preset?:string;text:string;start:number;end:number;color:'primary'|'secondary'|'default';bold:boolean;center:boolean;indent:number;target?:'sanad'|'wording';lastLineAlignment?:'right'|'center';sizePt?:number;sizePercent?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify'};
 export type MatnStyle=Omit<MatnFormat,'text'|'start'|'end'>;
-const same=(a:MatnStyle,b:MatnStyle)=>a.font===b.font&&a.preset===b.preset&&a.color===b.color&&a.bold===b.bold&&a.center===b.center&&a.indent===b.indent&&a.target===b.target&&a.lastLineAlignment===b.lastLineAlignment&&a.sizePercent===b.sizePercent&&a.lineSpacing===b.lineSpacing&&a.paragraphSpacing===b.paragraphSpacing&&a.firstLineIndent===b.firstLineIndent&&a.alignment===b.alignment;
+const same=(a:MatnStyle,b:MatnStyle)=>a.font===b.font&&a.preset===b.preset&&a.color===b.color&&a.bold===b.bold&&a.center===b.center&&a.indent===b.indent&&a.target===b.target&&a.lastLineAlignment===b.lastLineAlignment&&a.sizePt===b.sizePt&&a.sizePercent===b.sizePercent&&a.lineSpacing===b.lineSpacing&&a.paragraphSpacing===b.paragraphSpacing&&a.firstLineIndent===b.firstLineIndent&&a.alignment===b.alignment;
 export function cleanMatnFormats(text:string,formats:MatnFormat[]){
  const result:MatnFormat[]=[];
  const valid=formats.filter(f=>Number.isInteger(f.start)&&Number.isInteger(f.end)&&f.start>=0&&f.end>f.start&&f.end<=text.length&&text.slice(f.start,f.end)===f.text);
@@ -19,7 +19,7 @@ export function setMatnStyle(text:string,formats:MatnFormat[],start:number,end:n
   if(f.end<=start||f.start>=end)pieces.push(f);
   else{if(f.start<start)pieces.push({...f,end:start,text:text.slice(f.start,start)});if(f.end>end)pieces.push({...f,start:end,text:text.slice(end,f.end)});}
  }
- if(style.font||style.preset||style.bold||style.color!=='default'||style.center||style.indent||style.sizePercent||style.lineSpacing||style.paragraphSpacing!==undefined||style.firstLineIndent!==undefined||style.alignment||style.lastLineAlignment)pieces.push({...style,start,end,text:text.slice(start,end)});
+ if(style.font||style.preset||style.bold||style.color!=='default'||style.center||style.indent||style.sizePt||style.sizePercent||style.lineSpacing||style.paragraphSpacing!==undefined||style.firstLineIndent!==undefined||style.alignment||style.lastLineAlignment)pieces.push({...style,start,end,text:text.slice(start,end)});
  return cleanMatnFormats(text,pieces);
 }
 /** Rebase spans around a contiguous text edit; typing inherits the nearby span. */

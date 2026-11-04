@@ -1,5 +1,5 @@
 import {cleanMatnFormats,type MatnFormat,type MatnStyle} from './matnRichText';
-type InlineStyle=Pick<MatnStyle,'bold'|'color'|'sizePercent'|'font'|'preset'>;
+type InlineStyle=Pick<MatnStyle,'bold'|'color'|'sizePt'|'sizePercent'|'font'|'preset'>;
 type ParagraphStyle=Omit<MatnStyle,keyof InlineStyle|'target'>;
 export type RichDocument={version:2;direction:'rtl';paragraphs:{id:string;style:Partial<ParagraphStyle>;children:{type:'text'|'variable';text:string;style:Partial<InlineStyle>}[];original?:MatnFormat[]}[];legacyBackup:{text:string;formats:MatnFormat[]};warnings:string[]};
 /** In-memory adapter only. Persisting the existing array keeps rollback and old clients safe. */
@@ -13,7 +13,7 @@ export function fromLegacy(text:string,formats:MatnFormat[]):RichDocument{
   const points=new Set([start,end,...marks.flatMap(f=>[Math.max(start,f.start),Math.min(end,f.end)])]);
   for(const m of line.matchAll(/\{\{[^{}\n]+\}\}/gu)){points.add(start+m.index);points.add(start+m.index+m[0].length);}
   const sorted=[...points].sort((a,b)=>a-b);
-  const children=sorted.slice(0,-1).map((a,i)=>{const b=sorted[i+1],f=marks.find(f=>f.start<=a&&f.end>=b);const {bold,color,sizePercent,font,preset}=f||{};const value=text.slice(a,b);return {type:(/^\{\{[^{}]+\}\}$/u.test(value)?'variable':'text') as 'variable'|'text',text:value,style:{bold,color,sizePercent,font,preset}};});
+  const children=sorted.slice(0,-1).map((a,i)=>{const b=sorted[i+1],f=marks.find(f=>f.start<=a&&f.end>=b);const {bold,color,sizePt,sizePercent,font,preset}=f||{};const value=text.slice(a,b);return {type:(/^\{\{[^{}]+\}\}$/u.test(value)?'variable':'text') as 'variable'|'text',text:value,style:{bold,color,sizePt,sizePercent,font,preset}};});
   return {id:`p-${index}`,style:{alignment,center,indent,lastLineAlignment,lineSpacing,paragraphSpacing,firstLineIndent},children,original:marks};
  });
  return {version:2,direction:'rtl',paragraphs,legacyBackup:{text,formats:structuredClone(formats)},warnings:valid.length<formats.length?['Overlapping or stale legacy ranges require review; original retained.']:[]};
