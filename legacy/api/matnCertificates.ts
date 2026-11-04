@@ -1,3 +1,4 @@
+import {readMatnPresentation,DEFAULT_MATN_HEADING} from '../lib/matnPresentation';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
@@ -58,7 +59,7 @@ export default createEndpoint({
   }
   const {data:code,error}=await client.rpc('register_matn_subject',{target_issuer:issuerId,matn_name:source.name});if(error)throw error;
   const chain=assembleMatnCertificate(source,intro?.body||'',end?.body||'');
-  const document={editorVersion:2,bookName:source.name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting)};
+  const document={editorVersion:2,sourceMatn:{id:source.id,ownerId:uid,guestId,name:source.name},heading:readMatnPresentation(source.sanadFormatting).heading??DEFAULT_MATN_HEADING,bookName:source.name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting)};
   const formatting=JSON.stringify({document,formats:source.sanadFormatting||'[]',intro:intro?.body||'',introFormats:intro?.formatting||'[]',end:end?.body||'',endFormats:end?.formatting||'[]'});
   const sanad=await zite.asaneed.create({record:{title:source.name,chain,shaykh:uid,additionalShaykh:guestId,matnCode:String(code),matnName:source.name,matnFormatting:formatting}});
   let certificateId='';

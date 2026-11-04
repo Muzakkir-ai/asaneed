@@ -15,6 +15,7 @@ const assert=require('node:assert/strict'),fs=require('fs'),Module=require('modu
   await holding.execute({context,input:{action:'save',name:'Test',category:'Test',sanadText:text,wordingText:text,sanadFormatting:format}});
   assert.equal(rows.holdings[0].sanadText,text);assert.equal(rows.holdings[0].wordingText,text);assert.equal(rows.holdings[0].sanadFormatting,format);
   await assert.rejects(()=>holding.execute({context,input:{action:'save',name:'Blank',category:'Test',sanadText:'  \n '}}));
+  const presentation=JSON.stringify({version:2,formats:JSON.parse(format),heading:{version:1,mainHeightPt:60,secondaryHeightPt:30,lineGapMm:4,afterGapMm:8}});await holding.execute({context,input:{action:'save',id:rows.holdings[0].id,sanadFormatting:presentation}});assert.equal(rows.holdings[0].sanadFormatting,presentation);await holding.execute({context,input:{action:'save',id:rows.holdings[0].id,name:'Renamed'}});assert.equal(rows.holdings[0].sanadFormatting,presentation,'unrelated edits preserve saved heading');
   console.log('PASS: template/holding save-reopen preserves exact text and formatting offsets; blank text and other-owner update denied');
  }finally{Module._load=original;}
 })().catch(e=>{console.error(e);process.exitCode=1});

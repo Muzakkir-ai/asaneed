@@ -1,3 +1,5 @@
+import {MatnHeadingControls} from './MatnHeadingControls';
+import {headingTextTopMm,matnArtwork,resolveMatnHeading,type MatnHeadingSettings} from '../lib/matnPresentation';
 import {renderRichSanadFlow} from './RichSanadFlow';
 import {scopedPhraseRanges} from '../lib/sanadFormatting';
 import {MatnPreview} from './MatnFormatting';
@@ -306,7 +308,10 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const gregorianDate=certificateDate(cert.completionDate,'gregory');
   const [borderColor,setBorderColor]=useState('#926e35');
   const [accentColor,setAccentColor]=useState('#075f69');
+  const [headingOverride,setHeadingOverride]=useState<MatnHeadingSettings|null|undefined>();
   const [typography,setTypography]=useState<Record<Area,Typography>>(defaults);
+  const sharedHeading=!!matnDocument&&(isDraft||!!matnDocument.heading);
+  const resolvedHeading=resolveMatnHeading(matnDocument?.heading,headingOverride,typography.reading,matnArtwork(matnDocument?.bookName||'',activeArtwork));
   const [activeArea,setActiveArea]=useState<Area>('sanad');
   const [savingFormat,setSavingFormat]=useState(false);
   const sanadElement=useRef<HTMLDivElement>(null);
@@ -330,7 +335,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [phraseSize,setPhraseSize]=useState(12);
   const [phraseColor,setPhraseColor]=useState<ColorChoice>('primary');
   useEffect(()=>{
-    setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
+    setHeadingOverride(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
     setBorderColor('#926e35');setAccentColor('#075f69');
     const raw=isDraft?draftData?.formatting:cert.snapshotFormatting;
     if(!raw)return;
@@ -338,6 +343,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       const saved=JSON.parse(raw);
       if(Array.isArray(saved.phrases))setSharedPhrases(saved.phrases);
       if(saved.settings){
+        setHeadingOverride(saved.settings.matnHeading);
         setTypography(saved.settings.typography||defaults);
         setStyledPhrases(saved.settings.phrases||[]);
         setBorderColor(saved.settings.borderColor||'#926e35');
@@ -362,7 +368,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       const header=headerArea.current;
       if(!page||!header)return;
       const a=page.getBoundingClientRect(), b=header.getBoundingClientRect();
-      if(a.width){const gap=typography.reading.headingGapMm??2;const mm=(header.offsetTop+header.offsetHeight)/page.offsetWidth*297+gap;setTextTopMm(matnDocument&&(isDraft||typography.reading.headingGapMm!==undefined)?mm:Math.max(43,mm));}
+      if(a.width){const gap=sharedHeading?0:typography.reading.headingGapMm??2;const mm=headingTextTopMm(header.offsetTop,header.offsetHeight,page.offsetWidth)+gap;setTextTopMm(matnDocument&&(isDraft||typography.reading.headingGapMm!==undefined)?mm:Math.max(43,mm));}
     };
     update();
     const observer=new ResizeObserver(update);
@@ -370,7 +376,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(printArea.current)observer.observe(printArea.current);
     document.fonts.ready.then(update).catch(()=>{});
     return()=>observer.disconnect();
-  },[printPermission,typography.reading.size,typography.reading.font,typography.reading.headingGapMm,!!matnDocument,isDraft,activeSanad?.id]);
+  },[printPermission,typography.reading.size,typography.reading.font,typography.reading.headingGapMm,JSON.stringify(resolvedHeading),sharedHeading,!!matnDocument,isDraft,activeSanad?.id]);
   // Move the *entire* artwork-to-footer composition, without altering any
   // spacing inside it. For content longer than the safe A4 area, return to
   // the established layout and never squeeze or clip a long sanad.
@@ -378,7 +384,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     setCenterFits(true);
     const page=printArea.current;
     if(page)page.style.setProperty('--certificate-center-shift','0px');
-  },[cert.id,activeSanad?.id,sanadBody,footerName,typography,styledPhrases]);
+  },[cert.id,activeSanad?.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(!centerFits)return;
     const page=printArea.current,header=headerArea.current,footer=footerArea.current;
@@ -398,7 +404,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,styledPhrases]);
+  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
@@ -407,7 +413,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     for(const node of [printArea.current,sanadElement.current,footerArea.current,headerArea.current])if(node)observer.observe(node);
     check();document.fonts.ready.then(check).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,cert.id,sanadBody,typography,styledPhrases,textTopMm,centerFits,footerName]);
+  },[printPermission,cert.id,sanadBody,typography,headingOverride,styledPhrases,textTopMm,centerFits,footerName]);
   const printCertificate=()=>{if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
   const captureSelection=()=>{
     const selection=window.getSelection();
@@ -450,7 +456,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     finally{printArea.current?.classList.remove('certificate-export-original-paper');setExporting(false);}
   };
   const areaStyle=(area:Area):React.CSSProperties=>{const t=typography[area],scale=(t.scalePercent??100)/100;return {fontFamily:`'${t.font}', serif`,fontWeight:t.font==='Sakkal Kitab'?700:undefined,fontSynthesis:t.font==='Sakkal Kitab'?'none':undefined,fontSize:`${(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`,lineHeight:t.lineSpacing??(area==='sanad'?`${16*scale}pt`:undefined),color:resolvedColor(t.color,borderColor,accentColor),textAlign:(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),textAlignLast:t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),textIndent:t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined,'--certificate-text-scale':scale,'--certificate-paragraph-gap':t.paragraphSpacing!==undefined?`${t.paragraphSpacing}pt`:undefined,'--certificate-alignment':(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),'--certificate-last-alignment':t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),'--certificate-line-height':t.lineSpacing?`${t.lineSpacing*(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`:undefined,'--certificate-first-indent':t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined} as React.CSSProperties;};
-  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument)next.reading={...next.reading,svgHeightPt:next.reading.svgHeightPt??15,headingGapMm:next.reading.headingGapMm??2};return {borderColor,accentColor,typography:next,phrases:styledPhrases};};
+  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,typography:next,phrases:styledPhrases,...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
   const saveFormat=async()=>{if(!activeSanad?.id||!isDraft||readOnly||previewPalette)return;setSavingFormat(true);try{await sanadPrintStyle({action:'save',sanadId:activeSanad.id,settings:printSettings()});toast.success('حُفظ تنسيق الشهادة');}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ التنسيق');}finally{setSavingFormat(false);}};
   const approveFinal=async()=>{
     if(readOnly||previewPalette||!isDraft||printPermission!=='allowed')return;
@@ -482,12 +488,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           </>}
         </div>
       </div>
-      {isDraft&&<details className="no-print container mx-auto px-4 mb-4" dir="rtl"><summary className="cursor-pointer font-semibold">تنسيق</summary><fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3"><label>الجزء <select aria-label="جزء الشهادة" className="rounded border bg-background p-2" value={activeArea} onChange={e=>setActiveArea(e.target.value as Area)}>{Object.entries(labels).filter(([key])=>key!=='shaykh').map(([key,label])=><option key={key} value={key}>{key==='reading'&&matnDocument?'عنوان المتن SVG':key==='conclusion'?(matnDocument?'الخاتمة المضافة للمتن':'الخاتمة — هذا، وأوصيه'):label}</option>)}</select></label>{activeArea==='reading'&&matnDocument&&<label className="text-sm">ارتفاع العنوان SVG (pt)<input aria-label="ارتفاع العنوان SVG (pt)" className="ms-2 w-20 rounded border bg-background p-2" type="number" min={5} max={100} step={0.5} value={typography.reading.svgHeightPt??15} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const height=Math.max(5,Math.min(100,e.target.valueAsNumber));setTypography(prev=>({...prev,reading:{...prev.reading,svgHeightPt:height}}));}}/><span className="ms-2 text-xs text-muted-foreground">يتغيّر السطر السفلي معه تلقائيًا</span></label>}{activeArea==='reading'&&matnDocument&&<label className="text-sm">المسافة بعد السطر الثاني (مم)<input aria-label="المسافة بعد السطر الثاني (مم)" className="ms-2 w-20 rounded border bg-background p-2" type="number" min={0} max={20} step={0.5} value={typography.reading.headingGapMm??2} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const gap=Math.max(0,Math.min(20,e.target.valueAsNumber));setTypography(prev=>({...prev,reading:{...prev.reading,headingGapMm:gap}}));}}/></label>}{([{key:'scalePercent',label:'الحجم ٪',min:50,max:150,step:1,value:100},{key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},{key:'paragraphSpacing',label:'تباعد الفقرات (نقطة)',min:0,max:30,step:1,value:matnDocument?6:3},{key:'firstLineIndent',label:'إزاحة أول سطر من اليمين (مم)',min:0,max:25,step:1,value:0}] as const).filter(c=>activeArea!=='reading'||(!matnDocument&&c.key==='scalePercent')).map(c=><label key={c.key} className="text-sm">{c.label}<input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2" type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const value=Math.max(c.min,Math.min(c.max,e.target.valueAsNumber));setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],[c.key]:value}}));}}/></label>)}{activeArea!=='reading'&&<label>ضبط الفقرة — آخر سطر <select aria-label="محاذاة آخر سطر" className="rounded border bg-background p-2" value={typography[activeArea].lastLineAlignment??(typography[activeArea].alignment==='center'||activeArea==='conclusion'?'center':'right')} onChange={e=>setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],alignment:'justify',lastLineAlignment:e.target.value==='center'?'center':'right'}}))}><option value="right">يمين</option><option value="center">وسط</option></select></label>}<Button disabled={savingFormat} onClick={()=>void saveFormat()}>{savingFormat?'جارٍ الحفظ…':'حفظ التنسيق'}</Button></fieldset></details>}
-      {overflow&&<div role="alert" className="no-print container mx-auto px-4 mb-4"><div className="rounded-lg border border-destructive bg-background p-4 text-destructive" dir="rtl"><strong>تنبيه: محتوى الشهادة يتجاوز المساحة الآمنة للطباعة.</strong><p>السند طويل أو يتداخل مع العنوان أو التذييل. راجع حجم الخط والمسافات قبل الاعتماد أو الطباعة؛ لن يُصغّر النص تلقائيًا.</p></div></div>}
+      {isDraft&&<details className="certificate-settings-panel no-print container mx-auto px-4 mb-4" dir="rtl"><summary className="cursor-pointer font-semibold">تنسيق</summary><fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3"><label>الجزء <select aria-label="جزء الشهادة" className="rounded border bg-background p-2" value={activeArea} onChange={e=>setActiveArea(e.target.value as Area)}>{Object.entries(labels).filter(([key])=>key!=='shaykh').map(([key,label])=><option key={key} value={key}>{key==='reading'&&matnDocument?'عنوان المتن SVG':key==='conclusion'?(matnDocument?'الخاتمة المضافة للمتن':'الخاتمة — هذا، وأوصيه'):label}</option>)}</select></label>{activeArea==='reading'&&matnDocument&&<div className="w-full"><p className="text-xs text-muted-foreground">{headingOverride===null?'إعدادات المتن الافتراضية':headingOverride?'تخصيص لهذه الشهادة فقط':typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?'تخصيص محفوظ سابقًا لهذه الشهادة':'إعدادات المتن الافتراضية'}</p><Button type="button" size="sm" variant="outline" onClick={()=>setHeadingOverride(null)}>استخدام إعدادات المتن</Button><MatnHeadingControls name={matnDocument.bookName} value={resolvedHeading} onChange={setHeadingOverride} onReset={()=>setHeadingOverride(null)} artwork={activeArtwork} base={activeArtworkBase} primary={borderColor} secondary={accentColor} showPreview={false}/></div>}{([{key:'scalePercent',label:'الحجم ٪',min:50,max:150,step:1,value:100},{key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},{key:'paragraphSpacing',label:'تباعد الفقرات (نقطة)',min:0,max:30,step:1,value:matnDocument?6:3},{key:'firstLineIndent',label:'إزاحة أول سطر من اليمين (مم)',min:0,max:25,step:1,value:0}] as const).filter(c=>activeArea!=='reading'||(!matnDocument&&c.key==='scalePercent')).map(c=><label key={c.key} className="text-sm">{c.label}<input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2" type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const value=Math.max(c.min,Math.min(c.max,e.target.valueAsNumber));setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],[c.key]:value}}));}}/></label>)}{activeArea!=='reading'&&<label>ضبط الفقرة — آخر سطر <select aria-label="محاذاة آخر سطر" className="rounded border bg-background p-2" value={typography[activeArea].lastLineAlignment??(typography[activeArea].alignment==='center'||activeArea==='conclusion'?'center':'right')} onChange={e=>setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],alignment:'justify',lastLineAlignment:e.target.value==='center'?'center':'right'}}))}><option value="right">يمين</option><option value="center">وسط</option></select></label>}<Button disabled={savingFormat} onClick={()=>void saveFormat()}>{savingFormat?'جارٍ الحفظ…':'حفظ التنسيق'}</Button></fieldset></details>}
+      {overflow&&<div role="alert" className="certificate-settings-panel no-print container mx-auto px-4 mb-4"><div className="rounded-lg border border-destructive bg-background p-4 text-destructive" dir="rtl"><strong>تنبيه: محتوى الشهادة يتجاوز المساحة الآمنة للطباعة.</strong><p>السند طويل أو يتداخل مع العنوان أو التذييل. راجع حجم الخط والمسافات قبل الاعتماد أو الطباعة؛ لن يُصغّر النص تلقائيًا.</p></div></div>}
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 24mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <div aria-hidden="true" className="certificate-ornament" style={{backgroundColor:borderColor}} />
-          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
+          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (

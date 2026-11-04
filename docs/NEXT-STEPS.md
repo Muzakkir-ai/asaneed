@@ -81,3 +81,6 @@ Verify Sughra/Kubra selection in authenticated additional-shaykh, personal-holdi
 
 
 PR #5 correction validation update: Chrome desktop (1280px), mobile viewports (320/390px), Arabic/tashkil entry and a rendered one-page A4 PDF fixture have now been checked. Remaining release checks concern authenticated end-to-end certificate workflows, native IME/iOS behavior and physical printing. Run `npm run test:editor:browser` with installed Google Chrome (or `CHROME_PATH`); its fixture uses no hosted data and is removed automatically. Artifacts default to `.vercel/editor-browser`, configurable with `EDITOR_ARTIFACT_DIR`.
+
+
+Matn heading follow-up: shared independent SVG sizing, legacy/current/default precedence and real two-line artwork/PDF zoom invariance are checked on PR #5. Review saved defaults in an authenticated account before any release. Existing per-certificate legacy overrides intentionally remain effective; choose «استخدام إعدادات المتن» to inherit changed matn defaults. Physical print and native mobile export still require device review. Production approval is still required.
