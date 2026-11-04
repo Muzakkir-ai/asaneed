@@ -1,3 +1,17 @@
+## Matn layout and latest-completed default — 4 November 2026
+
+Release branch `feat/matn-preview-borders`: dimension-mode selectors now have full readable widths and separate numeric/range controls; switching units rounds to half units. Optional saved presentation settings add basmalah-to-title spacing, three paragraph boundary switches and a border choice. Joining sections preserves source formatting ranges by rebasing them; old records without these settings retain their existing rendering. Shared personal/additional-shaykh preview uses a fixed 297 × 210 mm A4 landscape paper with external zoom and an overflow warning.
+
+Administrators can expand saved asaneed by owner from a shared matn's edit page. Exact catalog IDs link holdings; both personal and additional-shaykh records are included, with read-only text, authenticated RLS queries and inspection restrictions. No data migration or record rewrite.
+
+Certificate lists default to latest completion date, including reset/invalid filters. The filter-storage namespace was advanced so old remembered defaults do not override this release. Explicit choices persist thereafter.
+
+Numbered matn borders are discovered through the existing pinned artwork pipeline. Upload `svg/borders/01/frame.svg` (then 02, 03, etc.) to the fonts repository; optional names use `"borders":{"01":"اسم الإطار"}` in `svg/catalog.json`. Refresh artwork in the app after uploading. Default and no-border choices are available immediately; additional choices appear after discovery. Borders are monochrome masks using the certificate's border color, proportionally contained. New finalizations freeze the catalog/revision; old snapshots retain their fallbacks.
+
+Chrome synthetic preview verified readable width/height choices, half-unit numeric conversion, basmalah spacing, joined paragraphs, compact checkboxes and fixed A4 dimensions. The temporary route was removed before merge.
+
+Validation: production build and TypeScript pass; matn heading/save/reopen/print suites, layout/joined-format/border tests, certificate filter tests, editor tab tests and admin allow/deny API tests pass. No real hosted certificate was created. Authenticated multi-user browser flows, future uploaded borders and physical printing remain unverified.
+
 # Current Asaneed state
 
 ## Consistent editor pages — 4 November 2026

@@ -25,7 +25,7 @@ const PAGE=15;
 const qariRawis=Object.fromEntries(QURRA.map(q=>[q.id,[...q.rawis]]));
 type Props={data:Data|null;currentUserId:string;scopeKey?:string;administrativeView?:boolean;onChange:()=>void;onPrint:(c:Cert)=>void;loading?:boolean;error?:string;onRetry?:()=>void;readOnly?:boolean};
 export default function CertificatesView({data,currentUserId,scopeKey=currentUserId,administrativeView=false,onChange,onPrint,loading=false,error='',onRetry,readOnly=false}:Props){
- const storageKey='asaneed:certificate-filters:v1:'+scopeKey;
+ const storageKey='asaneed:certificate-filters:v2:'+scopeKey;
  const [filters,setFilters]=useState<CertificateFilters>(()=>{try{return decodeCertificateFilters(sessionStorage.getItem(storageKey));}catch{return {...defaultCertificateFilters};}});
  const [view,setView]=useState<'certificates'|'students'>('certificates'),[filtersOpen,setFiltersOpen]=useState(false),[page,setPage]=useState(0);
  const [editing,setEditing]=useState<Cert|null|undefined>(undefined),[toDelete,setToDelete]=useState<Cert|null>(null),[studentDetails,setStudentDetails]=useState<Cert[]|null>(null),[certificateDetails,setCertificateDetails]=useState<Cert|null>(null);
@@ -50,7 +50,7 @@ export default function CertificatesView({data,currentUserId,scopeKey=currentUse
  if(effective.rawi!=='all'){const [q,r]=effective.rawi.split('|');chips.push({key:'rawi',label:'الرواية: '+displayRawi(q,r),clear:()=>update({rawi:'all'})});}
  if(effective.year!=='all')chips.push({key:'year',label:'سنة الإتمام: '+arabicDigits(effective.year),clear:()=>update({year:'all'})});
  if(effective.status!=='all')chips.push({key:'status',label:effective.status==='draft'?'مسودة':'نهائية',clear:()=>update({status:'all'})});
- if(effective.sort!=='completion')chips.push({key:'sort',label:effective.sort==='name'?'ترتيب حسب الاسم':effective.sort==='completion-desc'?'الأحدث إتمامًا':'الأحدث إضافة',clear:()=>update({sort:'completion'})});
+ if(effective.sort!=='completion-desc')chips.push({key:'sort',label:effective.sort==='name'?'ترتيب حسب الاسم':effective.sort==='completion'?'الأقدم إتمامًا':'الأحدث إضافة',clear:()=>update({sort:'completion-desc'})});
  const remove=async()=>{if(!toDelete)return;try{await deleteCertificate({id:toDelete.id});toast.success('حُذفت المسودة');onChange();}catch(e){toast.error(e instanceof Error?e.message:'تعذر حذف المسودة');}finally{setToDelete(null);}};
  const actions=(c:Cert)=><><Button size="sm" variant="outline" onClick={()=>onPrint(c)}>{c.publicationStatus==='draft'?<Eye size={16}/>:<Printer size={16}/>}<span>{c.publicationStatus==='draft'?'معاينة':'عرض وطباعة'}</span></Button>{!readOnly&&c.publicationStatus==='draft'&&<Button size="sm" variant="outline" onClick={()=>setEditing(c)}><Pencil size={16}/><span>تعديل</span></Button>}<CertificateRecordMenu name={c.studentName} onDetails={()=>setCertificateDetails(c)} onDelete={!readOnly&&c.publicationStatus==='draft'?()=>setToDelete(c):undefined}/></>;
  if(!data&&error)return <div role="alert" className="rounded-xl border p-6 space-y-3"><p>{error}</p><Button onClick={onRetry}>إعادة المحاولة</Button></div>;
