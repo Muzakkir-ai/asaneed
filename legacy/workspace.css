@@ -342,3 +342,17 @@
 @media screen{.zite-app .editor-page:has(.editor-page)>.editor-page-header{display:none}.zite-app .editor-page:has(.editor-page)>.editor-page-body>details:first-child{display:none}}
 
 @media screen{.zite-app .palette-summary{display:flex;align-items:center;gap:12px;flex-wrap:wrap;list-style:none}.zite-app .palette-summary::-webkit-details-marker{display:none}.zite-app .palette-summary::before{content:'›';font-size:24px;line-height:1;color:hsl(var(--primary));transition:transform .15s}.zite-app .palette-card[open]>.palette-summary::before{transform:rotate(-90deg)}.zite-app .palette-summary>.font-semibold{flex:1;min-width:180px}.zite-app .palette-summary-swatches{display:inline-flex;align-items:center;gap:6px}.zite-app .palette-color-dot{display:inline-block;width:24px;height:24px;border-radius:50%;border:2px solid hsl(var(--card));box-shadow:0 0 0 1px hsl(var(--border))}}
+
+/* Dimension fields have their own grid: selectors and numeric values never share a narrow column. */
+@media screen {
+ .zite-app .matn-sizing-modes,.zite-app .matn-dimension-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+ .zite-app .matn-sizing-modes label,.zite-app .matn-border-choice,.zite-app .matn-dimension-field{display:flex;flex-direction:column;gap:8px;min-width:0;font-size:14px}
+ .zite-app .matn-sizing-modes select,.zite-app .matn-border-choice select{display:block;width:100%;min-width:0;max-width:none;height:44px;padding:8px 12px;border:1px solid hsl(var(--border));border-radius:8px;background:hsl(var(--background));color:hsl(var(--foreground));font:inherit}
+ .zite-app .matn-dimension-field>div{display:grid;grid-template-columns:minmax(0,1fr) 112px;align-items:center;gap:12px;direction:rtl}
+ .zite-app .matn-dimension-field input[type=range]{width:100%;min-width:0;accent-color:hsl(var(--primary))}
+ .zite-app .matn-dimension-field input[type=number]{width:112px;min-width:112px;max-width:112px;height:44px;padding:8px;border:1px solid hsl(var(--border));border-radius:8px;font:inherit;font-variant-numeric:tabular-nums;background:hsl(var(--background));color:hsl(var(--foreground))}
+ @media(max-width:700px){.zite-app .matn-sizing-modes,.zite-app .matn-dimension-fields{grid-template-columns:1fr}}
+}
+
+@media screen{.zite-app .matn-a4-paper .matn-composed-preview{padding:0;border:0;background:transparent;font-size:9.5pt;line-height:1.68}.zite-app .matn-a4-paper .matn-composed-preview>div{min-width:0}}
+@media print{.certificate-custom-border{-webkit-print-color-adjust:exact;print-color-adjust:exact}}

@@ -1,3 +1,9 @@
+## Matn layout release follow-up — 4 November 2026
+
+- Upload the user's border artwork as numbered `svg/borders/NN/frame.svg`, refresh artwork, then review a real draft and frozen finalized snapshot. Current default/no-border and synthetic numbered-border tests pass; no new artwork was uploaded in this change.
+- Review the admin matn asaneed panel in an authenticated admin session with personal and additional-shaykh records. API role/inspection and exact-link fixture tests pass.
+- Check physical A4 landscape output and long-content overflow with the new section boundary controls. Existing finalizations remain immutable.
+
 # Editor workflow follow-up — 4 November 2026
 
 The current user requested consistent full-page editing and authorized publication. See CURRENT-STATE.md and EDITOR-WORKFLOW.md. Verify normal/admin/additional-shaykh workflows in authenticated production sessions, native mobile typing/selection and physical printing. Do not infer that older production-approval requirements below revoke this explicit session authorization.

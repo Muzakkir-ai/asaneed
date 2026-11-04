@@ -1,12 +1,13 @@
 import {z} from 'zod';
 
-export const artworkSchema=z.object({kind:z.enum(['mashaykh','books','turuq']),number:z.string().regex(/^\d{2,4}$/),line:z.enum(['name','line-02','line-03','heading']),path:z.string().regex(/^svg\/(mashaykh|books|turuq)\/\d{2,4}\/(name|line-02|line-03|heading)\.svg$/),width:z.number().positive(),height:z.number().positive(),label:z.string().max(250).default('')});
+export const artworkSchema=z.object({kind:z.enum(['mashaykh','books','turuq','borders']),number:z.string().regex(/^\d{2,4}$/),line:z.enum(['name','line-02','line-03','heading','frame']),path:z.string().regex(/^svg\/(mashaykh|books|turuq|borders)\/\d{2,4}\/(name|line-02|line-03|heading|frame)\.svg$/),width:z.number().positive(),height:z.number().positive(),label:z.string().max(250).default('')});
 export type Artwork=z.infer<typeof artworkSchema>;
 export const artworkListSchema=z.array(artworkSchema).max(500);
 export function numberedArtworkPath(path:string){
- const match=path.match(/^svg\/(mashaykh|books|turuq)\/(\d{2,4})\/(name|line-02|line-03|heading)\.svg$/);
+ const match=path.match(/^svg\/(mashaykh|books|turuq|borders)\/(\d{2,4})\/(name|line-02|line-03|heading|frame)\.svg$/);
  if(!match)return null;
- if(match[1]==='mashaykh'?match[3]==='heading':match[3]!=='heading'&&!(match[1]==='books'&&match[3]==='line-02'))return null;
+ if(match[1]==='borders')return match[3]==='frame'?{kind:'borders' as const,number:match[2],line:'frame' as const}:null;
+ if(match[1]==='mashaykh'?!['name','line-02','line-03'].includes(match[3]):match[3]!=='heading'&&!(match[1]==='books'&&match[3]==='line-02'))return null;
  return {kind:match[1] as Artwork['kind'],number:match[2],line:match[3] as Artwork['line']};
 }
 export function svgDimensions(svg:string){
@@ -27,8 +28,8 @@ export async function discoverArtwork(repo:string,revision:string):Promise<Artwo
  if(tree.tree.some((x:{path:string})=>x.path==='svg/catalog.json')){
   const r=await fetch(`https://raw.githubusercontent.com/${repo}/${revision}/svg/catalog.json`,options);
   if(!r.ok)throw Error('Cannot read svg/catalog.json');
-  const catalog=z.object({books:z.record(z.string().regex(/^\d{2,4}$/),z.string().max(250)).optional(),turuq:z.record(z.string().regex(/^\d{2,4}$/),z.string().max(250)).optional()}).parse(await r.json());
-  for(const kind of ['books','turuq'] as const)for(const [number,label] of Object.entries(catalog[kind]||{}))labels[kind+'/'+number]=label;
+  const catalog=z.object({books:z.record(z.string().regex(/^\d{2,4}$/),z.string().max(250)).optional(),turuq:z.record(z.string().regex(/^\d{2,4}$/),z.string().max(250)).optional(),borders:z.record(z.string().regex(/^\d{2,4}$/),z.string().max(250)).optional()}).parse(await r.json());
+  for(const kind of ['books','turuq','borders'] as const)for(const [number,label] of Object.entries(catalog[kind]||{}))labels[kind+'/'+number]=label;
  }
  const result:Artwork[]=[];
  for(let i=0;i<files.length;i+=5)result.push(...await Promise.all(files.slice(i,i+5).map(async file=>{
