@@ -2,6 +2,10 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Nested-card hover correction — PR #7
+
+The user recording exposed a broad outer Card hover/focus selector that filled every nested book icon. Removed generic layout-card hover/focus decoration and limited icon filling to explicit leaf shaykh cards and the existing individual action-card states. Entering a container no longer fills sibling icons or highlights its border. Regression browser checks now cover parent hover, sibling isolation and focus elsewhere inside the panel, in addition to the existing mobile/dark/accessibility checks.
+
 ## Workspace-wide primary-color treatment — PR #7 follow-up
 
 The review branch now applies the same primary-color interaction language through shared button/card/tab primitives, desktop/collapsed/mobile navigation, certificate actions/menus, scientific-matn and account records, shaykh cards and certificate-section choices. Navigation uses tinted icon tiles with filled hover/current/focus states. Outline/ghost actions use primary icons and hover/focus feedback; destructive actions retain red, primary/secondary button semantics remain, and headers retain their white controls. The matn toolbar keeps its compact dimensions and gets consistent primary active states. All new theme rules are screen-only; no artwork, typography, certificate snapshot or database changes.
