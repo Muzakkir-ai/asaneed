@@ -4,7 +4,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});
 Object.assign(global,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
 const {createRoot}=require('react-dom/client');
 const shaykh={id:'one',name:'شيخ تجريبي',email:'',qualification:'قارئ',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'jazari',readings:[],mutoon:[]};
-const box=({children,...props})=>React.createElement('div',{'aria-label':props['aria-label']},children);
+const box=({children,...props})=>React.createElement('div',props,children);
 const Button=({children,variant,size,...props})=>React.createElement('button',props,children);
 const api={additionalShaykhs:async()=>({sheikhs:[shaykh]}),contentManagement:async()=>({catalog:[]}),mutoonTemplates:async()=>({templates:[]}),additionalReadingSanads:async()=>({sanads:[]})};
 global.fetch=async()=>({ok:true,json:async()=>({chains:[],people:[],books:[]})});
@@ -28,7 +28,7 @@ mod.require=id=>{
  return {__esModule:true,default:()=>null,MatnPreview:()=>null,parseMatnFormat:()=>[]};
 };mod._compile(code,__filename);const root=createRoot(document.getElementById('root'));
 await act(async()=>{root.render(React.createElement(mod.exports.default,{onSaved(){}}));});
-const click=async label=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent===label);assert.ok(b,label);await act(async()=>b.click());};
+const click=async label=>{const b=label==='عرض ملف الشيخ'?document.querySelector('[role=button]'):[...document.querySelectorAll('button')].find(x=>x.textContent===label);assert.ok(b,label);await act(async()=>b.click());};
 await click('عرض ملف الشيخ');assert.ok(document.querySelector('section[aria-label="ملف الشيخ شيخ تجريبي"]'));assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(!document.body.textContent.includes('إضافة شيخ جديد'));
 await click('إضافة إجازة قراءات');assert.ok(document.querySelector('[role=dialog]').textContent.includes('القراءات والروايات'));
 // Remount to exercise a clean second visit and matn add without persisting fixtures.
