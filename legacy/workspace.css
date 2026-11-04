@@ -304,3 +304,13 @@
  .zite-app button.bg-accent,.zite-app a.bg-accent,.zite-app button.bg-secondary { background:hsl(var(--primary)); color:hsl(var(--primary-foreground)); }
  .zite-app button.bg-accent:hover,.zite-app a.bg-accent:hover,.zite-app button.bg-secondary:hover { background:hsl(var(--primary)/.9); }
 }
+
+/* Filled action buttons with white icons, without separate icon tiles. */
+@media screen {
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):is(:focus-visible,[aria-pressed=true],[data-state=open]) { background:var(--workspace-icon-fill); border-color:var(--workspace-icon-fill); color:#fff; }
+ .zite-app [data-workspace-button]:not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive)>svg:not(.text-destructive) { background:transparent; padding:0; border-radius:0; }
+ @media(hover:hover) and (pointer:fine) {
+  .zite-app [data-workspace-button]:not(:disabled):not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):hover { background:var(--workspace-icon-fill); border-color:var(--workspace-icon-fill); color:#fff; }
+  .zite-app [data-workspace-button]:not(:disabled):not(.studio-header *):not(.mobile-nav-button):is([data-workspace-button=outline],[data-workspace-button=ghost]):not(.text-destructive):hover>svg:not(.text-destructive) { background:transparent; color:#fff; }
+ }
+}
