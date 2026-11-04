@@ -23,8 +23,8 @@ export default createEndpoint({
    const guest=await zite.additionalShaykhs.findOne({id:guestId}).catch(()=>null);
    if(!guest)throw Error('الشيخ غير متاح');
    const {records}=await zite.additionalShaykhExtensions.findAll({filters:{shaykhId:guestId},limit:100});
-   const parsed=z.array(z.object({catalogId:z.string().uuid().optional(),name:z.string(),category:z.string().default(''),sanadText:z.string(),wordingText:z.string().default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')})).parse(JSON.parse(records.find(r=>r.shaykhId===guestId)?.mutoonJson||'[]'));
-   sources=parsed.map((m,i)=>({...m,id:String(i)}));
+   const parsed=z.array(z.object({id:z.string().uuid().optional(),catalogId:z.string().uuid().optional(),name:z.string(),category:z.string().default(''),sanadText:z.string(),wordingText:z.string().default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')})).parse(JSON.parse(records.find(r=>r.shaykhId===guestId)?.mutoonJson||'[]'));
+   sources=parsed.map((m,i)=>({...m,id:m.id||String(i)}));
   }else{
    const {records}=await zite.mutoonHoldings.findAll({filters:{ownerId:uid},limit:2000});
    sources=records.filter(m=>m.ownerId===uid).map(m=>({...m,name:m.name||'',category:m.category||'',sanadText:m.sanadText||''}));
@@ -61,7 +61,7 @@ export default createEndpoint({
   }
   const {data:code,error}=await client.rpc('register_matn_subject',{target_issuer:issuerId,matn_name:source.name});if(error)throw error;
   const chain=assembleMatnCertificate(source,intro?.body||'',end?.body||'');
-  const document={editorVersion:2,sourceMatn:{id:source.id,ownerId:uid,guestId,name:source.name},headingArtworkNumber:catalog?.artwork_number||undefined,heading:resolveMatnHeading(catalog?.heading??DEFAULT_MATN_HEADING,readMatnPresentation(source.sanadFormatting).heading??null,undefined,{}),bookName:source.name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting)};
+  const document={editorVersion:2,sourceMatn:{id:source.id,ownerId:uid,guestId,catalogId:source.catalogId,name:source.name},headingArtworkNumber:catalog?.artwork_number||undefined,heading:resolveMatnHeading(catalog?.heading??DEFAULT_MATN_HEADING,readMatnPresentation(source.sanadFormatting).heading??null,undefined,{}),bookName:source.name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting)};
   const formatting=JSON.stringify({document,formats:source.sanadFormatting||'[]',intro:intro?.body||'',introFormats:intro?.formatting||'[]',end:end?.body||'',endFormats:end?.formatting||'[]'});
   const sanad=await zite.asaneed.create({record:{title:source.name,chain,shaykh:uid,additionalShaykh:guestId,matnCode:String(code),matnName:source.name,matnFormatting:formatting}});
   let certificateId='';

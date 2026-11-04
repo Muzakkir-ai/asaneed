@@ -229,7 +229,7 @@
 
 /* Primary-color cards: scoped to navigation and book selection, never print/editor controls. */
 .zite-app .workspace-action-card{position:relative;min-width:0;overflow:hidden;border:1px solid hsl(var(--border));border-radius:16px;background:hsl(var(--card));color:hsl(var(--foreground));padding:16px;cursor:pointer;box-shadow:0 3px 14px hsl(var(--primary)/.045);transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease}
-.zite-app .workspace-action-card::before{content:"";position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,hsl(var(--primary)/.4),hsl(var(--primary)));transform:scaleX(0);transform-origin:right;transition:transform .22s ease}
+.zite-app .workspace-action-card::before{content:none}
 .zite-app .workspace-card-icon{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;border-radius:13px;background:hsl(var(--primary)/.09);color:hsl(var(--primary));transition:background .22s ease,color .22s ease,transform .22s ease}
 .zite-app .workspace-card-icon>svg{width:23px;height:23px;stroke:currentColor}
 .zite-app .workspace-card-title{transition:color .18s ease}

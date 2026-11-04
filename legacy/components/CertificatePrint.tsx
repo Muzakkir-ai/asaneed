@@ -302,6 +302,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     return {'--footer-line-font-size':`${size}pt`,'--footer-line-font-weight':settings.bold?700:400} as React.CSSProperties;
   };
   const matnDocument=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').matnDocument;}catch{return null;}})();
+  const fixedHeader=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').headerPosition==='fixed';}catch{return false;}})();
   const modernMatnLayout=isDraft||!!(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').matnHeadingArtwork;}catch{return false;}})();
   const routeEmphasis=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').routeEmphasis||{};}catch{return {};}})();
   const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'',routeEmphasis) : undefined;
@@ -378,9 +379,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     document.fonts.ready.then(update).catch(()=>{});
     return()=>observer.disconnect();
   },[printPermission,typography.reading.size,typography.reading.font,typography.reading.headingGapMm,JSON.stringify(resolvedHeading),sharedHeading,!!matnDocument,isDraft,activeSanad?.id]);
-  // Move the *entire* artwork-to-footer composition, without altering any
-  // spacing inside it. For content longer than the safe A4 area, return to
-  // the established layout and never squeeze or clip a long sanad.
+  // Drafts and new snapshots anchor the basmalah at its established top.
+  // Older snapshots retain their whole-composition balance. Long content
+  // falls back to the established layout without squeezing or clipping.
   useEffect(()=>{
     setCenterFits(true);
     const page=printArea.current;
@@ -394,7 +395,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     const center=()=>{
       const p=page.getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
       const old=parseFloat(page.style.getPropertyValue('--certificate-center-shift'))||0;
-      const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old});
+      const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old,anchorHeader:fixedHeader});
       if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');setCenterFits(false);return;}
       if(Math.abs(balanced.shift-old)>0.25)page.style.setProperty('--certificate-center-shift',balanced.shift.toFixed(2)+'px');
     };
@@ -405,7 +406,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
+  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;

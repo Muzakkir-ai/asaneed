@@ -32,8 +32,9 @@ export default createEndpoint({
   const previous=existing.find(s=>s.ownerId===issuer);
   const sanadId=first(cert.sanad);
   if(!sanadId)throw new Error('لا يوجد سند لهذه الشهادة');
-  const chain=(await getDraftSanadForCertificate(sanadId,issuer,cert.id)).chain;
-  const current=JSON.parse(await collectSnapshotFormatting(sanadId,issuer,chain));
+  const resolved=await getDraftSanadForCertificate(sanadId,issuer,cert.id);
+  const chain=resolved.chain;
+  const current=JSON.parse(await collectSnapshotFormatting(sanadId,issuer,chain,'matnDocument' in resolved?resolved.matnDocument:undefined));
   const [{records:profiles},{records:extras}]=await Promise.all([zite.shaykhPrintProfiles.findAll({filters:{ownerId:cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer},limit:50}),zite.additionalShaykhs.findAll({limit:2000})]);
   const profile=profiles.find(p=>p.ownerId===(cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer));
   const guest=extras.find(x=>x.id===cert.additionalShaykh);
@@ -53,7 +54,7 @@ export default createEndpoint({
   const {records:sources}=await zite.assetSources.findAll({filters:{key:'default'},limit:1});
   const source=sources[0];
   const artworkSnapshot={base:source?cdnBase(source.gitHubRepository||'',source.revision||source.branch||'main'):'',artwork:artworkListSchema.catch([]).parse(source?.artwork||[]),issuerNumber:registrationNumber.slice(2,4)};
-  const formatting=JSON.stringify({matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
+  const formatting=JSON.stringify({headerPosition:'fixed',matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
   const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
   const record={name:'شهادة '+cert.id,certificateId:cert.id,ownerId:issuer,chain,heading,formatting,issuedAt:new Date().toISOString()};
   const {client}=requestContext();
