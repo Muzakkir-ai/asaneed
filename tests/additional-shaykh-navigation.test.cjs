@@ -1,0 +1,37 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),Module=require('node:module');
+const {JSDOM}=require('jsdom'),React=require('react'),{act}=React;
+const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});
+Object.assign(global,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
+const {createRoot}=require('react-dom/client');
+const shaykh={id:'one',name:'شيخ تجريبي',email:'',qualification:'قارئ',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'jazari',readings:[],mutoon:[]};
+const box=({children,...props})=>React.createElement('div',{'aria-label':props['aria-label']},children);
+const Button=({children,variant,size,...props})=>React.createElement('button',props,children);
+const api={additionalShaykhs:async()=>({sheikhs:[shaykh]}),contentManagement:async()=>({catalog:[]}),mutoonTemplates:async()=>({templates:[]}),additionalReadingSanads:async()=>({sanads:[]})};
+global.fetch=async()=>({ok:true,json:async()=>({chains:[],people:[],books:[]})});
+(async()=>{const swc=require('next/dist/build/swc');await swc.loadBindings();const {code}=await swc.transform(fs.readFileSync('legacy/components/AdditionalShaykhsPage.tsx','utf8'),{filename:'AdditionalShaykhsPage.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}});
+const mod=new Module(__filename,module);mod.filename=__filename;mod.paths=module.paths;
+mod.require=id=>{
+ if(id==='react'||id==='react/jsx-runtime')return require(id);
+ if(id==='../lib/api')return api;
+ if(id==='../lib/ijazahCoverage')return {compactReadingCount:()=> 'لا روايات'};
+ if(id==='../lib/workspaceSelection')return {workspaceHeaders:()=>({})};
+ if(id==='../lib/qurra')return {QURRA:[]};
+ if(id==='sonner')return {toast:{error(){},success(){}}};
+ if(id==='lucide-react')return new Proxy({},{get:()=>()=>null});
+ if(id.endsWith('/button'))return {Button};
+ if(id.endsWith('/input'))return {Input:props=>React.createElement('input',props)};
+ if(id.endsWith('/textarea'))return {Textarea:props=>React.createElement('textarea',props)};
+ if(id.endsWith('/card'))return {Card:box,CardContent:box};
+ if(id.endsWith('/dialog'))return {Dialog:({open,children})=>open?React.createElement('div',{role:'dialog'},children):null,DialogContent:box,DialogHeader:box,DialogTitle:box};
+ if(id==='../lib/matnPresentation')return {readMatnPresentation:()=>({}),writeMatnPresentation:()=> '[]'};
+ if(id.startsWith('../lib/'))return {};
+ return {__esModule:true,default:()=>null,MatnPreview:()=>null,parseMatnFormat:()=>[]};
+};mod._compile(code,__filename);const root=createRoot(document.getElementById('root'));
+await act(async()=>{root.render(React.createElement(mod.exports.default,{onSaved(){}}));});
+const click=async label=>{const b=[...document.querySelectorAll('button')].find(x=>x.textContent===label);assert.ok(b,label);await act(async()=>b.click());};
+await click('عرض ملف الشيخ');assert.ok(document.querySelector('section[aria-label="ملف الشيخ شيخ تجريبي"]'));assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(!document.body.textContent.includes('إضافة شيخ جديد'));
+await click('إضافة إجازة قراءات');assert.ok(document.querySelector('[role=dialog]').textContent.includes('القراءات والروايات'));
+// Remount to exercise a clean second visit and matn add without persisting fixtures.
+await act(async()=>root.unmount());const next=createRoot(document.getElementById('root'));await act(async()=>next.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('إضافة متن');assert.ok(document.querySelector('[role=dialog]').textContent.includes('المتن المنشور'));
+await act(async()=>next.unmount());const last=createRoot(document.getElementById('root'));await act(async()=>last.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('العودة إلى المشايخ الإضافيين');assert.ok(document.body.textContent.includes('إضافة شيخ جديد'));assert.equal(document.querySelector('section[aria-label]'),null);await act(async()=>last.unmount());console.log('PASS: dedicated detail view, add-reading/add-matn actions and return to list; mocked data only');
+})().catch(e=>{console.error(e);process.exitCode=1});
