@@ -1,3 +1,6 @@
+import MatnCatalogPage,{MatnDecisionNotice} from './components/MatnCatalogPage';
+import SharedContentPage from './components/SharedContentPage';
+import CertificateAppearance from './components/CertificateAppearance';
 import AccountUsername from './components/AccountUsername';
 import SystemAdministration from './components/SystemAdministration';
 'use client';
@@ -112,7 +115,7 @@ function PrivateApp() {
 
   const shaykhName = displayName || user.name || `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
 
-  const isStaff=user.role!=='student';
+  const isStaff=user.canIssue??user.role!=='student';
   const changeName = async () => {
     if (profileName.trim().length < 2) return toast.error('أدخل اسماً صحيحاً');
     setSavingProfile(true);
@@ -157,10 +160,16 @@ function PrivateApp() {
       </header>
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>changeScope(target,!editInspection)}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{changeScope(directory.actorId);setActive('certs');}}>العودة إلى مساحتي</Button></section>}
+        {isStaff&&<MatnDecisionNotice/>}
         <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+editInspection}>
           <TabsContent value="certs">
             <CertificatesView scopeKey={directory.actorId+':'+target} administrativeView={inspecting} readOnly={inspecting&&!editInspection} loading={refreshing} error={loadError} onRetry={load} data={data} currentUserId={user.id} onChange={load} onPrint={setPrinting} />
           </TabsContent>
+          {isStaff&&<TabsContent value="available-mutoon"><MatnCatalogPage/></TabsContent>}
+          {isStaff&&<TabsContent value="appearance"><CertificateAppearance onMatn={()=>setActive('available-mutoon')}/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="shared-mutoon"><MatnCatalogPage admin/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="content-requests"><MatnCatalogPage admin requestsOnly/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="shared-texts"><SharedContentPage/></TabsContent>}
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting} onImported={()=>void load()}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>

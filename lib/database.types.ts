@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       accounts: {
         Row: {
+          can_issue: boolean
           active: boolean
           auth_user_id: string | null
           created_at: string
@@ -26,6 +27,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
           created_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
           created_at?: string

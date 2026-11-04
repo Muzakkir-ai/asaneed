@@ -17,11 +17,12 @@ export async function POST(request:Request,{params}:{params:Promise<{endpoint:st
  const {data:identity,error}=await client.auth.getClaims();
  const claims=identity?.claims;const user=claims?.sub?{id:claims.sub,email:typeof claims.email==='string'?claims.email:''}:null;
  if(error||!user)return NextResponse.json({error:'Sign in required'},{status:401});
- const {data:account,error:accountError}=await client.from('accounts').select('id,display_name,role,active').eq('auth_user_id',user.id).maybeSingle();
+ const {data:account,error:accountError}=await client.from('accounts').select('id,display_name,role,active,can_issue').eq('auth_user_id',user.id).maybeSingle();
  if(accountError||!account?.active)return NextResponse.json({error:'Account activation required'},{status:403});
  if(account.role==='student'&&!['accountUsername','myCertificates','certificatePrintAuthorization','assetSource','getDashboard','saveProfile'].includes(endpoint))return NextResponse.json({error:'Staff access required'},{status:403});
  try{
   const text=await request.text();if(text.length>15000000)return NextResponse.json({error:'Request too large'},{status:413});const body=JSON.parse(text);
+  if(!account.can_issue&&(['issueQiraah','prepareIjazah','finalizeCertificate','saveCertificate','receivedSanad'].includes(endpoint)||endpoint==='matnCertificates'&&body.action==='save'||['mutoonHoldings','ijazahHoldings'].includes(endpoint)&&!['list',undefined].includes(body.action)))return NextResponse.json({error:'صلاحية الإصدار غير مفعّلة لهذا الحساب'},{status:403});
   // Administrative directories use existing RLS grants, independently of list filters.
   const system=administrativeWorkspaceRequest(endpoint);
   let scope=await resolveWorkspaceScope(client,{...account,auth_user_id:user.id},request,system);

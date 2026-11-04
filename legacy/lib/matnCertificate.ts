@@ -1,5 +1,5 @@
 import {readMatnPresentation} from './matnPresentation';
-export type MatnSource={name:string;sanadText:string;wordingText?:string;introductionId?:string;conclusionId?:string;sanadFormatting?:string};
+export type MatnSource={catalogId?:string;name:string;sanadText:string;wordingText?:string;introductionId?:string;conclusionId?:string;sanadFormatting?:string};
 export const defaultMatnWording='وقد قرأ عليَّ mujaaz هذا المتن، فأجزته بروايته عني بالسند المذكور.';
 export const matnHeading=(name:string)=>'إجازة في '+name.trim();
 export const isMatnHeading=(heading:string)=>heading.startsWith('إجازة في ');
