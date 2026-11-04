@@ -3,8 +3,11 @@
 -- then remove these new objects only after explicit review. Keep legacy workspace records.
 alter table public.accounts add column can_issue boolean not null default false;
 update public.accounts set can_issue=true where role in ('admin','shaykh');
+-- The insert trigger fills omitted values while retaining explicit backup values.
+alter table public.accounts alter column can_issue drop default;
 create function private.issuance_capability_default() returns trigger language plpgsql set search_path='' as $$begin
- if tg_op='INSERT' then new.can_issue:=new.role='shaykh';
+ if tg_op='INSERT' then
+  new.can_issue:=case when new.role='student' then false else coalesce(new.can_issue,new.role='shaykh') end;
  elsif new.role is distinct from old.role then if new.role='student' then new.can_issue:=false;elsif new.role='shaykh' then new.can_issue:=true;end if;end if;return new;end;$$;
 create trigger issuance_capability_default before insert or update of role on public.accounts for each row execute function private.issuance_capability_default();
 create function private.matn_key(value text) returns text language sql immutable set search_path='' as $$select trim(regexp_replace(lower(translate(regexp_replace(normalize(value,NFKC),'[\u064b-\u065f\u0670\u06d6-\u06ed\u0640]','','g'),'أإآٱى٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹','ااااي01234567890123456789')),'\s+',' ','g'));$$;
