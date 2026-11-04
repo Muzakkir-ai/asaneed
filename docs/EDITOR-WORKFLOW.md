@@ -33,3 +33,7 @@ A three-step Arabic help disclosure is included in every EditorPage. Personal ho
 Navigation remains inside the existing studio; no new URL router or browser-history model was introduced. Dirty guards cover shared-frame Back/Cancel and browser unload, not every pre-existing sidebar or internal tab transition. Selection controls retain state; a full global navigation guard needs a separate app-level design if requested. Some specialized add-another and archive actions remain within book editing. Request/review dialogs are workflow decisions, not document editors.
 
 No hosted records were created or modified for testing. Mocked DOM tests and existing local SQL suites do not replace real authenticated role sessions, native iOS composition or physical print checks.
+
+## Browser review
+
+A temporary synthetic preview route was inspected in Chrome: real Arabic/tashkil entry, switching sanad/wording/preview tabs, composed text preservation, unsaved Back warning, continue-editing and saved-state clearing. Light/dark screenshots were reviewed. The synthetic route is removed before release. No real account record was changed.

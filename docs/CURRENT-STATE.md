@@ -6,7 +6,7 @@ User authorized automatic publication. Profile, additional-shaykh reading sanad,
 
 Matn catalog cards match Kutub/Turuq cards. Section tabs have a neutral container with teal active state. Each riwayah palette is collapsed by default with name and two live colour dots; hidden controls remain mounted to preserve unsaved changes.
 
-Validation: TypeScript, build, shared-page cancel/save/unload tests, added-shaykh navigation tests, shared matn tab/template/formatting tests, compact editor tests, matn save/reopen/heading/print suites and sanad composition/adapter/local SQL suites pass. Hosted authenticated account flows, native mobile IME and physical printing remain unverified.
+Validation: TypeScript, build, shared-page cancel/save/unload tests, added-shaykh navigation tests, shared matn tab/template/formatting tests, compact editor tests, matn save/reopen/heading/print suites and sanad composition/adapter/local SQL suites pass. A temporary Chrome preview also verified Arabic/tashkil input, tab preservation, composed preview, Back warning/continue-editing, saved state and light/dark layout. Its synthetic route was removed before release. Hosted authenticated account flows, native mobile IME and physical printing remain unverified.
 
 
 ## Interface polish — 4 November 2026
