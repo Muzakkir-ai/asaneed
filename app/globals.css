@@ -155,8 +155,8 @@ button,.button,input { border-radius:var(--control-radius); }
 button:not(.zite-app button),.button { min-height:var(--control-height); }
 .site-header .homepage-login,.homepage-header .homepage-login { background:#ffffff12; color:#fff; border:1px solid #ffffff80; border-radius:var(--control-radius); min-height:var(--control-height); }
 .site-header .homepage-login:hover { background:#ffffff24; color:#fff; }
-.language-switcher,.site-header .language-switcher,.auth-brand .language-switcher { padding:3px; border-radius:var(--control-radius); background:#003e483b; }
-.language-switcher button { padding:6px 12px; min-height:38px; border-radius:6px; font-weight:500; }
+.language-switcher,.site-header .language-switcher,.auth-brand .language-switcher { padding:3px; border-radius:999px; background:#003e483b; }
+.language-switcher button { padding:6px 12px; min-height:38px; border-radius:999px; font-weight:500; }
 .language-switcher button[aria-pressed=true],.site-header .language-switcher button[aria-pressed=true],.auth-brand .language-switcher button[aria-pressed=true] { background:white; color:var(--ink); }
 .workspace-nav a[aria-current=page] { background:var(--accent); border-color:var(--accent); color:white; }
 .field-hint,.input-note,.site-footer { font-size:.8rem; }
