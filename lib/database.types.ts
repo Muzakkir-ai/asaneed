@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       accounts: {
         Row: {
+          can_issue: boolean
           active: boolean
           auth_user_id: string | null
           created_at: string
@@ -26,6 +27,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
           created_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
           created_at?: string
@@ -97,6 +100,8 @@ export type Database = {
           branch_route_name: string
           confirmed: boolean
           continuation: string
+          continuation_ids: string[] | null
+          continuation_override: boolean | null
           id: string
           kind: string
           owner_id: string
@@ -115,6 +120,8 @@ export type Database = {
           branch_route_name?: string
           confirmed?: boolean
           continuation?: string
+          continuation_ids?: string[] | null
+          continuation_override?: boolean | null
           id?: string
           kind: string
           owner_id: string
@@ -133,6 +140,8 @@ export type Database = {
           branch_route_name?: string
           confirmed?: boolean
           continuation?: string
+          continuation_ids?: string[] | null
+          continuation_override?: boolean | null
           id?: string
           kind?: string
           owner_id?: string
@@ -641,6 +650,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      save_sanad_continuation: { Args: { record: Json }; Returns: string }
+      review_sanad_consolidation: { Args: { record: Json }; Returns: string }
       admin_set_account_username: {
         Args: { new_username: string; target_account: string }
         Returns: string

@@ -9,6 +9,13 @@ export type SectionFormatting=z.infer<typeof sectionFormatting>;
 export const defaultSectionFormatting:SectionFormatting={font:'KSA Regular',size:9,color:'charcoal',phrases:[]};
 export const parseFormatting=(value?:string|null):SectionFormatting=>{try{return value?sectionFormatting.parse(JSON.parse(value)):defaultSectionFormatting;}catch{return defaultSectionFormatting;}};
 
+/** An explicit source selection retains its exact letters and intersecting rich styles. */
+export function sliceSectionFormatting(text:string,start:number,end:number,style:SectionFormatting):SectionFormatting{
+ const source=text.slice(start,end);
+ const formats=sectionMatnFormats(text,style).flatMap(f=>{const a=Math.max(start,f.start),b=Math.min(end,f.end);return b>a?[{...f,start:a-start,end:b-start,text:text.slice(a,b)}]:[];});
+ return {...style,phrases:[],rich:{text:source,formats}};
+}
+
 /** Scope binds a new selection to its exact source; old phrase-only records stay readable. */
 export function scopedPhraseRanges(text:string,phrases:SectionFormatting['phrases']){
  const plain=text.replace(/[\uE100-\uE10B]/gu,'');

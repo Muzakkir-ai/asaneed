@@ -5,7 +5,7 @@ export function administrativeWorkspaceRequest(endpoint:string){return ['manageU
 export function readOnlyWorkspaceRequest(endpoint:string,input:Record<string,unknown>){
  if(endpoint==='assetSource')return input.repository===undefined&&!input.refresh;
  if(['getDashboard','myCertificates','getAdminAsaneed','narratorDirectory','certificateDraftPreview','certificatePrintAuthorization','resolveSanadFormatting','sectionVersions'].includes(endpoint))return true;
- const actions:Record<string,string[]>={accountUsername:['get'],matnCertificates:['options'],assetSource:['get','list'],additionalReadingSanads:['list'],additionalShaykhs:['list'],ijazahHoldings:['list'],mutoonHoldings:['list'],mutoonTemplates:['list'],personalWording:['list'],riwayahColors:['list'],sanadPrintStyle:['get'],sanadSections:['list'],shaykhPrintProfile:['get'],studentDirectory:['list']};
+ const actions:Record<string,string[]>={contentManagement:['list','appearance'],accountUsername:['get'],matnCertificates:['options'],assetSource:['get','list'],additionalReadingSanads:['list'],additionalShaykhs:['list'],ijazahHoldings:['list'],mutoonHoldings:['list'],mutoonTemplates:['list'],personalWording:['list'],riwayahColors:['list'],sanadPrintStyle:['get'],sanadSections:['list'],shaykhPrintProfile:['get'],studentDirectory:['list']};
  return !!actions[endpoint]?.includes(String(input.action??'list'));
 }
 export async function resolveWorkspaceScope(client:SupabaseClient,actor:{id:string;auth_user_id:string;display_name:string;role:string},request:Request,system=false):Promise<WorkspaceScope>{

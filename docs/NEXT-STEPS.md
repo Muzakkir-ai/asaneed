@@ -2,6 +2,13 @@
 
 Updated 30 October 2026. These are **suggestions and verification gaps**, not claims of completed work or authorization to change production data. Ask the user which product improvement they want when starting a new task; do not reopen paused branding work.
 
+## Active PR #6 — sanad unification review
+
+- Review the new additive sanad migration before applying it. Then regenerate hosted types/check advisors and exercise authenticated admin/issuer flows in preview. Do not merge or deploy production without approval.
+- Review the 23-route comparison: all 14 Shatibiyyah seven-name prefixes match, while 9 general route comparisons need manual review. Do not silently confirm routes or infer missing identities/branches.
+- Back up affected records privately and review exact before/after mappings before conversion. Existing builderRouteId alone does not identify the personal boundary. Preserve all 45 uncertain older snapshots, including the 30 carrying issue dates.
+- Retire the old CHAIN lookup adapter only after old holdings/preparations/additional-shaykh copies have approved mappings. New route selections use the same core with explicit references. See [SANAD-UNIFICATION.md](SANAD-UNIFICATION.md).
+
 ## Useful next user-facing improvements
 
 1. **Make library-versus-personal ownership even clearer.** The saved-route picker now connects the ijazah form to the shared library. Future polish could label the source book/sanad and explain that a saved holding is an independent copy. If adding refresh-from-library, show a diff and require explicit review; never rewrite certificates silently.

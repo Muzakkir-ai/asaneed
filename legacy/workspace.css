@@ -232,3 +232,7 @@
 @media(max-width:540px){.zite-app .certificate-viewer-tools{gap:4px;padding:5px}.zite-app .certificate-viewer-tools>span{display:none}.zite-app .matn-heading-inputs{grid-template-columns:1fr}}
 /* The shared heading already includes the exact title-to-text gap. */
 .zite-app .matn-composed-preview>.matn-heading-preview-frame+div{margin-top:0!important}
+
+.zite-app .shared-text-card{color:hsl(var(--foreground));background:hsl(var(--card));border-color:hsl(var(--border));transition:border-color .15s,box-shadow .15s}
+.zite-app .shared-text-card:hover{background:hsl(var(--muted))}
+.zite-app .shared-text-card[aria-pressed=true]{border-color:hsl(var(--primary));box-shadow:inset 0 0 0 1px hsl(var(--primary))}

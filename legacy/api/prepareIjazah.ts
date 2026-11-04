@@ -2,7 +2,7 @@ import {isAppAdmin} from '../lib/admin';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
-import {assembleIjazah} from '../lib/assembleIjazah';
+import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
 import {QURRA} from '../lib/qurra';
 import {canUsePersonalSanad,sanadBlockMessage} from '../lib/personalSanadValidation';
 export default createEndpoint({
@@ -23,7 +23,7 @@ export default createEndpoint({
   if(!selectedRawi)throw new Error('إصدار الشهادة برواية واحدة فقط؛ اختر إحدى الروايتين');
   if(!q.rawis.some(r=>r===selectedRawi)||(holding.rawi&&holding.rawi!==selectedRawi))throw new Error('الرواية غير متاحة في إجازتك');
   const {records:sections}=await zite.sanadSections.findAll({limit:2000});
-  const assembled=assembleIjazah({...holding,rawi:selectedRawi} as Parameters<typeof assembleIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+  const assembled=await assembleHoldingIjazah({...holding,rawi:selectedRawi} as Parameters<typeof assembleHoldingIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
   if(assembled.missing.length)throw new Error('لم تكتمل الأسانيد: '+assembled.missing.join('، '));
   const {records:preparations}=await zite.preparedIjazahs.findAll({filters:{ownerId:uid},limit:2000});
   const existing=preparations.find(p=>p.holdingId===holding.id&&(p.rawi||'')===selectedRawi);

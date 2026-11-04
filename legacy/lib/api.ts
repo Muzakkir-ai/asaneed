@@ -131,3 +131,7 @@ export const matnCertificates=(input:z.input<typeof matnCertificatesEndpoint.inp
 
 import type accountUsernameEndpoint from '../api/accountUsername';
 export const accountUsername=(input:z.input<typeof accountUsernameEndpoint.inputSchema>):Promise<z.infer<typeof accountUsernameEndpoint.outputSchema>>=>call('accountUsername',input);
+
+import type contentManagementEndpoint from '../api/contentManagement';
+export type ContentManagementOutput=z.infer<typeof contentManagementEndpoint.outputSchema>;
+export const contentManagement=(input:z.input<typeof contentManagementEndpoint.inputSchema>):Promise<ContentManagementOutput>=>call('contentManagement',input);
