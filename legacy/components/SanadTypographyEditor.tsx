@@ -1,5 +1,5 @@
 import MatnFormatting from './MatnFormatting';
-import {sectionMatnFormats} from '../lib/sanadFormatting';
+import {sectionMatnFormats,rebaseSectionFormatting} from '../lib/sanadFormatting';
 import {useRef} from 'react';
 import {type SectionFormatting} from '../lib/sanadFormatting';
 const fonts=['KSA Regular','Sakkal Kitab','Majalla','Bahij Muna','Amiri'] as const;
@@ -15,7 +15,7 @@ export default function SanadTypographyEditor({text,onTextChange,formatting,onFo
   {beforeText&&<div className="space-y-1"><p className="font-semibold text-sm">النص الذي يسبق سندك الشخصي</p><div className="max-h-48 overflow-auto whitespace-pre-line rounded border bg-muted/20 p-3 text-right text-sm leading-7" style={{fontFamily:"'KSA Regular',serif"}}>{beforeText}</div></div>}
   <label className="block text-sm font-semibold">سندك الشخصي — يُكتب هنا فقط ويُحفظ لحسابك</label>
   <p className="text-xs text-muted-foreground">ابدأ بسندك الشخصي بعبارة «كما أخذته عن» أو «كما أجازني»، ثم اذكر مشايخك حتى نقطة الالتقاء المحددة.</p>
-  <MatnFormatting label="سندك الشخصي" readOnly={!allowTextEdit} baseFont={formatting.font} baseSize={formatting.size} baseColor={formatting.color==='charcoal'?'inherit':`hsl(var(--${formatting.color}))`} sanad={text} onChange={value=>{pendingText.current=value;onTextChange(value);}} formats={sectionMatnFormats(text,formatting)} onFormatsChange={formats=>onFormattingChange({...formatting,rich:{text:pendingText.current,formats}})}/>
+  <MatnFormatting label="سندك الشخصي" readOnly={!allowTextEdit} baseFont={formatting.font} baseSize={formatting.size} baseColor={formatting.color==='charcoal'?'inherit':`hsl(var(--${formatting.color}))`} sanad={text} onChange={value=>{pendingText.current=value;onTextChange(value);}} formats={sectionMatnFormats(text,formatting)} onFormatsChange={formats=>onFormattingChange({...rebaseSectionFormatting(text,pendingText.current,formatting),rich:{text:pendingText.current,formats}})}/>
 
   {afterText&&<div className="space-y-1"><p className="font-semibold text-sm">النص الذي يأتي بعد سندك الشخصي</p><div className="max-h-48 overflow-auto whitespace-pre-line rounded border bg-muted/20 p-3 text-right text-sm leading-7" style={{fontFamily:"'KSA Regular',serif"}}>{afterText}</div></div>}
 

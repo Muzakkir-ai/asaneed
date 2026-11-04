@@ -2,6 +2,16 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Compact editor PR #5 correction — 4 November 2026
+
+The same `feat/compact-formatting-editor` branch and draft PR #5 were corrected after review. The primary toolbar now contains only preset, size, bold, Lucide alignment icons, palette and ellipsis. Save/status are in the header. The More disclosure contains selection/reset/history/variables/font/paragraph controls, supports Escape and outside-pointer dismissal, and does not permanently expose secondary rows. Native disclosures expose expanded state; icons have Arabic names/tooltips and alignment/bold/color controls reflect the selection. The preset selector retains the applied preset.
+
+Pending typing marks now survive capture events at the same caret and subsequent typing; actual caret movement clears them. Scoped section metadata is rebased alongside rich spans on editing, including unambiguous surrounding-text edits. Rich print source scopes produce inline runs inside paragraphs rather than separate wrapper blocks; only explicit newlines split the rich flow. The old phrase-only and historical finalized-matn rendering paths remain intact.
+
+Verification: DOM regressions cover pending marks across keyup, caret changes, scoped rebasing and continuous/multi-paragraph print boundaries. `npm run test:editor:browser` runs the actual components in installed Chrome with a local-only synthetic fixture: Arabic/tashkil input `بَارَكَ اللّٰهُ فِيهِ`, applied preset/active alignment, More disclosure, 1280px desktop and 320/390px mobile with no horizontal page overflow, configured KSA/Sakkal fonts and no browser page errors. Screenshots were visually reviewed. Chrome produced a real one-page A4 landscape PDF using the certificate print-area stylesheet; Poppler rendering was inspected for continuous source/prefix/suffix flow and the explicit second paragraph. The fixture route is created and removed by the browser test and is not shipped.
+
+Limits: this is a browser/PDF fixture check of the actual components, not a live account/certificate issuance, native Arabic IME session, iOS browser or physical printer test. No hosted data mutation or production deployment was performed. The earlier preview Google-login redirect investigation remains separate and was not changed in this correction.
+
 ## Compact formatting editor — review branch, 4 November 2026
 
 Implemented on `feat/compact-formatting-editor`; **not deployed**. `/studio/client.tsx` dynamically imports `legacy/App.tsx`; the matn and section editors in `legacy/components` are active. Both now share the compact editor, six semantic presets, selection actions, semantic colors, variable insertion, collapsed advanced font/paragraph controls and responsive toolbar styling.

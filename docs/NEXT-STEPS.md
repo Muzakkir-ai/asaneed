@@ -78,3 +78,6 @@ Verify Sughra/Kubra selection in authenticated additional-shaykh, personal-holdi
 - Review the compact editor PR in authenticated desktop and mobile sessions; exercise native Arabic composition, touch selection, mixed-script dates/URLs and variable insertion.
 - Verify actual PDF export and physical A4 landscape output with configured fonts, including multi-paragraph scoped section formatting and historical finalized fixtures.
 - Production deployment requires explicit user approval. No database migration or bulk rewrite accompanies this branch.
+
+
+PR #5 correction validation update: Chrome desktop (1280px), mobile viewports (320/390px), Arabic/tashkil entry and a rendered one-page A4 PDF fixture have now been checked. Remaining release checks concern authenticated end-to-end certificate workflows, native IME/iOS behavior and physical printing. Run `npm run test:editor:browser` with installed Google Chrome (or `CHROME_PATH`); its fixture uses no hosted data and is removed automatically. Artifacts default to `.vercel/editor-browser`, configurable with `EDITOR_ARTIFACT_DIR`.

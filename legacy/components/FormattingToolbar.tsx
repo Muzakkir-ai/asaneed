@@ -1,0 +1,28 @@
+import {useEffect,useRef} from 'react';
+import {AlignRight,AlignCenter,AlignJustify,Bold,Palette,Ellipsis,MousePointer2,RemoveFormatting,Undo2,Redo2} from 'lucide-react';
+import type {MatnStyle} from '../lib/matnRichText';
+import type {EditorPreset} from '../lib/editorPresets';
+type Props={style:Partial<MatnStyle>;presets:EditorPreset[];format:(patch:Partial<MatnStyle>)=>void;clear:()=>void;selectAll:()=>void;undo:(redo?:boolean)=>void;insert:(text:string)=>void;disabled:boolean};
+export default function FormattingToolbar({style,presets,format,clear,selectAll,undo,insert,disabled}:Props){
+ const root=useRef<HTMLDivElement>(null);
+ useEffect(()=>{const close=(event:PointerEvent)=>{if(!root.current?.contains(event.target as Node))root.current?.querySelectorAll('details[open]').forEach(e=>e.removeAttribute('open'));};document.addEventListener('pointerdown',close);return()=>document.removeEventListener('pointerdown',close);},[]);
+ const alignment=style.alignment||(style.center?'center':'right');
+ const icon=(label:string,Icon:typeof Bold,action:()=>void,active?:boolean)=><button type="button" title={label} aria-label={label} aria-pressed={active} disabled={disabled} className="matn-icon" onMouseDown={e=>e.preventDefault()} onClick={action}><Icon size={18} aria-hidden="true"/></button>;
+ const command=(label:string,Icon:typeof Bold,action:()=>void)=><button type="button" title={label} aria-label={label} onMouseDown={e=>e.preventDefault()} onClick={action} disabled={disabled}><Icon size={16} aria-hidden="true"/>{label}</button>;
+ return <div ref={root} className="matn-primary-toolbar" role="toolbar" aria-label="تنسيق النص" onKeyDown={e=>{if(e.key==='Escape'){const details=(e.target as HTMLElement).closest('details');details?.removeAttribute('open');details?.querySelector('summary')?.focus();}}}>
+  <select title="نمط النص" aria-label="نمط النص" className="matn-preset" disabled={disabled} value={style.preset||'normal'} onChange={e=>{const p=presets.find(p=>p.id===e.target.value);if(p)format(p.style);}}>{!presets.some(p=>p.id===(style.preset||'normal'))&&<option value={style.preset}>تنسيق مخصص</option>}{presets.map(p=><option key={p.id} value={p.id}>{p.label}</option>)}</select>
+  <select title="حجم النص" aria-label="حجم النص" className="matn-size" disabled={disabled} value={style.sizePercent||100} onChange={e=>format({sizePercent:Number(e.target.value)})}>{[...new Set([75,85,100,110,120,150,style.sizePercent||100])].sort((a,b)=>a-b).map(v=><option key={v} value={v}>{v}%</option>)}</select>
+  {icon('غامق',Bold,()=>format({bold:!style.bold}),!!style.bold)}
+  {icon('محاذاة يمين',AlignRight,()=>format({alignment:'right',center:false}),alignment==='right')}
+  {icon('توسيط',AlignCenter,()=>format({alignment:'center',center:false}),alignment==='center')}
+  {icon('ضبط',AlignJustify,()=>format({alignment:'justify',center:false}),alignment==='justify')}
+  <details className="matn-menu"><summary title="لون النص" aria-label="لون النص" className="matn-icon"><Palette size={18} aria-hidden="true"/></summary><div className="matn-menu-panel matn-palette" role="group" aria-label="ألوان النص">{(['default','primary','secondary'] as const).map((color,i)=><button key={color} type="button" aria-label={['اللون العادي','اللون الأساسي','اللون الثانوي'][i]} title={['اللون العادي','اللون الأساسي','اللون الثانوي'][i]} aria-pressed={(style.color||'default')===color} disabled={disabled} onMouseDown={e=>e.preventDefault()} onClick={()=>format({color})}><span style={{background:color==='default'?'currentColor':`hsl(var(--${color}))`}}/>{['العادي','الأساسي','الثانوي'][i]}</button>)}</div></details>
+  <details className="matn-menu"><summary title="المزيد من التنسيق" aria-label="المزيد من التنسيق" className="matn-icon"><Ellipsis size={18} aria-hidden="true"/></summary><div className="matn-menu-panel matn-more" role="group" aria-label="المزيد من التنسيق">
+   <div className="matn-menu-actions">{command('تحديد الكل',MousePointer2,selectAll)}{command('مسح التنسيق',RemoveFormatting,clear)}{command('تراجع',Undo2,()=>undo())}{command('إعادة',Redo2,()=>undo(true))}</div>
+   <fieldset disabled={disabled}><legend>إدراج متغير</legend>{[{name:'اسم المُجاز',token:'{{mujaaz}}'},{name:'اسم المجيز',token:'{{mujeez}}'},{name:'اسم المتن',token:'{{kitab_name}}'}].map(t=><button key={t.token} type="button" onMouseDown={e=>e.preventDefault()} onClick={()=>insert(t.token)}>إدراج {t.name}</button>)}</fieldset>
+   <fieldset disabled={disabled}><legend>الفقرة والخط</legend>{[{key:'lineSpacing',label:'تباعد الأسطر',values:[1,1.2,1.4,1.6,1.8,2,2.25,2.5,3]},{key:'paragraphSpacing',label:'تباعد الفقرات (نقطة)',values:[0,2,4,6,8,12,16,24]},{key:'firstLineIndent',label:'إزاحة أول سطر (مم)',values:[0,2,4,6,8,10,15,20]},{key:'indent',label:'مسافة بادئة',values:[0,1,2,3]}].map(c=><label key={c.key}>{c.label}<select aria-label={c.label} value={style[c.key as keyof MatnStyle] as number??''} onChange={e=>format({[c.key]:Number(e.target.value)})}><option value="" disabled>افتراضي</option>{c.values.map(v=><option key={v} value={v}>{v}</option>)}</select></label>)}
+   <label>محاذاة آخر سطر<select aria-label="محاذاة آخر سطر" value={style.lastLineAlignment||'right'} onChange={e=>format({lastLineAlignment:e.target.value as 'right'|'center'})}><option value="right">يمين</option><option value="center">وسط</option></select></label>
+   <label>الخط<select aria-label="الخط" value={style.font||'KSA Regular'} onChange={e=>format({font:e.target.value as MatnStyle['font']})}>{['KSA Regular','Sakkal Kitab','Majalla','Bahij Muna','Amiri'].map(f=><option key={f}>{f}</option>)}</select></label></fieldset>
+  </div></details>
+ </div>;
+}

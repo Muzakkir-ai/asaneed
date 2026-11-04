@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {applyMatnPatch,type MatnFormat} from './matnRichText';
+import {applyMatnPatch,editMatnFormats,type MatnFormat} from './matnRichText';
 export const fontChoice=z.enum(['KSA Regular','Sakkal Kitab','Majalla','Bahij Muna','Amiri']);
 export const colorChoice=z.enum(['primary','secondary','charcoal']);
 export const richSpan=z.object({text:z.string(),start:z.number().int().nonnegative(),end:z.number().int().nonnegative(),bold:z.boolean(),color:z.enum(['default','primary','secondary']),center:z.boolean(),indent:z.number().min(0).max(10),font:fontChoice.optional(),preset:z.string().optional(),alignment:z.enum(['right','center','justify']).optional(),lastLineAlignment:z.enum(['right','center']).optional(),sizePercent:z.number().min(20).max(500).optional(),lineSpacing:z.number().min(1).max(3).optional(),paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional()});
@@ -45,4 +45,15 @@ export function formattingForSavedText(text:string,style:SectionFormatting):Sect
  const offset=style.rich.text.length-style.rich.text.trimStart().length;
  const formats=style.rich.formats.flatMap(f=>{const start=Math.max(0,f.start-offset),end=Math.min(text.length,f.end-offset);return end>start?[{...f,start,end,text:text.slice(start,end)}]:[];});
  return {...style,rich:{text,formats}};
+}
+
+export function rebaseSectionFormatting(before:string,after:string,style:SectionFormatting):SectionFormatting{
+ if(before===after)return style;
+ const base=before?after.indexOf(before):-1;
+ const rebase=(formats:MatnFormat[])=>base>=0&&after.indexOf(before,base+1)<0?formats.map(f=>({...f,start:f.start+base,end:f.end+base})):editMatnFormats(before,after,formats);
+ return {...style,rich:style.rich?.text===before?{text:after,formats:rebase(style.rich.formats)}:style.rich,phrases:style.phrases.flatMap(p=>{
+  if(p.scope!==before||p.start===undefined||p.end===undefined)return [p];
+  const spans=rebase([{text:p.text,start:p.start,end:p.end,bold:false,color:'default',center:false,indent:0,font:p.font}]);
+  return spans.map(f=>({...p,scope:after,start:f.start,end:f.end,text:f.text}));
+ })};
 }

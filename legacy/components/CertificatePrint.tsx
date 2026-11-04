@@ -1,3 +1,4 @@
+import {renderRichSanadFlow} from './RichSanadFlow';
 import {scopedPhraseRanges} from '../lib/sanadFormatting';
 import {MatnPreview} from './MatnFormatting';
 import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
@@ -181,8 +182,7 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
   });
 }
 function renderSanadWithConclusion(text: string, primaryColor: string, secondaryColor:string, conclusionStyle?: React.CSSProperties, phrases:StyledPhrase[] = []):React.ReactNode {
-  const richRange=scopedPhraseRanges(text,phrases).find(r=>phrases[r.index].rich);
-  if(richRange){const p=phrases[richRange.index],others=phrases.filter((_,i)=>i!==richRange.index);return <>{renderSanadWithConclusion(text.slice(0,richRange.start),primaryColor,secondaryColor,conclusionStyle,others)}<div style={{'--matn-primary':primaryColor,'--matn-secondary':secondaryColor,color:resolvedColor(p.color,primaryColor,secondaryColor)} as React.CSSProperties}><MatnPreview bare sanad={p.text} formats={p.rich} certificateFont={p.font} bodyStyle={{fontSize:`calc(${p.size*1.1}pt * var(--certificate-text-scale, 1))`}}/></div>{renderSanadWithConclusion(text.slice(richRange.end),primaryColor,secondaryColor,conclusionStyle,others)}</>;}
+  if(phrases.some(p=>p.rich))return renderRichSanadFlow(text,primaryColor,secondaryColor,phrases,part=>renderSanadText(part,primaryColor,secondaryColor,phrases.filter(p=>p.scope===undefined)),conclusionStyle);
   for(const r of scopedPhraseRanges(text,phrases).sort((a,b)=>b.start-a.start))text=text.slice(0,r.start)+'\uE110'+r.index+':'+text.slice(r.start,r.end)+'\uE111'+text.slice(r.end);
   // Keep the final Sahaba full stop and the Prophet section on the same
   // justified paragraph line (with a Sakkal Kitab, primary-color span).
