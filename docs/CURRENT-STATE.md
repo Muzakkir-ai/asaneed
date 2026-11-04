@@ -1,5 +1,12 @@
 # Current Asaneed state
 
+## Interface polish — 4 November 2026
+
+Review branch `feat/interface-polish`: replaces gold button fills with teal/neutral treatments, compacts language selection, adds a translated expandable certificate-number illustration, clarifies email-or-username login, adds password visibility and a page-specific login title, and separates verification details into readable fields. Workspace controls share 44/36/48px sizes and 8px radii; card lift is reduced to 2px, icon rotation removed, and coloured hover feedback retained. Certificate artwork, snapshots and database records are unchanged.
+
+Username login already exists via server-only alias resolution; no new auth flow or schema was added. Existing email/username lookup tests and production build pass. Successful sign-in with real credentials and signed-in workspace visual checks have not been performed. Hosted preview review pending.
+
+
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
 ## Nested-card hover correction — PR #7
