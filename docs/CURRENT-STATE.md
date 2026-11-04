@@ -8,6 +8,8 @@ Certificate lists default to latest completion date, including reset/invalid fil
 
 Numbered matn borders are discovered through the existing pinned artwork pipeline. Upload `svg/borders/01/frame.svg` (then 02, 03, etc.) to the fonts repository; optional names use `"borders":{"01":"اسم الإطار"}` in `svg/catalog.json`. Refresh artwork in the app after uploading. Default and no-border choices are available immediately; additional choices appear after discovery. Borders are monochrome masks using the certificate's border color, proportionally contained. New finalizations freeze the catalog/revision; old snapshots retain their fallbacks.
 
+Chrome synthetic preview verified readable width/height choices, half-unit numeric conversion, basmalah spacing, joined paragraphs, compact checkboxes and fixed A4 dimensions. The temporary route was removed before merge.
+
 Validation: production build and TypeScript pass; matn heading/save/reopen/print suites, layout/joined-format/border tests, certificate filter tests, editor tab tests and admin allow/deny API tests pass. No real hosted certificate was created. Authenticated multi-user browser flows, future uploaded borders and physical printing remain unverified.
 
 # Current Asaneed state
