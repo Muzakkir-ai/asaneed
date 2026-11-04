@@ -71,3 +71,10 @@ YYSS-NNRR is now live: NN is a permanent lifetime serial per issuer across years
 ## Scope-first reading workflow follow-up
 
 Verify Sughra/Kubra selection in authenticated additional-shaykh, personal-holding and issuance sessions, including automatic original-route selection and full-qiraah issuance. Review the six Durrah drafts before enabling their attachment; do not silently confirm them. Requested Shatibiyyah attachments were limited to existing issuer riwayat (14/4/1), not expanded ijazah eligibility. Short route-source labels are edited on the source narrator; full sanad names remain independent.
+
+
+## Compact editor branch release checks — 4 November 2026
+
+- Review the compact editor PR in authenticated desktop and mobile sessions; exercise native Arabic composition, touch selection, mixed-script dates/URLs and variable insertion.
+- Verify actual PDF export and physical A4 landscape output with configured fonts, including multi-paragraph scoped section formatting and historical finalized fixtures.
+- Production deployment requires explicit user approval. No database migration or bulk rewrite accompanies this branch.

@@ -7,7 +7,7 @@ import {arabicSearchKey} from './arabicSearch';
 import {zite} from 'zitejs/db';
 import {context} from '../compat/context';
 import {assembleIjazah} from './assembleIjazah';
-import {parseFormatting} from './sanadFormatting';
+import {sectionPrintPhrases,parseFormatting} from './sanadFormatting';
 import {readingIdentityFromHeading} from './riwayahSvgHeading';
 import {canUsePersonalSanad,sanadInChain,sanadBlockMessage,reachesJunction} from './personalSanadValidation';
 const one=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
@@ -67,7 +67,7 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
   const source=('body' in item?item.body:('personalChain' in item?item.personalChain:''))||'';
   const core=source.trim().replace(/[.،؛\s]+$/u,'');
   if(core.length>=20&&body.includes(core))phrases.push({text:core,font:parsed.font,size:parsed.size,color:parsed.color});
-  for(const p of parsed.phrases)if(body.includes(p.text))phrases.push(p);
+  for(const p of sectionPrintPhrases(source,parsed))if(body.includes(p.text))phrases.push(p);
  }
  const latest=styles.find(x=>x.ownerId===uid&&!!x.settings);
  const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';

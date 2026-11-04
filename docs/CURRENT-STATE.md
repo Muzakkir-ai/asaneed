@@ -2,6 +2,18 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Compact formatting editor — review branch, 4 November 2026
+
+Implemented on `feat/compact-formatting-editor`; **not deployed**. `/studio/client.tsx` dynamically imports `legacy/App.tsx`; the matn and section editors in `legacy/components` are active. Both now share the compact editor, six semantic presets, selection actions, semantic colors, variable insertion, collapsed advanced font/paragraph controls and responsive toolbar styling.
+
+Collapsed clear resets typing marks; inline clear preserves paragraph settings. Explicit paragraph alignment wins over the default justification; paragraph actions retain the original selection. Transactions handle insert/delete/paste, undo/redo, grapheme boundaries and atomic placeholders. New section edits save exact scoped ranges in an optional `rich` member of the existing formatting JSON; original phrase metadata remains available. Legacy phrase-only records retain their historical all-occurrence behavior until intentionally edited. Boundary whitespace trimming rebases the new spans.
+
+The version-2 paragraph/run adapter is in-memory and round-trips untouched legacy metadata with a backup; storage remains compatible JSON in the existing columns. No SQL migration, hosted database mutation, bulk data rewrite or snapshot rewrite was performed. Existing finalized matn documents retain historical alignment rendering; newly created documents carry `editorVersion:2`. Existing Arabic font definitions, artwork and certificate palette settings were retained.
+
+Validation: `npm run test:editor` (DOM interaction plus real certificate render helpers), `npm run typecheck`, production build, existing matn rich-text/recovery/assembly/render/API/persistence and certificate format-settings suites passed. Tests cover repeated vocalized names, clear/typing, undo/redo, selection preservation, atomic variables, mixed Latin identifiers, scoped/multiline section print rendering, legacy conversion and saved whitespace offsets. The React checklist was reviewed for selection listeners, controlled values, toolbar labels and composition guards.
+
+Limits: DOM tests do not establish mobile browser layout, touch selection behavior, font loading or physical A4/PDF parity. Authenticated desktop/mobile review and physical printing remain release checks. Ambiguous or changed scoped source text refuses to guess another occurrence. No production deployment is authorized by this change.
+
 ## Where we are now
 
 Asaneed is running independently on Next.js/Vercel with Supabase authentication and database storage. The original Zite application remains unchanged. The active development objective is improving the migrated application in place, especially authentic certificate rendering, usable account/shaykh relationships and reusable books/طرق entry.

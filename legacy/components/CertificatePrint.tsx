@@ -1,3 +1,4 @@
+import {scopedPhraseRanges} from '../lib/sanadFormatting';
 import {MatnPreview} from './MatnFormatting';
 import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import CertificateViewport from './CertificateViewport';
@@ -50,7 +51,7 @@ const renderQuranGlyphs = (verse: string) => verse.split(/(۞)/g).map((part, i) 
  *  Sakkal Kitab presentation-form glyphs, without altering saved sanad text.
  *  Retain the attached vowels and leave وَايَةِ at its natural font spacing. */
 type ColorChoice = 'primary'|'secondary'|'charcoal';
-type StyledPhrase = {text:string; font:FontChoice; size:number; color:ColorChoice};
+type StyledPhrase = {rich?:import('../lib/matnRichText').MatnFormat[];scope?:string;start?:number;end?:number;text:string; font:FontChoice; size:number; color:ColorChoice};
 const resolvedColor=(choice:ColorChoice,primary:string,secondary:string)=>choice==='primary'?primary:choice==='secondary'?secondary:'#303030';
 // Dedicated print-only markers: retain exact text and isolate only the specified names/reading.
 const emphasizedStart='\uE100';
@@ -109,6 +110,11 @@ function highlightCertificateNames(chain:string,teacher:string,student:string,he
   return result;
 }
 function renderSanadText(text: string, primaryColor: string, secondaryColor: string, phrases:StyledPhrase[] = []) {
+  if(text.includes('\uE110')){
+    const output:React.ReactNode[]=[];let cursor=0;const matcher=/\uE110(\d+):([\s\S]*?)\uE111/gu;let match;
+    while((match=matcher.exec(text))){output.push(renderSanadText(text.slice(cursor,match.index),primaryColor,secondaryColor,phrases));const p=phrases[Number(match[1])];output.push(<span key={match.index} style={{fontFamily:p.font,fontSize:`calc(${p.size*1.1}pt * var(--certificate-text-scale, 1))`,color:resolvedColor(p.color,primaryColor,secondaryColor),fontWeight:p.font==='Sakkal Kitab'?700:undefined}}>{p.rich?<MatnPreview bare sanad={p.text} formats={p.rich} certificateFont={p.font} bodyStyle={{fontSize:`${p.size*1.1}pt`}}/>:renderSanadText(match[2].replace(/[\uE100-\uE10B]/gu,''),primaryColor,secondaryColor)}</span>);cursor=matcher.lastIndex;}
+    output.push(renderSanadText(text.slice(cursor),primaryColor,secondaryColor,phrases));return output;
+  }
   if(text.includes(emphasizedStart)||text.includes(titleStart)||text.includes(jazariNormalStart)||text.includes(personalNameStart)||text.includes(routeNarratorStart)||text.includes('\uE10A')){
     const fragments:React.ReactNode[]=[];
     let remaining=text;
@@ -144,7 +150,7 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
     }
     return fragments;
   }
-  const targets=phrases.filter(p=>p.text.trim()).sort((a,b)=>b.text.length-a.text.length);
+  const targets=phrases.filter(p=>p.scope===undefined&&p.text.trim()).sort((a,b)=>b.text.length-a.text.length);
   if(targets.length){
     // Split only on complete user-selected phrases; preserve text and apply styling locally.
     const output:React.ReactNode[]=[];
@@ -174,7 +180,10 @@ function renderSanadText(text: string, primaryColor: string, secondaryColor: str
     return <span key={i}>{part}</span>;
   });
 }
-function renderSanadWithConclusion(text: string, primaryColor: string, secondaryColor:string, conclusionStyle?: React.CSSProperties, phrases:StyledPhrase[] = []) {
+function renderSanadWithConclusion(text: string, primaryColor: string, secondaryColor:string, conclusionStyle?: React.CSSProperties, phrases:StyledPhrase[] = []):React.ReactNode {
+  const richRange=scopedPhraseRanges(text,phrases).find(r=>phrases[r.index].rich);
+  if(richRange){const p=phrases[richRange.index],others=phrases.filter((_,i)=>i!==richRange.index);return <>{renderSanadWithConclusion(text.slice(0,richRange.start),primaryColor,secondaryColor,conclusionStyle,others)}<div style={{'--matn-primary':primaryColor,'--matn-secondary':secondaryColor,color:resolvedColor(p.color,primaryColor,secondaryColor)} as React.CSSProperties}><MatnPreview bare sanad={p.text} formats={p.rich} certificateFont={p.font} bodyStyle={{fontSize:`calc(${p.size*1.1}pt * var(--certificate-text-scale, 1))`}}/></div>{renderSanadWithConclusion(text.slice(richRange.end),primaryColor,secondaryColor,conclusionStyle,others)}</>;}
+  for(const r of scopedPhraseRanges(text,phrases).sort((a,b)=>b.start-a.start))text=text.slice(0,r.start)+'\uE110'+r.index+':'+text.slice(r.start,r.end)+'\uE111'+text.slice(r.end);
   // Keep the final Sahaba full stop and the Prophet section on the same
   // justified paragraph line (with a Sakkal Kitab, primary-color span).
   const paragraphs=(value:string)=>value.trim().split(/\n\s*\n/u).filter(Boolean).map((part,i)=>{
@@ -482,7 +491,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
 
             {sanadBody?.trim() ? (
-              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
+              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} legacyAlignment={!isDraft&&!matnDocument.editorVersion} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
             ) : (
               <>
                 <p className="mt-6">الحمد لله الذي أنزل القرآن، والصلاة والسلام على من أُرسل بالهدى والفرقان، أما بعد:</p>

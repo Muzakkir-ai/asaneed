@@ -1,12 +1,14 @@
-export type MatnFormat={text:string;start:number;end:number;color:'primary'|'secondary'|'default';bold:boolean;center:boolean;indent:number;target?:'sanad'|'wording';lastLineAlignment?:'right'|'center';sizePercent?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify'};
+export type MatnFormat={font?:'KSA Regular'|'Sakkal Kitab'|'Majalla'|'Bahij Muna'|'Amiri';preset?:string;text:string;start:number;end:number;color:'primary'|'secondary'|'default';bold:boolean;center:boolean;indent:number;target?:'sanad'|'wording';lastLineAlignment?:'right'|'center';sizePercent?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify'};
 export type MatnStyle=Omit<MatnFormat,'text'|'start'|'end'>;
-const same=(a:MatnStyle,b:MatnStyle)=>a.color===b.color&&a.bold===b.bold&&a.center===b.center&&a.indent===b.indent&&a.target===b.target&&a.lastLineAlignment===b.lastLineAlignment&&a.sizePercent===b.sizePercent&&a.lineSpacing===b.lineSpacing&&a.paragraphSpacing===b.paragraphSpacing&&a.firstLineIndent===b.firstLineIndent&&a.alignment===b.alignment;
+const same=(a:MatnStyle,b:MatnStyle)=>a.font===b.font&&a.preset===b.preset&&a.color===b.color&&a.bold===b.bold&&a.center===b.center&&a.indent===b.indent&&a.target===b.target&&a.lastLineAlignment===b.lastLineAlignment&&a.sizePercent===b.sizePercent&&a.lineSpacing===b.lineSpacing&&a.paragraphSpacing===b.paragraphSpacing&&a.firstLineIndent===b.firstLineIndent&&a.alignment===b.alignment;
 export function cleanMatnFormats(text:string,formats:MatnFormat[]){
  const result:MatnFormat[]=[];
- for(const f of [...formats].sort((a,b)=>a.start-b.start)){
-  if(!Number.isInteger(f.start)||!Number.isInteger(f.end)||f.start<0||f.end<=f.start||f.end>text.length||text.slice(f.start,f.end)!==f.text)continue;
-  const last=result.at(-1);if(last&&f.start<last.end)continue;
-  if(last&&last.end===f.start&&same(last,f)){last.end=f.end;last.text=text.slice(last.start,last.end);}else result.push({...f});
+ const valid=formats.filter(f=>Number.isInteger(f.start)&&Number.isInteger(f.end)&&f.start>=0&&f.end>f.start&&f.end<=text.length&&text.slice(f.start,f.end)===f.text);
+ const points=[...new Set(valid.flatMap(f=>[f.start,f.end]))].sort((a,b)=>a-b);
+ for(let i=0;i<points.length-1;i++){
+  const start=points[i],end=points[i+1],active=valid.filter(f=>f.start<=start&&f.end>=end);if(!active.length)continue;
+  const f={...Object.assign({},...active),start,end,text:text.slice(start,end)} as MatnFormat;
+  const last=result.at(-1);if(last&&last.end===start&&same(last,f)){last.end=end;last.text=text.slice(last.start,end);}else result.push(f);
  }
  return result;
 }
@@ -17,7 +19,7 @@ export function setMatnStyle(text:string,formats:MatnFormat[],start:number,end:n
   if(f.end<=start||f.start>=end)pieces.push(f);
   else{if(f.start<start)pieces.push({...f,end:start,text:text.slice(f.start,start)});if(f.end>end)pieces.push({...f,start:end,text:text.slice(end,f.end)});}
  }
- if(style.bold||style.color!=='default'||style.center||style.indent||style.sizePercent||style.lineSpacing||style.paragraphSpacing!==undefined||style.firstLineIndent!==undefined||style.alignment||style.lastLineAlignment)pieces.push({...style,start,end,text:text.slice(start,end)});
+ if(style.font||style.preset||style.bold||style.color!=='default'||style.center||style.indent||style.sizePercent||style.lineSpacing||style.paragraphSpacing!==undefined||style.firstLineIndent!==undefined||style.alignment||style.lastLineAlignment)pieces.push({...style,start,end,text:text.slice(start,end)});
  return cleanMatnFormats(text,pieces);
 }
 /** Rebase spans around a contiguous text edit; typing inherits the nearby span. */

@@ -191,3 +191,13 @@
 .zite-app .certificate-composed-sanad .certificate-sanad-paragraph + .certificate-conclusion {
  margin-top: var(--certificate-paragraph-gap, 3pt) !important;
 }
+/* Compact editing uses the existing application and certificate palette tokens. */
+.zite-app .matn-rich-editor{min-width:0;max-width:100%}
+.zite-app .matn-toolbar-main{gap:.375rem}
+.zite-app .matn-rich-toolbar select{max-width:100%;min-height:36px}
+.zite-app .matn-toolbar-extras{display:flex;flex-wrap:wrap;gap:.75rem}
+.zite-app .matn-rich-editor [contenteditable]{unicode-bidi:plaintext;overflow-wrap:anywhere;font-synthesis:none}
+.zite-app .matn-selection-toolbar{position:sticky;bottom:0;z-index:21;width:fit-content;max-width:100%}
+@media(max-width:640px){.zite-app .matn-toolbar-main button{min-width:36px;min-height:40px}.zite-app .matn-rich-toolbar{position:relative}.zite-app .matn-selection-toolbar{width:100%}.zite-app .matn-toolbar-main .matn-toolbar-label{display:none}}
+.zite-app .matn-toolbar-main>.matn-advanced{flex-basis:100%;grid-column:1/-1;order:20}
+@media(max-width:640px){.zite-app .matn-toolbar-main>.matn-toolbar-extras{grid-column:1/-1}.zite-app .matn-advanced label{max-width:100%}}
