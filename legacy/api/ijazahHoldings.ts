@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { createEndpoint, ZiteError } from 'zitejs/backend';
 import { zite } from 'zitejs/db';
 import { QURRA,displayRawi } from '../lib/qurra';
-import {sectionFormatting} from '../lib/sanadFormatting';
+import {sectionFormatting,formattingForSavedText} from '../lib/sanadFormatting';
 import {reachesJunction} from '../lib/personalSanadValidation';
 const item = z.object({ chainMode:z.enum(['junction','complete']),sourceCertificateId:z.string(),sourceTeacherName:z.string(),bookAuthor:z.string(),routeSource:z.string(),tariqNumber:z.string(),tariqName:z.string(),id:z.string(),ownerId:z.string(),name:z.string(),qariId:z.string(),rawi:z.string(),personalChain:z.string(),junction:z.string(),introductionId:z.string(),wordingId:z.string(),formatting:z.string(),personalSanadConfirmed:z.boolean() });
 export default createEndpoint({
@@ -51,7 +51,7 @@ export default createEndpoint({
         const wordingId=input.wordingId??existing?.wordingId??'';
         if(introductionId&&!sections.records.some(s=>s.id===introductionId&&s.sectionType==='introduction'))throw new Error('Invalid introduction');
         if(wordingId&&!sections.records.some(s=>s.id===wordingId&&s.sectionType==='wording'))throw new Error('Invalid ijazah wording');
-        const record={chainMode,bookAuthor:input.bookAuthor??existing?.bookAuthor??'',routeSource:input.routeSource??existing?.routeSource??'',tariqNumber,tariqName,personalSanadConfirmed:input.personalSanadConfirmed??existing?.personalSanadConfirmed??false,introductionId,wordingId,formatting:input.formatting?JSON.stringify(input.formatting):existing?.formatting||'',name:(rawi?`رواية ${displayRawi(q.id,rawi)} عن ${q.imam}`:`قراءة ${q.reading}`)+(tariqName?' — '+tariqName:''),ownerId:uid,qariId,rawi,personalChain,junction};
+        const record={chainMode,bookAuthor:input.bookAuthor??existing?.bookAuthor??'',routeSource:input.routeSource??existing?.routeSource??'',tariqNumber,tariqName,personalSanadConfirmed:input.personalSanadConfirmed??existing?.personalSanadConfirmed??false,introductionId,wordingId,formatting:input.formatting?JSON.stringify(formattingForSavedText(personalChain,input.formatting)):existing?.formatting||'',name:(rawi?`رواية ${displayRawi(q.id,rawi)} عن ${q.imam}`:`قراءة ${q.reading}`)+(tariqName?' — '+tariqName:''),ownerId:uid,qariId,rawi,personalChain,junction};
         if(existing)await zite.ijazahHoldings.update({id:existing.id,record});
         else {
           const {records}=await zite.ijazahHoldings.findAll({filters:{ownerId:uid},limit:2000});

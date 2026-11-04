@@ -1,9 +1,10 @@
+import {readMatnPresentation} from './matnPresentation';
 export type MatnSource={name:string;sanadText:string;wordingText?:string;introductionId?:string;conclusionId?:string;sanadFormatting?:string};
 export const defaultMatnWording='وقد قرأ عليَّ mujaaz هذا المتن، فأجزته بروايته عني بالسند المذكور.';
 export const matnHeading=(name:string)=>'إجازة في '+name.trim();
 export const isMatnHeading=(heading:string)=>heading.startsWith('إجازة في ');
 export function matnFormats(raw?:string){
- try{const value=JSON.parse(raw||'[]');return Array.isArray(value)?value.filter(f=>f&&typeof f.text==='string'&&Number.isInteger(f.start)&&Number.isInteger(f.end)&&f.start>=0&&f.end>f.start&&typeof f.bold==='boolean'&&typeof f.center==='boolean'&&Number.isFinite(f.indent)&&f.indent>=0&&f.indent<=10):[];}catch{return [];}
+ try{const value=readMatnPresentation(raw).formats;return Array.isArray(value)?value.filter(f=>f&&typeof f.text==='string'&&Number.isInteger(f.start)&&Number.isInteger(f.end)&&f.start>=0&&f.end>f.start&&typeof f.bold==='boolean'&&typeof f.center==='boolean'&&Number.isFinite(f.indent)&&f.indent>=0&&f.indent<=10):[];}catch{return [];}
 }
 /** Keep placeholders until the certificate renderer substitutes the actual identities. */
 export function assembleMatnCertificate(matn:MatnSource,intro='',end=''){

@@ -71,3 +71,16 @@ YYSS-NNRR is now live: NN is a permanent lifetime serial per issuer across years
 ## Scope-first reading workflow follow-up
 
 Verify Sughra/Kubra selection in authenticated additional-shaykh, personal-holding and issuance sessions, including automatic original-route selection and full-qiraah issuance. Review the six Durrah drafts before enabling their attachment; do not silently confirm them. Requested Shatibiyyah attachments were limited to existing issuer riwayat (14/4/1), not expanded ijazah eligibility. Short route-source labels are edited on the source narrator; full sanad names remain independent.
+
+
+## Compact editor branch release checks — 4 November 2026
+
+- Review the compact editor PR in authenticated desktop and mobile sessions; exercise native Arabic composition, touch selection, mixed-script dates/URLs and variable insertion.
+- Verify actual PDF export and physical A4 landscape output with configured fonts, including multi-paragraph scoped section formatting and historical finalized fixtures.
+- Production deployment requires explicit user approval. No database migration or bulk rewrite accompanies this branch.
+
+
+PR #5 correction validation update: Chrome desktop (1280px), mobile viewports (320/390px), Arabic/tashkil entry and a rendered one-page A4 PDF fixture have now been checked. Remaining release checks concern authenticated end-to-end certificate workflows, native IME/iOS behavior and physical printing. Run `npm run test:editor:browser` with installed Google Chrome (or `CHROME_PATH`); its fixture uses no hosted data and is removed automatically. Artifacts default to `.vercel/editor-browser`, configurable with `EDITOR_ARTIFACT_DIR`.
+
+
+Matn heading follow-up: shared independent SVG sizing, legacy/current/default precedence and real two-line artwork/PDF zoom invariance are checked on PR #5. Review saved defaults in an authenticated account before any release. Existing per-certificate legacy overrides intentionally remain effective; choose «استخدام إعدادات المتن» to inherit changed matn defaults. Physical print and native mobile export still require device review. Production approval is still required.

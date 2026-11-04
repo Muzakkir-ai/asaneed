@@ -1,7 +1,7 @@
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
-import {parseFormatting,phraseStyle} from '../lib/sanadFormatting';
+import {sectionPrintPhrases,parseFormatting,phraseStyle} from '../lib/sanadFormatting';
 const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 export default createEndpoint({
  description:'Resolve saved admin shared-section formatting and user private-sanad formatting for a printed sanad',
@@ -23,14 +23,14 @@ export default createEndpoint({
     const style=parseFormatting(section.formatting);
     const core=(section.body||'').trim().replace(/[.،؛\s]+$/u,'');
     if(core.length>=20&&text.includes(core))out.push({text:core,font:style.font,size:style.size,color:style.color});
-    for(const phrase of style.phrases){if(text.includes(phrase.text))out.push(phrase);}
+    for(const phrase of sectionPrintPhrases(section.body||'',style)){if(text.includes(phrase.text))out.push(phrase);}
   }
   for(const holding of holdings){
     if(!holding.formatting)continue;
     const style=parseFormatting(holding.formatting);
     const core=(holding.personalChain||'').trim().replace(/[.،؛\s]+$/u,'');
     if(core.length>=20&&text.includes(core))out.push({text:core,font:style.font,size:style.size,color:style.color});
-    for(const phrase of style.phrases){if(text.includes(phrase.text))out.push(phrase);}
+    for(const phrase of sectionPrintPhrases(holding.personalChain||'',style)){if(text.includes(phrase.text))out.push(phrase);}
   }
   return {phrases:out.slice(0,180)};
  }
