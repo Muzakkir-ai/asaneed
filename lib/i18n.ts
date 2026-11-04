@@ -7,6 +7,7 @@ export const languageOptions = [
 ] as const;
 export const messages = {
  ar: {
+  recipient:'المُجاز', subject:'موضوع الإجازة', numberHelp:'أين أجد رقم الإجازة؟', exampleLabel:'مثال توضيحي — وليس إجازة حقيقية', numberHelpBody:'ابحث عن عبارة «المسجّل برقم» على إجازتك، ثم أدخل الرقم الذي يليها كاملًا مع الشرطة.',
   title:'التحقق من الإجازة | الأسانيد', description:'تحقق من الإجازة المعتمدة بإدخال رقمها في سجل الأسانيد والإجازات.',
   brand:'الأسانيد', subtitle:'توثيق الإجازات', register:'سجل الإجازات', heading:'التحقق من الإجازة',
   introduction:'أدخل رقم الإجازة للاطلاع على بياناتها والتحقق من اعتمادها.', language:'لغة الموقع',
@@ -17,11 +18,12 @@ export const messages = {
   notFoundTitle:'لم نعثر على إجازة بهذا الرقم', notFoundBody:'تحقق من الرقم المدوّن على الإجازة وحاول مجددًا. قد لا تكون الإجازة قد أُدرجت في السجل بعد.',
   verified:'إجازة معتمدة', issuer:'المجيز', qiraah:'القراءة', riwayah:'الرواية', completionDate:'تاريخ الإتمام', footer:'منصة الأسانيد والإجازات',
   login:'تسجيل الدخول', loginIntro:'للحسابات المفعّلة من إدارة المنصة.', email:'البريد الإلكتروني', password:'كلمة المرور', signIn:'دخول', signOut:'تسجيل الخروج',
-  loginError:'تعذر تسجيل الدخول. تحقق من البريد وكلمة المرور ثم حاول مجددًا.', accountError:'تعذر تحميل الحساب', connectionError:'حدث خطأ في الاتصال. يرجى إعادة المحاولة.',
+  loginError:'تعذر تسجيل الدخول. تحقق من البريد الإلكتروني أو اسم الدخول وكلمة المرور ثم حاول مجددًا.', accountError:'تعذر تحميل الحساب', connectionError:'حدث خطأ في الاتصال. يرجى إعادة المحاولة.',
   pendingAccount:'الحساب بانتظار التفعيل', activationHelp:'يرجى التواصل مع إدارة المنصة لتفعيل صلاحيات الحساب.', welcome:'مرحبًا،',
   managementPreparing:'تم التحقق من حسابك. يجري تجهيز أدوات الإدارة ونقل البيانات.', loading:'جارٍ التحميل…', pageError:'تعذر تحميل الصفحة', retryHelp:'يرجى المحاولة مجددًا.', retry:'إعادة المحاولة',
  },
  ur: {
+  recipient:'اجازہ حاصل کرنے والے', subject:'اجازہ کا موضوع', numberHelp:'اجازہ نمبر کہاں ملے گا؟', exampleLabel:'وضاحتی مثال — اصل اجازہ نہیں', numberHelpBody:'اپنے اجازہ پر «المسجّل برقم» تلاش کریں اور اس کے بعد لکھا ہوا پورا نمبر، ہائفن سمیت، درج کریں۔',
   title:'اجازہ کی تصدیق | الاسانید', description:'الاسانید کے رجسٹر میں اجازہ نمبر درج کرکے اس کی تصدیق کریں۔',
   brand:'الاسانید', subtitle:'اجازات کی توثیق', register:'اجازات کا رجسٹر', heading:'اجازہ کی تصدیق',
   introduction:'اجازہ کی تفصیلات اور اس کی منظوری کی تصدیق کے لیے اجازہ نمبر درج کریں۔', language:'ویب سائٹ کی زبان',
@@ -32,11 +34,12 @@ export const messages = {
   notFoundTitle:'اس نمبر کا کوئی اجازہ نہیں ملا', notFoundBody:'اجازہ پر لکھا ہوا نمبر چیک کرکے دوبارہ کوشش کریں۔ ممکن ہے یہ اجازہ ابھی رجسٹر میں شامل نہ ہوا ہو۔',
   verified:'منظور شدہ اجازہ', issuer:'اجازہ دینے والے شیخ', qiraah:'قراءت', riwayah:'روایت', completionDate:'تکمیل کی تاریخ', footer:'اسانید و اجازات کا پلیٹ فارم',
   login:'لاگ اِن', loginIntro:'انتظامیہ کے فعال کردہ اکاؤنٹس کے لیے۔', email:'ای میل', password:'پاس ورڈ', signIn:'لاگ اِن کریں', signOut:'لاگ آؤٹ کریں',
-  loginError:'لاگ اِن نہیں ہو سکا۔ ای میل اور پاس ورڈ چیک کرکے دوبارہ کوشش کریں۔', accountError:'اکاؤنٹ لوڈ نہیں ہو سکا', connectionError:'رابطے میں خرابی پیش آئی۔ دوبارہ کوشش کریں۔',
+  loginError:'لاگ اِن نہیں ہو سکا۔ ای میل یا صارف نام اور پاس ورڈ چیک کرکے دوبارہ کوشش کریں۔', accountError:'اکاؤنٹ لوڈ نہیں ہو سکا', connectionError:'رابطے میں خرابی پیش آئی۔ دوبارہ کوشش کریں۔',
   pendingAccount:'اکاؤنٹ فعال ہونا باقی ہے', activationHelp:'اکاؤنٹ فعال کروانے کے لیے انتظامیہ سے رابطہ کریں۔', welcome:'خوش آمدید،',
   managementPreparing:'آپ کے اکاؤنٹ کی تصدیق ہو گئی ہے۔ انتظامی سہولیات اور ڈیٹا کی منتقلی پر کام جاری ہے۔', loading:'لوڈ ہو رہا ہے…', pageError:'صفحہ لوڈ نہیں ہو سکا', retryHelp:'دوبارہ کوشش کریں۔', retry:'دوبارہ کوشش کریں',
  },
  en: {
+  recipient:'Recipient', subject:'Ijazah subject', numberHelp:'Where can I find my ijazah number?', exampleLabel:'Illustration — not a real certificate', numberHelpBody:'Find “المسجّل برقم” on your certificate and enter the complete number that follows, including the hyphen.',
   title:'Verify an Ijazah | Asaneed', description:'Enter an ijazah number to verify it in the Asaneed register.',
   brand:'Asaneed', subtitle:'Ijazah verification', register:'Ijazah register', heading:'Verify an ijazah',
   introduction:'Enter the ijazah number to view its details and confirm its approval.', language:'Website language',
@@ -47,7 +50,7 @@ export const messages = {
   notFoundTitle:'No ijazah found with this number', notFoundBody:'Check the number printed on the ijazah and try again. The ijazah may not have been added to the register yet.',
   verified:'Approved ijazah', issuer:'Issuing shaykh', qiraah:'Qira’ah', riwayah:'Riwayah', completionDate:'Completion date', footer:'Asaneed · Sanad and Ijazah Platform',
   login:'Sign in', loginIntro:'For accounts activated by the platform administrator.', email:'Email address', password:'Password', signIn:'Sign in', signOut:'Sign out',
-  loginError:'Unable to sign in. Check your email and password, then try again.', accountError:'Unable to load your account', connectionError:'A connection error occurred. Please try again.',
+  loginError:'Unable to sign in. Check your email or username and password, then try again.', accountError:'Unable to load your account', connectionError:'A connection error occurred. Please try again.',
   pendingAccount:'Your account is awaiting activation', activationHelp:'Contact the platform administrator to activate your account.', welcome:'Welcome,',
   managementPreparing:'Your account is verified. Management tools and data migration are being prepared.', loading:'Loading…', pageError:'Unable to load this page', retryHelp:'Please try again.', retry:'Try again',
  },

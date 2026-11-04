@@ -31,6 +31,13 @@ export default function VerificationForm() {
   <form onSubmit={submit} className="verification-form" aria-busy={loading}>
    <label htmlFor="ijazah-number">{t.number}</label>
    <p id="number-hint" className="field-hint">{t.hint.split('المسجّل برقم').map((part,index)=><span key={index}>{index>0&&<bdi lang="ar" className="arabic-phrase">المسجّل برقم</bdi>}{part}</span>)}</p>
+   <details className="number-help"><summary>{t.numberHelp}</summary>
+    <p>{t.numberHelpBody}</p>
+    <figure className="number-example"><figcaption>{t.exampleLabel}</figcaption>
+     <div className="example-lines" aria-hidden="true"><span/><span/><span/></div>
+     <div className="example-registration" dir="rtl"><span lang="ar">المسجّل برقم</span> <strong dir="ltr">{locale==='en'?'1234-5678':'١٢٣٤-٥٦٧٨'}</strong></div>
+    </figure>
+   </details>
    <div className="number-input-wrap"><input id="ijazah-number" name="number" value={number} onChange={event=>{setNumber(event.target.value);setResult(null);setError('');setInvalid(false);}} dir="ltr" inputMode="numeric" autoComplete="off" spellCheck={false} maxLength={32} placeholder={locale==='en'?'1234-5678':'\u2066١٢٣٤\u2069-\u2066٥٦٧٨\u2069'} required disabled={loading} aria-describedby={error?'number-hint verification-error':'number-hint'} aria-invalid={invalid}/></div>
    <button type="submit" className="verify-button" disabled={loading}>{loading?<><span className="spinner" aria-hidden="true"/>{t.checking}</>:<>{t.verify}<svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></>}</button>
    <p className="input-note">{t.inputNote}</p>
@@ -39,11 +46,10 @@ export default function VerificationForm() {
   <div aria-live="polite" aria-atomic="true">
    {result?.status==='preparing'&&<div className="lookup-message"><h2>{t.preparingTitle}</h2><p>{t.preparingBody}</p></div>}
    {result?.status==='not_found'&&<div className="lookup-message"><h2>{t.notFoundTitle}</h2><p>{t.notFoundBody}</p></div>}
-   {result?.status==='verified'&&<section className="verified-result"><p className="verified-badge"><span aria-hidden="true">✓</span> {t.verified}</p><h2><bdi>{result.certificate.student_name}</bdi></h2><dl>
+   {result?.status==='verified'&&<section className="verified-result"><p className="verified-badge"><span aria-hidden="true">✓</span> {t.verified}</p><p className="recipient-label">{t.recipient}</p><h2><bdi>{result.certificate.student_name}</bdi></h2><dl className="verification-details">
     <div><dt>{t.number}</dt><dd><bdi dir="ltr" className="registration-number"><span>{digits(result.certificate.registration_number.slice(0,4))}</span><span>-</span><span>{digits(result.certificate.registration_number.slice(5))}</span></bdi></dd></div>
     <div><dt>{t.issuer}</dt><dd><bdi>{result.certificate.issuer_name}</bdi></dd></div>
-    <div><dt>{t.qiraah}</dt><dd><bdi>{result.certificate.qiraah_name}</bdi></dd></div>
-    <div><dt>{t.riwayah}</dt><dd><bdi>{result.certificate.riwayah_name}</bdi></dd></div>
+    <div className="verification-subject"><dt>{t.subject}</dt><dd><span className="subject-line"><span>{t.qiraah}</span><bdi>{result.certificate.qiraah_name}</bdi></span><span className="subject-line"><span>{t.riwayah}</span><bdi>{result.certificate.riwayah_name}</bdi></span></dd></div>
     <div><dt>{t.completionDate}</dt><dd>{new Intl.DateTimeFormat(dateLocale(locale),{dateStyle:'long',calendar:'gregory',timeZone:'UTC'}).format(new Date(`${result.certificate.completion_date}T00:00:00Z`))}</dd></div>
    </dl></section>}
   </div>
