@@ -194,3 +194,20 @@ button:not(.zite-app button),.button { min-height:var(--control-height); }
 .auth-content .google-signin button { display:flex; align-items:center; justify-content:center; gap:12px; }
 .auth-content .google-signin button:hover:not(:disabled):not(.zite-app button):not(.language-switcher button),.auth-content .google-signin button:focus-visible { background:#edf5f4; color:var(--ink); border-color:var(--accent); }
 .auth-content .google-signin button svg { flex-shrink:0; }
+
+/* Stable language controls across Arabic, Urdu and English. */
+.language-switcher,.site-header .language-switcher,.auth-brand .language-switcher { display:inline-grid; grid-template-columns:repeat(3,64px); width:198px; height:44px; padding:3px; flex-shrink:0; align-items:center; }
+.language-switcher button,html[lang=ur] .auth-panel .language-switcher button { display:flex; align-items:center; justify-content:center; width:64px; height:38px; min-height:38px; padding:0 6px; margin:0; font-size:.75rem; line-height:1.2; }
+.language-switcher button[lang=ar] { font-family:'Readex Pro Variable',Tahoma,sans-serif; }
+.language-switcher button[lang=en] { font-family:'Readex Pro Variable',Tahoma,sans-serif; }
+.language-switcher button[lang=ur],html[lang=ur] .auth-panel .language-switcher button[lang=ur] { font-family:'Faiz Lahori',Tahoma,sans-serif; font-size:1.15rem; line-height:1.8; }
+html[lang=ur] .auth-panel { line-height:2; }
+html[lang=ur] .auth-panel h1 { font-size:2.15rem; line-height:1.7; margin-bottom:12px; }
+html[lang=ur] .auth-brand-name { font-size:1.8rem; line-height:1.8; }
+html[lang=ur] .auth-content>p,html[lang=ur] .auth-panel .field-hint,html[lang=ur] .auth-panel .auth-links,html[lang=ur] .auth-panel .auth-back { font-size:1.25rem; line-height:2; }
+html[lang=ur] .auth-panel label { font-size:1.3rem; line-height:1.8; margin-top:16px; margin-bottom:6px; }
+html[lang=ur] .auth-panel input { font-family:'Readex Pro Variable',Tahoma,sans-serif; font-size:1rem; line-height:1.5; height:50px; padding-block:10px; }
+html[lang=ur] .auth-content form>button { font-size:1.3rem; line-height:1.8; min-height:48px; padding-block:6px; }
+html[lang=ur] .auth-divider { margin:20px 0 4px; line-height:1.5; }
+html[lang=ur] .auth-panel .auth-links { margin-top:18px; }
+html[lang=ur] .auth-panel .auth-back { margin-bottom:0; margin-top:20px; }
