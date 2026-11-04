@@ -9,3 +9,7 @@ const scaled=certificateBalance({...layout,pageBottom:400,pageWidth:561.5,header
 assert.ok(Math.abs(scaled.shift-balanced.shift)<0.001,'Same print position at mobile preview scale');
 assert.equal(certificateBalance({...layout,footerBottom:795}).fits,false,'Long text must not be squeezed');
 console.log('PASS: restrained vertical balance, preview-scale independence, no drift and long-certificate fallback');
+
+assert.equal(certificateBalance({...layout,anchorHeader:true}).shift,0,'Keep basmalah at original top coordinate');
+assert.equal(certificateBalance({...layout,pageBottom:400,pageWidth:561.5,headerTop:27.5,footerBottom:345,anchorHeader:true}).shift,0,'Anchoring is independent of viewer zoom');
+assert.equal(certificateBalance({...layout,footerBottom:795,anchorHeader:true}).fits,false,'Anchoring retains overflow fallback');

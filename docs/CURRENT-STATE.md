@@ -8,7 +8,7 @@ Shaykh mutoon and riwayat use the same book-card theme as the shared matn librar
 
 Dialog footers use a 12px flex gap in both RTL and LTR, including the issuer picker and save-draft buttons. The decorative top strip on action cards is removed; teal hover/selection feedback remains.
 
-Chrome synthetic preview confirmed the 12px RTL dialog-button gap, absent top accent, card theme and card callbacks. Temporary review route removed before merge. Basmalah spacing deliberately unchanged.
+Chrome synthetic preview confirmed the 12px RTL dialog-button gap, absent top accent, card theme and card callbacks. Temporary review route removed before merge. Basmalah-to-title spacing remains unchanged. Drafts and new finalizations keep the heading at its established top coordinate (14.993mm); automatic balancing no longer translates it downward. New finalizations store `headerPosition:fixed`; older finalizations keep their prior balancing behavior.
 
 Validation: actual preview/finalize fixture covers changed personal/additional matn text, templates, source formatting, reorder/rename, deleted/other-owner links and immutable finalized content. Existing matn heading/save/reopen/print tests pass. Hosted multi-user and physical printing remain unverified.
 
