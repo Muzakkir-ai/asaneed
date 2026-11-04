@@ -1,3 +1,7 @@
+## Draft source refresh follow-up — 5 November 2026
+
+Review an existing draft after editing its original personal/additional-shaykh matn. Reopen preview to resolve the latest saved text; finalization resolves it again. Old drafts with missing or ambiguous source links retain their copied content for safe review. A real hosted certificate was not published for testing.
+
 ## Matn layout release follow-up — 4 November 2026
 
 - Upload the user's border artwork as numbered `svg/borders/NN/frame.svg`, refresh artwork, then review a real draft and frozen finalized snapshot. Current default/no-border and synthetic numbered-border tests pass; no new artwork was uploaded in this change.

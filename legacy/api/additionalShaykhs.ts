@@ -10,7 +10,7 @@ import {reachesJunction} from '../lib/personalSanadValidation';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
-const matn=z.object({catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
+const matn=z.object({id:z.string().uuid().optional(),catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
 const shaykh=z.object({
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),
@@ -31,7 +31,7 @@ export default createEndpoint({
  outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional()}),
  execute:async({input,context})=>{
   if(!(await isAppAdmin(context.user.email)))throw new Error('Permission denied');
-  const {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
+  let {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
   const extensionFor=(id:string)=>extensions.find(e=>e.shaykhId===id);
   const {records:routeRecords}=await zite.additionalShaykhReadingSanads.findAll({limit:2000});
   const serialize=(x:any)=>{
@@ -53,7 +53,8 @@ export default createEndpoint({
    const existing=input.id?await zite.additionalShaykhs.findOne({id:input.id}).catch(()=>null):null;
    if(input.id&&!existing)throw new Error('Unknown sheikh');
    const previousMutoon=existing?serialize(existing).mutoon:[];
-   const mutoon=input.mutoon??previousMutoon;
+   const mutoon=(input.mutoon??previousMutoon).map(m=>({...m,id:m.id||crypto.randomUUID()}));
+   if(new Set(mutoon.map(m=>m.id)).size!==mutoon.length)throw Error('Duplicate matn identity');
    const catalogIds=[...new Set(mutoon.flatMap(item=>item.catalogId?[item.catalogId]:[]))];
    if(catalogIds.length){
     const {data,error}=await requestContext().client.from('matn_catalog')
@@ -142,6 +143,7 @@ export default createEndpoint({
     throw e;
    }
   }
+  if(input.action==='save')extensions=(await zite.additionalShaykhExtensions.findAll({limit:2000})).records;
   const {records:all}=await zite.additionalShaykhs.findAll({limit:2000});
   return {sheikhs:all.map(serialize),...(createdCertificateId?{createdCertificateId}:{})};
  }

@@ -1,3 +1,15 @@
+## Draft matn source refresh and shaykh cards — 5 November 2026
+
+Draft matn preview and finalization now resolve the current saved matn source, including sanad, wording, introduction/conclusion templates and formatting, for personal holdings and additional mashaykh. Both paths pass the same resolved document into snapshot formatting so the visible document and frozen chain agree. No read-time source rewrite or bulk migration. Finalized certificates continue to use their immutable snapshots.
+
+Additional-shaykh mutoon acquire persistent UUIDs on ordinary saves. New draft references use those IDs; old positional references resolve only a unique matching catalog/name within the same shaykh. Missing or ambiguous legacy sources retain copied text; they never silently attach to a replacement or another owner. Reordering and renaming a source with a stable link preserve that link.
+
+Shaykh mutoon and riwayat use the same book-card theme as the shared matn library. Clicking a card opens the relevant editor, including the specific saved route. Matn remove actions remain separate from the card. Additional-shaykh save responses reload their extension data so just-saved text and generated IDs are immediately returned.
+
+Dialog footers use a 12px flex gap in both RTL and LTR, including the issuer picker and save-draft buttons. The decorative top strip on action cards is removed; teal hover/selection feedback remains.
+
+Validation: actual preview/finalize fixture covers changed personal/additional matn text, templates, source formatting, reorder/rename, deleted/other-owner links and immutable finalized content. Existing matn heading/save/reopen/print tests pass. Hosted multi-user and physical printing remain unverified.
+
 ## Matn layout and latest-completed default — 4 November 2026
 
 Release branch `feat/matn-preview-borders`: dimension-mode selectors now have full readable widths and separate numeric/range controls; switching units rounds to half units. Optional saved presentation settings add basmalah-to-title spacing, three paragraph boundary switches and a border choice. Joining sections preserves source formatting ranges by rebasing them; old records without these settings retain their existing rendering. Shared personal/additional-shaykh preview uses a fixed 297 × 210 mm A4 landscape paper with external zoom and an overflow warning.

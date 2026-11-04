@@ -32,8 +32,9 @@ export default createEndpoint({
   const previous=existing.find(s=>s.ownerId===issuer);
   const sanadId=first(cert.sanad);
   if(!sanadId)throw new Error('لا يوجد سند لهذه الشهادة');
-  const chain=(await getDraftSanadForCertificate(sanadId,issuer,cert.id)).chain;
-  const current=JSON.parse(await collectSnapshotFormatting(sanadId,issuer,chain));
+  const resolved=await getDraftSanadForCertificate(sanadId,issuer,cert.id);
+  const chain=resolved.chain;
+  const current=JSON.parse(await collectSnapshotFormatting(sanadId,issuer,chain,'matnDocument' in resolved?resolved.matnDocument:undefined));
   const [{records:profiles},{records:extras}]=await Promise.all([zite.shaykhPrintProfiles.findAll({filters:{ownerId:cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer},limit:50}),zite.additionalShaykhs.findAll({limit:2000})]);
   const profile=profiles.find(p=>p.ownerId===(cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer));
   const guest=extras.find(x=>x.id===cert.additionalShaykh);

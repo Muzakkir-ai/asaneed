@@ -1,6 +1,6 @@
 import {personalAppearance} from './certificateAppearance';
 import {readMatnPresentation,DEFAULT_MATN_HEADING,resolveMatnHeading} from './matnPresentation';
-import {matnFormats} from './matnCertificate';
+import {assembleMatnCertificate,defaultMatnWording,matnFormats} from './matnCertificate';
 import {currentRouteEmphasis} from './currentRouteEmphasis';
 import {currentPreservedRouteText} from './certificateRouteChoice';
 import {standardRouteSources} from './standardRouteSources';
@@ -13,21 +13,53 @@ import {sectionPrintPhrases,parseFormatting} from './sanadFormatting';
 import {readingIdentityFromHeading} from './riwayahSvgHeading';
 import {canUsePersonalSanad,sanadInChain,sanadBlockMessage,reachesJunction} from './personalSanadValidation';
 const one=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
-export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{persist=true}:{persist?:boolean}={}){
+/** Resolve only an issuer-owned source. Never guess between equally named holdings. */
+async function currentMatnDocument(sanad:any,uid:string){
+ const metadata=JSON.parse(sanad.matnFormatting||'{}');
+ const original=metadata.document?{...metadata.document,formats:metadata.document.formats??matnFormats(metadata.formats),introFormats:metadata.document.introFormats??matnFormats(metadata.introFormats),endFormats:metadata.document.endFormats??matnFormats(metadata.endFormats)}:undefined;
+ if(!original)return undefined;
+ const ref=original.sourceMatn;
+ let source:any;
+ if(sanad.additionalShaykh){
+  if(ref?.guestId&&ref.guestId!==sanad.additionalShaykh)return original;
+  const {records}=await zite.additionalShaykhExtensions.findAll({filters:{shaykhId:sanad.additionalShaykh},limit:100});
+  let sources:any[]=[];try{const parsed=JSON.parse(records.find(r=>r.shaykhId===sanad.additionalShaykh)?.mutoonJson||'[]');if(Array.isArray(parsed))sources=parsed;}catch{}
+  // New references use persistent IDs. Old references used mutable array indexes.
+  const stableId=ref?.id&&!/^\d+$/.test(ref.id);
+  const matches=stableId?sources.filter(m=>m.id===ref.id):sources.filter(m=>ref?.catalogId?m.catalogId===ref.catalogId:m.name===(ref?.name||original.bookName));
+  if(matches.length===1)source=matches[0];
+ }else{
+  if(ref?.ownerId&&ref.ownerId!==uid)return original;
+  const {records}=await zite.mutoonHoldings.findAll({filters:{ownerId:uid},limit:2000});
+  const matches=records.filter(m=>m.ownerId===uid&&(ref?.id?m.id===ref.id:m.name===original.bookName));
+  if(matches.length===1)source=matches[0];
+ }
+ if(!source)return original;
+ if(typeof source.sanadText!=='string'||!source.sanadText.trim())throw Error('سند المتن المرتبط غير مكتمل');
+ let name=source.name,shared=original.heading??DEFAULT_MATN_HEADING,headingArtworkNumber=original.headingArtworkNumber;
+ if(source.catalogId){const {data,error}=await context().client.from('matn_catalog').select('title,heading,artwork_number,status').eq('id',source.catalogId).maybeSingle();if(error)throw error;if(data?.status==='published'){name=data.title||name;shared=data.heading??DEFAULT_MATN_HEADING;headingArtworkNumber=data.artwork_number||undefined;}}
+ const {records:templates}=await zite.mutoonTextTemplates.findAll({limit:2000});
+ const intro=templates.find(t=>t.id===source.introductionId),end=templates.find(t=>t.id===source.conclusionId);
+ if(source.introductionId&&!intro||source.conclusionId&&!end)throw Error('نموذج المقدمة أو الخاتمة غير متاح');
+ return {...original,editorVersion:2,bookName:name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting),headingArtworkNumber,heading:resolveMatnHeading(shared,readMatnPresentation(source.sanadFormatting).heading??null,undefined,{})};
+}
+function matnDocumentChain(document:any){return assembleMatnCertificate({name:document.bookName,sanadText:document.sanad,wordingText:document.wording},document.intro,document.end);}
+async function resolveCurrentIssuance(sanadId:string,uid:string,{persist=true}:{persist?:boolean}={}){
  const sanad=await zite.asaneed.findOne({id:sanadId}).catch(()=>null);
  if(!sanad||one(sanad.shaykh)!==uid)throw new Error('السند غير موجود لهذا الحساب');
  if(sanad.matnCode){
   const {data,error}=await context().client.from('certificate_subjects').select('kind').eq('code',sanad.matnCode).single();
   if(error||data?.kind!=='matn'||!sanad.chain?.trim())throw Error('سند المتن غير مكتمل');
-  return sanad.chain;
+  const matnDocument=await currentMatnDocument(sanad,uid);
+  return {chain:matnDocument?matnDocumentChain(matnDocument):sanad.chain,matnDocument};
  }
  // Additional-shaykh drafts use the chain validated when they were created or
  // transferred. Previewing must not rewrite their preserved sanad.
  if(sanad.additionalShaykh){
-  if(sanad.unifiedHolding){const {records:sections}=await zite.sanadSections.findAll({limit:2000});const assembled=await assembleHoldingIjazah(sanad.unifiedHolding,sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));if(assembled.missing.length)throw Error(assembled.missing.join('، '));return assembled.chain;}
+  if(sanad.unifiedHolding){const {records:sections}=await zite.sanadSections.findAll({limit:2000});const assembled=await assembleHoldingIjazah(sanad.unifiedHolding,sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));if(assembled.missing.length)throw Error(assembled.missing.join('، '));return {chain:assembled.chain};}
   const guest=await zite.additionalShaykhs.findOne({id:sanad.additionalShaykh});
   if(!guest||!sanad.chain||!(['ubaydi','jazari'] as const).some(junction=>reachesJunction({personalChain:sanad.chain,junction})))throw new Error(sanadBlockMessage);
-  return sanad.tariqNumber&&sanad.tariqName?currentPreservedRouteText(sanad.chain,sanad.tariqName):sanad.chain;
+  return {chain:sanad.tariqNumber&&sanad.tariqName?currentPreservedRouteText(sanad.chain,sanad.tariqName):sanad.chain};
  }
  const sourceOwner=uid;
  const {records:preps}=await zite.preparedIjazahs.findAll({filters:{ownerId:sourceOwner},limit:2000});
@@ -41,34 +73,23 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{pers
  if(result.missing.length)throw new Error('السند غير مكتمل: '+result.missing.join('، '));
  if(!sanadInChain(result.chain,holding.unifiedSanad?.prefix||holding.personalChain||''))throw new Error(sanadBlockMessage);
  if(persist&&result.chain!==sanad.chain&&!context().scope?.readOnly)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
- return result.chain;
+ return {chain:result.chain};
 }
-export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:string){
+export async function getCurrentSanadForIssuance(sanadId:string,uid:string,options:{persist?:boolean}={}){return (await resolveCurrentIssuance(sanadId,uid,options)).chain;}
+
+export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:string,resolvedMatnDocument?:any){
  const sanad=await zite.asaneed.findOne({id:sanadId});
  if(sanad.matnCode){
+  const document=resolvedMatnDocument??await currentMatnDocument(sanad,uid);
   const metadata=JSON.parse(sanad.matnFormatting||'{}');
-  // Refresh presentation only; the copied scholarly text and old finalized snapshots are never rewritten.
-  let heading=metadata.document?.heading??DEFAULT_MATN_HEADING,headingArtworkNumber=metadata.document?.headingArtworkNumber;
-  const presentation=async(source:any)=>{let shared=metadata.document?.heading??DEFAULT_MATN_HEADING;if(source.catalogId){const {data,error}=await context().client.from('matn_catalog').select('heading,artwork_number,status').eq('id',source.catalogId).maybeSingle();if(error)throw error;if(data?.status==='published'){shared=data.heading??DEFAULT_MATN_HEADING;headingArtworkNumber=data.artwork_number||undefined;}}heading=resolveMatnHeading(shared,readMatnPresentation(source.sanadFormatting).heading??null,undefined,{});};
-  if(metadata.document){
-   const ref=metadata.document.sourceMatn;
-   if(sanad.additionalShaykh){
-    const {records}=await zite.additionalShaykhExtensions.findAll({filters:{shaykhId:sanad.additionalShaykh},limit:100});
-    try{const sources=JSON.parse(records.find(r=>r.shaykhId===sanad.additionalShaykh)?.mutoonJson||'[]');const matches=sources.filter((m:any)=>m.name===metadata.document.bookName&&m.sanadText===metadata.document.sanad);if(matches.length===1)await presentation(matches[0]);}catch{}
-   }else{
-    const {records}=await zite.mutoonHoldings.findAll({filters:{ownerId:uid},limit:2000});
-    const matches=records.filter(m=>m.ownerId===uid&&(ref?m.id===ref.id:m.name===metadata.document.bookName&&m.sanadText===metadata.document.sanad));
-    if(matches.length===1)await presentation(matches[0]);
-   }
-  }
   const phrases:{text:string;font:string;size:number;color:string}[]=[];
-  for(const formats of [matnFormats(metadata.formats),matnFormats(metadata.introFormats),matnFormats(metadata.endFormats)]){
+  for(const formats of [document?.formats??matnFormats(metadata.formats),document?.introFormats??matnFormats(metadata.introFormats),document?.endFormats??matnFormats(metadata.endFormats)]){
    if(Array.isArray(formats))for(const f of formats)if(typeof f.text==='string'&&chain.includes(f.text))phrases.push({text:f.text,font:f.bold?'Sakkal Kitab':'KSA Regular',size:9,color:f.color==='primary'||f.color==='secondary'?f.color:'charcoal'});
   }
   const {records:styles}=await zite.sanadPrintStyles.findAll({filters:{sanadId},limit:50});
   let settings:unknown=null;try{settings=JSON.parse(styles.find(s=>s.ownerId===uid)?.settings||'null');}catch{}
   const appearanceDefaults=sanad.additionalShaykh?null:await personalAppearance(context().client,uid);if(!settings&&appearanceDefaults)settings=appearanceDefaults;
-  return JSON.stringify({appearanceDefaults:!!appearanceDefaults,matnDocument:metadata.document?{...metadata.document,heading,headingArtworkNumber}:undefined,transmission:null,routeEmphasis:{},phrases,settings,palette:null});
+  return JSON.stringify({appearanceDefaults:!!appearanceDefaults,matnDocument:document,transmission:null,routeEmphasis:{},phrases,settings,palette:null});
  }
  const sourceOwner=sanad?.additionalShaykh?'guest:'+sanad.additionalShaykh:uid;
  const [{records:sections},{records:holdings},{records:styles}]=await Promise.all([
@@ -121,7 +142,7 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
 /** Resolve a draft afresh; old certificates with an unavailable original holding
  * still preview safely from their issuer-owned preserved text, not another sanad. */
 export async function getDraftSanadForCertificate(sanadId:string,issuer:string,certificateId:string){
- try{return {chain:await getCurrentSanadForIssuance(sanadId,issuer,{persist:false}),source:'current' as const};}
+ try{return {...await resolveCurrentIssuance(sanadId,issuer,{persist:false}),source:'current' as const};}
  catch(error){
   const {records}=await zite.certificateSnapshots.findAll({filters:{certificateId},limit:100});
   const saved=records.find(s=>s.ownerId===issuer&&!!s.chain?.trim());

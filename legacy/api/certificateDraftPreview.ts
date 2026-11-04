@@ -27,7 +27,7 @@ export default createEndpoint({
   const current=await getDraftSanadForCertificate(sanadId,issuer,cert.id);
   const chain=current.chain;
   const [formatting,profiles,users,extraSheikhs]=await Promise.all([
-   collectSnapshotFormatting(sanadId,issuer,chain),
+   collectSnapshotFormatting(sanadId,issuer,chain,'matnDocument' in current?current.matnDocument:undefined),
    zite.shaykhPrintProfiles.findAll({filters:{ownerId:cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer},limit:50}),
    zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}),
    zite.additionalShaykhs.findAll({limit:2000}),
