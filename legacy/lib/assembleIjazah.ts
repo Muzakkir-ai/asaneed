@@ -1,11 +1,10 @@
-import {cleanSanadPunctuation,cleanSanadPartStart,cleanAllahSpelling} from './sanadPunctuation';
+import {composeSanadSegments} from './unifiedSanad';
+import {cleanAllahSpelling} from './sanadPunctuation';
 import {certificateRoutePhrase,certificateRouteWording} from './certificateRouteChoice';
 import {QURRA,routeFor,readingText} from './qurra';
 import {vocalizeReadingLabel} from './vocalizedReading';
 export type AssemblyHolding={chainMode?:'junction'|'complete';tariqNumber?:string;tariqName?:string;qariId:string;rawi?:string;personalChain:string;junction:string;introductionId?:string;wordingId?:string};
 export type AssemblySection={id:string;title:string;body:string;sectionType:string;formatting?:string};
-const cleanEnd=(s:string)=>s.trim().replace(/[.،؛\s]+$/u,'');
-const joinChain=(parts:string[])=>parts.map(cleanSanadPartStart).filter(Boolean).map((part,i,all)=>i===all.length-1?part.trim():cleanEnd(part)+(i===all.length-2?'.':'،')).join(' ');
 export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[]){
  const imam=QURRA.find(q=>q.id===holding.qariId);
  if(!imam)return {chain:'',heading:'',missing:['القارئ غير معروف'],sectionIds:[] as string[]};
@@ -37,7 +36,7 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  const heading=[reading,route].filter(Boolean).join(' ');
  const wordingRoute=customRoute?certificateRouteWording(holding.tariqName!):route;
  const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,wordingRoute].filter(Boolean).join(' ')));
- const isnad=cleanSanadPunctuation(joinChain([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]));
+ const isnad=composeSanadSegments([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]);
  const chain=cleanAllahSpelling(`【بيان القراءة:${heading}】\n${[intro?.body,[words,isnad].filter(Boolean).join(' '),conclusion?.body].filter(Boolean).join('\n\n')}`);
  return {chain:missing.length?'':chain,heading,missing,sectionIds:[...new Set(used.map(s=>s.id))]};
 }
