@@ -356,3 +356,5 @@
 
 @media screen{.zite-app .matn-a4-paper .matn-composed-preview{padding:0;border:0;background:transparent;font-size:9.5pt;line-height:1.68}.zite-app .matn-a4-paper .matn-composed-preview>div{min-width:0}}
 @media print{.certificate-custom-border{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+
+@media screen{.zite-app .matn-section-breaks label{display:flex;align-items:center;justify-content:flex-start;gap:10px}.zite-app .matn-section-breaks input[type=checkbox]{appearance:auto;width:18px;min-width:18px;max-width:18px;height:18px;flex:0 0 18px;margin:0;padding:0;accent-color:hsl(var(--primary))}}
