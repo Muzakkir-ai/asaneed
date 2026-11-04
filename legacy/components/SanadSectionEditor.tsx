@@ -1,3 +1,4 @@
+import {Tabs,TabsList,TabsTrigger,TabsContent} from '@project/components/ui/tabs';
 import {QURRA,displayRawi,shortReadingLabel} from '../lib/qurra';
 import {sectionDisplayTitle} from '../lib/sectionDisplayTitle';
 import BookTariqBuilder from './BookTariqBuilder';
@@ -10,7 +11,7 @@ import {toast} from 'sonner';
 import SanadTypographyEditor from './SanadTypographyEditor';
 import {parseFormatting,type SectionFormatting} from '../lib/sanadFormatting';
 type Section=SanadSectionsOutputType['sections'][number];
-export default function SanadSectionEditor(){
+export default function SanadSectionEditor({textsOnly=false}:{textsOnly?:boolean}){
  const [sections,setSections]=useState<Section[]>([]);
  const [id,setId]=useState('');
  const [riwayah,setRiwayah]=useState(QURRA[0].id+'|'+QURRA[0].rawis[0]);
@@ -50,7 +51,7 @@ export default function SanadSectionEditor(){
      setChanged(false);setId('');toast.success('تم حفظ النص والخط والحجم واللون في قاعدة البيانات والتحقق منها');
    }catch{toast.error('تعذر حفظ المقطع');}finally{setBusy(false);}
  };
- return <Card dir="rtl"><CardHeader><CardTitle>إدارة الكتب والطرق والأسانيد</CardTitle><p className="text-sm text-muted-foreground">ابدأ من الكتب والطرق لاختيار الأسماء وبناء الأسانيد. النصوص المشتركة القديمة متاحة في الإعدادات المتقدمة.</p></CardHeader><CardContent className="space-y-3"><BookTariqBuilder/><details className="rounded-lg border p-3"><summary className="cursor-pointer font-semibold">النصوص المشتركة حسب الرواية — إعدادات متقدمة</summary><div className="space-y-3 mt-3"><p className="text-xs text-muted-foreground">تعديل هذه النصوص يؤثر على الأسانيد الجديدة التي تستخدمها. الشهادات النهائية تحتفظ بنسخها المحفوظة. افتح المحرر بأيقونة القلم فقط.</p>
+ return <Card dir="rtl"><CardHeader><CardTitle>إدارة الكتب والطرق والأسانيد</CardTitle><p className="text-sm text-muted-foreground">إدارة الكتب والطرق والنصوص المشتركة</p></CardHeader><CardContent className="space-y-3"><Tabs defaultValue={textsOnly?'texts':'books'} dir="rtl"><TabsList aria-label="إدارة الكتب والنصوص">{!textsOnly&&<TabsTrigger value="books">الكتب والطرق</TabsTrigger>}<TabsTrigger value="texts">النصوص المشتركة</TabsTrigger></TabsList>{!textsOnly&&<TabsContent value="books"><BookTariqBuilder inline/></TabsContent>}<TabsContent value="texts"><div className="space-y-3 mt-3"><p className="text-xs text-muted-foreground">تعديل هذه النصوص يؤثر على الأسانيد الجديدة التي تستخدمها. الشهادات النهائية تحتفظ بنسخها المحفوظة. افتح المحرر بأيقونة القلم فقط.</p>
  <label className="block space-y-1 text-sm"><span>الرواية</span><select className="w-full rounded border bg-background p-2" value={riwayah} disabled={busy||changed} onChange={e=>{setRiwayah(e.target.value);setId('');setShowVersions(false);}}>{QURRA.flatMap(q=>q.rawis.map(r=><option key={q.id+'|'+r} value={q.id+'|'+r}>{shortReadingLabel(q.id,r)}</option>))}</select></label><p className="text-xs text-muted-foreground">مقاطع سند الرواية المختارة، مع النصوص العامة المستخدمة في الإجازات.</p>
  {visibleSections.map(s=><div key={s.id} className="rounded-lg border overflow-hidden">
    <div className="flex justify-between items-center gap-3 px-3 py-2"><div className="space-y-1"><span className="text-sm font-medium">{sectionDisplayTitle(s.title)}</span>{s.formatting&&<p className="text-xs text-muted-foreground">الخط المحفوظ: {parseFormatting(s.formatting).font} — {parseFormatting(s.formatting).size} pt</p>}</div><Button type="button" size="icon" variant={id===s.id?'default':'outline'} aria-label={`تعديل ${sectionDisplayTitle(s.title)}`} aria-expanded={id===s.id} title={id===s.id?'إغلاق التعديل':'تعديل'} onClick={()=>edit(s)}>{id===s.id?<ChevronUp className="h-4 w-4"/>:<Pencil className="h-4 w-4"/>}</Button></div>
@@ -59,5 +60,5 @@ export default function SanadSectionEditor(){
     {showVersions&&<div className="space-y-2 rounded border p-3"><strong>النسخ السابقة للمقطع</strong>{versions.map(v=><div key={v.id} className="flex flex-wrap items-center justify-between gap-2 border-b py-2"><div className="text-sm"><strong>الإصدار {v.revision}</strong><p className="text-xs text-muted-foreground">{v.savedAt}</p><p className="line-clamp-1 text-xs">{v.body}</p></div><Button size="sm" variant="outline" onClick={()=>restore(v)}>استعادة في المحرر</Button></div>)}</div>}
    </div>}
  </div>)}
- </div></details></CardContent></Card>;
+ </div></TabsContent></Tabs></CardContent></Card>;
 }
