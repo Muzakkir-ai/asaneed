@@ -5,7 +5,7 @@ import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {QURRA} from '../lib/qurra';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
-import {assembleIjazah} from '../lib/assembleIjazah';
+import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
 import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 
 
@@ -29,15 +29,15 @@ export default createEndpoint({
       zite.preparedIjazahs.findAll({filters:{ownerId:owner},limit:2000}),
     ]);
     // An individually saved riwayah takes precedence over a shared qiraah sanad.
-    const entries=imam.rawis.map(rawi=>{
+    const entries=await Promise.all(imam.rawis.map(async rawi=>{
       const holding=holdings.find(h=>h.qariId===imam.id&&h.rawi===rawi&&(h.tariqNumber||'')===input.tariqNumber)
         ||holdings.find(h=>h.qariId===imam.id&&!h.rawi&&(h.tariqNumber||'')===input.tariqNumber);
       if(!holding||holding.ownerId!==owner||!canUsePersonalSanad(holding))
         throw new Error(`أكمل سند رواية ${rawi} قبل إصدار الشهادات`);
-      const assembled=assembleIjazah({chainMode:holding.chainMode,tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+      const assembled=await assembleHoldingIjazah({unifiedSanad:holding.unifiedSanad||undefined,chainMode:holding.chainMode,tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
       if(assembled.missing.length)throw new Error(`سند ${rawi} غير مكتمل: ${assembled.missing.join('، ')}`);
       return {rawi,holding,assembled};
-    });
+    }));
     const nextNumber=await nextShahadaNumber();
     const created:{id:string}[]=[];
     try{

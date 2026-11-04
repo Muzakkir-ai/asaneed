@@ -8,7 +8,7 @@ import {extractTeacherTransmission} from './receivedTransmission';
 import {arabicSearchKey} from './arabicSearch';
 import {zite} from 'zitejs/db';
 import {context} from '../compat/context';
-import {assembleIjazah} from './assembleIjazah';
+import {assembleHoldingIjazah} from './assembleHoldingIjazah';
 import {sectionPrintPhrases,parseFormatting} from './sanadFormatting';
 import {readingIdentityFromHeading} from './riwayahSvgHeading';
 import {canUsePersonalSanad,sanadInChain,sanadBlockMessage,reachesJunction} from './personalSanadValidation';
@@ -24,6 +24,7 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{pers
  // Additional-shaykh drafts use the chain validated when they were created or
  // transferred. Previewing must not rewrite their preserved sanad.
  if(sanad.additionalShaykh){
+  if(sanad.unifiedHolding){const {records:sections}=await zite.sanadSections.findAll({limit:2000});const assembled=await assembleHoldingIjazah(sanad.unifiedHolding,sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));if(assembled.missing.length)throw Error(assembled.missing.join('، '));return assembled.chain;}
   const guest=await zite.additionalShaykhs.findOne({id:sanad.additionalShaykh});
   if(!guest||!sanad.chain||!(['ubaydi','jazari'] as const).some(junction=>reachesJunction({personalChain:sanad.chain,junction})))throw new Error(sanadBlockMessage);
   return sanad.tariqNumber&&sanad.tariqName?currentPreservedRouteText(sanad.chain,sanad.tariqName):sanad.chain;
@@ -36,9 +37,9 @@ export async function getCurrentSanadForIssuance(sanadId:string,uid:string,{pers
  if(!holding||holding.ownerId!==sourceOwner)throw new Error('الإجازة المرتبطة بهذا السند حُذفت؛ اختر إجازة محفوظة أخرى');
  if(!canUsePersonalSanad(holding as typeof holding & {personalSanadConfirmed?:boolean}))throw new Error(sanadBlockMessage);
  const {records:sections}=await zite.sanadSections.findAll({limit:2000});
- const result=assembleIjazah({...holding,rawi:prep.rawi||holding.rawi||''} as Parameters<typeof assembleIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+ const result=await assembleHoldingIjazah({...holding,rawi:prep.rawi||holding.rawi||''} as Parameters<typeof assembleHoldingIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
  if(result.missing.length)throw new Error('السند غير مكتمل: '+result.missing.join('، '));
- if(!sanadInChain(result.chain,holding.personalChain||''))throw new Error(sanadBlockMessage);
+ if(!sanadInChain(result.chain,holding.unifiedSanad?.prefix||holding.personalChain||''))throw new Error(sanadBlockMessage);
  if(persist&&result.chain!==sanad.chain&&!context().scope?.readOnly)await zite.asaneed.update({id:sanad.id,record:{chain:result.chain}});
  return result.chain;
 }

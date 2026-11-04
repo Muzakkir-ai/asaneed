@@ -5,7 +5,7 @@ import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {isAppAdmin} from '../lib/admin';
 import {QURRA} from '../lib/qurra';
-import {assembleIjazah} from '../lib/assembleIjazah';
+import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
 import {reachesJunction} from '../lib/personalSanadValidation';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
 
@@ -92,24 +92,25 @@ export default createEndpoint({
    const wording=shared.find(x=>x.title==='كلمات الإجازة'&&x.sectionType==='wording')||shared.find(x=>x.sectionType==='wording');
    const {records:holdings}=await zite.ijazahHoldings.findAll({filters:{ownerId:'guest:'+guest.id},limit:2000});
    // Validate both riwayat before creating either draft.
-   const entries=rawis.map(rawi=>{
+   const entries=await Promise.all(rawis.map(async rawi=>{
     const selected=specific.find(x=>x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
     if(input.tariqNumber&&!selected)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
     const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
     const chain=selected?.sanadText||known.personalChain;
     const junction=selected?.junction||known.junction;
     if(input.tariqNumber?chain.length<100:!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
-    const assembled=assembleIjazah({tariqNumber:input.tariqNumber,tariqName:selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
-      introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id},
+    const assemblyHolding={unifiedSanad:selected?(selected.unifiedSanad||undefined):(source?.unifiedSanad||undefined),tariqNumber:input.tariqNumber,tariqName:selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
+      introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id};
+    const assembled=await assembleHoldingIjazah(assemblyHolding,
       all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})));
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));
-    return {rawi,assembled,tariqName:selected?.tariqName||'',bookAuthor:selected?.bookAuthor||'',routeSource:selected?.routeSource||''};
-   });
+    return {rawi,assembled,unifiedHolding:assemblyHolding.unifiedSanad?assemblyHolding:undefined,tariqName:selected?.tariqName||'',bookAuthor:selected?.bookAuthor||'',routeSource:selected?.routeSource||''};
+   }));
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
    try{
-    for(const [index,{rawi,assembled,tariqName,bookAuthor,routeSource}] of entries.entries()){
-     const sanad=await zite.asaneed.create({record:{tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
+    for(const [index,{rawi,assembled,unifiedHolding,tariqName,bookAuthor,routeSource}] of entries.entries()){
+     const sanad=await zite.asaneed.create({record:{unifiedHolding,tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
        shaykh:context.user.id,additionalShaykh:known.id,chain:assembled.chain,qiraah:null,certificates:null}});
      const row={certificateId:'',sanadId:sanad.id,snapshotId:''};created.push(row);
      const cert=await zite.certificates.create({record:{
