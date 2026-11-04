@@ -1,3 +1,9 @@
+## Text layout and recoverable user deletion — 5 November 2026
+
+Review point/percent sizing, centered matn text width and overall scaling in authenticated desktop/mobile sessions. Local editor/render/save tests pass; automatic approval rejected creating a protected-preview sharing link, so no new browser verification is claimed for this release. Physical print remains unverified.
+
+Recoverable user removal is available only to active admins for non-admin accounts, with exact-name confirmation and restore. The additive migration is applied; hosted fixture rolled back and zero accounts are marked deleted. Restore leaves the user inactive. Permanent Auth erasure is not implemented.
+
 ## Draft source refresh follow-up — 5 November 2026
 
 Review an existing draft after editing its original personal/additional-shaykh matn. Reopen preview to resolve the latest saved text; finalization resolves it again. Old drafts with missing or ambiguous source links retain their copied content for safe review. A real hosted certificate was not published for testing.

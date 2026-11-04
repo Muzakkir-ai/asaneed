@@ -16,9 +16,9 @@ export type Database = {
     Tables: {
       accounts: {
         Row: {
-          can_issue: boolean
           active: boolean
           auth_user_id: string | null
+          can_issue: boolean
           created_at: string
           display_name: string
           id: string
@@ -27,9 +27,9 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
+          can_issue: boolean
           created_at?: string
           display_name: string
           id?: string
@@ -38,9 +38,9 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          can_issue?: boolean
           active?: boolean
           auth_user_id?: string | null
+          can_issue?: boolean
           created_at?: string
           display_name?: string
           id?: string
@@ -424,6 +424,44 @@ export type Database = {
           },
         ]
       }
+      content_audit: {
+        Row: {
+          action: string
+          actor_id: string
+          after_data: Json | null
+          before_data: Json | null
+          created_at: string
+          id: string
+          target_id: string
+        }
+        Insert: {
+          action: string
+          actor_id: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          id?: string
+          target_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string
+          after_data?: Json | null
+          before_data?: Json | null
+          created_at?: string
+          id?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_audit_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issuer_accounts: {
         Row: {
           account_id: string
@@ -480,6 +518,148 @@ export type Database = {
           print_profile?: Json
         }
         Relationships: []
+      }
+      matn_catalog: {
+        Row: {
+          artwork_number: string
+          author: string
+          category: string
+          created_at: string
+          created_by: string
+          description: string
+          heading: Json | null
+          id: string
+          status: string
+          template_ids: string[]
+          title: string
+          title_key: string | null
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          artwork_number?: string
+          author?: string
+          category: string
+          created_at?: string
+          created_by: string
+          description?: string
+          heading?: Json | null
+          id?: string
+          status?: string
+          template_ids?: string[]
+          title: string
+          title_key?: string | null
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          artwork_number?: string
+          author?: string
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          heading?: Json | null
+          id?: string
+          status?: string
+          template_ids?: string[]
+          title?: string
+          title_key?: string | null
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matn_catalog_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matn_catalog_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matn_requests: {
+        Row: {
+          account_id: string
+          author: string
+          catalog_id: string | null
+          category: string
+          created_at: string
+          decision_at: string | null
+          decision_by: string | null
+          explanation: string
+          id: string
+          notes: string
+          reference: string
+          seen_at: string | null
+          status: string
+          title: string
+          title_key: string | null
+        }
+        Insert: {
+          account_id: string
+          author?: string
+          catalog_id?: string | null
+          category: string
+          created_at?: string
+          decision_at?: string | null
+          decision_by?: string | null
+          explanation?: string
+          id?: string
+          notes?: string
+          reference?: string
+          seen_at?: string | null
+          status?: string
+          title: string
+          title_key?: string | null
+        }
+        Update: {
+          account_id?: string
+          author?: string
+          catalog_id?: string | null
+          category?: string
+          created_at?: string
+          decision_at?: string | null
+          decision_by?: string | null
+          explanation?: string
+          id?: string
+          notes?: string
+          reference?: string
+          seen_at?: string | null
+          status?: string
+          title?: string
+          title_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matn_requests_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matn_requests_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "matn_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matn_requests_decision_by_fkey"
+            columns: ["decision_by"]
+            isOneToOne: false
+            referencedRelation: "accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qiraat: {
         Row: {
@@ -650,8 +830,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      save_sanad_continuation: { Args: { record: Json }; Returns: string }
-      review_sanad_consolidation: { Args: { record: Json }; Returns: string }
+      account_deletion_ids: { Args: never; Returns: string[] }
+      acknowledge_matn_decision: {
+        Args: { request_id: string }
+        Returns: undefined
+      }
       admin_set_account_username: {
         Args: { new_username: string; target_account: string }
         Returns: string
@@ -718,6 +901,18 @@ export type Database = {
         Args: { data: Json; overwrite?: boolean }
         Returns: Json
       }
+      review_matn_request: {
+        Args: {
+          allow_distinct?: boolean
+          decision: string
+          entry?: Json
+          existing_matn?: string
+          explanation?: string
+          request_id: string
+        }
+        Returns: string
+      }
+      review_sanad_consolidation: { Args: { record: Json }; Returns: string }
       save_account_profile: {
         Args: {
           legacy_id?: string
@@ -729,8 +924,21 @@ export type Database = {
         Returns: undefined
       }
       save_builder_chain: { Args: { record: Json }; Returns: string }
+      save_matn_catalog: {
+        Args: { allow_distinct?: boolean; entry: Json }
+        Returns: string
+      }
       save_personal_issuer_profile: { Args: { profile: Json }; Returns: string }
+      save_sanad_continuation: { Args: { record: Json }; Returns: string }
+      set_account_deleted: {
+        Args: { deleted: boolean; target_account: string }
+        Returns: undefined
+      }
       set_account_username: { Args: { new_username: string }; Returns: string }
+      set_issuance_capability: {
+        Args: { enabled: boolean; target_account: string }
+        Returns: undefined
+      }
       set_issuer_assignment: {
         Args: { enabled: boolean; issuer: string; target: string }
         Returns: undefined
@@ -739,6 +947,7 @@ export type Database = {
         Args: { account: string; student: string }
         Returns: undefined
       }
+      submit_matn_request: { Args: { entry: Json }; Returns: string }
       verify_certificate_token: { Args: { token: string }; Returns: Json }
       verify_ijazah: { Args: { p_number: string }; Returns: Json }
     }
@@ -873,4 +1082,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
