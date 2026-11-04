@@ -2,6 +2,18 @@
 
 Updated **30 October 2026 (Asia/Riyadh)**. Read together with root `AGENTS.md`. This document supersedes older progress reports where they conflict with the newer behavior described here; inspect the implementation when in doubt.
 
+## Unified sanad architecture — draft PR #6, 4 November 2026
+
+Continued the existing management branch after fetching PR #6 follow-up fixes. One shared composition core serves builder previews and legacy holding/certificate adapters. New explicit route references flow through personal preparation, qiraah issuance, additional-shaykh issuance and draft snapshot resolution. Shared saves no longer rewrite copied holdings, prepared sanads or snapshots.
+
+Shared texts use four responsive icon categories, approved continuation metadata in existing sections, read-only CHAIN sources, explicit selection/style preservation, central route continuation selection and a separate advanced override. Admin-only HTTP/RLS guards, audited comparison review and reversible conversion proposals are prepared. See [SANAD-UNIFICATION.md](SANAD-UNIFICATION.md) for paths, migration protocol and limitations.
+
+Read-only audit: 23 active routes; 14/14 Shatibiyyah seven-name prefixes match the saved Ibn al-Jazari → al-Dani segment. General ordered-name comparison leaves 9 routes needing review. There are 47 core drafts and no finalized core snapshots, but all 45 older workspace snapshots (30 carrying issue dates) remain uncertain and excluded from conversion.
+
+TypeScript, production build, unified/legacy workflow and local SQL migration tests, editor/matn suites, desktop/mobile Chrome Arabic typing and real A4 landscape print fixtures passed. Dark theme and mobile cards were visually reviewed. No authenticated hosted mutation, physical printer or historical-authentication coverage is claimed.
+
+**Not merged or deployed to production.** Migration 20261104164423_unified_sanad_continuations.sql is prepared, not applied. No stored-chain conversion occurred. Production remains the merged PR #5 main release 7743ecf. The earlier matn migration already exists in the inspected hosted schema; it is separate from this new migration.
+
 ## Compact editor PR #5 correction — 4 November 2026
 
 The same `feat/compact-formatting-editor` branch and draft PR #5 were corrected after review. The primary toolbar now contains only preset, size, bold, Lucide alignment icons, palette and ellipsis. Save/status are in the header. The More disclosure contains selection/reset/history/variables/font/paragraph controls, supports Escape and outside-pointer dismissal, and does not permanently expose secondary rows. Native disclosures expose expanded state; icons have Arabic names/tooltips and alignment/bold/color controls reflect the selection. The preset selector retains the applied preset.
