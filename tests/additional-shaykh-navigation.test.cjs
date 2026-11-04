@@ -9,8 +9,10 @@ const Button=({children,variant,size,...props})=>React.createElement('button',pr
 const api={additionalShaykhs:async()=>({sheikhs:[shaykh]}),contentManagement:async()=>({catalog:[]}),mutoonTemplates:async()=>({templates:[]}),additionalReadingSanads:async()=>({sanads:[]})};
 global.fetch=async()=>({ok:true,json:async()=>({chains:[],people:[],books:[]})});
 (async()=>{const swc=require('next/dist/build/swc');await swc.loadBindings();const {code}=await swc.transform(fs.readFileSync('legacy/components/AdditionalShaykhsPage.tsx','utf8'),{filename:'AdditionalShaykhsPage.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}});
+const frameCode=(await swc.transform(fs.readFileSync('legacy/components/EditorPage.tsx','utf8'),{filename:'EditorPage.tsx',jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}})).code;let frameExports;
 const mod=new Module(__filename,module);mod.filename=__filename;mod.paths=module.paths;
 mod.require=id=>{
+ if(id==='./EditorPage')return frameExports;
  if(id==='react'||id==='react/jsx-runtime')return require(id);
  if(id==='../lib/api')return api;
  if(id==='../lib/ijazahCoverage')return {compactReadingCount:()=> 'لا روايات'};
@@ -26,12 +28,12 @@ mod.require=id=>{
  if(id==='../lib/matnPresentation')return {readMatnPresentation:()=>({}),writeMatnPresentation:()=> '[]'};
  if(id.startsWith('../lib/'))return {};
  return {__esModule:true,default:()=>null,MatnPreview:()=>null,parseMatnFormat:()=>[]};
-};mod._compile(code,__filename);const root=createRoot(document.getElementById('root'));
+};const fm=new Module(__filename,module);fm.filename=__filename;fm.paths=module.paths;fm.require=mod.require;fm._compile(frameCode,__filename);frameExports=fm.exports;mod._compile(code,__filename);const root=createRoot(document.getElementById('root'));
 await act(async()=>{root.render(React.createElement(mod.exports.default,{onSaved(){}}));});
 const click=async label=>{const b=label==='عرض ملف الشيخ'?document.querySelector('[role=button]'):[...document.querySelectorAll('button')].find(x=>x.textContent===label);assert.ok(b,label);await act(async()=>b.click());};
 await click('عرض ملف الشيخ');assert.ok(document.querySelector('section[aria-label="ملف الشيخ شيخ تجريبي"]'));assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(!document.body.textContent.includes('إضافة شيخ جديد'));
-await click('إضافة إجازة قراءات');assert.ok(document.querySelector('[role=dialog]').textContent.includes('القراءات والروايات'));
+await click('إضافة إجازة قراءات');assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(document.querySelector('.editor-page').textContent.includes('القراءات والروايات'));assert.ok(document.querySelector('.editor-page').textContent.includes('شيخ تجريبي'));
 // Remount to exercise a clean second visit and matn add without persisting fixtures.
-await act(async()=>root.unmount());const next=createRoot(document.getElementById('root'));await act(async()=>next.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('إضافة متن');assert.ok(document.querySelector('[role=dialog]').textContent.includes('المتن المنشور'));
-await act(async()=>next.unmount());const last=createRoot(document.getElementById('root'));await act(async()=>last.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('العودة إلى المشايخ الإضافيين');assert.ok(document.body.textContent.includes('إضافة شيخ جديد'));assert.equal(document.querySelector('section[aria-label]'),null);await act(async()=>last.unmount());console.log('PASS: dedicated detail view, add-reading/add-matn actions and return to list; mocked data only');
+await act(async()=>root.unmount());const next=createRoot(document.getElementById('root'));await act(async()=>next.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('إضافة متن');assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(document.querySelector('.editor-page').textContent.includes('المتن المنشور'));
+await act(async()=>next.unmount());const last=createRoot(document.getElementById('root'));await act(async()=>last.render(React.createElement(mod.exports.default,{onSaved(){}})));await click('عرض ملف الشيخ');await click('تعديل بيانات الشيخ');assert.equal(document.querySelector('[role=dialog]'),null);assert.ok(document.querySelector('.editor-page'));await click('العودة إلى ملف الشيخ');await click('العودة إلى المشايخ الإضافيين');assert.ok(document.body.textContent.includes('إضافة شيخ جديد'));assert.equal(document.querySelector('section[aria-label]'),null);await act(async()=>last.unmount());console.log('PASS: dedicated detail view, add-reading/add-matn actions and return to list; mocked data only');
 })().catch(e=>{console.error(e);process.exitCode=1});

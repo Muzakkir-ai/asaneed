@@ -1,5 +1,14 @@
 # Current Asaneed state
 
+## Consistent editor pages — 4 November 2026
+
+User authorized automatic publication. Profile, additional-shaykh reading sanad, personal holdings, shared matn metadata, shared text, continuation, book and route editing now use the reusable EditorPage frame rather than large editing dialogs. Personal and added-shaykh mutoon share MatnDocumentEditor tabs for sanad, wording, heading and preview. Context/owner, Back/Cancel and Save actions are visible; Back/Cancel and browser unload warn for dirty tracked forms. Small pickers and certificate print-preview dialogs remain dialogs. Existing server/RLS ownership and historical snapshot logic are unchanged. See EDITOR-WORKFLOW.md for the coverage map and limits.
+
+Matn catalog cards match Kutub/Turuq cards. Section tabs have a neutral container with teal active state. Each riwayah palette is collapsed by default with name and two live colour dots; hidden controls remain mounted to preserve unsaved changes.
+
+Validation: TypeScript, build, shared-page cancel/save/unload tests, added-shaykh navigation tests, shared matn tab/template/formatting tests, compact editor tests, matn save/reopen/heading/print suites and sanad composition/adapter/local SQL suites pass. Hosted authenticated account flows, native mobile IME and physical printing remain unverified.
+
+
 ## Interface polish — 4 November 2026
 
 Review branch `feat/interface-polish`: replaces gold button fills with teal/neutral treatments, compacts language selection, adds a translated expandable certificate-number illustration, clarifies email-or-username login, adds password visibility and a page-specific login title, and separates verification details into readable fields. Workspace controls share 44/36/48px sizes and 8px radii; card lift is reduced to 2px, icon rotation removed, and coloured hover feedback retained. Certificate artwork, snapshots and database records are unchanged.
