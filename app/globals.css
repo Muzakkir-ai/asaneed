@@ -189,3 +189,8 @@ button:not(.zite-app button),.button { min-height:var(--control-height); }
 .subject-line { display:flex; flex-wrap:wrap; column-gap:12px; align-items:baseline; }
 .subject-line>span { font-size:.8rem; color:#556967; font-weight:400; }
 @media(min-width:480px) { .verification-details { grid-template-columns:repeat(2,minmax(0,1fr)); } .verification-details .verification-subject { grid-column:1/-1; } }
+
+/* Keep the Google label readable against every interaction state. */
+.auth-content .google-signin button { display:flex; align-items:center; justify-content:center; gap:12px; }
+.auth-content .google-signin button:hover:not(:disabled):not(.zite-app button):not(.language-switcher button),.auth-content .google-signin button:focus-visible { background:#edf5f4; color:var(--ink); border-color:var(--accent); }
+.auth-content .google-signin button svg { flex-shrink:0; }

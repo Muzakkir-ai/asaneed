@@ -2,7 +2,7 @@ import {z} from 'zod';
 import type {MatnFormat} from './matnRichText';
 import type {Artwork} from './artworkCatalog';
 import {arabicSearchKey} from './arabicSearch';
-export const matnHeadingSchema=z.object({version:z.literal(1),mainHeightPt:z.number().min(5).max(150),secondaryHeightPt:z.number().min(1).max(120),lineGapMm:z.number().min(0).max(15),afterGapMm:z.number().min(0).max(20)});
+export const matnHeadingSchema=z.object({version:z.literal(1),mainWidthMm:z.number().min(5).max(250).optional(),secondaryWidthMm:z.number().min(5).max(250).optional(),mainHeightPt:z.number().min(5).max(150),secondaryHeightPt:z.number().min(1).max(120),lineGapMm:z.number().min(0).max(15),afterGapMm:z.number().min(0).max(20)});
 export type MatnHeadingSettings=z.infer<typeof matnHeadingSchema>;
 export const DEFAULT_MATN_HEADING:MatnHeadingSettings={version:1,mainHeightPt:42,secondaryHeightPt:24,lineGapMm:2,afterGapMm:4};
 export function matnArtwork(name:string,catalog:Artwork[],number?:string){const matches=catalog.filter(a=>a.kind==='books'&&a.line==='heading'&&(number?a.number===number:a.label&&arabicSearchKey(a.label)===arabicSearchKey(name)));const main=matches.length===1?matches[0]:undefined;return {main,secondary:main?catalog.find(a=>a.kind==='books'&&a.number===main.number&&a.line==='line-02'):undefined};}

@@ -18,3 +18,13 @@ assert.equal(writeMatnPresentation(legacy,readMatnPresentation(legacy).formats),
 assert.deepEqual(resolveMatnHeading(config,null,{svgHeightPt:15},matnArtwork(props.name,artwork)),config);const custom={...config,mainHeightPt:60};assert.deepEqual(resolveMatnHeading(config,custom,{svgHeightPt:15},{}),custom);const old=resolveMatnHeading(config,undefined,{svgHeightPt:15,headingGapMm:2},matnArtwork(props.name,artwork));assert.equal(old.mainHeightPt,15);assert.ok(Math.abs(old.secondaryHeightPt-15*19.84/48.19)<1e-8);assert.equal(old.afterGapMm,2);assert.equal(matnHeadingSchema.safeParse({...config,mainHeightPt:1000}).success,false);
 assert.equal(resolveMatnHeading(config,undefined,{svgHeightPt:5},matnArtwork(props.name,artwork)).mainHeightPt,5);assert.ok(resolveMatnHeading(config,undefined,{scalePercent:150},matnArtwork(props.name,artwork)).mainHeightPt>100,'preserve old scaled heading geometry');
 console.log('PASS: independent main/secondary heights, ratios, centered basmalah/art, gaps, shared renderer, fallback, old arrays/settings, precedence and bounds');
+
+const widthConfig={...config,mainWidthMm:100,secondaryWidthMm:100};
+const widthMarkup=renderToStaticMarkup(<MatnHeading {...props} settings={widthConfig}/>);
+const widths=[...widthMarkup.matchAll(/height:([\d.]+)pt;width:([\d.]+)pt/g)].map(m=>[Number(m[1]),Number(m[2])]);
+assert.ok(Math.abs(widths[0][1]-100*72/25.4)<1e-8);assert.equal(widths[0][1],widths[1][1]);
+assert.ok(Math.abs(widths[0][0]/widths[0][1]-48.19/186.29)<1e-8);assert.ok(Math.abs(widths[1][0]/widths[1][1]-19.84/184.97)<1e-8);
+assert.deepEqual(readMatnPresentation(writeMatnPresentation(legacy,[],widthConfig)).heading,widthConfig);
+assert.equal(matnHeadingSchema.safeParse({...config,mainWidthMm:251}).success,false);
+assert.equal(matnHeadingSchema.safeParse({...config,secondaryWidthMm:-1}).success,false);
+console.log('PASS: equal independent widths, preserved artwork ratios, width save/reopen and bounds');
