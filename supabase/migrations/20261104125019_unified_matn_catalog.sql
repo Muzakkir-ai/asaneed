@@ -37,6 +37,35 @@ create policy content_audit_read on public.content_audit for select to authentic
 revoke all on public.matn_catalog,public.matn_requests,public.content_audit from anon,authenticated;
 grant select on public.matn_catalog,public.matn_requests,public.content_audit to authenticated;
 -- Shared drafts are not exposed through direct workspace-record reads either.
+-- Audit shared template changes in the same transaction as the write.
+create function private.audit_shared_matn_template() returns trigger
+language plpgsql security definer set search_path='' as $$
+declare actor uuid; before_payload jsonb; after_payload jsonb;
+begin
+ if tg_op <> 'INSERT' and old.kind='mutoonTextTemplates'
+    and coalesce(old.payload->>'ownerId','')='' then
+  before_payload := old.payload;
+ end if;
+ if tg_op <> 'DELETE' and new.kind='mutoonTextTemplates'
+    and coalesce(new.payload->>'ownerId','')='' then
+  after_payload := new.payload;
+ end if;
+ if (before_payload is not null or after_payload is not null)
+    and before_payload is distinct from after_payload and auth.uid() is not null then
+  select id into actor from public.accounts
+   where auth_user_id=auth.uid() and active and role='admin';
+  if actor is null then raise exception 'Administrator required' using errcode='42501'; end if;
+  insert into public.content_audit(actor_id,action,target_id,before_data,after_data)
+   values(actor,'shared_matn_template_'||lower(tg_op),coalesce(new.id,old.id),before_payload,after_payload);
+ end if;
+ return null;
+end;
+$$;
+revoke all on function private.audit_shared_matn_template() from public,anon,authenticated;
+create trigger audit_shared_matn_template
+after insert or update or delete on public.workspace_records
+for each row execute function private.audit_shared_matn_template();
+
 create policy shared_template_visibility on public.workspace_records as restrictive for select to authenticated using(kind<>'mutoonTextTemplates' or coalesce(payload->>'ownerId','')<>'' or coalesce(payload->>'status','published')='published' or private.is_admin());
 create function public.save_matn_catalog(entry jsonb,allow_distinct boolean default false) returns uuid language plpgsql security definer set search_path='' as $$
 declare actor uuid; target uuid; prior jsonb; normalized text;

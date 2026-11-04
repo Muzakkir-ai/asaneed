@@ -1,3 +1,4 @@
+import {context as requestContext} from '../compat/context';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
@@ -9,7 +10,7 @@ import {reachesJunction} from '../lib/personalSanadValidation';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
-const matn=z.object({name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
+const matn=z.object({catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
 const shaykh=z.object({
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),
@@ -51,12 +52,27 @@ export default createEndpoint({
    if(readings.some(r=>!QURRA.some(q=>q.id===r.qariId&&q.rawis.some(v=>v===r.rawi))))throw new Error('Choose the ijazah riwayat');
    const existing=input.id?await zite.additionalShaykhs.findOne({id:input.id}).catch(()=>null):null;
    if(input.id&&!existing)throw new Error('Unknown sheikh');
+   const previousMutoon=existing?serialize(existing).mutoon:[];
+   const mutoon=input.mutoon??previousMutoon;
+   const catalogIds=[...new Set(mutoon.flatMap(item=>item.catalogId?[item.catalogId]:[]))];
+   if(catalogIds.length){
+    const {data,error}=await requestContext().client.from('matn_catalog')
+      .select('id,title,category').in('id',catalogIds).eq('status','published');
+    if(error)throw error;
+    for(const item of mutoon){
+     if(!item.catalogId)continue;
+     const match=data?.find(row=>row.id===item.catalogId);
+     if(!match)throw Error('اختر متنًا منشورًا');
+     item.name=match.title;
+     item.category=match.category;
+    }
+   }
    const record={name,qualification:input.qualification?.trim()||'',teachingRole:input.teachingRole?.trim()||'',
     madrasaName:input.madrasaName?.trim()||'',madrasaPlace:input.madrasaPlace?.trim()||'',
     readingsJson:JSON.stringify([...new Map(readings.map(x=>[x.qariId+'|'+x.rawi,x])).values()]),
     personalChain,junction:input.junction||'ubaydi',createdBy:existing?.createdBy||context.user.id};
    const saved=existing?await zite.additionalShaykhs.update({id:existing.id,record}):await zite.additionalShaykhs.create({record});
-   const extension=extensionFor(saved.id);const extRecord={name:name,shaykhId:saved.id,email:input.email?.trim().toLowerCase()||'',mutoonJson:JSON.stringify(input.mutoon||[])};
+   const extension=extensionFor(saved.id);const extRecord={name:name,shaykhId:saved.id,email:input.email?.trim().toLowerCase()||'',mutoonJson:JSON.stringify(mutoon)};
    if(extension)await zite.additionalShaykhExtensions.update({id:extension.id,record:extRecord});
    else await zite.additionalShaykhExtensions.create({record:extRecord});
   }

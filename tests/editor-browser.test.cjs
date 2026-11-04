@@ -7,10 +7,10 @@ async function main(){
  fs.mkdirSync(route);fs.copyFileSync('tests/fixtures/editor-review.tsx',path.join(route,'page.tsx'));fs.mkdirSync(out,{recursive:true});
  let server,browser;
  try{
-  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--port','3105'],{stdio:'pipe',windowsHide:true});let serverLog='';server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
-  let ready=false;for(let i=0;i<120;i++){try{const r=await fetch('http://localhost:3105/editor-review');if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}if(!ready)throw Error(serverLog);
+  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3105'],{stdio:'pipe',windowsHide:true});let serverLog='';server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
+  let ready=false;for(let i=0;i<120;i++){try{const r=await fetch('http://127.0.0.1:3105/editor-review',{signal:AbortSignal.timeout(3000)});if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}if(!ready)throw Error(serverLog);
   browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH,headless:true}:{channel:'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://localhost:3105/editor-review');const box=page.getByRole('textbox');await box.waitFor();await page.evaluate(()=>document.fonts.ready);await page.addStyleTag({content:'nextjs-portal{display:none}'});
+  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:3105/editor-review');const box=page.getByRole('textbox');await box.waitFor();await page.evaluate(()=>document.fonts.ready);await page.addStyleTag({content:'nextjs-portal{display:none}'});
   assert.equal(await page.getByRole('button',{name:'تراجع',exact:true}).isVisible(),false);
   await box.click();await page.keyboard.press('Control+End');await page.getByRole('button',{name:'غامق',exact:true}).first().click();await page.keyboard.insertText(' بَارَكَ اللّٰهُ');await page.keyboard.press('Shift');await page.keyboard.insertText(' فِيهِ');
   const state=JSON.parse(await page.getByTestId('state').textContent());assert.ok(state.formats.some(f=>f.bold&&f.text.includes('بَارَكَ اللّٰهُ فِيهِ')));assert.equal(await page.getByRole('button',{name:'غامق',exact:true}).first().getAttribute('aria-pressed'),'true');
