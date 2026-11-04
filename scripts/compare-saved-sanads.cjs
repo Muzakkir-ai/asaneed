@@ -3,7 +3,7 @@ const fs=require('node:fs'),path=require('node:path');
 const {compareStructuredRoute,sanadKey}=require(path.resolve('.vercel/unified-tests/legacy/lib/unifiedSanad.js'));
 const [input,output]=process.argv.slice(2);if(!input||!output)throw Error('Supply audit JSON input and Markdown output paths');
 const a=JSON.parse(fs.readFileSync(input,'utf8'));
-const chains=a.chains.map(c=>({...c,branches:[...new Set(a.nodes.filter(n=>n.chain_id===c.id).map(n=>n.branch))].sort((a,b)=>a-b).map(branch=>a.nodes.filter(n=>n.chain_id===c.id&&n.branch===branch).sort((a,b)=>a.position-b.position))}));
+const chains=a.chains.map(c=>({...c,branches:!a.nodes.some(n=>n.chain_id===c.id)?[[]]:[...new Set(a.nodes.filter(n=>n.chain_id===c.id).map(n=>n.branch))].sort((a,b)=>a-b).map(branch=>a.nodes.filter(n=>n.chain_id===c.id&&n.branch===branch).sort((a,b)=>a.position-b.position))}));
 const results=[];let prefixMatches=0,prefixCount=0;
 for(const book of a.books.filter(b=>!b.archived))for(const route of chains.filter(c=>c.book_id===book.id&&c.kind==='route'&&!c.archived)){
  const parent=chains.find(c=>c.id===route.book_chain_id);if(!parent){results.push({book:book.title,route:route.title,status:'incomplete',branches:0,missing:['إسناد الكتاب غير متاح'],id:route.id});continue;}

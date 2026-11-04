@@ -41,3 +41,8 @@ const proposal=planHoldingReference(original,book,parent,reviewedRoute,people,pr
 assert.equal(proposal.status,'ready');assert.equal(proposal.after?.personalChain,original.personalChain);assert.equal(proposal.after?.ownerId,'owner');assert.deepEqual(proposal.before,original);
 assert.equal(planHoldingReference({...original,personalChain:original.personalChain+' إضافة'},book,parent,reviewedRoute,people,prefix).after,null,'no conversion when exact text differs');
 assert.equal(planHoldingReference(original,book,parent,{...reviewedRoute,rawi:'ورش'},people,prefix).after,null,'never change riwayah in a conversion plan');
+
+const twoParents={...parent,branches:[parent.branches[0],[{person_id:'2',route_source:false}]]};
+const twoRoutes={...route,branches:[route.branches[0],[{person_id:'1',route_source:false}]]};
+const matrix=compareStructuredRoute(book,twoParents,twoRoutes,people,[{id:'source',title:'branch source',body:'عن أَحْمَدُ عن المؤلف عن الثالث عن الثالث عن أَحْمَدُ'}]);assert.equal(matrix.paths.length,4,'all book and route branch combinations retained');
+const emptyBook={...parent,branches:[[]]};assert.equal(compareStructuredRoute(book,emptyBook,twoRoutes,people,[{id:'source',title:'source',body:'عن المؤلف عن الثالث عن الثالث عن أَحْمَدُ'}]).paths.length,2,'an intentional empty book branch still composes both route variants');
