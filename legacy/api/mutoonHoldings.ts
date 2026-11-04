@@ -19,7 +19,9 @@ export default createEndpoint({
     const sanadText=(input.sanadText??existing?.sanadText??''),wordingText=(input.wordingText??existing?.wordingText??'');
     if(!name||!category||!sanadText.trim())throw new Error('Matn name, category and complete sanad are required');
     if(name.length>200||category.length>120||sanadText.length>60000||wordingText.length>30000)throw new Error('Text too long');
-    const catalogId=input.catalogId??(existing as typeof existing & {catalogId?:string})?.catalogId;if(catalogId){const {data:matn,error}=await requestContext().client.from('matn_catalog').select('id,title,category,status').eq('id',catalogId).single();if(error||!matn||matn.status!=='published')throw Error('اختر متنًا منشورًا');if(name!==matn.title||category!==matn.category)throw Error('اسم المتن وتصنيفه يأتيان من الفهرس المشترك');}
+    const catalogId=input.catalogId??(existing as typeof existing & {catalogId?:string})?.catalogId;
+    if(!existing&&!catalogId)throw Error('اختر متنًا منشورًا');
+    if(catalogId){const {data:matn,error}=await requestContext().client.from('matn_catalog').select('id,title,category,status').eq('id',catalogId).single();if(error||!matn||matn.status!=='published')throw Error('اختر متنًا منشورًا');if(name!==matn.title||category!==matn.category)throw Error('اسم المتن وتصنيفه يأتيان من الفهرس المشترك');}
     const record={...(catalogId?{catalogId}:{}),name,category,sanadText,wordingText,introductionId:input.introductionId??existing?.introductionId??'',conclusionId:input.conclusionId??existing?.conclusionId??'',sanadFormatting:input.sanadFormatting??existing?.sanadFormatting??'',ownerId,createdAtText:existing?.createdAtText||new Date().toISOString()};
     if(existing)await zite.mutoonHoldings.update({id:existing.id,record});
     else await zite.mutoonHoldings.create({record});

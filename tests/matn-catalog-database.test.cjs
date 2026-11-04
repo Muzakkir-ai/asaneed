@@ -23,4 +23,4 @@ const legacyAccount={id:'00000000-0000-4000-8000-000000000099',auth_user_id:'100
 await db.exec('reset role;delete from public.matn_requests;delete from public.matn_catalog;delete from public.content_audit;');await actor(1);await row('select private.restore_application_backup($1::jsonb,false)',[JSON.stringify(backup)]);assert.equal(await count('matn_catalog'),backup.matn_catalog.length);assert.equal(await count('matn_requests'),backup.matn_requests.length);
 await db.exec('reset role;set role anon');await assert.rejects(()=>db.query('select * from public.matn_catalog'),/permission denied/);await assert.rejects(()=>row('select public.save_matn_catalog($1::jsonb)',[JSON.stringify(item)]),/permission denied/);
 console.log('PASS local PostgreSQL: migration, RLS roles/ownership, normalized duplicates, request decision atomicity, review replay, notifications, independent capabilities, legacy/published preservation, backup/restore and anonymous denial');
-}finally{await db.close();}})().catch(e=>{console.error(e);process.exitCode=1});
+}finally{await db.close();}})().catch(e=>{console.error(e.message,e.detail ?? '');process.exitCode=1});
