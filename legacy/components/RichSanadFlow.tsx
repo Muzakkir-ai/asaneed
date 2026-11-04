@@ -8,7 +8,7 @@ export function renderRichSanadFlow(text:string,primary:string,secondary:string,
  const scoped=scopedPhraseRanges(text,phrases);
  const spans:{start:number;end:number;style:CSSProperties;layout?:MatnFormat}[]=[];
  for(const r of scoped){const p=phrases[r.index];spans.push({...r,style:{fontFamily:p.font,fontSize:`calc(${p.size*1.1}pt * var(--certificate-text-scale, 1))`,color:color(p.color,primary,secondary)}});
-  for(const f of p.rich||[]){const mapped=scopedPhraseRanges(text,[{...p,text:f.text,start:(p.start||0)+f.start,end:(p.start||0)+f.end}])[0];if(!mapped)continue;spans.push({...mapped,layout:f,style:{fontFamily:f.font||(f.bold?'Sakkal Kitab':p.font),fontWeight:f.bold?700:400,fontSynthesis:'none',fontSize:`calc(${p.size*1.1*(f.sizePercent||100)/100}pt * var(--certificate-text-scale, 1))`,color:f.color==='default'?color(p.color,primary,secondary):color(f.color,primary,secondary)}});}
+  for(const f of p.rich||[]){const mapped=scopedPhraseRanges(text,[{...p,text:f.text,start:(p.start||0)+f.start,end:(p.start||0)+f.end}])[0];if(!mapped)continue;spans.push({...mapped,layout:f,style:{fontFamily:f.font||(f.bold?'Sakkal Kitab':p.font),fontWeight:f.bold?700:400,fontSynthesis:'none',fontSize:`calc(${f.sizePt??p.size*1.1*(f.sizePercent||100)/100}pt * var(--certificate-text-scale, 1))`,color:f.color==='default'?color(p.color,primary,secondary):color(f.color,primary,secondary)}});}
  }
  let offset=0;
  return text.split('\n').map((line,index)=>{const start=offset,end=start+line.length;offset=end+1;const active=spans.filter(s=>s.start<end&&s.end>start);const points=[...new Set([start,end,...active.flatMap(s=>[Math.max(start,s.start),Math.min(end,s.end)])])].sort((a,b)=>a-b);

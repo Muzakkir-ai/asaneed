@@ -1,3 +1,11 @@
+## Point sizing and matn text layout — 5 November 2026
+
+Editor toolbar shows point size; relative selection sizing remains under More to keep the primary row compact. A size change without selected text applies to the current paragraph instead of silently affecting only future typing. Selected text retains its precise range. Absolute `sizePt` is optional and survives the rich adapter, section schema, editor repaint, source saves, matn preview and rich certificate rendering. Existing percentage-only records retain their relative behavior. Clear/presets reset absolute sizing.
+
+Matn presentation settings add optional centered text-box width (100–265mm) and overall body scale (50–200%) under a collapsed «مساحة النص وحجمه» group. Text scaling includes source point-sized spans and certificate phrase overrides; the SVG heading/basmalah stays independent. Missing settings retain the old layout, and existing finalized snapshots are not rewritten. Width/scale participate in existing matn defaults/overrides and snapshot persistence. The editor tab is now labeled «تنسيق الشهادة».
+
+Validation: compact editor tests cover selection/current-paragraph resizing, point-size adapter/schema/render persistence and rich print size. Matn layout fixtures cover centered width and overall scaling, including absolute point sizes. Hosted authenticated use and physical printing remain unverified.
+
 ## Draft matn source refresh and shaykh cards — 5 November 2026
 
 Draft matn preview and finalization now resolve the current saved matn source, including sanad, wording, introduction/conclusion templates and formatting, for personal holdings and additional mashaykh. Both paths pass the same resolved document into snapshot formatting so the visible document and frozen chain agree. No read-time source rewrite or bulk migration. Finalized certificates continue to use their immutable snapshots.
