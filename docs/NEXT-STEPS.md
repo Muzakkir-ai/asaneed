@@ -1,3 +1,7 @@
+## Branch review — 6 November 2026
+
+Open the shared personal-sanad editor and inspect the shortest/alternate highlighted paths. Expand the common tail, confirm the prepared narrator boxes, then save when satisfied. The reviewed alternate spellings reuse one saved identity; no source was silently corrected or confirmed. Verify on a physical iPhone; local Chromium checks cover 320/390px.
+
 ## Shared Sughra and mobile narrator review — 5 November 2026
 
 Review the requested shaykh's prepared shared prefix on the first detail page, confirm its narrator boxes and save once. Shared mode covers all selected original Sughra riwayat; numbered routes remain independent and old individual sources are retained. Switch shared mode off to edit exceptions. Verify the stacked connected-branch layout on a physical phone; Chromium 320/390px checks pass.

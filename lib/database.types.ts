@@ -221,6 +221,7 @@ export type Database = {
       }
       builder_people: {
         Row: {
+          aliases: Json
           archived: boolean
           display_name: string
           id: string
@@ -229,6 +230,7 @@ export type Database = {
           search_key: string
         }
         Insert: {
+          aliases?: Json
           archived?: boolean
           display_name?: string
           id?: string
@@ -237,6 +239,7 @@ export type Database = {
           search_key: string
         }
         Update: {
+          aliases?: Json
           archived?: boolean
           display_name?: string
           id?: string

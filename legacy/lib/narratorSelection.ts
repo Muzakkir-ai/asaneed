@@ -13,18 +13,18 @@ export function observedLinks(lib:BuilderLibrary):ObservedLink[]{
 export const narratorSearchKey=(value:string)=>builderNameKey(value).replace(/^(?:الشيخ|الإمام|الامام)\s+/u,'').replace(/(^|\s)(?:ابو|ابي)(?=\s|$)/gu,'$1ابي');
 export function rankNarrators(people:BuilderPerson[],query:string,links:ObservedLink[],previous?:string,next?:string){
  const key=narratorSearchKey(query);
- return people.filter(p=>!p.archived&&[p.name,p.display_name].some(n=>narratorSearchKey(n||'').includes(key))).map(person=>({person,observed:links.filter(l=>(l.from===previous&&l.to===person.id)||(l.from===person.id&&l.to===next))})).sort((a,b)=>Number(b.observed.length>0)-Number(a.observed.length>0)||a.person.name.localeCompare(b.person.name,'ar'));
+ return people.filter(p=>!p.archived&&[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(n=>narratorSearchKey(n||'').includes(key))).map(person=>({person,observed:links.filter(l=>(l.from===previous&&l.to===person.id)||(l.from===person.id&&l.to===next))})).sort((a,b)=>Number(b.observed.length>0)-Number(a.observed.length>0)||a.person.name.localeCompare(b.person.name,'ar'));
 }
 /** Review hints only: shared name tokens never establish identity. */
 export function possibleNarratorDuplicates(people:BuilderPerson[],query:string){
  const key=narratorSearchKey(query),tokens=key.split(' ').filter(t=>t.length>1);
  if(!key)return [];
- return people.filter(p=>!p.archived&&[p.name,p.display_name].some(n=>{const candidate=narratorSearchKey(n||'');const parts=candidate.split(' ');return candidate.includes(key)||key.includes(candidate)&&candidate.length>2||tokens.length>=2&&tokens.filter(t=>parts.includes(t)).length>=Math.max(2,Math.ceil(tokens.length*.6));}));
+ return people.filter(p=>!p.archived&&[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(n=>{const candidate=narratorSearchKey(n||'');const parts=candidate.split(' ');return candidate.includes(key)||key.includes(candidate)&&candidate.length>2||tokens.length>=2&&tokens.filter(t=>parts.includes(t)).length>=Math.max(2,Math.ceil(tokens.length*.6));}));
 }
 
 /** Text-derived suggestions already represented by saved names/aliases need no creation review. */
 export function unresolvedNarratorSuggestions(people:BuilderPerson[],suggestions:string[],query:string){
- const saved=new Set(people.filter(p=>!p.archived).flatMap(p=>[p.name,p.display_name].filter(Boolean).map(narratorSearchKey)));
+ const saved=new Set(people.filter(p=>!p.archived).flatMap(p=>[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].filter(Boolean).map(narratorSearchKey)));
  const key=narratorSearchKey(query);
  return [...new Set(suggestions)].filter(name=>!saved.has(narratorSearchKey(name))&&narratorSearchKey(name).includes(key));
 }
