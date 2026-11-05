@@ -1,3 +1,7 @@
+## Account setup follow-up — 5 November 2026
+
+Use a real administrator-created invitation when ready: optional profile email → username/setup code → native email verification → user-chosen password → active workspace. Test on desktop/mobile, including opening confirmation in another browser and re-entering the unconsumed code. No real invitation or email was created during development. Existing active accounts use normal management/password recovery; setup never overwrites them. Linked shaykh holdings are independent copies of current sources, and historical issuer/certificate IDs stay fixed.
+
 ## Personal sanad follow-up — 5 November 2026
 
 Review the narrator picker and named personal sanad flow in authenticated desktop/mobile sessions. Save two variants of one riwayah, choose each explicitly in issuance, and review a merged copy. Local API/DOM/PostgreSQL checks cover ownership, stable identities and source retention; no real certificate was issued for testing. Existing pasted prefixes require deliberate narrator entry or an explicitly reviewed private continuation; they are not automatically split into identities. Merged paths preserve full branches separated by (ح), without automatic common-tail compression.

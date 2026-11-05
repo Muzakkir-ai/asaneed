@@ -831,6 +831,15 @@ export type Database = {
     }
     Functions: {
       account_deletion_ids: { Args: never; Returns: string[] }
+      account_setup_state: {
+        Args: {
+          code_hash: string
+          email_input?: string
+          login_username: string
+          lookup_key: string
+        }
+        Returns: Json
+      }
       acknowledge_matn_decision: {
         Args: { request_id: string }
         Returns: undefined
@@ -849,6 +858,10 @@ export type Database = {
       }
       attach_builder_route: {
         Args: { extra?: string; holding: Json; route_id: string }
+        Returns: string
+      }
+      complete_account_setup: {
+        Args: { code_hash: string; login_username: string; lookup_key: string }
         Returns: string
       }
       create_issuer_profile: {
@@ -872,6 +885,10 @@ export type Database = {
       get_account_username: { Args: never; Returns: string }
       legacy_identity_choices: { Args: never; Returns: Json }
       list_application_accounts: { Args: never; Returns: Json }
+      manage_account_setup: {
+        Args: { action: string; record?: Json }
+        Returns: Json
+      }
       merge_builder_people: {
         Args: { expected_token?: string; source_id: string; target_id: string }
         Returns: Json
