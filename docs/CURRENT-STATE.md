@@ -1,3 +1,13 @@
+## Mobile card feedback and simplified personal-sanad entry — 5 November 2026
+
+Clickable navigation, book, matn, riwayah and additional-shaykh cards use a teal top accent, glow, small lift, filled/tilted icon and the existing reveal arrow. Desktop hover and keyboard focus share the language; passive delegated pointer feedback adds touch/pen support without intercepting or delaying clicks. Release feedback clears after 380ms, on scroll/drag/cancel/blur and on unmount. Layout panels do not activate descendant cards. Reduced motion retains colour feedback without transforms/transitions. Effects are screen-only and use the existing theme.
+
+Personal-sanad narrator cards now place the meeting-point selector after the last narrator and before the adoption button. A point must be chosen explicitly for new card adoption. Options include direct Ibn al-Jazari and reviewed saved continuations for al-Ubaydi/other shuyukh; a missing al-Ubaydi continuation is labelled unavailable. Selecting a point does not invent a connection or trim the entered chain. The existing continuation and endpoint checks still block mismatches and missing sources. Full-chain mode retains its existing endpoint requirements.
+
+Removed the redundant manual text adoption/editor and manual route-metadata panels from personal/additional-shaykh riwayah entry. Existing saved prose, route metadata, holdings and certificate snapshots are preserved. The saved-text preview, discard, saved book/route picker and separately reviewed continuation creation remain available.
+
+Validation: local Chromium fixture covers isolated hover/focus, real emulated touch, single-tap activation, no sticky hover, scroll/cancel, disabled cards, keyboard navigation, dark button contrast and reduced motion at 390/320px. Personal-sanad API/React/helper suites and additional-shaykh navigation tests pass. Production build checked without the temporary review route. No live account/certificate data changed. Physical iOS Safari and signed-in hosted flows remain unverified. Release source is based on main 6ae5f6c via feat/mobile-card-feedback-and-junctions.
+
 ## Username and one-time account setup — 5 November 2026
 
 Admins can create a username and a one-time setup code from an additional shaykh's بيانات الشيخ panel or the users manager. Email is optional during provisioning; role is Student or Shaykh, with an explicit issuance-capability checkbox. Codes are generated server-side from 20 random bytes, shown once, stored only as SHA-256 hashes, expire after 72 hours and can be rotated/revoked. Pending usernames are reserved across existing setters. No account/invitation was created for a real person during implementation.
