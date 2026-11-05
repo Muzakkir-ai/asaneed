@@ -1,3 +1,11 @@
+## All-sanad default and isolated route views — 6 November 2026
+
+Prepared branch review opens with «عرض الكل» selected. Every node and branch is shown equally, with no individual route focused. Selecting the shorter or an alternate sanad now renders only that path's narrators in transmission order, with consecutive arrows and numbering. Other branch cards/connectors and ح transition badges are absent in the single-path view. «عرض الكل» restores every branch and its connectors. The personal sanad remains visible through its meeting point without any tail-reveal step.
+
+This is display state only: switching views does not adopt a route, discard source occurrences or alter confirmation/saving. An explicit shared-node name edit still updates its source occurrences; adoption preserves all source branches even when one path is displayed. No database or certificate data changes are required.
+
+Validation covers neutral default, six/seven/eight-node path selection, exact shortest-path order, connector counts, full-view restoration and adoption preserving hidden branches. Local personal-sanad/helper/API/React suites, typecheck, production build and Chromium desktop/320/390px checks pass. Physical Safari remains unverified. Previous release PR #28: c64d428, deployment dpl_DD38gTJSYm8HwBHDnprGDYWGp7Ey READY. This release is tracked by its PR/deployment commit.
+
 ## Flexible name search, narrator creation and full mobile sanad — 6 November 2026
 
 Corrected the reviewed-alias lookup introduced in PR #27: the PostgREST contains filter now receives a serialized JSONB array, rather than a JavaScript array that the client encodes as a PostgreSQL array literal. New narrator creation no longer fails with invalid JSON on this lookup; existing reviewed aliases still reuse a single identity and ambiguous matches are denied. No database migration or user source mutation is involved in this correction.

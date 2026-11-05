@@ -22,6 +22,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});Object.ass
  assert.equal(document.querySelectorAll('[data-graph-node]').length,8,'converging paths render one visible meeting node');assert.equal(graphApplied,undefined);
  await act(async()=>document.querySelector('[data-person-name="الشيخ الملتقى"]').click());
  assert.equal(document.querySelector('[data-person-name="الاسم المعدل"]').textContent,'الاسم المعدل','explicit edits stay visible');
+ await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='السند الأعلى٦ رواة').click());assert.equal(document.querySelectorAll('[data-graph-node]').length,6,'view selection only hides unrelated branch cards');
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='تأكيد الرواة من النص السابق').click());
  assert.equal(graphApplied[0],graphText.replaceAll('الشيخ الملتقى','الاسم المعدل'),'one shared-node edit updates its source occurrences while retaining all connectors');
  await act(async()=>graphRoot.unmount());
