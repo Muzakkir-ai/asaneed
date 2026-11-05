@@ -28,3 +28,11 @@ assert.deepEqual(readMatnPresentation(writeMatnPresentation(legacy,[],widthConfi
 assert.equal(matnHeadingSchema.safeParse({...config,mainWidthMm:251}).success,false);
 assert.equal(matnHeadingSchema.safeParse({...config,secondaryWidthMm:-1}).success,false);
 console.log('PASS: equal independent widths, preserved artwork ratios, width save/reopen and bounds');
+
+const borderArt={kind:'borders',number:'09',line:'frame',path:'svg/borders/09/frame.svg',width:297,height:210,label:'إطار'} as Artwork;
+const bordered=renderToStaticMarkup(<MatnHeadingControls {...props} value={{...config,borderNumber:'09',basmalahOffsetMm:5}} artwork={[...artwork,borderArt]} base="https://example.test/frozen" onChange={()=>{}}/>);
+assert.ok(bordered.includes('data-heading-paper="A4"'));
+assert.ok(bordered.includes('frozen/svg/borders/09/frame.svg'));
+assert.ok(bordered.includes('padding-top:5mm'));
+assert.ok(bordered.includes('aria-label="إزاحة البسملة لأسفل"'));
+console.log('PASS: heading controls preview selected pinned border on A4 and expose independent basmalah downward offset');
