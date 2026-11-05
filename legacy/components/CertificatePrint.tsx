@@ -1,3 +1,4 @@
+import PrintSafeIssuerArtwork,{type ArtworkStatus} from './PrintSafeIssuerArtwork';
 import CertificateBorder from './CertificateBorder';
 import {MatnHeadingControls} from './MatnHeadingControls';
 import {headingTextTopMm,matnArtwork,resolveMatnHeading,type MatnHeadingSettings} from '../lib/matnPresentation';
@@ -292,7 +293,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const activeArtworkBase=isDraft?currentArtworkBase():(snapshotArtwork?.base||'');
   const issuerNumber=isDraft?(cert.registrationNumber||'').slice(2,4):snapshotArtwork?.issuerNumber||'';
   const issuerArtwork=activeArtwork.filter(a=>a.kind==='mashaykh'&&a.number===issuerNumber).sort((a,b)=>['name','line-02','line-03'].indexOf(a.line)-['name','line-02','line-03'].indexOf(b.line));
+  const [issuerArtStatus,setIssuerArtStatus]=useState<ArtworkStatus>('loading'),[issuerArtRetry,setIssuerArtRetry]=useState(0);
   const hasNumberedArtwork=issuerArtwork.some(a=>a.line==='name');
+  const preparingIssuerArtwork=hasNumberedArtwork&&issuerArtStatus!=='ready';
   const zakaullahArtwork=!!cert.additionalShaykh&&cert.additionalShaykh==='64dd31bc-7105-4732-8646-148f27fe7fca'&&!!assetBase();
   const footerLineStyle=(line:'name'|'qualification'|'teaching'|'place'):React.CSSProperties=>{
     let configured:Record<string,{bold?:boolean,size?:number}>={};
@@ -417,7 +420,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     check();document.fonts.ready.then(check).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
   },[printPermission,cert.id,sanadBody,typography,headingOverride,styledPhrases,textTopMm,centerFits,footerName]);
-  const printCertificate=()=>{if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
+  const printCertificate=()=>{if(preparingIssuerArtwork){toast.error('انتظر تجهيز رسم المجيز للطباعة');return;}if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
   const captureSelection=()=>{
     const selection=window.getSelection();
     if(!selection||selection.isCollapsed||!sanadElement.current)return;
@@ -439,6 +442,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   // Native print/PDF preserves selectable Arabic text and vector SVG masks.
   // The older html-to-image -> PNG -> PDF path rasterized the entire A4 page.
   const savePdf=async()=>{
+    if(preparingIssuerArtwork){toast.error('انتظر تجهيز رسم المجيز للطباعة');return;}
     if(printPermission!=='allowed'||!printArea.current)return;
     if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}
     setExporting(true);
@@ -452,7 +456,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
          (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)){
         await exportCertificatePdf(printArea.current,`ijazah-${cert.registrationNumber||cert.certificateNumber||cert.studentName}.pdf`);
       }else{
-        // Desktop print-to-PDF retains native text and vector artwork.
+        // Desktop PDF retains native text/heading vectors; issuer images are 600dpi.
         window.print();
       }
     }catch(e){console.error(e);toast.error('تعذّر فتح نافذة الطباعة');}
@@ -462,7 +466,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,typography:next,phrases:styledPhrases,...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
   const saveFormat=async()=>{if(!activeSanad?.id||!isDraft||readOnly||previewPalette)return;setSavingFormat(true);try{await sanadPrintStyle({action:'save',sanadId:activeSanad.id,settings:printSettings()});toast.success('حُفظ تنسيق الشهادة');}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ التنسيق');}finally{setSavingFormat(false);}};
   const approveFinal=async()=>{
-    if(readOnly||previewPalette||!isDraft||printPermission!=='allowed')return;
+    if(readOnly||previewPalette||!isDraft||printPermission!=='allowed'||preparingIssuerArtwork)return;
     if(measureOverflow()){toast.error('لا يمكن اعتماد الشهادة قبل معالجة تجاوز مساحة الطباعة.');return;}
     setFinalizing(true);
     try{
@@ -484,10 +488,11 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft||!!previewPalette} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft||!!previewPalette} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
-          {isDraft&&<Button variant="default" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'معاينة PDF بدون اعتماد'}</Button>}
-          {isDraft?<Button disabled={readOnly||!!previewPalette||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly||previewPalette?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
-            <Button disabled={overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
-            <Button variant="secondary" disabled={exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>
+          {hasNumberedArtwork&&issuerArtStatus!=='ready'&&<span role="status" className="text-sm">{issuerArtStatus==='error'?<><span>تعذر تجهيز رسم المجيز للطباعة.</span><Button variant="outline" size="sm" onClick={()=>setIssuerArtRetry(v=>v+1)}>إعادة المحاولة</Button></>:'جارٍ تجهيز رسم المجيز للطباعة…'}</span>}
+          {isDraft&&<Button variant="default" disabled={preparingIssuerArtwork||exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'معاينة PDF بدون اعتماد'}</Button>}
+          {isDraft?<Button disabled={readOnly||!!previewPalette||preparingIssuerArtwork||finalizing||overflow||!layoutChecked} onClick={()=>setConfirmFinal(true)}><CheckCircle2 className="h-4 w-4 me-2"/> {readOnly||previewPalette?'معاينة للقراءة فقط':'اعتماد نهائي'}</Button>:<>
+            <Button disabled={preparingIssuerArtwork||overflow||!layoutChecked} onClick={printCertificate}><Printer className="h-4 w-4 me-2"/> طباعة</Button>
+            <Button variant="secondary" disabled={preparingIssuerArtwork||exporting||overflow||!layoutChecked} onClick={savePdf}>{exporting?'جارٍ التحضير…':'حفظ PDF بجودة الطباعة'}</Button>
           </>}
         </div>
       </div>
@@ -525,7 +530,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                       </div>
                     </td>
                     <td className="certificate-footer-center certificate-footer-mujeez">
-                      {hasNumberedArtwork?<div className="certificate-numbered-artwork" role="img" aria-label={footerName}>{issuerArtwork.map(a=><span key={a.path} aria-hidden="true" style={{display:'block',width:(a.width/issuerArtwork[0].height*10.5)+'mm',height:(a.height/issuerArtwork[0].height*10.5)+'mm',maxWidth:'100%',backgroundColor:a.line==='line-03'?accentColor:borderColor,WebkitMaskImage:'url("'+activeArtworkBase+'/'+a.path+'")',maskImage:'url("'+activeArtworkBase+'/'+a.path+'")',WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>) }
+                      {hasNumberedArtwork?<div className="certificate-numbered-artwork" role="img" aria-label={footerName}><PrintSafeIssuerArtwork artwork={issuerArtwork} base={activeArtworkBase} primary={borderColor} secondary={accentColor} onStatus={setIssuerArtStatus} retry={issuerArtRetry}/>
                         {!issuerArtwork.some(a=>a.line==='line-02')&&footerProfile.showScientificQualification&&footerProfile.scientificQualification?.trim()&&<div className="certificate-footer-qualification" style={footerLineStyle('qualification')}>{footerProfile.scientificQualification.trim()}</div>}
                         {!issuerArtwork.some(a=>a.line==='line-03')&&<>{(footerProfile.showTeachingRole&&footerProfile.teachingRole?.trim()||footerProfile.showMadrasaName&&footerProfile.madrasaName?.trim())&&<div className="certificate-footer-madrasa-line" style={footerLineStyle('teaching')}>{[footerProfile.showTeachingRole?footerProfile.teachingRole.trim():'',footerProfile.showMadrasaName?footerProfile.madrasaName.trim():''].filter(Boolean).join(' ')}</div>}{footerProfile.showMadrasaPlace&&footerProfile.madrasaPlace?.trim()&&<div className="certificate-footer-place" style={footerLineStyle('place')}>{footerProfile.madrasaPlace.trim()}</div>}</>}
                       </div>:zakaullahArtwork?<div className="certificate-zakaullah-artwork" role="img" aria-label={footerName}>
