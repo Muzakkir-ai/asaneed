@@ -1,3 +1,13 @@
+## Themed meeting-point search, Quran people and teal gradients — 5 November 2026
+
+The meeting-point selector is now a searchable themed popover instead of a native select, including on iOS-style touch layouts. Names/descriptions wrap, Arabic search ignores harakat/alif variants, and keyboard/touch selection closes the popup. It remains below the narrator cards. The shared Popover primitive is marked separately from modal dialogs; mobile full-height dialog rules no longer stretch popover content or indent its search row.
+
+The library response includes read-only meeting-point candidates from the shared Quran narrator directory and identities used by confirmed Quran routes/their book chains. Private text sections, unrelated people and draft-only routes do not populate this shared list. Existing reviewed continuations remain direct choices. Selecting another saved person pre-fills the anchor and opens reviewed continuation creation, with saved-source references visible; selection alone does not infer a continuation, modify the chain or make it ready for issuance. Existing source/endpoint validation and pending-save guards remain in force. No migration or real source data changes were needed.
+
+Main filled controls/header/selected navigation use a subtle physical left-to-right gradient: current teal at the left, darker teal at the right. Workspace accent/sidebar tokens and outline/ghost hover classes now use teal, eliminating the old gold touch-hover fallback. Certificate palette/artwork/print settings remain independent.
+
+Validation: local Chromium desktop and emulated touch checks pass for themed popup search, keyboard/touch choice, compact mobile bounds, teal accent, gradient direction and existing card interactions, dark contrast, disabled/destructive and reduced motion. Personal-sanad tests cover new-person selection requiring review; loader fixtures cover source provenance, confirmed-chain inclusion, draft/unrelated exclusion and private-source isolation. Typecheck and production build pass. Physical iOS Safari and signed-in hosted issuance remain unverified.
+
 ## Mobile card feedback and simplified personal-sanad entry — 5 November 2026
 
 Clickable navigation, book, matn, riwayah and additional-shaykh cards use a teal top accent, glow, small lift, filled/tilted icon and the existing reveal arrow. Desktop hover and keyboard focus share the language; passive delegated pointer feedback adds touch/pen support without intercepting or delaying clicks. Release feedback clears after 380ms, on scroll/drag/cancel/blur and on unmount. Layout panels do not activate descendant cards. Reduced motion retains colour feedback without transforms/transitions. Effects are screen-only and use the existing theme.
@@ -6,7 +16,7 @@ Personal-sanad narrator cards now place the meeting-point selector after the las
 
 Removed the redundant manual text adoption/editor and manual route-metadata panels from personal/additional-shaykh riwayah entry. Existing saved prose, route metadata, holdings and certificate snapshots are preserved. The saved-text preview, discard, saved book/route picker and separately reviewed continuation creation remain available.
 
-Validation: local Chromium fixture covers isolated hover/focus, real emulated touch, single-tap activation, no sticky hover, scroll/cancel, disabled cards, keyboard navigation, dark button contrast and reduced motion at 390/320px. Personal-sanad API/React/helper suites and additional-shaykh navigation tests pass. Production build checked without the temporary review route. No live account/certificate data changed. Physical iOS Safari and signed-in hosted flows remain unverified. Release source is based on main 6ae5f6c via feat/mobile-card-feedback-and-junctions.
+Validation: local Chromium fixture covers isolated hover/focus, real emulated touch, single-tap activation, no sticky hover, scroll/cancel, disabled cards, keyboard navigation, dark button contrast and reduced motion at 390/320px. Personal-sanad API/React/helper suites and additional-shaykh navigation tests pass. Production build checked without the temporary review route. No live account/certificate data changed. Physical iOS Safari and signed-in hosted flows remain unverified. Released in PR #23, production main 17bdea5; Vercel deployment dpl_BcMQihbcUokSAZPWpGuscZ5b8NMg was verified READY with the production alias.
 
 ## Username and one-time account setup — 5 November 2026
 

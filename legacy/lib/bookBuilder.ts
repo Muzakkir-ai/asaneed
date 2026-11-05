@@ -2,7 +2,8 @@ export type BuilderPerson={id:string;name:string;display_name:string;archived:bo
 export type BuilderBook={artwork_number?:string;id:string;title:string;author_id:string;archived:boolean};
 export type BuilderNode={person_id:string;route_source:boolean;source_level?:'upper'|'branch'|null};
 export type BuilderChain={id:string;book_id:string;book_chain_id:string|null;route_code:string;kind:'book'|'route';title:string;qari_id:string;rawi:string;continuation:string;continuation_ids?:string[]|null;continuation_override?:boolean;confirmed:boolean;archived:boolean;revision:number;upper_route_name?:string;branch_route_name?:string;reading_scope?:'unspecified'|'sughra'|'kubra';branches:BuilderNode[][]};
-export type BuilderLibrary={canManage?:boolean;unificationReady?:boolean;people:BuilderPerson[];books:BuilderBook[];chains:BuilderChain[];suggestions:string[];continuations:Record<string,string>;continuationSections?:import('./unifiedSanad').ContinuationSection[];prefixContinuations?:import('./builderPrefix').BuilderPrefixContinuation[]};
+export type QuranMeetingPerson={id:string;name:string;sources:string[]};
+export type BuilderLibrary={quranMeetingPeople?:QuranMeetingPerson[];canManage?:boolean;unificationReady?:boolean;people:BuilderPerson[];books:BuilderBook[];chains:BuilderChain[];suggestions:string[];continuations:Record<string,string>;continuationSections?:import('./unifiedSanad').ContinuationSection[];prefixContinuations?:import('./builderPrefix').BuilderPrefixContinuation[]};
 export {sanadKey as builderNameKey} from './unifiedSanad';
 import {sanadKey as builderNameKey,composeStructuredSanad} from './unifiedSanad';
 export const builderPreview=composeStructuredSanad;

@@ -55,7 +55,18 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.equal(await touch.evaluate(e=>getComputedStyle(e).transform),'none');
   assert.equal(await touch.locator('.workspace-card-icon').evaluate(e=>getComputedStyle(e).transform),'none');
   await touch.dispatchEvent('pointercancel',{pointerId:42});assert.equal(await touch.getAttribute('data-card-touch'),null);
+  await mobile.getByRole('button',{name:'نقطة التقاء السند الشخصي اختر نقطة الالتقاء'}).click();
+  const search=mobile.getByRole('combobox',{name:'ابحث عن نقطة التقاء'});await search.fill('احمد بن محمد');
+  const option=mobile.getByRole('option',{name:'أَحْمَد بن مُحَمَّد المقرئ من أسانيد القرآن المحفوظة'});assert.ok(await option.isVisible());assert.ok(await mobile.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));const popup=mobile.locator('.meeting-point-popover');assert.ok(await popup.evaluate(e=>e.getBoundingClientRect().height<420),'popover does not inherit full-screen mobile dialog height');await mobile.screenshot({path:path.join(out,'workspace-meeting-popup.png'),animations:'disabled'});
+  await option.tap();assert.ok(await mobile.getByRole('button',{name:'نقطة التقاء السند الشخصي أَحْمَد بن مُحَمَّد المقرئ'}).isVisible());
+  await mobile.getByRole('button',{name:'نقطة التقاء السند الشخصي أَحْمَد بن مُحَمَّد المقرئ'}).click();await search.fill('ابن الجزري');await search.press('Enter');
+  assert.ok(await mobile.getByRole('button',{name:'نقطة التقاء السند الشخصي الإمام ابن الجزري'}).isVisible());
+  const deleted=mobile.getByRole('button',{name:'عرض الشهادة',exact:true});await deleted.hover();assert.equal(await deleted.getAttribute('data-workspace-button'),'outline');
+  const accent=await mobile.evaluate(()=>{const app=document.querySelector('.zite-app'),e=document.createElement('span');e.style.background='hsl(var(--accent))';app.append(e);const value=getComputedStyle(e).backgroundColor;e.style.background='hsl(var(--primary))';const primary=getComputedStyle(e).backgroundColor;e.remove();return {value,primary};});
+  assert.equal(accent.value,accent.primary,'UI accent is teal on touch');
+  assert.ok(await mobile.locator('.studio-header').evaluate(e=>getComputedStyle(e).backgroundImage.includes('to right')),'teal gradient darkens physically to the right');
+  await mobile.screenshot({path:path.join(out,'workspace-meeting-selector.png'),fullPage:true});
   await touchContext.close();
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({touchFeedback:true,singleTap:true,scrollCancellation:true,isolatedCardHover:true,isolatedPanelFocus:true,desktop:true,mobile:[390,320],keyboardNavigation:true,disabled:true,destructive:true,darkIconContrast:contrast,reducedMotion:true,errors}));
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({themedMeetingSelector:true,searchAndKeyboard:true,gradient:true,touchFeedback:true,singleTap:true,scrollCancellation:true,isolatedCardHover:true,isolatedPanelFocus:true,desktop:true,mobile:[390,320],keyboardNavigation:true,disabled:true,destructive:true,darkIconContrast:contrast,reducedMotion:true,errors}));
  }finally{await browser?.close();if(server){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{try{process.kill(-server.pid,'SIGTERM');}catch{}}}fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').includes('workspace-theme-review/page'))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);}
 })().catch(e=>{console.error(e);process.exitCode=1});
