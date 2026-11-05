@@ -7,6 +7,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
  await db.exec(sql('supabase/migrations/20261030103948_atomic_builder_attachment.sql'));
  const legacy=await db.query("insert into public.workspace_records(kind,payload) values ('sanadSections',$1::jsonb) returning id",[JSON.stringify({title:'CHAIN:nafi:قالون',body:'نص أَحْمَدُ قديم محفوظ',ownerId:''})]);const sourceId=legacy.rows[0].id;
  await db.exec(sql('supabase/migrations/20261104164423_unified_sanad_continuations.sql'));
+ await db.exec(sql('supabase/migrations/20261105142134_personal_sanad_variants.sql'));
  const actor=async n=>db.exec(`reset role;set request.jwt.claim.sub='10000000-0000-4000-8000-00000000000${n}';set role authenticated`),row=async(q,p=[])=> (await db.query(q,p)).rows[0],rpc=async(n,r)=>(await row(`select public.${n}($1::jsonb) id`,[JSON.stringify(r)])).id;
  await actor(1);const sections=[];for(const kind of ['rawi','qari','prophet'])sections.push(await rpc('save_sanad_continuation',{title:kind+' continuation',body:'عن أَحْمَدُ محفوظ '.repeat(5),kind,qariId:'nafi',rawi:'قالون',variant:'',status:'approved',formatting:{font:'KSA Regular',size:9,color:'charcoal',phrases:[]}}));
  assert.equal((await row("select payload->>'body' body from public.workspace_records where id=$1",[sourceId])).body,'نص أَحْمَدُ قديم محفوظ');
@@ -23,6 +24,16 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
  await assert.rejects(()=>rpc('save_builder_chain',{...draft,continuation_ids:[sections[0],sections[0],sections[2]]}),/three continuation/);
  await assert.rejects(()=>db.query('update public.builder_chains set continuation_ids=null,confirmed=true where id=$1',[route]),/Approved continuation/);
  const issuerId='00000000-0000-4000-8000-000000000077';await db.exec('reset role');await db.query("insert into public.issuers(id,display_name) values ($1,'Synthetic issuer')",[issuerId]);await actor(1);const holding={ownerId:'guest:'+issuerId,builderRouteId:route,tariqNumber:(await row('select route_code from public.builder_chains where id=$1',[route])).route_code,qariId:'nafi',rawi:'قالون',personalChain:'عن سند محفوظ '.repeat(20),name:'Synthetic',unifiedSanad:{version:1,routeId:route,prefix:'عن الشيخ إلى الإمام ابن الجزري'}};await row('select public.attach_builder_route($1,$2::jsonb,$3)',[route,JSON.stringify(holding),issuerId]);assert.equal((await row("select payload->'unifiedSanad'->>'routeId' id from public.workspace_records where kind='additionalShaykhReadingSanads'")).id,route,'actual additional-shaykh attachment keeps unified reference');
+ const personalHolding={...holding,ownerId:'10000000-0000-4000-8000-000000000001',shortName:'السند الأول'};
+ const attach=async h=>(await row('select public.attach_builder_route($1,$2::jsonb,null) id',[route,JSON.stringify(h)])).id;
+ const originalId=await attach(personalHolding);assert.equal(await attach(personalHolding),originalId,'same reviewed personal sanad is idempotent');
+ const another={...personalHolding,shortName:'السند الثاني',unifiedSanad:{...personalHolding.unifiedSanad,prefix:'عن شيخ ثان إلى الإمام ابن الجزري'}};
+ const anotherId=await attach(another);assert.notEqual(anotherId,originalId,'second personal sanad for same route has independent ID');
+ assert.equal((await row('select payload from public.workspace_records where id=$1',[originalId])).payload.shortName,'السند الأول','original is unchanged');
+ await actor(2);const ownPerson=(await row("insert into public.builder_people(owner_id,name,search_key) values ('00000000-0000-4000-8000-000000000002','راو شخصي','personal-test') returning id")).id;
+ assert.ok(ownPerson);await assert.rejects(()=>row("insert into public.builder_people(owner_id,name,search_key) values ('00000000-0000-4000-8000-000000000001','اسم ممنوع','denied')"),/row-level security/);
+ assert.equal((await db.query('update public.builder_people set name=$1 where id=$2 returning id',['تعديل ممنوع',ownPerson])).rows.length,0,'staff cannot edit shared narrator identities');
+ await actor(4);await assert.rejects(()=>row("insert into public.builder_people(owner_id,name,search_key) values ('00000000-0000-4000-8000-000000000004','اسم ممنوع','denied-student')"),/row-level security/);await actor(1);
  const evidence={routeId:route,revision:1,parentId:parent,parentRevision:1,sourceIds:[sourceId],sources:[{id:sourceId,body:'نص أَحْمَدُ قديم محفوظ'}],note:'مراجعة المطابقة دون توثيق تاريخي'};
  await rpc('review_sanad_consolidation',evidence);await assert.rejects(()=>rpc('review_sanad_consolidation',{...evidence,revision:2}),/Builder changed/);
  await assert.rejects(()=>rpc('review_sanad_consolidation',{...evidence,sources:[{id:sourceId,body:'changed'}]}),/Source changed/);
@@ -31,10 +42,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
  await assert.rejects(()=>row('select public.attach_builder_route($1,$2::jsonb,$3)',[route,JSON.stringify(holding),issuerId]),/Administrator/);
  await assert.rejects(()=>rpc('save_sanad_continuation',{title:'forged',body:'forged',kind:'rawi',qariId:'nafi',status:'approved'}),/Administrator/);
  await assert.rejects(()=>rpc('review_sanad_consolidation',evidence),/Administrator/);
- await assert.rejects(()=>db.exec("insert into public.builder_people(owner_id,name,search_key) values ('00000000-0000-4000-8000-000000000002','راوٍ جديد','forged')"),/row-level/);
+ await assert.rejects(()=>db.query("insert into public.builder_books(owner_id,title,author_id) values ('00000000-0000-4000-8000-000000000002','كتاب ممنوع',$1)",[person]),/row-level/);
  await actor(1);await db.query("update public.workspace_records set payload=jsonb_set(payload,'{continuation,status}','\"draft\"') where id=$1",[sections[0]]);await assert.rejects(()=>row('select private.assert_builder_continuation(c) from public.builder_chains c where id=$1',[route]),/Approved continuation/);
  assert.ok((await row('select count(*)::int n from public.content_audit')).n>=5);
  await db.exec('reset role;set role anon');await assert.rejects(()=>rpc('save_sanad_continuation',{}),/permission denied/);
  await actor(1);const restoredId='00000000-0000-4000-8000-000000000088';const oldRoute={...(await row('select * from public.builder_chains where id=$1',[route])),id:restoredId,route_code:'9988',continuation:'عن راوٍ قديم '.repeat(20)};delete oldRoute.continuation_ids;delete oldRoute.continuation_override;await row('select private.restore_application_backup($1::jsonb,false)',[JSON.stringify({builder_people:[],builder_books:[],builder_chains:[oldRoute],builder_nodes:[]})]);assert.equal((await row('select continuation_override from public.builder_chains where id=$1',[restoredId])).continuation_override,true);
  console.log('PASS unified SQL: actual migrations, admin/RLS allow-deny, immutable originals, approved references, direct-write guard, duplicate IDs, rawi isolation, review evidence races, draft visibility and audit');
- }finally{await db.close();}})().catch(e=>{console.error(e.message,e.detail||'');process.exitCode=1;});
+ }finally{await db.close();}})().catch(e=>{console.error(e.stack,e.detail||'');process.exitCode=1;});

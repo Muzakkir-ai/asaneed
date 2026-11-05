@@ -1,3 +1,7 @@
+## Personal sanad follow-up — 5 November 2026
+
+Review the narrator picker and named personal sanad flow in authenticated desktop/mobile sessions. Save two variants of one riwayah, choose each explicitly in issuance, and review a merged copy. Local API/DOM/PostgreSQL checks cover ownership, stable identities and source retention; no real certificate was issued for testing. Existing pasted prefixes require deliberate narrator entry or an explicitly reviewed private continuation; they are not automatically split into identities. Merged paths preserve full branches separated by (ح), without automatic common-tail compression.
+
 ## Text layout and recoverable user deletion — 5 November 2026
 
 Review point/percent sizing, centered matn text width and overall scaling in authenticated desktop/mobile sessions. Local editor/render/save tests pass; automatic approval rejected creating a protected-preview sharing link, so no new browser verification is claimed for this release. Physical print remains unverified.

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {resolveBuilderPrefix,UBAYDI_BRIDGE_TITLE} from '../legacy/lib/builderPrefix';
+import {resolveBuilderPrefix,UBAYDI_BRIDGE_TITLE,validatePersonalBridge,savedPersonalMeetingPoints} from '../legacy/lib/builderPrefix';
 import {builderPreview,type BuilderChain} from '../legacy/lib/bookBuilder';
 const personal='عن الشيخ عبد الله بن محمد، عن إبراهيم العُبيدي';
 const bridge={id:'bridge',title:UBAYDI_BRIDGE_TITLE,body:'عن راو أول، عن راو ثان (ح). وقرأ راو آخر على الإمام محمد بن محمد الجزري'};
@@ -27,3 +27,19 @@ assert.ok(preview.text.indexOf('الجزري')<preview.text.indexOf('صاحب ا
 assert.equal(preview.text.match(/صاحب الكتاب/gu)?.length,1);
 assert.deepEqual(preview.sources,['صاحب الطريق']);
 console.log('Saved Ubaydi bridge, branch preservation, explicit ambiguity, missing-source denial and full custom-route assembly: PASS');
+
+const arbitrary={id:'custom',title:'custom',anchorName:'عبد الله بن أحمد',body:'عن الشيخ الأول، عن الإمام ابن الجزري'};
+assert.equal(resolveBuilderPrefix('كما أخذته عن عبد الله بن أحمد',[arbitrary],'custom').text,'كما أخذته عن عبد الله بن أحمد، '+arbitrary.body);
+assert.throws(()=>resolveBuilderPrefix('عن عبد الله بن أحمد، عن رجل آخر',[arbitrary],'custom'),/ينتهي/u);
+assert.throws(()=>resolveBuilderPrefix('عن عبد الله بن أحمد',[],'custom'),/غير متاحة/u);
+assert.throws(()=>validatePersonalBridge('عبد الله بن أحمد','عن عبد الله بن أحمد، عن ابن الجزري'),/تكرار/u);
+assert.throws(()=>validatePersonalBridge('عبد الله بن أحمد','عن رجل آخر'),/لا تصل/u);
+const storedPeople=[{id:'p1',name:'شيخ قريب',archived:false},{id:'p2',name:'إبراهيم العبيدي',archived:false}];
+const meetingPoints=savedPersonalMeetingPoints([{id:'source',unifiedSanad:{prefix:'كما أخذته عن شيخ قريب، عن إبراهيم العبيدي، عن الشيخ التالي، عن الإمام ابن الجزري',prefixPersonIds:['p1','p2']}}],storedPeople);
+assert.equal(meetingPoints.length,2);
+assert.equal(meetingPoints[0].anchorName,'شيخ قريب');
+assert.equal(meetingPoints[0].body,'عن إبراهيم العبيدي، عن الشيخ التالي، عن الإمام ابن الجزري');
+assert.equal(meetingPoints[1].body,'عن الشيخ التالي، عن الإمام ابن الجزري');
+assert.equal(savedPersonalMeetingPoints([{id:'source',unifiedSanad:{prefix:'pasted unstructured text',prefixPersonIds:['p1']}}],storedPeople).length,0);
+assert.equal(savedPersonalMeetingPoints([{id:'source',unifiedSanad:{prefix:'كما أخذته عن شيخ قريب، عن ابن الجزري',prefixPersonIds:['missing']}}],storedPeople).length,0);
+console.log('Arbitrary reviewed junctions, exact endpoint validation and identity-backed saved meeting points: PASS');

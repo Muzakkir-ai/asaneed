@@ -101,7 +101,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const routeOptions=[...new Map((isGuest?selectedGuest?.routes||[]:holdings).filter(h=>h.tariqNumber).map(h=>[h.tariqNumber,h.tariqName])).entries()];
   const bookOptions=[...new Set(routeOptions.filter(([,name])=>!sughraBook(name)).map(([,name])=>routeBook(name)))];
   const baseRouteHoldings=holdings.filter(h=>readingScope==='kubra'?!!h.tariqNumber&&!sughraBook(h.tariqName)&&(!selectedBook||routeBook(h.tariqName)===selectedBook):readingScope==='sughra'?!h.tariqNumber||sughraBook(h.tariqName):!!cert);
-  const routeHoldings=baseRouteHoldings.filter((h,i,all)=>readingScope!=='sughra'||(h.tariqNumber?!all.slice(0,i).some(v=>v.tariqNumber&&v.qariId===h.qariId&&v.rawi===h.rawi):!all.some(v=>v.tariqNumber&&v.qariId===h.qariId&&v.rawi===h.rawi)));
+  const routeHoldings=baseRouteHoldings.filter((h,_i,all)=>readingScope!=='sughra'||h.tariqNumber||!all.some(v=>v.tariqNumber&&v.qariId===h.qariId&&v.rawi===h.rawi&&(v.shortName||'')===(h.shortName||'')));
   const selectReading=(value:string)=>{setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));
   const readingGroups=QURRA.map(q=>({
@@ -224,7 +224,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
                       <span className="flex items-center gap-2"><span>القراءة كاملة</span><span className="text-xs font-normal text-muted-foreground">شهادتان · {q.rawis.map(r=>displayRawi(q.id,r)).join(' + ')}</span></span>
                     </SelectItem>}
                     {narrators.flatMap(({rawi})=>choicesFor(rawi).map(holding=><SelectItem key={holding.id+'-'+rawi} value={`holding:${holding!.id}:${encodeURIComponent(rawi)}`} disabled={!canUsePersonalSanad(holding!)} className="text-right py-2">
-                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{readingScope==='kubra'?' من طريق '+compactLabel(holding.tariqNumber,holding.tariqName):''}{holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
+                      <span className="text-sm">رواية {displayRawi(q.id,rawi)}{readingScope==='kubra'?' من طريق '+compactLabel(holding.tariqNumber,holding.tariqName):''}{holding.shortName?' — '+holding.shortName:holding.sourceTeacherName?' — عن '+holding.sourceTeacherName:''}</span>
                     </SelectItem>))}
                     <SelectSeparator className="my-1"/>
                   </SelectGroup>;
