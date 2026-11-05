@@ -404,3 +404,13 @@
  .zite-app{--accent:var(--primary);--accent-foreground:var(--primary-foreground);--sidebar-primary:var(--primary);--workspace-fill-gradient:linear-gradient(to right,hsl(var(--primary)),color-mix(in srgb,hsl(var(--primary)) 78%,black))}
  .zite-app :is([data-workspace-button=default],button.bg-primary,button.bg-accent,button.bg-secondary,.studio-header.bg-primary,.sidebar-link[aria-current=page],[data-workspace-tab][data-state=active]){background-image:var(--workspace-fill-gradient)}
 }
+
+/* Parallel paths retain readable narrator cards on narrow screens. */
+@media screen and (max-width:700px){
+ .zite-app .connected-chain-split{grid-template-columns:minmax(0,1fr)!important;gap:18px}
+ .zite-app .connected-chain-lane{min-width:0;border-inline-start:2px solid hsl(var(--primary)/.18);padding-inline-start:8px}
+ .zite-app .connected-chain-lane::before{content:'الفرع ' attr(data-branch-label);display:block;padding:6px 0;color:hsl(var(--primary));font-size:12px;font-weight:600}
+ .zite-app .narrator-person-card>div:first-child{flex-wrap:wrap}
+ .zite-app .narrator-person-card>div:first-child>div{min-width:min(140px,100%);flex-basis:calc(100% - 48px)}
+ .zite-app .narrator-person-card p{word-break:normal;overflow-wrap:break-word}
+}

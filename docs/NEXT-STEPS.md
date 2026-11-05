@@ -1,3 +1,7 @@
+## Shared Sughra and mobile narrator review — 5 November 2026
+
+Review the requested shaykh's prepared shared prefix on the first detail page, confirm its narrator boxes and save once. Shared mode covers all selected original Sughra riwayat; numbered routes remain independent and old individual sources are retained. Switch shared mode off to edit exceptions. Verify the stacked connected-branch layout on a physical phone; Chromium 320/390px checks pass.
+
 ## Previously entered narrator boxes awaiting user confirmation — 5 November 2026
 
 The requested additional-shaykh profile's four riwayat and existing route-specific sources are staged for narrator review. Open a riwayah, inspect the prepared prefix and full preserved source, choose «تأكيد الرواة من النص السابق», then «حفظ السند». Repeated names and joint-teacher wording intentionally remain as entered; no scholarly correction or branch simplification was inferred. None was confirmed during implementation. Unsupported/ambiguous sources or identities need review rather than guessed links.
