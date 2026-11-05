@@ -1,3 +1,7 @@
+## Viewing and editing sanads — 6 November 2026
+
+Existing sanads open as a viewing diagram. Use «تعديل السند» to change narrators or the meeting point, review/adopt and save; «عرض السند» hides editing tools without saving. New blank drafts open in edit mode. Confirm the interaction on a physical phone; local Chromium coverage includes view/edit transitions and branch/rank navigation.
+
 ## Narrator rank review — 6 November 2026
 
 Check the reverse ranks in a real sanad: the meeting-point narrator is ١, and parallel peers use labels such as ٢ أ and ٢ ب. All view shows only the highest/shortest rank for each narrator; select a route to see its specific rank. Source text and saved identities are unchanged.

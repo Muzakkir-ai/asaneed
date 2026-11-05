@@ -1,3 +1,11 @@
+## View sanad first, edit explicitly — 6 November 2026
+
+Existing personal sanads open in viewing mode, with narrator cards, arrows, ranks and All/individual-route selection. «تعديل السند» reveals narrator pencils, building instructions, meeting-point controls, preparation/adoption and add/reorder tools; «عرض السند» returns to the viewing layout. Existing source prose without saved narrator structure is shown verbatim instead of a fake empty card. Blank new drafts still start in editing mode.
+
+Shared profile mode/checkbox/save controls and individual-riwayah reuse/route/save controls follow the same editing state. The riwayah page frame hides editing help/cancel actions in its viewing state. Simply opening a prepared source does not mark it pending; entering edit mode retains the existing review/confirmation guard. View switches preserve the narrator draft and active card state; they neither adopt nor save it. Source wording, identities and certificate data are unchanged.
+
+Validation: personal-sanad/API/React/navigation suites and typecheck pass. Chromium desktop and 320/390px checks use PersonalSanadInput itself and verify clean default view, explicit building/pencil controls, hiding an open editor, preserving active edits and all existing route/rank/mobile checks. Physical Safari remains unverified. Previous release PR #32: 6aeb68c, deployment dpl_2afV1HrwcGxQ5gJAwZTgfp3zh2GV READY. Production build passes; this release is tracked by its PR/deployment commit.
+
 ## Highest rank only in All view — 6 November 2026
 
 «عرض الكل» now shows one rank per narrator: the minimum narrator count along its saved paths back to the meeting point (the highest/shortest sanad). Peer letters in this view group narrators by those displayed highest ranks. Selecting an individual route still shows its actual distance, including longer routes. Full branch visibility, the default All view and the full-width All button below individual routes remain. No source, identity, database or certificate data changes are involved.
