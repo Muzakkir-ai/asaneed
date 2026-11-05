@@ -1,3 +1,4 @@
+import {matchesArabic} from './arabicSearch';
 import {builderNameKey,type BuilderLibrary,type BuilderPerson} from './bookBuilder';
 export type ObservedLink={from:string;to:string;chainId:string};
 /** Direction follows written order (reader -> teacher); no historical verification. */
@@ -13,7 +14,7 @@ export function observedLinks(lib:BuilderLibrary):ObservedLink[]{
 export const narratorSearchKey=(value:string)=>builderNameKey(value).replace(/^(?:الشيخ|الإمام|الامام)\s+/u,'').replace(/(^|\s)(?:ابو|ابي)(?=\s|$)/gu,'$1ابي');
 export function rankNarrators(people:BuilderPerson[],query:string,links:ObservedLink[],previous?:string,next?:string){
  const key=narratorSearchKey(query);
- return people.filter(p=>!p.archived&&[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(n=>narratorSearchKey(n||'').includes(key))).map(person=>({person,observed:links.filter(l=>(l.from===previous&&l.to===person.id)||(l.from===person.id&&l.to===next))})).sort((a,b)=>Number(b.observed.length>0)-Number(a.observed.length>0)||a.person.name.localeCompare(b.person.name,'ar'));
+ return people.filter(p=>!p.archived&&[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(n=>matchesArabic(narratorSearchKey(n||''),key))).map(person=>({person,observed:links.filter(l=>(l.from===previous&&l.to===person.id)||(l.from===person.id&&l.to===next))})).sort((a,b)=>Number(b.observed.length>0)-Number(a.observed.length>0)||a.person.name.localeCompare(b.person.name,'ar'));
 }
 /** Review hints only: shared name tokens never establish identity. */
 export function possibleNarratorDuplicates(people:BuilderPerson[],query:string){
@@ -26,5 +27,5 @@ export function possibleNarratorDuplicates(people:BuilderPerson[],query:string){
 export function unresolvedNarratorSuggestions(people:BuilderPerson[],suggestions:string[],query:string){
  const saved=new Set(people.filter(p=>!p.archived).flatMap(p=>[p.name,p.display_name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].filter(Boolean).map(narratorSearchKey)));
  const key=narratorSearchKey(query);
- return [...new Set(suggestions)].filter(name=>!saved.has(narratorSearchKey(name))&&narratorSearchKey(name).includes(key));
+ return [...new Set(suggestions)].filter(name=>!saved.has(narratorSearchKey(name))&&matchesArabic(narratorSearchKey(name),key));
 }

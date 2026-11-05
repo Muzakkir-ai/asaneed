@@ -1,7 +1,7 @@
 import type {PreparedSanadPeople} from './preparedSanadPeople';
 import {sanadKey} from './unifiedSanad';
 export type PreparedGraphNode={id:string;indices:number[];name:string;turn:boolean};
-export type PreparedGraph={nodes:PreparedGraphNode[];edges:{from:string;to:string}[];paths:string[][];tailStart:number};
+export type PreparedGraph={nodes:PreparedGraphNode[];edges:{from:string;to:string}[];paths:string[][]};
 /** Resolve explicit source references only. Ambiguous origins, cycles and dangling branches fall back to the literal source editor. */
 export function preparedSanadGraph(source:PreparedSanadPeople,people:{name:string;personId?:string}[]):PreparedGraph|null{
  if(source.tokens.length!==people.length)return null;
@@ -24,6 +24,5 @@ export function preparedSanadGraph(source:PreparedSanadPeople,people:{name:strin
  walk(root,[]);if(invalid||paths.length<2||nodes.some(n=>!paths.some(p=>p.includes(n.id))))return null;
  const depth=new Map<string,number>();for(const path of paths)path.forEach((id,i)=>depth.set(id,Math.max(depth.get(id)||0,i)));
  nodes.sort((a,b)=>(depth.get(a.id)||0)-(depth.get(b.id)||0)||a.indices[0]-b.indices[0]);paths.sort((a,b)=>a.length-b.length);
- const lastMerge=Math.max(...nodes.map((n,i)=>edges.filter(e=>e.to===n.id).length>1?i:-1));
- return {nodes,edges,paths,tailStart:lastMerge>=0&&nodes.length-lastMerge>3?lastMerge+1:nodes.length};
+ return {nodes,edges,paths};
 }

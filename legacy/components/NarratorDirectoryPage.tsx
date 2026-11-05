@@ -1,4 +1,4 @@
-import {arabicSearchKey as plain} from '../lib/arabicSearch';
+import {matchesArabic} from '../lib/arabicSearch';
 import {useEffect,useMemo,useState} from 'react';
 import {narratorDirectory,type NarratorDirectoryOutputType} from '../lib/api';
 import {QURRA,displayRawi} from '../lib/qurra';
@@ -35,7 +35,7 @@ export default function NarratorDirectoryPage(){
  const byId=useMemo(()=>new Map(people.map(p=>[p.id,p])),[people]);
  const chosenQari=QURRA.find(q=>q.id===qariId);
  const filtered=useMemo(()=>people.filter(p=>{
-  const matchesQuery=!query.trim()||plain(p.name).includes(plain(query.trim()));
+  const matchesQuery=matchesArabic(p.name,query);
   const matchesQari=qariId==='all'||p.readings.some(r=>r.qariId===qariId&&(rawi==='all'||r.rawi===rawi));
   return matchesQuery&&matchesQari;
  }),[people,query,qariId,rawi]);

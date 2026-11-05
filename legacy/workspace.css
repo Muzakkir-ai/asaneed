@@ -426,5 +426,17 @@
  .zite-app .prepared-graph-node{position:relative;z-index:1;width:calc(100% - 64px);min-width:0;background:hsl(var(--card));border-radius:10px}
  .zite-app .prepared-graph-node[data-selected=true]>.narrator-person-card{border-color:hsl(var(--primary)/.6);box-shadow:0 3px 12px hsl(var(--primary)/.08)}
  .zite-app .prepared-graph-turn{position:absolute;inset-inline-start:12px;top:-13px;z-index:2;background:hsl(var(--card));color:hsl(var(--primary));border:1px solid hsl(var(--border));border-radius:7px;min-width:24px;text-align:center;padding:2px 5px;font-size:12px}
- .zite-app .prepared-graph-tail{width:100%;min-height:44px;padding:10px;white-space:normal;border:1px solid hsl(var(--border));border-radius:9px;background:hsl(var(--card));color:hsl(var(--primary));box-shadow:none;font-size:12px}
+}
+
+@media screen {
+ .zite-app :is(.narrator-picker,.narrator-create-review){min-width:0;max-width:100%}
+ .zite-app .narrator-duplicate-list{display:grid;gap:8px;min-width:0;max-height:240px;overflow-y:auto;overscroll-behavior:contain}
+ .zite-app .narrator-duplicate-list>[data-workspace-button]{display:block;width:100%;max-width:100%;height:auto;min-height:44px;white-space:normal;overflow-wrap:anywhere;text-align:start;line-height:1.7;padding:8px 10px;margin:0;box-shadow:none}
+ .zite-app .narrator-create-review>p{overflow-wrap:anywhere}
+ .zite-app .narrator-create-review>[data-workspace-button]{max-width:100%;height:auto;min-height:44px;white-space:normal}
+}
+
+@media screen {
+ .zite-app .narrator-create-review>label{display:flex;align-items:flex-start;gap:8px}
+ .zite-app .narrator-create-review input[type=checkbox]{appearance:auto;width:18px;min-width:18px;max-width:18px;height:18px;flex:0 0 18px;padding:0;margin:2px 0 0;accent-color:hsl(var(--primary))}
 }
