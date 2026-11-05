@@ -5,4 +5,4 @@ export const arabicSearchKey=(value:string)=>value.normalize('NFKC')
  .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
  .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
  .toLocaleLowerCase('ar').replace(/\s+/gu,' ').trim();
-export const matchesArabic=(value:string,query:string)=>arabicSearchKey(value).includes(arabicSearchKey(query));
+export const matchesArabic=(value:string,query:string)=>{const candidate=arabicSearchKey(value);return arabicSearchKey(query).split(' ').filter(Boolean).every(word=>candidate.includes(word));};

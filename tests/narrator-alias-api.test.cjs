@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),Module=require('node:module'),swc=require('next/dist/build/swc'),{createClient}=require('@supabase/supabase-js');
+(async()=>{
+ await swc.loadBindings();let aliases=[],writes=0,filters=[];
+ const person={id:'00000000-0000-4000-8000-000000000009',name:'الاسم المعتمد',archived:false,display_name:''};
+ const db=createClient('https://fixture.invalid','fixture-key',{auth:{persistSession:false},global:{fetch:async(url,options)=>{url=new URL(url);if(url.pathname.endsWith('/accounts'))return Response.json({id:'account',role:'admin',active:true});if(options.method==='POST'){writes++;return Response.json({...person,...JSON.parse(options.body)});}const filter=url.searchParams.get('aliases');if(filter){filters.push(filter);assert.ok(filter.startsWith('cs.['),'JSONB array must remain JSON, not a PostgreSQL array literal');assert.equal(JSON.parse(filter.slice(3))[0].key,'الشيخ الاختباري');return Response.json(aliases);}return new Response(null,{status:200});}}});
+ const client={auth:{getClaims:async()=>({data:{claims:{sub:'fixture-user'}}})},from:db.from.bind(db)};
+ const file='app/api/book-builder/route.ts',m=new Module(path.resolve(file),module);m.paths=module.paths;const extras={'../../../lib/supabase/server':{createClient:async()=>client},'../../../lib/workspace-scope':{resolveWorkspaceScope:async()=>({accountId:'account',readOnly:false})},'../../../legacy/lib/bookBuilder':{builderNameKey:s=>s},'../../../lib/sanad-library':{},'../../../legacy/lib/unifiedSanad':{},'../../../legacy/lib/qurra':{},'../../../legacy/lib/builderPrefix':{}};
+ m.require=id=>id in extras?extras[id]:require(id);m._compile(swc.transformSync(fs.readFileSync(file,'utf8'),{filename:file,jsc:{parser:{syntax:'typescript'}},module:{type:'commonjs'}}).code,path.resolve(file));
+ const call=()=>m.exports.POST(new Request('https://fixture.invalid/api/book-builder',{method:'POST',headers:{origin:'https://fixture.invalid','content-type':'application/json'},body:JSON.stringify({action:'person',name:'الشيخ الاختباري'})}));
+ let response=await call();assert.equal(response.status,200,await response.clone().text());assert.equal(writes,1,'a new name can be created after a valid empty alias lookup');
+ aliases=[person];response=await call();assert.equal(response.status,200);assert.equal((await response.json()).id,person.id);assert.equal(writes,1,'reviewed alias reuses identity without insertion');
+ aliases=[person,{...person,id:'another'}];response=await call();assert.ok(response.status>=400);assert.match((await response.json()).error,/أكثر من شخص/);assert.equal(writes,1,'ambiguous alias never creates a person');assert.equal(filters.length,3);
+ console.log('PASS: actual PostgREST JSONB serialization, new-name creation, alias reuse and ambiguous alias denial');
+})().catch(e=>{console.error(e);process.exitCode=1});

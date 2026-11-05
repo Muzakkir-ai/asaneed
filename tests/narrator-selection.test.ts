@@ -31,3 +31,10 @@ const suggestions=['أبي عمرو','أبو زيد','محمد الأول','اس
 assert.deepEqual(unresolvedNarratorSuggestions(people,suggestions,''),['اسم غير محفوظ'],'saved canonical names and aliases do not appear as unreviewed suggestions');
 assert.deepEqual(unresolvedNarratorSuggestions(people,suggestions,'غير'),['اسم غير محفوظ']);
 assert.equal(people.filter(p=>p.name==='محمد الآخر').length,2,'suggestion filtering never merges identities');
+
+const searched=[{id:'words',name:'عَبْدُ الرَّحْمَٰنِ بْنُ بَشِيرٍ المَكِّيُّ',display_name:'',archived:false,aliases:[{name:'الشيخ عبد الرحمن خان',key:'reviewed'}]},{id:'partial',name:'بشير المكي',display_name:'',archived:false}];
+assert.deepEqual(rankNarrators(searched,'بشير عبد الرحمن',[]).map(r=>r.person.id),['words'],'all query words can appear out of order and separated by other words');
+assert.equal(rankNarrators(searched,'بَشِير عَبْد الرَّحْمَن',[]).length,1,'vocalized query and source match');
+assert.equal(rankNarrators(searched,'بشير زيد',[]).length,0,'every query word is required');
+assert.equal(rankNarrators(searched,'خان الرحمن',[])[0].person.id,'words','reviewed spellings support unordered words');
+assert.deepEqual(unresolvedNarratorSuggestions([],['عَبْد الرحمن بن بشير المكي'],'بشير عبد'),['عَبْد الرحمن بن بشير المكي']);

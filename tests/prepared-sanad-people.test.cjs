@@ -19,7 +19,7 @@ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});Object.ass
  const graphPrepared=prepareSavedSanadPeople(graphText),graphPeople=[...new Set(graphPrepared.tokens.map(t=>t.name))].map((name,i)=>({id:'saved-'+i,name,display_name:'',archived:false}));
  const graphRoot=createRoot(document.getElementById('root'));let graphApplied;
  await act(async()=>graphRoot.render(React.createElement(People,{library:{people:graphPeople},preparation:graphPrepared,onPersonCreated:()=>assert.fail('all graph people already saved'),onApply:(...args)=>graphApplied=args})));
- assert.equal(document.querySelectorAll('[data-graph-node]').length,5,'converging paths render one visible meeting node');assert.equal(graphApplied,undefined);
+ assert.equal(document.querySelectorAll('[data-graph-node]').length,8,'converging paths render one visible meeting node');assert.equal(graphApplied,undefined);
  await act(async()=>document.querySelector('[data-person-name="الشيخ الملتقى"]').click());
  assert.equal(document.querySelector('[data-person-name="الاسم المعدل"]').textContent,'الاسم المعدل','explicit edits stay visible');
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='تأكيد الرواة من النص السابق').click());

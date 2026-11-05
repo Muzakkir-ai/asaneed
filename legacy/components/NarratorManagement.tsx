@@ -1,10 +1,11 @@
+import {matchesArabic} from '../lib/arabicSearch';
 import NarratorShortName from './NarratorShortName';
 import {useState} from 'react';
 import {useAuth} from 'zitejs/auth';
 import {Button} from '@project/components/ui/button';
 import {Input} from '@project/components/ui/input';
 import BuilderPersonRoutes from './BuilderPersonRoutes';
-import {builderNameKey,type BuilderLibrary} from '../lib/bookBuilder';
+import {type BuilderLibrary} from '../lib/bookBuilder';
 type Impact={token:string;sourceName:string;targetName:string;nodes:number;books:number;chains:{id:string;title:string}[]};
 export default function NarratorManagement({lib,busy,api,run,load}:{lib:BuilderLibrary;busy:boolean;api:(body:unknown)=>Promise<any>;run:(fn:()=>Promise<void>)=>Promise<void>;load:()=>Promise<unknown>}){
  const {user}=useAuth();
@@ -14,7 +15,7 @@ export default function NarratorManagement({lib,busy,api,run,load}:{lib:BuilderL
  return <section className="space-y-4 rounded-xl border border-primary/30 bg-primary/5 p-3 sm:p-5" aria-label="إدارة الرواة">
  <div><h3 className="text-lg font-bold">إدارة الرواة</h3><p className="text-sm text-muted-foreground">ابحث عن الراوي لتعديل اسمه، عرض مواضعه في الأسانيد، أو دمج سجل مكرر.</p></div>
  <Input aria-label="بحث الرواة" placeholder="ابحث بالاسم، مع التشكيل أو بدونه…" value={query} onChange={e=>setQuery(e.target.value)}/>
- <label className="block space-y-1 text-sm"><span>الراوي المراد إدارته</span><select className="w-full rounded border bg-background p-2" value={id} onChange={e=>{setId(e.target.value);setName(people.find(p=>p.id===e.target.value)?.name||'');setTarget('');reset();}}><option value="">اختر الراوي</option>{people.filter(p=>p.id===id||builderNameKey(p.name+' '+p.display_name).includes(builderNameKey(query))).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+ <label className="block space-y-1 text-sm"><span>الراوي المراد إدارته</span><select className="w-full rounded border bg-background p-2" value={id} onChange={e=>{setId(e.target.value);setName(people.find(p=>p.id===e.target.value)?.name||'');setTarget('');reset();}}><option value="">اختر الراوي</option>{people.filter(p=>p.id===id||matchesArabic([p.name,p.display_name,...(p.aliases||[]).map(a=>a.name)].join(' '),query)).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
  {selected?<><div className="rounded-lg border bg-background p-3 space-y-3"><h4 className="font-semibold">تعديل الاسم</h4><label className="block text-sm">الاسم بصيغة الجر<Input value={name} onChange={e=>{setName(e.target.value);reset();}}/></label><div className="flex flex-wrap gap-2"><Button disabled={busy||name.trim().length<2||name===selected.name} onClick={()=>void run(async()=>{await api({action:'editPerson',id,name});await load();reset();setMessage('حُفظ الاسم');})}>حفظ الاسم</Button><Button variant="outline" disabled={busy} onClick={()=>{if(window.confirm('أرشفة هذا الراوي؟'))void run(async()=>{await api({action:'archive',table:'builder_people',id});await load();setId('');});}}>أرشفة</Button></div></div>
  <div className="rounded-lg border bg-background p-3"><NarratorShortName key={selected.id+':'+selected.display_name} person={selected} onSave={async(personId,shortName)=>{await run(async()=>{await api({action:'personShortName',id:personId,shortName});await load();reset();setMessage('حُفظ الاسم المختصر');});}}/></div>
  {user?.role==='admin'&&<div className="rounded-lg border bg-background p-3 space-y-3"><h4 className="font-semibold">دمج سجل مكرر</h4><p className="text-sm">السجل المكرر الذي سيؤرشف: <strong>{selected.name}</strong></p><label className="block text-sm space-y-1"><span>الراوي الصحيح الذي سيبقى</span><select className="w-full rounded border bg-background p-2" value={target} onChange={e=>{setTarget(e.target.value);reset();}}><option value="">اختر السجل الذي تريد الاحتفاظ به</option>{people.filter(p=>p.id!==id).map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label><Button variant="outline" disabled={busy||!target} onClick={()=>void run(async()=>{reset();setImpact(await api({action:'mergePeople',sourceId:id,targetId:target}));})}>معاينة الدمج</Button>

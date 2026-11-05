@@ -1,3 +1,13 @@
+## Flexible name search, narrator creation and full mobile sanad — 6 November 2026
+
+Corrected the reviewed-alias lookup introduced in PR #27: the PostgREST contains filter now receives a serialized JSONB array, rather than a JavaScript array that the client encodes as a PostgreSQL array literal. New narrator creation no longer fails with invalid JSON on this lookup; existing reviewed aliases still reuse a single identity and ambiguous matches are denied. No database migration or user source mutation is involved in this correction.
+
+Arabic search now requires every query word in any order, ignoring tashkeel, tatweel and supported letter variants. The same matching serves narrator pickers, saved aliases, suggestions, meeting points, narrator directory/management and existing shared Arabic-search consumers. Original spellings and exact identity matching remain unchanged.
+
+Duplicate-review suggestions now form a bounded, scrollable list. Long names wrap inside the narrator card, and internal UUID fragments are removed from button labels. Prepared branch diagrams show every personal-sanad node through its meeting point immediately; the common-tail reveal/collapse button is removed. Route highlighting and connecting arrows remain.
+
+Validation: a regression test exercises the real Supabase/PostgREST client serialization through the actual authenticated route with mocked transport, covering empty lookup/new-person insertion, existing-alias reuse and ambiguity denial. Personal-sanad suites and typecheck pass. Chromium desktop and 320/390px checks cover full nodes/arrows, no reveal step, bounded long duplicate choices and existing-person selection. Physical Safari and authenticated hosted creation remain unverified. Prior release PR #27: production 0054bfe, deployment dpl_8CFP5kW2btfMYhacgBoy1vasnGPx READY. This correction is tracked by its PR/deployment commit.
+
 ## Approved ح branch view and reviewed narrator spellings — 6 November 2026
 
 Prepared personal/shared-sanad review now shows explicitly resolved ح branches as connected narrator cards. Route buttons highlight the shortest sanad or alternate paths; saved repeated identities meet at one node, with the common lower tail expandable. Mobile cards retain readable widths. Ambiguous branch origins, unlinked repeated names, cycles and dangling branches retain the literal source editor. Displaying or selecting a path does not rewrite the source. An explicit shared-node edit updates all its occurrences; review/adoption retains the full connecting wording and lower sanad, and page saving remains explicit.
