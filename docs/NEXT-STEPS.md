@@ -1,3 +1,7 @@
+## Narrator rank review — 6 November 2026
+
+Check the reverse ranks in a real sanad: the meeting-point narrator is ١, and parallel peers use labels such as ٢ أ and ٢ ب. All view may show multiple ranks for a narrator with routes of different lengths; select a route to see its specific rank. Source text and saved identities are unchanged.
+
 ## Per-riwayah source reuse — 6 November 2026
 
 Open an original riwayah to create its sanad, or choose «استخدام سند محفوظ» to copy another complete personal prefix belonging to that shaykh. Review its narrators/meeting point and save the target riwayah. Fresh or reused drafts do not overwrite their source. The shared Sughra editor appears only with complete coverage; other profiles have no missing-coverage notice. Reopen the requested corrected riwayat to load the updated source rather than saving a stale open form.

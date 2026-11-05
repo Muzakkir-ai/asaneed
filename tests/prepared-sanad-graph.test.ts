@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {prepareSavedSanadPeople,preparedSanadText} from '../legacy/lib/preparedSanadPeople';
-import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
+import {preparedSanadGraph,preparedGraphLevels} from '../legacy/lib/preparedSanadGraph';
 const text='كما أخذته عن الشيخ الأول، عن الشيخ الثاني، عن الشيخ الملتقى(ح). وأخذ الشيخ الثاني أيضًا عن الشيخ الثالث، عن الشيخ الملتقى(ح). وأخذ الشيخ الثالث أيضًا عن الشيخ الرابع، عن الشيخ الملتقى، عن الشيخ الخامس، عن الشيخ السادس، عن الشيخ إبراهيم العُبَيدِي';
 const prepared=prepareSavedSanadPeople(text)!;assert.ok(prepared);
 const people=prepared.tokens.map((t,i)=>({name:t.name,personId:t.name==='الشيخ الملتقى'?'meeting':'person-'+i}));
@@ -13,3 +13,6 @@ console.log('PASS: explicit branch origins, merged stable IDs, shortest paths, f
 const linear=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ الثاني، عن الشيخ إبراهيم العُبَيدِي')!;assert.equal(preparedSanadGraph(linear,linear.tokens.map((t,i)=>({name:t.name,personId:String(i)})))?.paths.length,1,'simple saved chains share the same card/arrow layout');
 
 const joint=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ الثاني والشيخة الثالثة، وهما عن الشيخ إبراهيم العُبَيدِي')!;const jointGraph=preparedSanadGraph(joint,joint.tokens.map((t,i)=>({name:t.name,personId:String(i)})))!;assert.deepEqual(jointGraph.paths,[['0','1','3'],['0','2','3']],'joint teachers are parallel sources at the same transmission depth');
+
+const jointLevels=preparedGraphLevels(jointGraph);assert.deepEqual(jointLevels.get('1'),[{level:2,suffix:'أ'}]);assert.deepEqual(jointLevels.get('2'),[{level:2,suffix:'ب'}]);assert.deepEqual(jointLevels.get('3'),[{level:1,suffix:''}]);assert.deepEqual(jointLevels.get('0'),[{level:3,suffix:''}]);
+const multi=preparedGraphLevels(graph);assert.deepEqual(multi.get('person-0')!.map(r=>r.level),[8,7,6],'all actual distances to the junction are retained');assert.deepEqual(preparedGraphLevels(graph,graph.paths[0]).get('person-0')!.map(r=>r.level),[6],'single view shows the selected route distance');assert.deepEqual(preparedGraphLevels(graph,graph.paths[0]).get('person-9'),[{level:1,suffix:''}]);assert.equal(preparedSanadText(prepared),text,'numbering never rewrites source text');
