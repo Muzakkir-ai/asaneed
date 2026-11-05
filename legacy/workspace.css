@@ -440,3 +440,5 @@
  .zite-app .narrator-create-review>label{display:flex;align-items:flex-start;gap:8px}
  .zite-app .narrator-create-review input[type=checkbox]{appearance:auto;width:18px;min-width:18px;max-width:18px;height:18px;flex:0 0 18px;padding:0;margin:2px 0 0;accent-color:hsl(var(--primary))}
 }
+
+@media screen { .zite-app .prepared-graph-paths>.prepared-graph-all{flex:0 0 100%;width:100%} }

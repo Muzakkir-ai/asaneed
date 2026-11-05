@@ -1,3 +1,11 @@
+## Narrator ranks counted from the meeting point — 6 November 2026
+
+Resolved personal-sanad diagrams number the meeting-point narrator as 1 and count back along each transmission path. Different narrator identities at the same rank share the numeral and receive stable Arabic letter suffixes (أ، ب، ج، د…). The same badges appear in shared and individual editors; identity-backed ordered chains also use this renderer while retaining their add/reorder controls. Source-order editor positions remain separate from scholarly ranks.
+
+All view retains each actual rank for a narrator whose paths to the junction have different lengths. A selected route shows only its own rank, preserving the same peer letters used in All view. No shortest/longest distance is silently chosen. Parallel routes of equal length receive distinct selector labels. «عرض الكل» occupies its own full-width row beneath the individual route buttons. This is display-only; original wording, saved identities, branch edges and certificate data are unchanged.
+
+Validation: helper tests cover parallel teachers, junction rank 1, multiple route distances, selected-route rank and source immutability. Personal-sanad/API/React/navigation suites and typecheck pass. Chromium desktop and 320/390px checks verify actual badge labels, compact joint-teacher cards, route switching and mobile bounds. Production build passes. Physical Safari remains unverified. Previous release PR #30: a15d482, deployment dpl_Gd1vswwqbUzDQ7mqBvy4Zx6cX1LW READY. This release is tracked by its PR/deployment commit.
+
 ## Optional shared Sughra editor and reusable per-riwayah sanads — 6 November 2026
 
 The first-page shared Sughra editor appears only when all ten original qiraat are covered. Profiles without that coverage receive no missing-coverage prompt or replacement notice. Server-side shared-mode resolution and save validation use the same coverage rule; a historical flag alone cannot block independent riwayah editing or override its saved source. Full-coverage shared issuance and independent numbered routes retain their existing behavior.
