@@ -1,3 +1,11 @@
+## Basmalah sizing and print-safe issuer artwork — 5 November 2026
+
+Matn certificate heading controls add independent basmalah width (15–80mm) with linked proportional height. The optional setting flows through existing saved presentation/override/snapshot paths; old records retain the original 34.18 × 4.4mm default and existing top position.
+
+The user's physical print shows a horizontal rule between the issuer teaching/location lines, distinct from the diacritic initially discussed. The inspected numbered source SVGs contain no such rule. Numbered issuer artwork now prints as transparent 600dpi PNGs tinted from source alpha, replacing CSS masks after preparation. Original source SVGs, colours, physical dimensions and pinned snapshot asset URLs are retained. Print/PDF/finalize actions wait for all image loads; failures show a retry action. A bounded client cache avoids repeated rasterization. Other certificate text/heading vectors remain unchanged.
+
+Validation: tests cover native image output/readiness, pinned source, colour/proportion metadata, stale-colour handling, failure/retry and basmalah setting save/render/bounds. TypeScript, matn save/reopen/print suites and build pass. The physical-printer artifact cannot be confirmed resolved without another physical print; no authenticated browser/physical print verification is claimed.
+
 ## Linked matn footer width — 5 November 2026
 
 Matn draft certificates now give the centered lower issuer/signature/date/verification table the same effective width as the main text box. Its three existing percentage columns contract together. Date insets decrease proportionally and date tokens can wrap at narrow widths; text font sizes remain independent of width. New finalizations store `footerWidthLinked:true`, freezing this behavior with their saved heading/width settings. Older finalized snapshots keep their original footer geometry.
