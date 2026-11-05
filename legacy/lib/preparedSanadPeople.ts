@@ -7,11 +7,13 @@ export function prepareSavedSanadPeople(source:string,reviewed=false):PreparedSa
  const anchor=/ابراهيم\s+العبيدي/u.exec(normalized);if(!anchor)return null;
  let end=positions[anchor.index+anchor[0].length-1]+1;while(/[\u064b-\u065f\u0670]/u.test(source[end]||''))end++;
  const prefix=source.slice(0,end),tokens:PreparedSanadPeople['tokens']=[];
- for(const [i,clause] of prefix.split('،').entries()){
-  const relation=/^(\s*(?:(?:كما أخذت ذلك|كما أخذته)\s+عن|وهما\s+عن|عن)\s+)(.+)$/u.exec(clause);
-  if(!relation)return null;
-  const before=(i?'،':'')+relation[1],body=relation[2],joint=body.indexOf(' والشيخة ');
-  if(joint>=0){tokens.push({before,name:body.slice(0,joint)},{before:' و',name:body.slice(joint+2)});}
+ const relations=[...prefix.matchAll(/(?:^(?:كما أخذت ذلك|كما أخذته)\s+عن\s+|،\s*(?:وهما\s+عن|وهو تلقى ذلك عن أخيه|عن)\s+|\(ح\)\.\s*وأخذ\s+[^،.]+?\s+أيضًا\s+عن\s+)/gu)];
+ if(!relations.length||relations[0].index!==0)return null;
+ for(let i=0;i<relations.length;i++){
+  const relation=relations[i],body=prefix.slice(relation.index!+relation[0].length,relations[i+1]?.index??prefix.length);
+  if(/\(ح\)|وأخذ|وقرأ|وهما|وهم/u.test(body))return null;
+  const joint=body.indexOf(' والشيخة '),before=relation[0];
+  if(joint>=0)tokens.push({before,name:body.slice(0,joint)},{before:' و',name:body.slice(joint+2)});
   else tokens.push({before,name:body});
  }
  if(!tokens.length||tokens.length>100||tokens.some(t=>!t.name.trim()||t.name.length>250))return null;

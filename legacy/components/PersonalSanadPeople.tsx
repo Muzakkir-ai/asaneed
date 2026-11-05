@@ -5,7 +5,7 @@ import {workspaceHeaders} from '../lib/workspaceSelection';
 import {sanadKey} from '../lib/unifiedSanad';
 import {preparedSanadText,type PreparedSanadPeople} from '../lib/preparedSanadPeople';
 import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
-import NarratorPicker from './NarratorPicker';
+import ChainNarratorRow from './ChainNarratorRow';
 type Node={name:string;personId?:string;key:string};
 export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode;preparation?:PreparedSanadPeople|null}){
  const matches=(name:string)=>library.people.filter(p=>!p.archived&&sanadKey(p.name)===sanadKey(name));
@@ -32,10 +32,7 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  };
  return <fieldset disabled={busy} className="space-y-3 rounded-lg border p-3" aria-busy={busy}>
  <p className="text-xs text-muted-foreground">{preparation?'الرواة مُعدّون من النص السابق للمراجعة. تبقى ألفاظ الاتصال والفروع والتكرارات كما كُتبت، وتُحفظ الأسماء عند التأكيد.':'أضف شيوخ سندك بالترتيب، من شيخك المباشر حتى نهاية سندك الشخصي.'}</p>
- {nodes.map((node,i)=><div key={node.key} className="rounded-lg border p-3 space-y-2"><div className="flex items-center justify-between gap-3"><strong className="text-sm">الراوي {i+1}</strong>{!preparation&&<div className="flex gap-2"><Button type="button" size="sm" variant="ghost" disabled={i===0} onClick={()=>update(v=>{const next=[...v];[next[i-1],next[i]]=[next[i],next[i-1]];return next;})}>أعلى</Button><Button type="button" size="sm" variant="ghost" disabled={nodes.length===1} onClick={()=>update(v=>v.filter((_,n)=>n!==i))}>إزالة</Button></div>}</div>
- {preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()==='و'?'مع الراوي السابق — في الفرع نفسه':preparation.tokens[i].before.trim().replace(/^،\s*/u,'')}</p>}
- <NarratorPicker lib={library} node={node} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onChange={value=>update(v=>v.map((n,j)=>j===i?{...n,...value}:n))}/>
- {!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</div>)}
+ {nodes.map((node,i)=><div key={node.key} className="space-y-2">{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()==='و'?'مع الراوي السابق — في الفرع نفسه':preparation.tokens[i].before.trim().replace(/^،\s*/u,'')}</p>}<ChainNarratorRow node={{...node,source:false}} index={i} count={nodes.length} lib={library} roles={false} lockedLayout={!!preparation} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onChange={value=>update(v=>v.map((n,j)=>j===i?{...n,...value}:n))} onRemove={()=>update(v=>v.filter((_,j)=>j!==i))} onMove={direction=>update(v=>{const next=[...v];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next;})}/>{!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</div>)}
  {beforeApply}<Button type="button" onClick={()=>void adopt()}>{busy?'جارٍ حفظ الأسماء…':preparation?'تأكيد الرواة من النص السابق':'اعتماد ترتيب الرواة'}</Button>
  <p className="text-xs text-muted-foreground">راجع السند المركب ثم احفظ الإجازة.</p>{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
  </fieldset>;

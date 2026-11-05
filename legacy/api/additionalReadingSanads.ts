@@ -1,3 +1,4 @@
+import {usesSharedSughra} from '../lib/sharedShaykhSanad';
 import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {resolveHoldingSanad} from '../lib/assembleHoldingIjazah';
 import {z} from 'zod';
@@ -21,6 +22,7 @@ export default createEndpoint({
   if(!shaykh)throw new Error('Sheikh not found');
   const {records:all}=await zite.additionalShaykhReadingSanads.findAll({filters:{shaykhId:shaykh.id},limit:2000});
   if(input.action==='save'){
+   if(usesSharedSughra(shaykh,input.tariqNumber))throw Error('حرر السند المشترك من الصفحة الأولى للشيخ، أو أوقف استخدامه لجميع الروايات أولًا');
    const q=QURRA.find(q=>q.id===input.qariId);
    if(!q||!input.rawi||!q.rawis.includes(input.rawi as never))throw new Error('Invalid reading');
    const selections=JSON.parse(shaykh.readingsJson||'[]') as {qariId:string;rawi:string}[];
