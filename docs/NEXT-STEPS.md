@@ -1,6 +1,6 @@
 ## Narrator rank review — 6 November 2026
 
-Check the reverse ranks in a real sanad: the meeting-point narrator is ١, and parallel peers use labels such as ٢ أ and ٢ ب. All view may show multiple ranks for a narrator with routes of different lengths; select a route to see its specific rank. Source text and saved identities are unchanged.
+Check the reverse ranks in a real sanad: the meeting-point narrator is ١, and parallel peers use labels such as ٢ أ and ٢ ب. All view shows only the highest/shortest rank for each narrator; select a route to see its specific rank. Source text and saved identities are unchanged.
 
 ## Per-riwayah source reuse — 6 November 2026
 
