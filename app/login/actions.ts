@@ -1,4 +1,5 @@
 'use server';
+import {isSetupCode,rememberSetup,setupState} from '../../lib/account-setup';
 import {loginEmail} from '../../lib/username-login';
 import { redirect } from 'next/navigation';
 import { createClient } from '../../lib/supabase/server';
@@ -8,6 +9,7 @@ export async function login(form: FormData) {
   const password = String(form.get('password') ?? '');
   if (!identifier || identifier.length>254 || !password || password.length > 1024) redirect('/login?error=invalid');
   const client = await createClient();
+  if(isSetupCode(password)){let invitation=null;try{invitation=await setupState(client,{username:identifier,code:password});}catch{}if(invitation){await rememberSetup({username:identifier,code:password});redirect('/activate-account');}}
   const email=await loginEmail(client,identifier);
   if(!email)redirect('/login?error=invalid');
   const { error } = await client.auth.signInWithPassword({ email, password });
