@@ -30,6 +30,10 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const extraInput={action:'save',shaykhId:'extra',qariId:'nafi',rawi:'قالون',sanadText:'كما أخذته عن شيخ محفوظ، عن الإمام ابن الجزري',junction:'jazari',personalPersonIds:[identity]};
  assert.deepEqual((await callExtra(extraInput)).sanads[0].personalPersonIds,[identity]);
  const edited={...extraInput,sanadText:'عن شيخ آخر، عن الإمام ابن الجزري'};delete edited.personalPersonIds;assert.deepEqual((await callExtra(edited)).sanads[0].personalPersonIds,[],'manual replacement clears stale narrator identities');assert.equal(extraRows.length,1);
+ const stagedSource='كما أخذت ذلك عن الشيخ الأول، عن الشيخ إبراهيم العُبَيدِي، عن الإمام ابن الجزري';
+ Object.assign(extraRows[0],{sanadText:stagedSource,prepareNarratorBoxes:true,personalPeopleReviewed:false,personalPersonIds:[]});
+ const preparedBefore=(await callExtra({action:'list',shaykhId:'extra'})).sanads[0];assert.equal(preparedBefore.preparedPeople.reviewed,false);assert.equal(preparedBefore.preparedPeople.tokens.length,2);assert.equal(extraRows[0].sanadText,stagedSource,'reading preparation never mutates source text');
+ const preparedAfter=(await callExtra({...extraInput,sanadText:stagedSource,personalPersonIds:[identity,other]})).sanads[0];assert.equal(preparedAfter.preparedPeople.reviewed,true);assert.equal(preparedAfter.sanadText,stagedSource);assert.equal(extraRows.length,1,'confirmation updates the same scoped record');
  extraAllowed=false;await assert.rejects(()=>callExtra(extraInput),/Permission denied/);
  console.log('PASS: independently named sanads, same-riwayah save/reopen, no overwrite, non-mutating merge preview, complete branches, no duplicate framing, save combined copy and owner/riwayah denial');
 })().catch(e=>{console.error(e);process.exitCode=1});
