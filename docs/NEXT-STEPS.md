@@ -1,6 +1,6 @@
 ## Branch review — 6 November 2026
 
-Open the shared personal-sanad editor and inspect the shortest/alternate highlighted paths. The complete personal sanad is already visible; confirm the prepared narrator boxes, then save when satisfied. The reviewed alternate spellings reuse one saved identity; no source was silently corrected or confirmed. Verify on a physical iPhone; local Chromium checks cover 320/390px.
+Open the shared personal-sanad editor in its default all-sanad view. Select a sanad to see just its narrators, and choose «عرض الكل» to restore every branch. The complete personal sanad is already visible; confirm the prepared narrator boxes, then save when satisfied. The reviewed alternate spellings reuse one saved identity; no source was silently corrected or confirmed. Verify on a physical iPhone; local Chromium checks cover 320/390px.
 
 ## Shared Sughra and mobile narrator review — 5 November 2026
 
