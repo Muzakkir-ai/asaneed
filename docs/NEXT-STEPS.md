@@ -1,3 +1,7 @@
+## Previously entered narrator boxes awaiting user confirmation — 5 November 2026
+
+The requested additional-shaykh profile's four riwayat and existing route-specific sources are staged for narrator review. Open a riwayah, inspect the prepared prefix and full preserved source, choose «تأكيد الرواة من النص السابق», then «حفظ السند». Repeated names and joint-teacher wording intentionally remain as entered; no scholarly correction or branch simplification was inferred. None was confirmed during implementation. Unsupported/ambiguous sources or identities need review rather than guessed links.
+
 ## Meeting-point search and theme follow-up — 5 November 2026
 
 Check the compact searchable meeting selector on a physical iPhone. Choose an existing reviewed continuation or a saved Quran narrator, review/save a new continuation if needed, adopt the narrator order and save. No connection is inferred from selecting a name. Review the teal left-to-right gradients and outline-button touch hover in a real session; local Chromium touch/desktop checks pass.
