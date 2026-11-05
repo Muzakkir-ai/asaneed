@@ -16,6 +16,7 @@ const PopoverContent = React.forwardRef<
   <PopoverPrimitive.Portal container={typeof document==='undefined'?undefined:document.querySelector('.zite-app') as HTMLElement??undefined}>
     <PopoverPrimitive.Content
       ref={ref}
+      data-workspace-popover=""
       align={align}
       sideOffset={sideOffset}
       className={cn(

@@ -1,3 +1,7 @@
+## Meeting-point search and theme follow-up — 5 November 2026
+
+Check the compact searchable meeting selector on a physical iPhone. Choose an existing reviewed continuation or a saved Quran narrator, review/save a new continuation if needed, adopt the narrator order and save. No connection is inferred from selecting a name. Review the teal left-to-right gradients and outline-button touch hover in a real session; local Chromium touch/desktop checks pass.
+
 ## Mobile feedback / personal-sanad follow-up — 5 November 2026
 
 Check the deployed effects on a physical iPhone and Android device: one tap opens cards, scrolling cancels the highlight, and reduced motion stays calm. The local Chromium desktop/touch fixture passes; no real signed-in mobile issuance was performed. In a real riwayah editor, add narrator cards through the chosen meeting point, choose its reviewed continuation under the last card, adopt/review, then save. Existing saved text remains available as a preview; redundant manual-entry panels are removed.

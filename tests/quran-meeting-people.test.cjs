@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),Module=require('node:module'),swc=require('next/dist/build/swc');
+(async()=>{
+ await swc.loadBindings();const compile=(m,file)=>m._compile(swc.transformSync(fs.readFileSync(file,'utf8'),{filename:file,jsc:{parser:{syntax:'typescript',tsx:false}},module:{type:'commonjs'}}).code,file);require.extensions['.ts']=compile;
+ const {loadBuilderLibrary}=require('../lib/sanad-library.ts');
+ const tables={builder_people:[{id:'shared-person',name:'قارئ محفوظ في طريق قرآني',archived:false},{id:'unrelated-person',name:'شخص غير مستخدم',archived:false},{id:'draft-person',name:'قارئ في طريق غير مؤكد',archived:false}],builder_books:[{id:'book',author_id:'shared-person',archived:false}],builder_chains:[{id:'route',kind:'route',book_id:'book',book_chain_id:null,qari_id:'nafi',rawi:'ورش',confirmed:true,archived:false,title:'طريق قرآني محفوظ'},{id:'draft',kind:'route',book_id:'book',book_chain_id:null,qari_id:'nafi',rawi:'ورش',confirmed:false,archived:false,title:'مسودة'}],builder_nodes:[{chain_id:'route',person_id:'shared-person',position:0,branch:0},{chain_id:'draft',person_id:'draft-person',position:0,branch:0}],workspace_records:[{id:'public',kind:'sanadSections',payload:{title:'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',body:'عن أبي زيد عبد الرحمن بن حسن الأجهوري، عن الإمام ابن الجزري'}},{id:'private',kind:'sanadSections',payload:{title:'CHAIN:nafi:ورش',body:'عن شيخ خاص لا ينبغي إظهاره',ownerId:'another-owner'}}]};
+ const client={from(table){const filters=[];let start=0,end=Infinity,max=Infinity;const q={select(){return q;},eq(k,v){filters.push([k,v]);return q;},range(a,b){start=a;end=b;return q;},limit(n){max=n;return q;},then(resolve,reject){const data=tables[table].filter(row=>filters.every(([key,value])=>(key==='payload->>ownerId'?row.payload?.ownerId:row[key])===value)).slice(start,Math.min(end+1,start+max));return Promise.resolve({data,error:null}).then(resolve,reject);}};return q;}};
+ const lib=await loadBuilderLibrary(client,'owner');
+ assert.ok(lib.quranMeetingPeople.some(p=>p.id==='shared-person'),'confirmed structured Quran people are selectable');
+ assert.ok(lib.quranMeetingPeople.some(p=>p.name.includes('الأَجهُورِي')),'shared Quran source narrators are selectable beyond the two default anchors');
+ assert.ok(!lib.quranMeetingPeople.some(p=>p.id==='unrelated-person'||p.id==='draft-person'),'unrelated and unconfirmed route-only people are excluded');
+ assert.ok(!JSON.stringify(lib.quranMeetingPeople).includes('شيخ خاص'),'private Quran prose is not exposed as a shared meeting source');
+ assert.equal(lib.quranMeetingPeople.find(p=>p.id==='shared-person').sources[0],'طريق قرآني محفوظ');
+ console.log('PASS: shared Quran narrators and confirmed route identities, source provenance, draft exclusion and private-source isolation');
+})().catch(e=>{console.error(e);process.exitCode=1;});
