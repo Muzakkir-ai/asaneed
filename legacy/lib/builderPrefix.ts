@@ -55,3 +55,11 @@ export function savedPersonalMeetingPoints(holdings:{id:string;unifiedSanad?:{pr
   });
  });
 }
+
+/** Restore only a saved, identity-backed endpoint with its exact reviewed continuation. */
+export function savedPrefixSelection(value:string,ids:string[],people:{id:string;name:string;archived:boolean}[],continuations:BuilderPrefixContinuation[]=[]){
+ const last=people.find(p=>p.id===ids.at(-1)&&!p.archived);if(!last)return '';
+ if(reachesJunction({personalChain:'كما أخذته عن '+last.name,junction:'jazari'})&&reachesJunction({personalChain:value,junction:'jazari'}))return DIRECT_JAZARI_ID;
+ const choices=continuations.filter(c=>{const anchor=key(prefixBridgeAnchor(c)),name=key(last.name);return anchor&&(name===anchor||name.endsWith(' '+anchor))&&c.body.trim()&&value.trim().endsWith(c.body.trim());});
+ return choices.length===1?choices[0].id:'';
+}

@@ -1,4 +1,4 @@
-import {usesSharedSughra} from '../lib/sharedShaykhSanad';
+import {usesSharedSughra,profileHasSharedSughraCoverage} from '../lib/sharedShaykhSanad';
 import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {context as requestContext} from '../compat/context';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
@@ -40,7 +40,7 @@ export default createEndpoint({
     let readings: {qariId:string;rawi:string}[]=[];
     try{readings=JSON.parse(x.readingsJson||'[]');}catch{}
     const extension=extensionFor(x.id);let mutoon: z.infer<typeof matn>[]=[];try{mutoon=matn.array().parse(JSON.parse(extension?.mutoonJson||'[]'));}catch{}
-    return {sharedSughraSanad:x.sharedSughraSanad===true,personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})),id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
+    return {sharedSughraSanad:usesSharedSughra(x),personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})),id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
       madrasaName:x.madrasaName||'',madrasaPlace:x.madrasaPlace||'',personalChain:x.personalChain||'',
       junction:(x.junction==='jazari'?'jazari':'ubaydi') as 'ubaydi'|'jazari',readings};
   };
@@ -48,6 +48,7 @@ export default createEndpoint({
   if(input.action==='saveShared'){
    if(!input.id)throw Error('اختر الشيخ أولًا');
    const existing=await zite.additionalShaykhs.findOne({id:input.id});
+   if(input.sharedSughraSanad&&!profileHasSharedSughraCoverage(existing))throw Error('احفظ السند من محرر الرواية');
    const personalChain=(input.personalChain||'').trim(),junction=input.junction||'ubaydi';
    if(!input.personalPersonIds?.length||!reachesJunction({personalChain,junction})||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
    await zite.additionalShaykhs.update({id:existing.id,record:{personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),sharedSughraSanad:input.sharedSughraSanad===true,sharedPeopleReviewed:true}});

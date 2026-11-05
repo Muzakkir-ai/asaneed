@@ -46,3 +46,9 @@ console.log('Arbitrary reviewed junctions, exact endpoint validation and identit
 
 assert.equal(resolveBuilderPrefix(already,[bridge],DIRECT_JAZARI_ID).text,already,'explicit Jazari does not append a bridge');
 assert.throws(()=>resolveBuilderPrefix(personal,[bridge],DIRECT_JAZARI_ID),/أكمل رواة/u);
+
+// Reusing a saved prefix restores only its proven endpoint/continuation.
+import {savedPrefixSelection} from '../legacy/lib/builderPrefix';
+const savedEnd=[{id:'end',name:'إبراهيم العُبيدي',archived:false}],savedBody='عن الشيخ التالي، عن الإمام ابن الجزري';
+assert.equal(savedPrefixSelection('كما أخذته عن إبراهيم العُبيدي، '+savedBody,['end'],savedEnd,[{id:'saved-bridge',title:'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',body:savedBody}]),'saved-bridge');
+assert.equal(savedPrefixSelection('كما أخذته عن إبراهيم العُبيدي',['end'],savedEnd,[{id:'saved-bridge',title:'من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند',body:savedBody}]),'','no continuation is guessed without its saved body');

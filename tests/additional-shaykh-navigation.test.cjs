@@ -15,6 +15,7 @@ mod.require=id=>{
  if(id==='./EditorPage')return frameExports;
  if(id==='react'||id==='react/jsx-runtime')return require(id);
  if(id==='../lib/api')return api;
+ if(id==='../lib/sharedShaykhSanad')return {hasSharedSughraCoverage:()=>false};
  if(id==='../lib/ijazahCoverage')return {compactReadingCount:()=> 'لا روايات'};
  if(id==='../lib/workspaceSelection')return {workspaceHeaders:()=>({})};
  if(id==='../lib/qurra')return {QURRA:[]};
