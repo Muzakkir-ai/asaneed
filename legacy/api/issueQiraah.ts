@@ -30,8 +30,10 @@ export default createEndpoint({
     ]);
     // An individually saved riwayah takes precedence over a shared qiraah sanad.
     const entries=await Promise.all(imam.rawis.map(async rawi=>{
-      const holding=holdings.find(h=>h.qariId===imam.id&&h.rawi===rawi&&(h.tariqNumber||'')===input.tariqNumber)
-        ||holdings.find(h=>h.qariId===imam.id&&!h.rawi&&(h.tariqNumber||'')===input.tariqNumber);
+      const exact=holdings.filter(h=>h.qariId===imam.id&&h.rawi===rawi&&(h.tariqNumber||'')===input.tariqNumber);
+      const candidates=exact.length?exact:holdings.filter(h=>h.qariId===imam.id&&!h.rawi&&(h.tariqNumber||'')===input.tariqNumber);
+      if(candidates.length>1)throw Error('لهذه الرواية أكثر من سند؛ اختر السند باسمه المختصر وأصدر كل رواية على حدة');
+      const holding=candidates[0];
       if(!holding||holding.ownerId!==owner||!canUsePersonalSanad(holding))
         throw new Error(`أكمل سند رواية ${rawi} قبل إصدار الشهادات`);
       const assembled=await assembleHoldingIjazah({unifiedSanad:holding.unifiedSanad||undefined,chainMode:holding.chainMode,tariqNumber:holding.tariqNumber,tariqName:holding.tariqName,qariId:imam.id,rawi,personalChain:holding.personalChain||'',junction:holding.junction||'ubaydi',introductionId:holding.introductionId||'',wordingId:holding.wordingId||''},sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));

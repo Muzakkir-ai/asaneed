@@ -6,7 +6,7 @@ import {isAppAdmin} from '../lib/admin';
 import {QURRA} from '../lib/qurra';
 import {reachesJunction} from '../lib/personalSanadValidation';
 
-const unified=z.object({version:z.literal(1),routeId:z.string().uuid(),prefix:z.string().trim().min(25).max(10000)});
+const unified=z.object({version:z.literal(1),routeId:z.string().uuid(),prefixPersonIds:z.array(z.string().uuid()).max(100).optional(),prefix:z.string().trim().min(25).max(10000)});
 const record=z.object({unifiedSanad:unified.nullable().optional(),bookAuthor:z.string(),routeSource:z.string(),tariqNumber:z.string(),tariqName:z.string(),id:z.string(),qariId:z.string(),rawi:z.string(),sanadText:z.string(),junction:z.enum(['ubaydi','jazari'])});
 export default createEndpoint({
  authenticated:true,
