@@ -1,3 +1,7 @@
+## Mobile feedback / personal-sanad follow-up — 5 November 2026
+
+Check the deployed effects on a physical iPhone and Android device: one tap opens cards, scrolling cancels the highlight, and reduced motion stays calm. The local Chromium desktop/touch fixture passes; no real signed-in mobile issuance was performed. In a real riwayah editor, add narrator cards through the chosen meeting point, choose its reviewed continuation under the last card, adopt/review, then save. Existing saved text remains available as a preview; redundant manual-entry panels are removed.
+
 ## Account setup follow-up — 5 November 2026
 
 Use a real administrator-created invitation when ready: optional profile email → username/setup code → native email verification → user-chosen password → active workspace. Test on desktop/mobile, including opening confirmation in another browser and re-entering the unconsumed code. No real invitation or email was created during development. Existing active accounts use normal management/password recovery; setup never overwrites them. Linked shaykh holdings are independent copies of current sources, and historical issuer/certificate IDs stay fixed.

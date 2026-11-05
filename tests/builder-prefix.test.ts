@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {resolveBuilderPrefix,UBAYDI_BRIDGE_TITLE,validatePersonalBridge,savedPersonalMeetingPoints} from '../legacy/lib/builderPrefix';
+import {DIRECT_JAZARI_ID,resolveBuilderPrefix,UBAYDI_BRIDGE_TITLE,validatePersonalBridge,savedPersonalMeetingPoints} from '../legacy/lib/builderPrefix';
 import {builderPreview,type BuilderChain} from '../legacy/lib/bookBuilder';
 const personal='عن الشيخ عبد الله بن محمد، عن إبراهيم العُبيدي';
 const bridge={id:'bridge',title:UBAYDI_BRIDGE_TITLE,body:'عن راو أول، عن راو ثان (ح). وقرأ راو آخر على الإمام محمد بن محمد الجزري'};
@@ -43,3 +43,6 @@ assert.equal(meetingPoints[1].body,'عن الشيخ التالي، عن الإم
 assert.equal(savedPersonalMeetingPoints([{id:'source',unifiedSanad:{prefix:'pasted unstructured text',prefixPersonIds:['p1']}}],storedPeople).length,0);
 assert.equal(savedPersonalMeetingPoints([{id:'source',unifiedSanad:{prefix:'كما أخذته عن شيخ قريب، عن ابن الجزري',prefixPersonIds:['missing']}}],storedPeople).length,0);
 console.log('Arbitrary reviewed junctions, exact endpoint validation and identity-backed saved meeting points: PASS');
+
+assert.equal(resolveBuilderPrefix(already,[bridge],DIRECT_JAZARI_ID).text,already,'explicit Jazari does not append a bridge');
+assert.throws(()=>resolveBuilderPrefix(personal,[bridge],DIRECT_JAZARI_ID),/أكمل رواة/u);

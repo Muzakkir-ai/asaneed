@@ -5,9 +5,9 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
  const generated=['AGENTS.md','next-env.d.ts','app/studio/studio.css'].map(file=>({file,content:fs.readFileSync(file)}));
  fs.mkdirSync(route);fs.copyFileSync('tests/fixtures/workspace-theme-review.tsx',path.join(route,'page.tsx'));fs.mkdirSync(out,{recursive:true});let server,browser;
  try{
-  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3107'],{stdio:'pipe',windowsHide:true});let log='';server.stdout.on('data',b=>log+=b);server.stderr.on('data',b=>log+=b);
+  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3107'],{stdio:'pipe',windowsHide:true,detached:process.platform!=='win32'});let log='';server.stdout.on('data',b=>log+=b);server.stderr.on('data',b=>log+=b);
   let ready=false;for(let i=0;i<120;i++){try{if((await fetch('http://127.0.0.1:3107/workspace-theme-review',{signal:AbortSignal.timeout(3000)})).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}if(!ready)throw Error(log.slice(-3000));
-  browser=await chromium.launch({channel:'chrome',headless:true});const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH,headless:true}:process.platform==='win32'?{channel:'chrome',headless:true}:{headless:true});const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.route('**/api/**',r=>r.fulfill({json:{admin:true,sections:[],comparisons:[]}}));await page.goto('http://127.0.0.1:3107/workspace-theme-review');await page.addStyleTag({content:'nextjs-portal{display:none}'});await page.evaluate(()=>document.fonts.ready);
   // Parent panel hover/focus must never activate sibling action-card icons.
   const panel=page.getByTestId('nested-panel'),icons=panel.locator('.workspace-card-icon');
@@ -19,7 +19,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await page.mouse.move(0,0);await panel.getByRole('button',{name:'إعدادات المكتبة',exact:true}).focus();await page.waitForTimeout(250);
   assert.deepEqual(await icons.evaluateAll(els=>els.map(e=>getComputedStyle(e).color)),normalColors,'panel focus leaves sibling icons unchanged');
   const sidebar=page.locator('.workspace-sidebar'),link=sidebar.getByRole('button',{name:'أسانيدي',exact:true}),view=page.getByRole('button',{name:'عرض الشهادة',exact:true});
-  await link.hover();await page.waitForFunction(()=>getComputedStyle(document.querySelector('.workspace-sidebar .sidebar-link:hover svg')).color==='rgb(255, 255, 255)');await page.screenshot({path:path.join(out,'workspace-theme-desktop.png'),fullPage:true,animations:'disabled'});
+  await link.hover();await page.waitForTimeout(250);assert.equal(await link.locator('svg').evaluate(e=>getComputedStyle(e).color),await link.evaluate(e=>getComputedStyle(e).color),'sidebar icon inherits its link colour');await page.screenshot({path:path.join(out,'workspace-theme-desktop.png'),fullPage:true,animations:'disabled'});
   await link.click();assert.equal(await link.getAttribute('aria-current'),'page');
   await view.hover();await page.waitForFunction(()=>getComputedStyle([...document.querySelectorAll('button')].find(b=>b.textContent==='عرض الشهادة').querySelector('svg')).color==='rgb(255, 255, 255)');await view.click();assert.equal(await page.getByRole('status').textContent(),'عرض');
   await page.getByRole('tab',{name:'الطلاب',exact:true}).click();assert.ok(await page.getByText('قائمة الطلاب',{exact:true}).isVisible());await page.keyboard.press('ArrowRight');await page.waitForFunction(()=>document.activeElement?.getAttribute('role')==='tab'&&document.activeElement.textContent==='الشهادات');
@@ -27,9 +27,35 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await view.focus();assert.ok(await view.evaluate(e=>e.matches(':focus-visible')));await page.screenshot({path:path.join(out,'workspace-theme-actions.png'),fullPage:true,animations:'disabled'});
   await page.getByRole('button',{name:'إجراءات شهادة تجريبية'}).click();const deletion=page.getByRole('menuitem',{name:'حذف المسودة'});await deletion.hover();const red=await deletion.evaluate(e=>getComputedStyle(e).color);assert.ok(Number(red.match(/[\d.]+/g)[0])>Number(red.match(/[\d.]+/g)[1]));await page.keyboard.press('Escape');
   await page.evaluate(()=>document.documentElement.classList.add('dark'));await page.mouse.move(0,0);await view.hover();await page.waitForTimeout(250);
-  const contrast=await view.locator('svg').evaluate(e=>{const ctx=document.createElement('canvas').getContext('2d');const l=s=>{ctx.fillStyle=s;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0)},a=l(getComputedStyle(e).color),b=l(getComputedStyle(e).backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});assert.ok(contrast>=4.5,'filled icon contrast in dark mode');await page.screenshot({path:path.join(out,'workspace-theme-dark.png'),fullPage:true,animations:'disabled'});
+  const contrast=await view.locator('svg').evaluate(e=>{const ctx=document.createElement('canvas').getContext('2d');const l=s=>{ctx.fillStyle=s;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0)},a=l(getComputedStyle(e).color),b=l(getComputedStyle(e.closest('button')).backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});assert.ok(contrast>=4.5,'filled icon contrast in dark mode');await page.screenshot({path:path.join(out,'workspace-theme-dark.png'),fullPage:true,animations:'disabled'});
   await page.emulateMedia({reducedMotion:'reduce'});await link.hover();assert.equal(await link.locator('.sidebar-icon').evaluate(e=>getComputedStyle(e).transform),'none');await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>document.documentElement.classList.remove('dark'));
   for(const width of [390,320]){await page.setViewportSize({width,height:900});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'فتح قائمة التنقل'}).click();await page.getByRole('dialog').waitFor();await page.screenshot({path:path.join(out,`workspace-theme-mobile-${width}.png`),fullPage:true,animations:'disabled'});await page.getByRole('dialog').getByRole('button',{name:'أسانيدي',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});}
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({isolatedCardHover:true,isolatedPanelFocus:true,desktop:true,mobile:[390,320],keyboardNavigation:true,disabled:true,destructive:true,darkIconContrast:contrast,reducedMotion:true,errors}));
- }finally{await browser?.close();if(server){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{}}fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').includes('workspace-theme-review/page'))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);}
+  const touchContext=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+  const mobile=await touchContext.newPage();await mobile.route('**/api/**',r=>r.fulfill({json:{admin:true,sections:[],comparisons:[]}}));
+  await mobile.goto('http://127.0.0.1:3107/workspace-theme-review');
+  const touch=mobile.getByTestId('touch-card');await touch.scrollIntoViewIfNeeded();
+  const box=await touch.boundingBox(),cdp=await touchContext.newCDPSession(mobile),point={x:box.x+box.width/2,y:box.y+box.height/2};
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});await mobile.waitForTimeout(260);
+  assert.equal(await touch.getAttribute('data-card-touch'),'true');
+  assert.equal(await touch.locator('.workspace-card-icon').evaluate(e=>getComputedStyle(e).color),'rgb(255, 255, 255)');
+  assert.equal(await touch.evaluate(e=>getComputedStyle(e,'::before').content),'""');
+  assert.notEqual(await touch.locator('.workspace-card-icon').evaluate(e=>getComputedStyle(e).backgroundImage),'none','touch icon has a filled gradient');await mobile.screenshot({path:path.join(out,'workspace-theme-touch.png')});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  assert.equal(await mobile.getByRole('status').textContent(),' tap','one touch immediately activates once');
+  await mobile.waitForTimeout(650);assert.equal(await touch.getAttribute('data-card-touch'),null,'touch highlight clears');
+  assert.notEqual(await touch.locator('.workspace-card-icon').evaluate(e=>getComputedStyle(e).color),'rgb(255, 255, 255)','no sticky touch hover');
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point]});
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:point.x,y:point.y+30}]});
+  assert.equal(await touch.getAttribute('data-card-touch'),null,'scroll gesture cancels feedback');
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+  assert.equal(await mobile.getByRole('status').textContent(),' tap','scroll does not activate');
+  await mobile.getByTestId('disabled-card').tap({force:true});assert.equal(await mobile.getByTestId('disabled-card').getAttribute('data-card-touch'),null);
+  await mobile.emulateMedia({reducedMotion:'reduce'});
+  await touch.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true,pointerId:42,clientX:point.x,clientY:point.y});
+  assert.equal(await touch.evaluate(e=>getComputedStyle(e).transform),'none');
+  assert.equal(await touch.locator('.workspace-card-icon').evaluate(e=>getComputedStyle(e).transform),'none');
+  await touch.dispatchEvent('pointercancel',{pointerId:42});assert.equal(await touch.getAttribute('data-card-touch'),null);
+  await touchContext.close();
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({touchFeedback:true,singleTap:true,scrollCancellation:true,isolatedCardHover:true,isolatedPanelFocus:true,desktop:true,mobile:[390,320],keyboardNavigation:true,disabled:true,destructive:true,darkIconContrast:contrast,reducedMotion:true,errors}));
+ }finally{await browser?.close();if(server){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{try{process.kill(-server.pid,'SIGTERM');}catch{}}}fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').includes('workspace-theme-review/page'))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);}
 })().catch(e=>{console.error(e);process.exitCode=1});

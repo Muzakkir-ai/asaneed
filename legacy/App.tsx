@@ -1,3 +1,4 @@
+import {useCardTouchFeedback} from './lib/useCardTouchFeedback';
 import MatnCatalogPage,{MatnDecisionNotice} from './components/MatnCatalogPage';
 import SharedContentPage from './components/SharedContentPage';
 import CertificateAppearance from './components/CertificateAppearance';
@@ -43,6 +44,7 @@ export default function App(){
 }
 
 function PrivateApp() {
+  useCardTouchFeedback();
   const { user, isLoading } = useAuth();
   const session=useSession();
   const [sessionExpired,setSessionExpired]=useState(false);

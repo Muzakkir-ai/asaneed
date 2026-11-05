@@ -1,5 +1,6 @@
 import {reachesJunction} from './personalSanadValidation';
 export const UBAYDI_BRIDGE_TITLE='من إبراهيم العُبيدي إلى ابن الجزري — فرعا السند';
+export const DIRECT_JAZARI_ID='junction:jazari';
 export const PERSONAL_BRIDGE_TITLE='PERSONAL-BRIDGE:';
 export type BuilderPrefixContinuation={id:string;title:string;body:string;anchorName?:string};
 const key=(s:string)=>s.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u0640\u06d6-\u06ed]/gu,'').replace(/[أإآٱ]/gu,'ا').replace(/ى/gu,'ي').replace(/[،.؛\s]+$/u,'').replace(/\s+/gu,' ').trim();
@@ -15,6 +16,10 @@ export function validatePersonalBridge(anchor:string,body:string){
 /** Preserve the reviewed source verbatim, including its textual branch markers. */
 export function resolveBuilderPrefix(prefix:string,continuations:BuilderPrefixContinuation[]=[],selectedId=''){
  const text=prefix.trim();
+ if(selectedId===DIRECT_JAZARI_ID){
+  if(!reachesJunction({personalChain:text,junction:'jazari'}))throw Error('أكمل رواة سندك إلى الإمام ابن الجزري قبل اعتماد نقطة الالتقاء');
+  return {text,junction:'jazari' as const,sourceId:''};
+ }
  const selected=selectedId?continuations.find(c=>c.id===selectedId):undefined;
  if(selectedId&&!selected)throw Error('التتمة المختارة غير متاحة؛ أعد اختيار نقطة الالتقاء');
  if(selected?.anchorName){
