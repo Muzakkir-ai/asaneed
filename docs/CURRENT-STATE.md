@@ -1,3 +1,9 @@
+## Highest rank only in All view — 6 November 2026
+
+«عرض الكل» now shows one rank per narrator: the minimum narrator count along its saved paths back to the meeting point (the highest/shortest sanad). Peer letters in this view group narrators by those displayed highest ranks. Selecting an individual route still shows its actual distance, including longer routes. Full branch visibility, the default All view and the full-width All button below individual routes remain. No source, identity, database or certificate data changes are involved.
+
+Helper and mobile-browser regression checks cover the single highest badge, peer letters, longer-route rank and highest-rank restoration. Previous release PR #31: 31f3eaa, deployment dpl_4MiDF1JqvR3bS5iP4vrEYmgErZgz READY. This release is tracked by its PR/deployment commit.
+
 ## Narrator ranks counted from the meeting point — 6 November 2026
 
 Resolved personal-sanad diagrams number the meeting-point narrator as 1 and count back along each transmission path. Different narrator identities at the same rank share the numeral and receive stable Arabic letter suffixes (أ، ب، ج، د…). The same badges appear in shared and individual editors; identity-backed ordered chains also use this renderer while retaining their add/reorder controls. Source-order editor positions remain separate from scholarly ranks.
