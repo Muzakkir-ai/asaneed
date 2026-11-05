@@ -9,3 +9,7 @@ const unresolved=people.map((p,i)=>({...p,personId:'different-'+i}));assert.equa
 const cycle={...prepared,tokens:prepared.tokens.slice(0,2)};assert.equal(preparedSanadGraph(cycle,[{name:'أول',personId:'one'},{name:'أول',personId:'one'}]),null,'self-transmission is not erased or drawn as a shortcut');
 const ambiguous=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ عبد الله المشترك، عن الشيخ أحمد المشترك(ح). وأخذ المشترك أيضًا عن الشيخ الثاني، عن الشيخ إبراهيم العُبَيدِي')!;assert.equal(preparedSanadGraph(ambiguous,ambiguous.tokens.map((t,i)=>({name:t.name,personId:String(i)}))),null,'ambiguous origin abbreviations stay in literal review');
 console.log('PASS: explicit branch origins, merged stable IDs, shortest paths, full common tail, unchanged source, and cycle/ambiguity safeguards');
+
+const linear=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ الثاني، عن الشيخ إبراهيم العُبَيدِي')!;assert.equal(preparedSanadGraph(linear,linear.tokens.map((t,i)=>({name:t.name,personId:String(i)})))?.paths.length,1,'simple saved chains share the same card/arrow layout');
+
+const joint=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ الثاني والشيخة الثالثة، وهما عن الشيخ إبراهيم العُبَيدِي')!;const jointGraph=preparedSanadGraph(joint,joint.tokens.map((t,i)=>({name:t.name,personId:String(i)})))!;assert.deepEqual(jointGraph.paths,[['0','1','3'],['0','2','3']],'joint teachers are parallel sources at the same transmission depth');

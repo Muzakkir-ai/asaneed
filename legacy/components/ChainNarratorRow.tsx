@@ -7,9 +7,9 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import NarratorPicker from './NarratorPicker';
 import NarratorShortName from './NarratorShortName';
 type Node={editorKey?:string;name:string;source:boolean;personId?:string;sourceLevel?:'upper'|'branch'|null};
-export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,connected,onChange,onCreate,onShortName,onMove,onRemove,onParallel,lockedLayout=false}:{node:Node;index:number;count:number;number?:number;connected?:boolean;lockedLayout?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
+export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,connected,onChange,onCreate,onShortName,onMove,onRemove,onParallel,lockedLayout=false,initialEditing}:{node:Node;index:number;count:number;number?:number;connected?:boolean;lockedLayout?:boolean;initialEditing?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
  const ordinal=number??index+1;
- const [editing,setEditing]=useState(!node.personId),panel=useId();
+ const [editing,setEditing]=useState(initialEditing??!node.personId),panel=useId();
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
  return <article className={`narrator-person-card min-w-0 rounded-lg border bg-background ${editing?'border-primary/40':''}`} dir="rtl">
  <div className="flex min-w-0 items-center gap-2 p-2 sm:p-3">
