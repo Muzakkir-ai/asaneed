@@ -1,3 +1,13 @@
+## Direct personal-sanad narrator editor — 5 November 2026
+
+The user's correction identifies the extra-shaykh riwayah editor's legacy textarea as the intended entry point. Personal holdings and additional-shaykh riwayah editors now put the saved narrator cards directly in the primary form. Add/remove/reorder/search/create reuses the same NarratorPicker and builder_people endpoint as Kutub/Turuq. The route composer is a separate collapsed choice; pasted text is a deliberate collapsed legacy fallback.
+
+Standalone personalPersonIds are persisted beside personal/additional-reading prose and reopen as ordered cards. They are independent of unified route prefix IDs. Changing text without corresponding IDs clears stale standalone identities. Existing copied prose is preserved until the user explicitly adopts a new card order; no names are inferred from old prose. Direct personal prefixes can also supply exact reviewed meeting-point suffixes through their stored identities.
+
+Unadopted card edits and route choices mark the outer form pending and block a stale save. Users can explicitly discard narrator changes or cancel a route choice and retain the current saved sanad. Choosing another route after adopting a direct prefix reloads that current prefix. Existing ownership/admin rules, immutable certificate snapshots and additional-reading upsert scope remain intact.
+
+Validation: TypeScript, production build, existing additional-shaykh navigation tests and personal-sanad API/React suites pass. Tests exercise visible primary cards, collapsed text fallback, saved ID reopening, new-name reuse/creation, bridge composition, pending-save/discard behavior, standalone save/reopen and stale-ID clearing, plus non-admin additional-reading denial. No database migration or real record mutation was required. Authenticated hosted desktop/mobile and real issuance remain unverified.
+
 ## Basmalah offset, bordered heading previews and personal section sizes — 5 November 2026
 
 Matn presentation adds optional basmalahOffsetMm (0–30mm). This inserts space above the basmalah from its established position, moving the title/body down in normal flow while retaining the existing basmalah-to-title gap. Missing/zero offset retains default positioning. The option uses the existing source/default/override/snapshot schemas; finalized snapshots are not rewritten.
