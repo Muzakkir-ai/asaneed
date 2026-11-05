@@ -25,3 +25,21 @@ console.log('PASS: basmalah gap, join/separate boundaries with rebased formats, 
 const boxed=new JSDOM(renderToStaticMarkup(<MatnPreview {...props} formats={[{...props.formats[0],sizePt:20}]} headingSettings={{...layout,bodyWidthMm:190,bodyScalePercent:120}}/>)).window.document;assert.ok(boxed.querySelector('.matn-text-box')?.getAttribute('style')?.includes('width:190mm'));assert.ok(boxed.querySelector('.matn-text-box')?.getAttribute('style')?.includes('font-size:120%'));assert.ok(boxed.querySelector('span[style*="font-size:24pt"]'));assert.equal(matnHeadingSchema.safeParse({...layout,bodyWidthMm:99}).success,false);
 
 const bSettings={...layout,basmalahWidthMm:50};assert.equal(readMatnPresentation(writeMatnPresentation('[]',[],bSettings)).heading?.basmalahWidthMm,50);const sized=new JSDOM(renderToStaticMarkup(<MatnHeading name="مثال" settings={bSettings}/>)).window.document.querySelector('.certificate-basmalah-svg') as HTMLElement;assert.equal(sized.style.width,'50mm');assert.ok(Math.abs(parseFloat(sized.style.height)-50*4.4/34.18)<.0001);assert.equal(matnHeadingSchema.safeParse({...layout,basmalahWidthMm:81}).success,false);
+
+const sectionSettings={...layout,basmalahOffsetMm:8,introductionSizePt:13,conclusionSizePt:11};
+assert.deepEqual(readMatnPresentation(writeMatnPresentation('[]',[],sectionSettings)).heading,sectionSettings);
+const shifted=new JSDOM(renderToStaticMarkup(<MatnHeading name="مثال" settings={sectionSettings}/>)).window.document.querySelector('.matn-heading-group') as HTMLElement;
+assert.equal(shifted.style.paddingTop,'8mm');
+const unchanged=new JSDOM(renderToStaticMarkup(<MatnHeading name="مثال" settings={DEFAULT_MATN_HEADING}/>)).window.document.querySelector('.matn-heading-group') as HTMLElement;
+assert.equal(unchanged.style.paddingTop,'');
+assert.equal(matnHeadingSchema.safeParse({...layout,basmalahOffsetMm:31}).success,false);
+assert.equal(matnHeadingSchema.safeParse({...layout,introductionSizePt:73}).success,false);
+const sectionsSized=new JSDOM(renderToStaticMarkup(<MatnPreview {...props} headingSettings={{...sectionSettings,bodyScalePercent:120}}/>)).window.document;
+assert.ok([...sectionsSized.querySelectorAll('span')].some(s=>s.textContent===props.intro&&s.getAttribute('style')?.includes('font-size:15.6pt')));
+assert.ok([...sectionsSized.querySelectorAll('span')].some(s=>s.textContent===props.end&&s.getAttribute('style')?.includes('font-size:13.2pt')));
+assert.equal(sectionsSized.querySelector('span[style*="font-weight:700"]')?.textContent,'سند');
+console.log('PASS: basmalah offset default/limits, saved per-section point sizes and whole-text scaling without lost sanad styles');
+
+const sizedPrint=renderToStaticMarkup(<MatnPreview {...props} bare headingSettings={sectionSettings}/>);
+assert.ok(sizedPrint.includes('font-size:13pt'));assert.ok(sizedPrint.includes('font-size:11pt'));
+assert.ok(!sizedPrint.includes('data-matn-heading'),'print body leaves heading to its physical header renderer');

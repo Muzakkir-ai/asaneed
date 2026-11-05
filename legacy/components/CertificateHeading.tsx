@@ -1,3 +1,4 @@
+import {MatnHeadingPreview} from './MatnHeadingControls';
 import MatnHeading from './MatnHeading';
 import type {MatnHeadingSettings} from '../lib/matnPresentation';
 import {currentArtwork,assetBase} from '../lib/assets';
@@ -5,7 +6,7 @@ import {arabicSearchKey} from '../lib/arabicSearch';
 import {isMatnHeading} from '../lib/matnCertificate';
 import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import type {Artwork} from '../lib/artworkCatalog';
-import {forwardRef,useEffect,useRef,useState,type CSSProperties,type ReactNode} from 'react';
+import {forwardRef,type CSSProperties,type ReactNode} from 'react';
 import {svgReadingParts,riwayahSvgWidthMm,riwayahSvgUrl,RIWAYAH_SVG_HEIGHT_MM} from '../lib/riwayahSvgHeading';
 
 /** Keep legacy reading ligatures and the original print geometry in one renderer. */
@@ -34,10 +35,5 @@ export default CertificateHeading;
 
 /** Scale the entire original heading uniformly; never squeeze separate SVGs. */
 export function CertificateHeadingPreview(props:Props){
- const frame=useRef<HTMLDivElement>(null),stage=useRef<HTMLDivElement>(null);
- const [layout,setLayout]=useState({scale:1,height:150});
- const pieces=svgReadingParts(props.heading,{preserveHistoricalRoute:props.preserveHistoricalRoute,catalog:props.artwork});
- const widthMm=pieces?Math.max(98.0244,pieces.reduce((sum,p)=>sum+riwayahSvgWidthMm(p,props.artwork),0)):208.2;
- useEffect(()=>{const f=frame.current,s=stage.current;if(!f||!s)return;const update=()=>{const scale=Math.min(1,Math.max(0,(f.clientWidth-24)/s.offsetWidth));setLayout({scale,height:s.offsetHeight*scale+24});};update();const observer=new ResizeObserver(update);observer.observe(f);observer.observe(s);return()=>observer.disconnect();},[widthMm,props.heading]);
- return <div ref={frame} className="certificate-heading-preview" style={{height:layout.height}}><div ref={stage} className="certificate-heading-stage" style={{width:`${widthMm}mm`,transform:`translateX(-50%) scale(${layout.scale})`}}><CertificateHeading {...props}/></div></div>;
+ return <MatnHeadingPreview paper positionedHeading borderNumber={props.matnSettings?.borderNumber} artwork={props.artwork} base={props.artworkBase} color={props.primary}><CertificateHeading {...props}/></MatnHeadingPreview>;
 }

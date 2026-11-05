@@ -1,3 +1,13 @@
+## Basmalah offset, bordered heading previews and personal section sizes — 5 November 2026
+
+Matn presentation adds optional basmalahOffsetMm (0–30mm). This inserts space above the basmalah from its established position, moving the title/body down in normal flow while retaining the existing basmalah-to-title gap. Missing/zero offset retains default positioning. The option uses the existing source/default/override/snapshot schemas; finalized snapshots are not rewritten.
+
+Heading controls now preview physical 297 × 210mm paper and its selected pinned border, uniformly scaled to a compact maximum height. Qiraah heading previews in the form and palette editor also show the default border. Preview paper uses the certificate header's 14.993mm top coordinate. Normal body previews remain inside their existing A4 border and do not receive a second border.
+
+Personal and additional-shaykh matn editors add المقدمة and الخاتمة tabs. Each offers an optional whole-section size in points (6–72) and return-to-template sizing. Sizes live in the matn's presentation settings, not in the reusable template. Applying an override preserves source colours/bold/other layout while overriding every range in that section; whole-body percentage still scales it. Existing template selection and editing remain available. Joined sections rebase these generated ranges, and print uses the same rendering.
+
+Validation: typecheck, production build, local React section-tab interactions, saved heading/section-size round-trip, pinned border/geometry fixtures, bare print rendering, actual print-style/finalization schemas, draft-refresh/owner/isolation and immutable snapshot suites pass. No database migration, template mutation or real issuance. Authenticated hosted desktop/mobile and physical printing remain unverified.
+
 ## Personal sanad meeting points, narrator entry and named variants — 5 November 2026
 
 Personal saved-route entry shares the existing narrator picker: search/reuse a stable person ID, review duplicates before creating, insert/remove/reorder people, then explicitly apply the generated prefix. New names use builder_people. Active shaykhs can insert their own narrator rows; updates/deletes and shared book/route editing remain administrator-only. Stored ordered prefixPersonIds survive save/reopen; existing pasted text remains available and is never automatically parsed or migrated.
