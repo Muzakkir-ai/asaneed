@@ -12,7 +12,7 @@ export function preparedSanadGraph(source:PreparedSanadPeople,people:{name:strin
  const add=(from:string,to:string)=>{if(from===to)return false;if(!edges.some(e=>e.from===from&&e.to===to))edges.push({from,to});return true;};
  let joint:string[]=[];
  for(let i=1;i<people.length;i++){
-  const before=source.tokens[i].before,branch=/\(ح\)\.\s*وأخذ\s+(.+?)\s+أيضًا\s+عن/u.exec(before);
+  const before=source.tokens[i].before,branch=/\(ح\)\.?\s*(?:وأخذ|وقرأ)\s+(.+?)\s+أيضًا\s+(?:عن|على)/u.exec(before);
   if(branch){const origin=key(branch[1]);const candidates=nodes.filter(n=>n.indices.some(j=>j<i)&&n.indices.some(j=>j<i&&(' '+key(people[j].name)+' ').includes(' '+origin+' ')));if(candidates.length!==1||!add(candidates[0].id,ids[i]))return null;joint=[];}
   else if(before.trim()==='و'){if(i<2||!add(ids[i-2],ids[i]))return null;joint=[ids[i-1],ids[i]];}
   else if(/وهما\s+عن/u.test(before)){if(joint.length!==2||joint.some(from=>!add(from,ids[i])))return null;joint=[];}
