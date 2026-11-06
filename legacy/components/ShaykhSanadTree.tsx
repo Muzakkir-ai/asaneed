@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/api';
+import {additionalShaykhs,sanadSections} from '../lib/api';
 import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
@@ -37,16 +37,16 @@ export default function ShaykhSanadTree(){
    try{
     const [{sheikhs},{sections}]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'})]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
-    const groups=await Promise.all(sheikhs.map(async sheikh=>{
-     const {sanads}=await additionalReadingSanads({action:'list',shaykhId:sheikh.id});
-     const sources=[{id:'shared',label:'السند المشترك',text:sheikh.personalChain},{id:'kubra',label:'سند الكبرى',text:sheikh.kubraPersonalChain},...sanads.map(s=>({id:s.id,label:[s.rawi,s.tariqName,s.variantName].filter(Boolean).join(' — '),text:s.unifiedSanad?.prefix||s.sanadText}))];
+    const groups=sheikhs.map(sheikh=>{
+     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain}];
+     if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[];
       try{names=numberedPaths(resolveBuilderPrefix(s.text,bridges).text);}catch{/* Incomplete or ambiguous saved chain. */}
       return {label,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
      });
-    }));
+    });
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length).map(row=>row.label)));}
    }catch(e){if(!cancelled)setError(e instanceof Error?e.message:'تعذر تحميل أسانيد المشايخ');}
    finally{if(!cancelled)setLoading(false);}
@@ -65,9 +65,9 @@ export default function ShaykhSanadTree(){
  }
  return <section className="space-y-4" aria-label="أسانيد المشايخ">
   <h3 className="font-bold">أسانيد المشايخ</h3>
-  <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر طريقًا لعرض سنده وعدد رواته.</p>
+  <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
-   {paths.length>0?<><label className="block text-sm">الشيخ والطريق<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selected?.id||''} onChange={e=>setSelected(paths.find(path=>path.id===e.target.value))}><option value="">عرض جميع الطرق</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {arabicDigits(path.names.length)}</option>)}</select></label>
+   {paths.length>0?<><label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selected?.id||''} onChange={e=>setSelected(paths.find(path=>path.id===e.target.value))}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {arabicDigits(path.names.length)}</option>)}</select></label>
     <ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} selected={selected} onSelect={setSelected}/></ul></>:<p>لا توجد أسانيد قابلة للعرض بعد.</p>}
    {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map((label,i)=><li key={i}>{label}</li>)}</ul></details>}
   </>}
