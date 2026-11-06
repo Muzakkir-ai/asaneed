@@ -17,8 +17,19 @@ export default function PreparedSanadGraph({graph,renderNode}:{graph:PreparedGra
  useEffect(()=>{
   const element=host.current;if(!element)return;
   const draw=()=>{const frame=element.getBoundingClientRect(),boxes=new Map<string,DOMRect>();element.querySelectorAll<HTMLElement>('[data-graph-node]').forEach(node=>boxes.set(node.dataset.graphNode!,node.getBoundingClientRect()));let shortcut=0;const result:{d:string;on:boolean}[]=[];
+   const drawnRows=new Set<string>();
    for(const edge of edges){const a=boxes.get(edge.from),b=boxes.get(edge.to);if(!a||!b)continue;const from=visible.findIndex(n=>n.id===edge.from),to=visible.findIndex(n=>n.id===edge.to);const active=!!path;let d:string;
-    if(to===from+1||Math.abs(a.width-b.width)>20&&b.top>=a.bottom){d=`M ${a.left-frame.left+a.width/2} ${a.bottom-frame.top} L ${b.left-frame.left+b.width/2} ${b.top-frame.top-4}`;}
+    const fromRow=rows.findIndex(row=>row.some(node=>node.id===edge.from));
+    const toRow=rows.findIndex(row=>row.some(node=>node.id===edge.to));
+    if(toRow===fromRow+1&&(rows[fromRow].length>1||rows[toRow].length>1)){
+     const key=fromRow+':'+toRow;
+     if(drawnRows.has(key))continue;
+     drawnRows.add(key);
+     const bottom=Math.max(...rows[fromRow].map(node=>boxes.get(node.id)?.bottom??a.bottom));
+     const top=Math.min(...rows[toRow].map(node=>boxes.get(node.id)?.top??b.top));
+     const center=frame.width/2;
+     d=`M ${center} ${bottom-frame.top+3} L ${center} ${top-frame.top-4}`;
+    }else if(to===from+1){d=`M ${a.left-frame.left+a.width/2} ${a.bottom-frame.top} L ${b.left-frame.left+b.width/2} ${b.top-frame.top-4}`;}
     else{const left=shortcut++%2===0,x=left?7:frame.width-7,ax=left?a.left-frame.left:a.right-frame.left,bx=left?b.left-frame.left-4:b.right-frame.left+4;d=`M ${ax} ${a.top-frame.top+a.height/2} L ${x} ${a.top-frame.top+a.height/2} L ${x} ${b.top-frame.top+b.height/2} L ${bx} ${b.top-frame.top+b.height/2}`;}
     result.push({d,on:active});
    }
