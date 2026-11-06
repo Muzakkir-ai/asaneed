@@ -102,7 +102,8 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const bookOptions=[...new Set(routeOptions.filter(([,name])=>!sughraBook(name)).map(([,name])=>routeBook(name)))];
   const baseRouteHoldings=holdings.filter(h=>readingScope==='kubra'?!!h.tariqNumber&&!sughraBook(h.tariqName)&&(!selectedBook||routeBook(h.tariqName)===selectedBook):readingScope==='sughra'?!h.tariqNumber||sughraBook(h.tariqName):!!cert);
   const routeHoldings=baseRouteHoldings.filter((h,_i,all)=>readingScope!=='sughra'||h.tariqNumber||!all.some(v=>v.tariqNumber&&v.qariId===h.qariId&&v.rawi===h.rawi&&(v.shortName||'')===(h.shortName||'')));
-  const selectReading=(value:string)=>{setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
+  const [guestSanadId,setGuestSanadId]=useState('');
+  const selectReading=(value:string)=>{setGuestSanadId('');setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));
   const readingGroups=QURRA.map(q=>({
     q,
@@ -116,6 +117,12 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const guestChoices=QURRA.map(q=>({q,rawis:q.rawis.filter(rawi=>guestReadings.some(r=>r.qariId===q.id&&r.rawi===rawi))})).filter(item=>item.rawis.length);
   const [headingPreviewOpen,setHeadingPreviewOpen]=useState(false),[previewColors,setPreviewColors]=useState<RiwayahColorsOutputType['entries']|null>(null),[previewColorError,setPreviewColorError]=useState(false);
   useEffect(()=>{if(!headingPreviewOpen||previewColors)return;let active=true;riwayahColors({action:'list'}).then(r=>{if(active){setPreviewColors(r.entries);setPreviewColorError(false);}}).catch(()=>{if(active)setPreviewColorError(true);});return()=>{active=false;};},[headingPreviewOpen,previewColors]);
+  const selectedGuestRoute=guestRouteChoice(form.sanadId);
+  const [,standardQari,standardRawi]=form.sanadId.startsWith('guest-reading:')?form.sanadId.split(':'):[];
+  const alternativeQari=selectedGuestRoute?.qariId||standardQari;
+  const alternativeRawi=selectedGuestRoute?.rawi||(standardRawi?decodeURIComponent(standardRawi):'');
+  const canChooseGuestSanad=readingScope==='sughra'||!selectedGuestRoute||selectedGuest?.routes.some(r=>r.automatic&&r.tariqNumber===selectedGuestRoute.tariqNumber&&r.qariId===alternativeQari&&r.rawi===alternativeRawi);
+  const guestVariants=canChooseGuestSanad?(selectedGuest?.variants||[]).filter(v=>v.qariId===alternativeQari&&v.rawi===alternativeRawi):[];
   const previewChoices:{qariId:string;rawi:string;heading:string}[]=[];
   if(cert){const heading=cert.snapshotHeading||asaneed.find(s=>s.id===cert.sanadId)?.chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||cert.qiraahName;const identity=readingIdentityFromHeading(heading);previewChoices.push({qariId:identity?.qariId||'',rawi:identity?.rawi||'',heading:vocalizeReadingLabel(heading)});}
   else{
@@ -125,7 +132,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
    else if(form.sanadId.startsWith('guest-route:')){const choice=guestRouteChoice(form.sanadId);qariId=choice?.qariId||'';rawi=choice?.rawi||'';}
    else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
    else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
-   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
+   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq&&!(isGuest&&readingScope==='sughra'&&guestVariants.some(v=>v.id===guestSanadId))?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
   }
 
   const [touched, setTouched] = useState(false);
@@ -147,7 +154,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         const split=parsedChoice.indexOf(':');
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
-        await additionalShaykhs({action:'issue',tariqNumber:routeChoice?.tariqNumber||selectedTariq,id:selectedGuest.id,qariId,rawi,
+        await additionalShaykhs({action:'issue',personalSanadId:guestVariants.find(v=>v.id===guestSanadId)?.id,tariqNumber:readingScope==='sughra'&&guestVariants.some(v=>v.id===guestSanadId)?'':routeChoice?.tariqNumber||selectedTariq,id:selectedGuest.id,qariId,rawi,
           studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
@@ -211,7 +218,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
                   <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{shortQariName(q.id)}</SelectLabel>
                   {readingScope==='sughra'&&q.rawis.every(r=>rawis.includes(r))&&<SelectItem value={`guest-qiraah:${q.id}`} className="font-semibold">القراءة كاملة — شهادتان للروايتين</SelectItem>}
-                  {readingScope==='kubra'?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&!sughraBook(r.tariqName)&&(!selectedBook||routeBook(r.tariqName)===selectedBook)).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {compactLabel(r.tariqNumber,r.tariqName)}</SelectItem>):rawis.map(rawi=>{const original=selectedGuest?.routes.find(r=>r.qariId===q.id&&r.rawi===rawi&&sughraBook(r.tariqName));return <SelectItem key={rawi} value={original?`guest-route:${encodeURIComponent(original.tariqNumber)}:${q.id}:${encodeURIComponent(rawi)}`:`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>})}
+                  {readingScope==='kubra'?(selectedGuest?.routes||[]).filter(r=>r.qariId===q.id&&!sughraBook(r.tariqName)&&(!selectedBook||routeBook(r.tariqName)===selectedBook)).map(r=><SelectItem key={r.tariqNumber+'-'+r.rawi} value={`guest-route:${encodeURIComponent(r.tariqNumber)}:${q.id}:${encodeURIComponent(r.rawi)}`}>رواية {displayRawi(q.id,r.rawi)} من طريق {compactLabel(r.tariqNumber,r.tariqName)}</SelectItem>):rawis.map(rawi=>{const original=!selectedGuest?.sharedSughraSanad&&selectedGuest?.routes.find(r=>r.qariId===q.id&&r.rawi===rawi&&sughraBook(r.tariqName));return <SelectItem key={rawi} value={original?`guest-route:${encodeURIComponent(original.tariqNumber)}:${q.id}:${encodeURIComponent(rawi)}`:`guest-reading:${q.id}:${encodeURIComponent(rawi)}`}>رواية {displayRawi(q.id,rawi)}</SelectItem>})}
                   <SelectSeparator className="my-1"/>
                 </SelectGroup>)}
                 {!cert&&!isGuest&&readingGroups.map(({q,narrators})=>{
@@ -237,6 +244,13 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             {choosingQiraah&&<p className="text-xs text-muted-foreground">شهادتان مستقلتان بنفس تاريخ الختم</p>}
             {err('sanadId')}
           </div>
+          {!cert&&isGuest&&guestVariants.length>0&&<label className="block space-y-1 text-sm">
+            <span>السند الشخصي</span>
+            <select className="w-full rounded border bg-background p-2" value={guestVariants.some(v=>v.id===guestSanadId)?guestSanadId:''} onChange={e=>setGuestSanadId(e.target.value)}>
+              <option value="">السند المعتمد للشيخ</option>
+              {guestVariants.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
+          </label>}
           {previewChoices.length>0&&<details className="rounded-lg border p-3" onToggle={e=>setHeadingPreviewOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-semibold">معاينة عنوان الإجازة قبل الحفظ</summary>{headingPreviewOpen&&<div className="space-y-3 mt-3">{previewChoices.length>1&&<p className="text-xs text-muted-foreground">القراءة كاملة: تُنشأ شهادتان مستقلتان، وهذه معاينة عنوان كل رواية.</p>}{previewColorError?<p role="alert" className="text-sm text-destructive">تعذر تحميل ألوان الروايات. أغلق المعاينة وافتحها لإعادة المحاولة.</p>:!previewColors?<p role="status">جارٍ تحميل المعاينة…</p>:previewChoices.map(choice=>{const colors=previewColors.find(c=>c.qariId===choice.qariId&&c.rawi===choice.rawi);return <div key={choice.heading} className="rounded border bg-white"><CertificateHeadingPreview heading={choice.heading} primary={colors?.primaryColor||'#926e35'} secondary={colors?.secondaryColor||'#075f69'}/></div>;})}</div>}</details>}
           <div className="space-y-1.5">
             <Label>اسم الطالب</Label>

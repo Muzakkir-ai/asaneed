@@ -32,7 +32,7 @@ async function readKind(kind:string):Promise<RecordRow[]>{
  if(kind==='certificates')return coreCertificates();
  if(kind==='students')return (await table('students')).map(r=>({id:r.id,name:r.display_name,ownerId:'',legacyId:r.legacy_id}));
  if(kind==='qiraat')return (await table('qiraat')).map(r=>({id:r.id,name:r.display_name,description:'',asaneed:[]}));
- if(kind==='additionalShaykhs')return (await table('issuers')).filter(i=>!i.print_profile?.personalAccount||i.print_profile?.loginLinked===true).map(r=>({...r.print_profile,id:r.id,name:r.display_name,qualification:r.print_profile?.qualification??r.print_profile?.scientificQualification??'',readingsJson:r.print_profile?.readingsJson??'[]'}));
+ if(kind==='additionalShaykhs')return (await table('issuers')).filter(i=>!i.print_profile?.personalAccount||i.print_profile?.loginLinked===true).map(r=>({...r.print_profile,id:r.id,issuerCode:r.issuer_code,name:r.display_name,qualification:r.print_profile?.qualification??r.print_profile?.scientificQualification??'',readingsJson:r.print_profile?.readingsJson??'[]'}));
  if(kind==='asaneed'){
  const [issuers,users]=await Promise.all([table('issuers'),load('appUsers')]);const core=(await table('sanads')).map(r=>({...r.body?.editor,id:r.id,title:r.title,chain:r.body?.chain??'',...issuerAccountIdentity(issuers.find(i=>i.id===r.issuer_id),r.created_at,r.body?.editor?.additionalShaykh,user.id,users),qiraah:r.qiraah_id?[r.qiraah_id]:[],certificates:[],_core:r}));
  const extra=await workspaceRows(kind);return [...core,...extra.filter(r=>!core.some(c=>c.id===r.id)).map(r=>({...r.payload,id:r.id}))];

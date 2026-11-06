@@ -6,8 +6,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const guest={id:'guest',name:'شيخ تجريبي',personalChain:old,junction:'ubaydi',prepareSharedNarratorBoxes:true,sharedPeopleReviewed:false,readingsJson:JSON.stringify(allReadings)};
  const records=[{id:'original',shaykhId:'guest',qariId:'nafi',rawi:'قالون',sanadText:old,junction:'ubaydi',unifiedSanad:{version:1,routeId:'old-reference',prefix:old}},{id:'numbered',shaykhId:'guest',qariId:'nafi',rawi:'قالون',tariqNumber:'1030',tariqName:'طريق مستقل',sanadText:('عن الشيخ الخاص، عن الإمام ابن الجزري ').repeat(5),junction:'jazari'}];
  let admin=true,captured,profileWrites=0;
- const db={additionalShaykhs:{findAll:async()=>({records:[guest]}),findOne:async({id})=>{if(id!=='guest')throw Error('not found');return guest;},update:async({record})=>{profileWrites++;return Object.assign(guest,record);}},additionalShaykhExtensions:{findAll:async()=>({records:[{id:'ext',shaykhId:'guest',mutoonJson:'[]'}]}),update:async()=>{}},additionalShaykhReadingSanads:{findAll:async()=>({records}),update:async({id,record})=>Object.assign(records.find(r=>r.id===id),record)},sanadSections:{findAll:async()=>({records:[]})},ijazahHoldings:{findAll:async()=>({records:[{qariId:'nafi',rawi:'قالون',unifiedSanad:{routeId:'stale'}}]})}};
- const extras={'zitejs/backend':{createEndpoint:v=>v},'zitejs/db':{zite:db},'../lib/admin':{isAppAdmin:async()=>admin},'../lib/assembleHoldingIjazah':{assembleHoldingIjazah:async h=>{captured=h;throw Error('fixture-stop-before-write');},resolveHoldingSanad:async h=>h.personalChain}};
+ const db={additionalShaykhs:{findAll:async()=>({records:[guest]}),findOne:async({id})=>{if(id!=='guest')throw Error('not found');return guest;},update:async({record})=>{profileWrites++;return Object.assign(guest,record);}},additionalShaykhExtensions:{findAll:async()=>({records:[{id:'ext',shaykhId:'guest',mutoonJson:'[]'}]}),update:async()=>{}},additionalShaykhReadingSanads:{findAll:async()=>({records}),create:async({record})=>{const row={...record,id:crypto.randomUUID()};records.push(row);return row;},update:async({id,record})=>Object.assign(records.find(r=>r.id===id),record)},sanadSections:{findAll:async()=>({records:[]})},ijazahHoldings:{findAll:async()=>({records:[{qariId:'nafi',rawi:'قالون',unifiedSanad:{routeId:'stale'}}]})}};
+ const library={books:[{id:'book',title:'المستنير'}],people:[],chains:[
+  {id:'parent',kind:'book'},
+  {id:'route1',kind:'route',book_id:'book',book_chain_id:'parent',confirmed:true,reading_scope:'kubra',route_code:'1031',qari_id:'nafi',rawi:'قالون',title:'طريق تجريبي'},
+  {id:'draft',kind:'route',book_id:'book',book_chain_id:'parent',confirmed:false,reading_scope:'kubra',route_code:'1032',qari_id:'nafi',rawi:'قالون',title:'مسودة'},
+ ]};
+ const extras={'../../lib/sanad-library':{loadBuilderLibrary:async()=>library},'../compat/context':{context:()=>({client:{}})},'../lib/bookBuilder':{builderPreview:(_book,_parent,_route,_people,prefix)=>({text:prefix+'، '+('عن راوي طريق الكتاب ').repeat(8),author:'مؤلف الكتاب',sources:['راوي الطريق']})},'zitejs/backend':{createEndpoint:v=>v},'zitejs/db':{zite:db},'../lib/admin':{isAppAdmin:async()=>admin},'../lib/assembleHoldingIjazah':{assembleHoldingIjazah:async h=>{captured=h;throw Error('fixture-stop-before-write');},resolveHoldingSanad:async h=>h.personalChain}};
  const endpoint=load('legacy/api/additionalShaykhs.ts',extras).default,call=async value=>endpoint.outputSchema.parse(await endpoint.execute({input:endpoint.inputSchema.parse(value),context:{user:{id:'fixture',email:'fixture@example.invalid'}}}));
  assert.equal((await call({action:'list'})).sheikhs[0].preparedShared.reviewed,false);
  const input={action:'saveShared',id:'guest',personalChain:updated,junction:'jazari',personalPersonIds:['00000000-0000-4000-8000-000000000001'],sharedSughraSanad:true};
@@ -22,6 +27,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  guest.readingsJson=JSON.stringify([{qariId:'nafi',rawi:'قالون'}]);assert.equal((await call({action:'list'})).sheikhs[0].sharedSughraSanad,true,'partial coverage can use the shared sanad');
  await call(input);await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);assert.equal(captured.personalChain,updated,'partial coverage uses the shared sanad automatically');await call({...input,sharedSughraSanad:false});
  await reading.execute({input:reading.inputSchema.parse({action:'save',shaykhId:'guest',qariId:'nafi',rawi:'قالون',sanadText:updated,junction:'jazari',unifiedSanad:null}),context:{user:{email:'fixture@example.invalid'}}});assert.equal(records[0].sanadText,updated,'independent riwayah save remains available despite legacy shared flag');assert.equal(records[1].sanadText.includes('الشيخ الخاص'),true);
- admin=false;await assert.rejects(()=>call(input),/Permission denied/);assert.equal(records.length,2);
+ guest.issuerCode='01';
+ const linked=await call({action:'list'});
+ assert.equal(linked.sheikhs[0].libraryKubra,true);
+ assert.deepEqual(linked.sheikhs[0].routes.filter(r=>r.automatic).map(r=>r.tariqNumber),['1031']);
+ library.chains.push({...library.chains[1],id:'route2',route_code:'1033'});
+ assert.equal((await call({action:'list'})).sheikhs[0].routes.filter(r=>r.automatic).length,2);
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1033'}),/fixture-stop-before-write/);
+ assert.equal(captured.unifiedSanad.routeId,'route2');assert.equal(captured.unifiedSanad.prefix,updated);
+ await call(input);
+ const variantText='كما أخذته عن شيخ آخر، عن الإمام ابن الجزري';
+ await reading.execute({input:reading.inputSchema.parse({action:'save',shaykhId:'guest',qariId:'nafi',rawi:'قالون',variantName:'السند الثاني',sanadText:variantText,junction:'jazari'}),context:{user:{email:'fixture@example.invalid'}}});
+ const variant=(await call({action:'list'})).sheikhs[0].variants[0];
+ assert.equal(variant.name,'السند الثاني');assert.equal(records[0].sanadText,updated);
+ await assert.rejects(()=>call({...issuance,personalSanadId:variant.id}),/fixture-stop-before-write/);assert.equal(captured.personalChain,variantText);
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1031',personalSanadId:variant.id}),/fixture-stop-before-write/);assert.equal(captured.unifiedSanad.prefix,variantText);
+ await assert.rejects(()=>call({...issuance,rawi:'ورش',personalSanadId:variant.id}),/غير مضافة|اختر سندًا شخصيًا/);
+ admin=false;await assert.rejects(()=>call(input),/Permission denied/);assert.equal(records.length,3);
  console.log('PASS: one shared profile save, original-riwayah resolution, independent numbered routes, source/metadata preservation, individual-save guard and role denial');
 })().catch(e=>{console.error(e);process.exitCode=1});
