@@ -1,7 +1,7 @@
 import PreparedSanadGraph from './PreparedSanadGraph';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import {Plus} from 'lucide-react';
-import {useState,type ReactNode} from 'react';
+import {useLayoutEffect,useRef,useState,type ReactNode} from 'react';
 import {Button} from '@project/components/ui/button';
 import {workspaceHeaders} from '../lib/workspaceSelection';
 import {sanadKey} from '../lib/unifiedSanad';
@@ -9,24 +9,36 @@ import {preparedSanadText,type PreparedSanadPeople} from '../lib/preparedSanadPe
 import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import ChainNarratorRow from './ChainNarratorRow';
 type Node={name:string;personId?:string;key:string};
-export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,readOnly=false}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,path:string[],changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;readOnly?:boolean}){
+export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,readOnly=false}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;readOnly?:boolean}){
  const matches=(name:string)=>library.people.filter(p=>!p.archived&&[p.name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(value=>sanadKey(value)===sanadKey(name)));
  const [nodes,setNodes]=useState<Node[]>(()=>preparation?preparation.tokens.map((t,i)=>{const found=matches(t.name);return {key:`prepared-${i}`,name:t.name,personId:initialPersonIds.length===preparation.tokens.length?initialPersonIds[i]:found.length===1?found[0].id:undefined};}):initialPersonIds.length?initialPersonIds.map((id,i)=>({key:`saved-${i}`,personId:id,name:library.people.find(p=>p.id===id)?.name||'راوٍ غير متاح'})):[{name:'',key:'first'}]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const viewportAnchor=useRef<{row:string;top:number}|null>(null);
+ const keepRowInPlace=(row:string)=>{
+  const element=document.querySelector(`[data-personal-rawi="${row}"]`);
+  if(element)viewportAnchor.current={row,top:element.getBoundingClientRect().top};
+ };
+ useLayoutEffect(()=>{
+  const anchor=viewportAnchor.current;
+  if(!anchor)return;
+  viewportAnchor.current=null;
+  const element=document.querySelector(`[data-personal-rawi="${anchor.row}"]`);
+  if(element)window.scrollBy({top:element.getBoundingClientRect().top-anchor.top,behavior:'instant'});
+ },[nodes]);
  const create=async(name:string,alias:string,distinct:boolean)=>{const response=await fetch('/api/book-builder',{method:'POST',headers:{'content-type':'application/json',...workspaceHeaders()},body:JSON.stringify({action:'person',name,displayName:alias,distinct})});const person=await response.json();if(!response.ok)throw Error(person.error||'تعذر حفظ الراوي');onPersonCreated(person);return person as BuilderPerson;};
  const update=(fn:(v:Node[])=>Node[])=>{onPendingChange?.(true);setNodes(fn);};
- const moveMeetingPoint=(name:string,path:string[],changing:boolean)=>{
+ const moveMeetingPoint=(name:string,changing:boolean)=>{
   setError('');
   const key=sanadKey(name);
   const same=(value:string)=>{const candidate=sanadKey(value);return candidate===key||candidate.endsWith(' '+key);};
   if(same(nodes.at(-1)?.name||''))return true;
-  if(preparation){setError('راجع نهاية السند ذي الفروع قبل تغيير نقطة الالتقاء.');return false;}
   const existing=nodes.findLastIndex(n=>same(n.name));
-  if(existing>=0){update(v=>v.slice(0,existing+1));return true;}
-  if(changing&&!path.length){setError('لا يوجد مسار محفوظ واضح بين نقطتي الالتقاء. راجع الرواة أولًا.');return false;}
-  const additions=path.length?path:[name];
-  const resolved=additions.map(part=>matches(part));
-  if(resolved.some(found=>found.length>1)){setError('يوجد أكثر من راوٍ بهذا الاسم. اختر الهوية من قائمة الرواة.');return false;}
-  update(v=>[...v.filter(n=>n.name.trim()),...additions.map((part,i)=>({key:crypto.randomUUID(),name:resolved[i][0]?.name||part,personId:resolved[i][0]?.id}))]);
+  if(existing>=0&&!preparation){update(v=>v.slice(0,existing+1));return true;}
+  const found=matches(name);
+  const endpoint={key:crypto.randomUUID(),name:found.length===1?found[0].name:name,personId:found.length===1?found[0].id:undefined};
+  update(v=>{
+   if(preparation||changing)return [...v.slice(0,-1),{...endpoint,key:v.at(-1)?.key||endpoint.key}];
+   return [...v.filter(n=>n.name.trim()),endpoint];
+  });
   return true;
  };
  const insert=(index:number)=>{
@@ -57,10 +69,10 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  };
  const graphSource=preparation||(nodes.every(n=>n.personId&&n.name.trim())?{version:1 as const,tokens:nodes.map((n,i)=>({before:i?'، عن ':'كما أخذته عن ',name:n.name})),suffix:'',reviewed:true}:null);
  const graph=graphSource?preparedSanadGraph(graphSource,nodes):null;
- const renderRow=(i:number,ordinal=i+1,indices=[i],labels?:string[])=>{const node=nodes[i];return <ChainNarratorRow node={{...node,source:false}} number={ordinal} badgeLabels={labels} index={i} count={nodes.length} lib={library} roles={false} readOnly={readOnly} lockedLayout={!!preparation} initialEditing={preparation?false:undefined} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onPersonUpdated={(sourceId,person)=>{const source=library.people.find(p=>p.id===sourceId);if(source&&sourceId!==person.id)onPersonCreated({...source,archived:true});onPersonCreated(person);update(v=>v.map(n=>n.personId===sourceId?{...n,personId:person.id,name:person.name}:n));}} onChange={value=>update(v=>v.map((n,j)=>indices.includes(j)?{...n,...value}:n))} onRemove={()=>update(v=>v.filter((_,j)=>j!==i))} onMove={direction=>update(v=>{const next=[...v];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next;})}/>;};
+ const renderRow=(i:number,ordinal=i+1,indices=[i],labels?:string[])=>{const node=nodes[i];return <ChainNarratorRow node={{...node,editorKey:node.key,source:false}} number={ordinal} badgeLabels={labels} index={i} count={nodes.length} lib={library} roles={false} readOnly={readOnly} lockedLayout={!!preparation} initialEditing={preparation?false:undefined} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onPersonUpdated={(sourceId,person)=>{const source=library.people.find(p=>p.id===sourceId);if(source&&sourceId!==person.id)onPersonCreated({...source,archived:true});onPersonCreated(person);update(v=>v.map(n=>n.personId===sourceId?{...n,personId:person.id,name:person.name}:n));}} onChange={value=>{if(value.personId)keepRowInPlace(node.key);update(v=>v.map((n,j)=>indices.includes(j)?{...n,...value}:n));}} onRemove={()=>update(v=>v.filter((_,j)=>j!==i))} onMove={direction=>update(v=>{const next=[...v];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next;})}/>;};
  return <fieldset disabled={busy} className={readOnly?"space-y-3 min-w-0":"space-y-3 rounded-lg border p-3"} aria-busy={busy}>
  {!readOnly&&<p className="text-xs text-muted-foreground">{preparation?'الرواة مُعدّون من النص السابق للمراجعة. تبقى ألفاظ الاتصال والفروع والتكرارات كما كُتبت، وتُحفظ الأسماء عند التأكيد.':'أضف شيوخ سندك بالترتيب، من شيخك المباشر حتى نهاية سندك الشخصي.'}</p>}
- {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=><>{renderRow(entry.indices[0],ordinal,entry.indices,labels)}{!readOnly&&!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(entry.indices[0]+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</>}/>:nodes.map((node,i)=><div key={node.key} id={'personal-rawi-'+node.key} className="space-y-2">{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()==='و'?'مع الراوي السابق — في الفرع نفسه':preparation.tokens[i].before.trim().replace(/^،\s*/u,'')}</p>}{renderRow(i)}{!readOnly&&!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</div>)}
+ {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=><>{renderRow(entry.indices[0],ordinal,entry.indices,labels)}{!readOnly&&!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(entry.indices[0]+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</>}/>:nodes.map((node,i)=><div key={node.key} id={'personal-rawi-'+node.key} className="space-y-2">{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()==='و'?'مع الراوي السابق — في الفرع نفسه':preparation.tokens[i].before.trim().replace(/^،\s*/u,'')}</p>}{renderRow(i,nodes.length-i)}{!readOnly&&!preparation&&<Button type="button" size="sm" variant="outline" disabled={nodes.length>=100} onClick={()=>insert(i+1)}><Plus aria-hidden="true" className="h-4 w-4"/>إضافة راوٍ بعده</Button>}</div>)}
  {!readOnly&&<>{typeof beforeApply==='function'?beforeApply(moveMeetingPoint):beforeApply}<Button type="button" onClick={()=>void adopt()}>{busy?'جارٍ حفظ الأسماء…':preparation?'تأكيد الرواة من النص السابق':'اعتماد ترتيب الرواة'}</Button>
  <p className="text-xs text-muted-foreground">راجع السند المركب ثم احفظ الإجازة.</p></>}{!readOnly&&error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
  </fieldset>;
