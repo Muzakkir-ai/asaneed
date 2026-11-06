@@ -1,10 +1,10 @@
+'use client';
 import {useCardTouchFeedback} from './lib/useCardTouchFeedback';
 import MatnCatalogPage,{MatnDecisionNotice} from './components/MatnCatalogPage';
 import SharedContentPage from './components/SharedContentPage';
 import CertificateAppearance from './components/CertificateAppearance';
 import AccountUsername from './components/AccountUsername';
 import SystemAdministration from './components/SystemAdministration';
-'use client';
 import {setSessionRefresher} from './lib/sessionRecovery';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth, useSession, loginWithRedirect, logout } from 'zitejs/auth';
