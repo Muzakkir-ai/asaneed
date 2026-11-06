@@ -15,12 +15,20 @@ function linearNames(source:string){
  if(/[().؛\n]|وقرأ|وأخذ|وهما|وهم|وهو| والشيخ/u.test(body))return [];
  return body.split(/،\s*عن\s+/u).map(part=>part.replace(/^(?:(?:كما أخذته|كما أخذت ذلك)\s+)?عن\s+/u,'').trim());
 }
+function graphPaths(source:string,endpoint:'ubaydi'|'jazari'){
+ const prepared=prepareSavedSanadPeople(source,false,endpoint);
+ if(!prepared)return null;
+ const graph=preparedSanadGraph(prepared,prepared.tokens);
+ return graph?{paths:graph.paths.map(path=>path.map(id=>graph.nodes.find(node=>node.id===id)!.name)),suffix:prepared.suffix}:null;
+}
 function numberedPaths(source:string){
- const prepared=prepareSavedSanadPeople(source);
- const graph=prepared&&preparedSanadGraph(prepared,prepared.tokens);
- const tail=prepared?linearNames(prepared.suffix.replace(/^\s*،\s*/u,'')):[];
- const routes=graph&&tail.length?graph.paths.map(path=>[...path.map(id=>graph.nodes.find(node=>node.id===id)!.name),...tail]):[linearNames(source)];
- return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250)&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
+ const prefix=graphPaths(source,'ubaydi');
+ const tail=prefix?.suffix.replace(/^\s*،\s*/u,'').trim()||'';
+ const continuation=tail?graphPaths('كما أخذته '+tail,'jazari'):null;
+ const endings=continuation?.paths||[linearNames(tail)];
+ const full=graphPaths(source,'jazari');
+ const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):full?.paths||[linearNames(source)];
+ return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
 function BranchView({branch,depth,selected,onSelect}:{branch:Branch;depth:number;selected?:Path;onSelect:(path:Path)=>void}){
@@ -30,7 +38,7 @@ function BranchView({branch,depth,selected,onSelect}:{branch:Branch;depth:number
  </li>;
 }
 export default function ShaykhSanadTree(){
- const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<string[]>([]),[selected,setSelected]=useState<Path>(),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<{label:string;text:string}[]>([]),[selected,setSelected]=useState<Path>(),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{
   let cancelled=false;
   async function load(){
@@ -42,12 +50,12 @@ export default function ShaykhSanadTree(){
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
-      let names:string[][]=[];
-      try{names=numberedPaths(resolveBuilderPrefix(s.text,bridges).text);}catch{/* Incomplete or ambiguous saved chain. */}
-      return {label,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
+      let names:string[][]=[],text=s.text;
+      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text);}catch{/* Incomplete or ambiguous saved chain. */}
+      return {label,text,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
      });
     });
-    if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length).map(row=>row.label)));}
+    if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length)));}
    }catch(e){if(!cancelled)setError(e instanceof Error?e.message:'تعذر تحميل أسانيد المشايخ');}
    finally{if(!cancelled)setLoading(false);}
   }
@@ -69,7 +77,7 @@ export default function ShaykhSanadTree(){
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
    {paths.length>0?<><label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selected?.id||''} onChange={e=>setSelected(paths.find(path=>path.id===e.target.value))}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {arabicDigits(path.names.length)}</option>)}</select></label>
     <ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} selected={selected} onSelect={setSelected}/></ul></>:<p>لا توجد أسانيد قابلة للعرض بعد.</p>}
-   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map((label,i)=><li key={i}>{label}</li>)}</ul></details>}
+   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text},i)=><li key={i}><details><summary>{label}</summary><p className="whitespace-pre-wrap leading-loose">{text}</p></details></li>)}</ul></details>}
   </>}
  </section>;
 }
