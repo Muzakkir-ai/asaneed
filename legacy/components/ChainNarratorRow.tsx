@@ -14,7 +14,7 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  const [editing,setEditing]=useState(initialEditing??!node.personId),panel=useId();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
- return <article className={`narrator-person-card min-w-0 rounded-lg border bg-background ${editing?'border-primary/40':''}`} dir="rtl">
+ return <article data-personal-rawi={node.editorKey} className={`narrator-person-card min-w-0 rounded-lg border bg-background ${editing?'border-primary/40':''}`} dir="rtl">
  <div className="flex min-w-0 items-center gap-2 p-2 sm:p-3">
  <span data-narrator-level={badgeLabels?.join(" / ")} aria-label={badgeLabels?"الرتبة من نقطة الالتقاء: "+badgeLabels.join(" أو "):`الراوي ${ordinal}`} className={`inline-flex min-h-8 min-w-8 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 font-bold text-primary ${badgeLabels?"flex-col gap-0.5 px-2 py-1 text-xs":"h-8 w-8 text-sm"}`}>{badgeLabels?badgeLabels.map(label=><span key={label} className="whitespace-nowrap">{label}</span>):arabicDigits(ordinal)}</span>
  <div className="min-w-0 flex-1"><p className="break-words text-sm font-medium">{node.name||'اختر الراوي'}</p>{node.source&&<span className="whitespace-nowrap text-xs text-primary">صاحب الطريق</span>}</div>

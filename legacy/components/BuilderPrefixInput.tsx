@@ -22,15 +22,24 @@ export default function BuilderPrefixInput({value,onChange,continuations=[],sele
  const chooseJunction=(id:string)=>{
   setError('');
   const person=id.startsWith('person:')?savedPeople.find(p=>'person:'+p.id===id):undefined;
-  if(person){setPendingPerson(id);setAnchor(person.name);setBody('');setReviewed(false);setAdding(true);onSelect('');onPendingChange?.(true);}
+  if(person){
+   const candidates=new Set<string>();
+   for(const source of library?.continuationSections||[]){
+    if(!person.sources.includes(source.title))continue;
+    const parts=source.body.trim().replace(/[.،؛]+$/u,'').split(/،\s*عن\s+/u);
+    const indices=parts.flatMap((part,i)=>sanadKey(part.replace(/^عن\s+/u,''))===sanadKey(person.name)?[i]:[]);
+    if(indices.length!==1)continue;
+    const tail='عن '+parts.slice(indices[0]+1).join('، عن ');
+    if(/[؛().\n]|وقرأ|وأخذ|وهو|وهما|وهم/u.test(tail))continue;
+    if(!/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(tail)))continue;
+    try{validatePersonalBridge(person.name,tail);candidates.add(tail);}catch{/* Keep uncertain source text for manual review. */}
+   }
+   setPendingPerson(id);setAnchor(person.name);setBody(candidates.size===1?[...candidates][0]:'');setReviewed(false);setAdding(true);onSelect('');onPendingChange?.(true);}
   else{setPendingPerson('');setAdding(false);onSelect(id);}
  };
- const junctionControl=(move?:(name:string,path:string[],changing:boolean)=>boolean)=>showJunction&&!readOnly?<MeetingPointSelector options={options} value={pendingPerson||selectedId} onChange={id=>{
+ const junctionControl=(move?:(name:string,changing:boolean)=>boolean)=>showJunction&&!readOnly?<MeetingPointSelector options={options} value={pendingPerson||selectedId} onChange={id=>{
   const option=options.find(o=>o.value===id);
-  const linear=selected&&!/[؛().\n]|وقرأ|وأخذ|وهو|وهما|وهم/u.test(selected.body.trim().replace(/[.،؛]+$/u,''))?selected.body:'';
-  const steps=linear.trim().replace(/[.،؛]+$/u,'').split(/،\s*عن\s+/u).map(step=>step.replace(/^عن\s+/u,''))||[];
-  const end=option?steps.findIndex(step=>sanadKey(step)===sanadKey(option.name)):-1;
-  if(option&&move&&!move(option.name,end>=0?steps.slice(0,end+1):[],!!selectedId))return;
+  if(option&&move&&!move(option.name,!!(pendingPerson||selectedId)))return;
   chooseJunction(id);
  }}/>:null;
  const selectedPerson=savedPeople.find(p=>'person:'+p.id===pendingPerson);
