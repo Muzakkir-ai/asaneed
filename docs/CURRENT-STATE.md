@@ -1,3 +1,9 @@
+## Library-linked Kubrā and additional personal sanads — 6 November 2026
+
+Additional shaykh profiles can select the full Ṣughrā, individual Ṣughrā riwāyāt and library-linked Kubrā. Issuer 01 defaults to the Kubrā link, with an explicit profile setting to change it. Confirmed, active Kubrā library routes are resolved at read and issuance time using the shaykh’s saved personal prefix. Manually attached complete routes remain available when there is no matching catalog route.
+
+Named alternative personal sanads are separate records for a riwāyah. Issuance can select one explicitly for Ṣughrā or a library-linked Kubrā route. The API validates that the selected alternative belongs to the shaykh and riwāyah. Tests exercise automatic discovery of a newly confirmed route, the default shared prefix, and alternative selection in both groups. The production profile was inspected read-only. Issuer 01 has 20 Ṣughrā riwāyāt and a shared prefix to Ibn al-Jazarī.
+
 ## Shared personal sanad for additional shaykhs — 6 November 2026
 
 A shaykh with any configured qiraat can enable one personal sanad for all their standard riwayat. Issuance uses that sanad automatically. Numbered routes use their own complete chains. Turning the setting off restores individual-riwayah selection. Standard cards display the book pair from the reading catalog. Advanced book and route management opens on demand from the readings settings.

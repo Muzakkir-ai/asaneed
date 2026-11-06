@@ -1,3 +1,7 @@
+import {guestKubraRoutes,usesLibraryKubra} from '../lib/guestKubra';
+import {loadBuilderLibrary} from '../../lib/sanad-library';
+import {resolveBuilderPrefix} from '../lib/builderPrefix';
+import {builderPreview} from '../lib/bookBuilder';
 import {usesSharedSughra} from '../lib/sharedShaykhSanad';
 import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {context as requestContext} from '../compat/context';
@@ -13,10 +17,10 @@ import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
 const matn=z.object({id:z.string().uuid().optional(),catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
-const shaykh=z.object({sharedSughraSanad:z.boolean().default(false),personalPersonIds:z.array(z.string()).default([]),preparedShared:z.object({version:z.literal(1),tokens:z.array(z.object({before:z.string(),name:z.string()})),suffix:z.string(),reviewed:z.boolean()}).nullable().optional(),
+const shaykh=z.object({libraryKubra:z.boolean().default(false),variants:z.array(choice.extend({id:z.string(),name:z.string()})).default([]),sharedSughraSanad:z.boolean().default(false),personalPersonIds:z.array(z.string()).default([]),preparedShared:z.object({version:z.literal(1),tokens:z.array(z.object({before:z.string(),name:z.string()})),suffix:z.string(),reviewed:z.boolean()}).nullable().optional(),
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),
- routes:z.array(z.object({qariId:z.string(),rawi:z.string(),tariqNumber:z.string(),tariqName:z.string()})),junction:z.enum(['ubaydi','jazari']),readings:z.array(choice),email:z.string(),mutoon:z.array(matn),
+ routes:z.array(z.object({qariId:z.string(),rawi:z.string(),tariqNumber:z.string(),tariqName:z.string(),automatic:z.boolean().optional()})),junction:z.enum(['ubaydi','jazari']),readings:z.array(choice),email:z.string(),mutoon:z.array(matn),
 });
 export default createEndpoint({
  description:'Shared extra sheikh profiles and administrator-supervised sanad drafts',
@@ -25,7 +29,7 @@ export default createEndpoint({
    action:z.enum(['list','save','saveShared','issue']).default('list'),id:z.string().optional(),
    name:z.string().optional(),qualification:z.string().optional(),teachingRole:z.string().optional(),
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
-   sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
+   libraryKubra:z.boolean().optional(),personalSanadId:z.string().uuid().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
    tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
@@ -36,11 +40,17 @@ export default createEndpoint({
   let {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
   const extensionFor=(id:string)=>extensions.find(e=>e.shaykhId===id);
   const {records:routeRecords}=await zite.additionalShaykhReadingSanads.findAll({limit:2000});
+  const {records:profiles}=await zite.additionalShaykhs.findAll({limit:2000});
+  const library=(input.libraryKubra===true||profiles.some(usesLibraryKubra))?await loadBuilderLibrary(requestContext().client):null;
+  const automatic=library?guestKubraRoutes(library):[];
+  const automaticChoices=automatic.map(({qariId,rawi,tariqNumber,tariqName,automatic})=>({qariId,rawi,tariqNumber,tariqName,automatic}));
   const serialize=(x:any)=>{
     let readings: {qariId:string;rawi:string}[]=[];
     try{readings=JSON.parse(x.readingsJson||'[]');}catch{}
     const extension=extensionFor(x.id);let mutoon: z.infer<typeof matn>[]=[];try{mutoon=matn.array().parse(JSON.parse(extension?.mutoonJson||'[]'));}catch{}
-    return {sharedSughraSanad:usesSharedSughra(x),personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})),id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
+    const libraryKubra=usesLibraryKubra(x);
+    const variants=routeRecords.filter(r=>r.shaykhId===x.id&&r.variantName).map(r=>({id:r.id,qariId:r.qariId||'',rawi:r.rawi||'',name:r.variantName!}));
+    return {libraryKubra,variants,sharedSughraSanad:usesSharedSughra(x),personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:[...(libraryKubra?automaticChoices:[]),...routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})).filter(r=>!libraryKubra||!automatic.some(a=>a.tariqNumber===r.tariqNumber&&a.rawi===r.rawi&&a.qariId===r.qariId))],id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
       madrasaName:x.madrasaName||'',madrasaPlace:x.madrasaPlace||'',personalChain:x.personalChain||'',
       junction:(x.junction==='jazari'?'jazari':'ubaydi') as 'ubaydi'|'jazari',readings};
   };
@@ -59,7 +69,7 @@ export default createEndpoint({
    const readings=input.readings||[];
    if(name.length<3||name.length>220)throw new Error('Enter a valid sheikh name');
    if(personalChain&&(personalChain.length<25||personalChain.length>30000||!reachesJunction({personalChain,junction:input.junction||existing?.junction||'ubaydi'})))throw new Error('The general sanad must reach Ibn al-Jazari or Ibrahim al-Ubaydi');
-   if(!readings.length&&!input.mutoon?.length)throw new Error('Add a qiraat riwayah or a matn');
+   if(!readings.length&&!input.mutoon?.length&&!(input.libraryKubra??(existing&&usesLibraryKubra(existing))))throw new Error('Add a qiraat riwayah or a matn');
    if(readings.some(r=>!QURRA.some(q=>q.id===r.qariId&&q.rawis.some(v=>v===r.rawi))))throw new Error('Choose the ijazah riwayat');
    if(input.id&&!existing)throw new Error('Unknown sheikh');
    const previousMutoon=existing?serialize(existing).mutoon:[];
@@ -78,7 +88,7 @@ export default createEndpoint({
      item.category=match.category;
     }
    }
-   const record={name,qualification:input.qualification?.trim()||'',teachingRole:input.teachingRole?.trim()||'',
+   const record={...(input.libraryKubra===undefined?{}:{libraryKubra:input.libraryKubra}),name,qualification:input.qualification?.trim()||'',teachingRole:input.teachingRole?.trim()||'',
     madrasaName:input.madrasaName?.trim()||'',madrasaPlace:input.madrasaPlace?.trim()||'',
     readingsJson:JSON.stringify([...new Map(readings.map(x=>[x.qariId+'|'+x.rawi,x])).values()]),
     personalChain,junction:input.junction||existing?.junction||'ubaydi',createdBy:existing?.createdBy||context.user.id};
@@ -95,7 +105,8 @@ export default createEndpoint({
    const imam=QURRA.find(q=>q.id===input.qariId);
    if(!imam)throw new Error('اختر قراءة صحيحة');
    const rawis=input.rawi?[input.rawi]:[...imam.rawis];
-   if(rawis.some(rawi=>!known.readings.some(r=>r.qariId===imam.id&&r.rawi===rawi)))throw new Error('هذه القراءة أو الرواية غير مضافة للمُجيز');
+   const catalogRoute=known.libraryKubra?automatic.find(r=>r.tariqNumber===input.tariqNumber&&r.qariId===imam.id&&r.rawi===input.rawi):undefined;
+   if(!catalogRoute&&rawis.some(rawi=>!known.readings.some(r=>r.qariId===imam.id&&r.rawi===rawi)))throw new Error('هذه القراءة أو الرواية غير مضافة للمُجيز');
    const {records:specific}=await zite.additionalShaykhReadingSanads.findAll({filters:{shaykhId:guest.id},limit:2000});
    const {records:all}=await zite.sanadSections.findAll({limit:2000});
    const shared=all.filter(x=>!x.ownerId);
@@ -104,19 +115,24 @@ export default createEndpoint({
    const {records:holdings}=await zite.ijazahHoldings.findAll({filters:{ownerId:'guest:'+guest.id},limit:2000});
    // Validate both riwayat before creating either draft.
    const entries=await Promise.all(rawis.map(async rawi=>{
-    const useShared=usesSharedSughra(known,input.tariqNumber);
-    const selected=specific.find(x=>x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
-    if(input.tariqNumber&&!selected)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
+    const variant=input.personalSanadId?specific.find(r=>r.shaykhId===guest.id&&r.id===input.personalSanadId&&r.variantName&&r.qariId===imam.id&&r.rawi===rawi&&!r.tariqNumber):undefined;
+    if(input.personalSanadId&&!variant)throw Error('اختر سندًا شخصيًا محفوظًا لهذه الرواية');
+    if(variant&&input.tariqNumber&&!catalogRoute)throw Error('السند البديل متاح للرواية أو لطريق مرتبط بالمكتبة');
+    const useShared=!variant&&usesSharedSughra(known,input.tariqNumber);
+    const selected=specific.find(x=>!x.variantName&&x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
+    if(input.tariqNumber&&!selected&&!catalogRoute)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
     const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
-    const chain=useShared?known.personalChain:selected?.sanadText||known.personalChain;
-    const junction=useShared?known.junction:selected?.junction||known.junction;
+    const prefix=catalogRoute?resolveBuilderPrefix(variant?.sanadText||known.personalChain,library!.prefixContinuations).text:'';
+    const preview=catalogRoute?builderPreview(catalogRoute.book,catalogRoute.parent,catalogRoute.route,library!.people,prefix):undefined;
+    const chain=preview?.text||variant?.sanadText||(useShared?known.personalChain:selected?.sanadText||known.personalChain);
+    const junction=catalogRoute?'jazari':variant?.junction||(useShared?known.junction:selected?.junction||known.junction);
     if(input.tariqNumber?chain.length<100:!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
-    const assemblyHolding={unifiedSanad:useShared?undefined:selected?(selected.unifiedSanad||undefined):(source?.unifiedSanad||undefined),tariqNumber:input.tariqNumber,tariqName:selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
+    const assemblyHolding={unifiedSanad:catalogRoute?{version:1,routeId:catalogRoute.route.id,prefix}:useShared||variant?undefined:selected?(selected.unifiedSanad||undefined):(source?.unifiedSanad||undefined),tariqNumber:input.tariqNumber,tariqName:catalogRoute?.tariqName||selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
       introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id};
     const assembled=await assembleHoldingIjazah(assemblyHolding,
-      all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})));
+      all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})),catalogRoute?library??undefined:undefined);
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));
-    return {rawi,assembled,unifiedHolding:assemblyHolding.unifiedSanad?assemblyHolding:undefined,tariqName:selected?.tariqName||'',bookAuthor:selected?.bookAuthor||'',routeSource:selected?.routeSource||''};
+    return {rawi,assembled,unifiedHolding:assemblyHolding.unifiedSanad?assemblyHolding:undefined,tariqName:catalogRoute?.tariqName||selected?.tariqName||'',bookAuthor:preview?.author||selected?.bookAuthor||'',routeSource:preview?.sources.join('، ')||selected?.routeSource||''};
    }));
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
