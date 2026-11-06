@@ -144,6 +144,10 @@ const {chromium}=require('playwright');
    const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
    const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedEdges);
+   for(const [node,port] of [['from','start'],['to','end']]){
+    const ports=await combined.locator('[data-from]').evaluateAll((edges,[node,port])=>edges.map(edge=>JSON.stringify([edge.dataset[node],edge.dataset[port]])),[node,port]);
+    assert.equal(new Set(ports).size,ports.length,'each edge has a separate card port');
+   }
    assert.equal(await combined.locator('[data-combined-narrator]').count(),new Set(combinedPaths.flat()).size);
    assert.ok(await combined.getByText('أصحاب ابن الجزري',{exact:true}).isVisible());
    assert.ok(await combined.getByText('أعلى سند',{exact:false}).isVisible());

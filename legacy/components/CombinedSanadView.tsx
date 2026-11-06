@@ -31,6 +31,19 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
  const grouped=groupJazariStudents&&graph.directStudents.length>1;
  const points=new Map(graph.rows.flatMap((row,y)=>row.map((id,x)=>[id,{x:width/2+(row.length/2-x-.5)*cell,y:y*rowHeight+(grouped&&y>0?28:0)}] as const)));
  const height=graph.rows.length*rowHeight+(grouped?28:0);
+ const outgoing=new Map<string,typeof graph.edges>(),incoming=new Map<string,typeof graph.edges>();
+ for(const edge of graph.edges){
+  outgoing.set(edge.from,[...(outgoing.get(edge.from)??[]),edge]);
+  incoming.set(edge.to,[...(incoming.get(edge.to)??[]),edge]);
+ }
+ for(const edges of outgoing.values())edges.sort((a,b)=>points.get(a.to)!.x-points.get(b.to)!.x);
+ for(const edges of incoming.values())edges.sort((a,b)=>points.get(a.from)!.x-points.get(b.from)!.x);
+ const port=(edges:typeof graph.edges,edge:typeof graph.edges[number])=>(edges.indexOf(edge)-(edges.length-1)/2)*Math.min(16,cardWidth/(edges.length+1));
+ const lanes=new Map<number,typeof graph.edges>();
+ for(const edge of graph.edges){
+  const y=points.get(edge.from)!.y;
+  lanes.set(y,[...(lanes.get(y)??[]),edge]);
+ }
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
   <div className="flex flex-wrap items-center gap-3">
    <span className="text-sm font-semibold">أعلى سند <strong className="ms-1 rounded-full bg-primary px-3 py-1 text-lg text-primary-foreground">{arabicDigits(graph.lengths[0])}</strong></span>
@@ -51,12 +64,21 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
    <div className="absolute left-0 top-0 origin-top-left" style={{width,height,transform:`scale(${scale})`}}>
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
-     {graph.edges.map(({from,to,routes},index)=>{
+     {graph.edges.map((edge)=>{
+      const {from,to,routes}=edge;
       const a=points.get(from)!,b=points.get(to)!;
       const active=route===null||routes.includes(route);
-      const start=a.y+cardHeight,end=b.y-5,mid=start+Math.min(9+(index%8)*4,(end-start)/2);
-      const connector=b.y-a.y>rowHeight+28? `M${a.x} ${start} V${mid} H${8+(index%4)*4} V${b.y-12-(index%4)*4} H${b.x} V${end}` : `M${a.x} ${start} V${mid} H${b.x} V${end}`;
-      return <path key={JSON.stringify([from,to])} data-from={from} data-to={to} data-routes={routes.join(',')} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>;
+      const out=outgoing.get(from)!,ins=incoming.get(to)!,row=lanes.get(a.y)!;
+      const x1=a.x+port(out,edge),x2=b.x+port(ins,edge);
+      const start=a.y+cardHeight,end=b.y-5;
+      const mid=start+6+(row.indexOf(edge)+1)*22/(row.length+1);
+      const connector=b.y-a.y>rowHeight+28
+       ? `M${x1} ${start} V${mid} H${8+graph.edges.indexOf(edge)*12/(graph.edges.length+1)} V${end-6-ins.indexOf(edge)*3} H${x2} V${end}`
+       : `M${x1} ${start} V${mid} H${x2} V${end}`;
+      return <g key={JSON.stringify([from,to])} opacity={active?1:.15}>
+       <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
+       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
+      </g>;
      })}
     </svg>
     {grouped&&<p dir="rtl" className="absolute right-5 text-sm font-semibold text-primary" style={{top:rowHeight}}>أصحاب ابن الجزري</p>}
