@@ -1,6 +1,6 @@
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -30,7 +30,10 @@ const personalGraph=preparedSanadGraph(recovered,recovered.tokens.map((token,i)=
 assert.deepEqual(personalGraph?.paths,[['student','teacher1','join','0'],['student','teacher2','join','0']]);
 const continuations=linkedBridgeTails(linked!,tail,'0');
 assert.deepEqual(continuations?.map(path=>path.map(node=>node.id)),[['1','2','6'],['1','3','4','6'],['1','3','5','6']]);
-const routes=personalGraph!.paths.flatMap(path=>continuations!.map(end=>[...path,...end.map(node=>node.id)]));
+const routes=joinSharedBridgeRoutes(personalGraph!.paths,continuations!,'0');
+assert.ok(routes);
+assert.equal(joinSharedBridgeRoutes([['student','wrong-junction']],continuations!,'0'),null);
+assert.equal(joinSharedBridgeRoutes([['student','1','0']],continuations!,'0'),null);
 assert.equal(routes.length,6);
 assert.ok(routes.every(route=>route.filter(id=>id==='0').length===1&&route.at(-1)==='6'));
 assert.equal(linkedBridgeTails(linked!,tail,'wrong-id'),null);

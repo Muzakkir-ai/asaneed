@@ -99,3 +99,10 @@ export function reviewedSharedBridge(source:SharedBridgeSource,review:unknown,pe
  if(routes.some(path=>new Set(path.map(node=>node.id)).size!==path.length))return null;
  return {source,routes,unresolved:[]};
 }
+
+/** A personal path must end at the reviewed junction and must not revisit a shared narrator. */
+export function joinSharedBridgeRoutes(personalPaths:string[][],tails:{id:string}[][],meetingId:string){
+ if(!personalPaths.length||!tails.length||personalPaths.some(path=>path.at(-1)!==meetingId))return null;
+ const joined=personalPaths.flatMap(path=>tails.map(tail=>[...path,...tail.map(node=>node.id)]));
+ return joined.every(path=>new Set(path).size===path.length)?joined:null;
+}

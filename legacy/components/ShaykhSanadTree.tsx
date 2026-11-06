@@ -6,7 +6,7 @@ import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
 import {preparedSanadText,prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
-import {linkSharedBridge,linkedBridgeTails,recoverSharedBridgePrefix,sharedBridgePaths} from '../lib/sharedBridge';
+import {joinSharedBridgeRoutes,linkSharedBridge,linkedBridgeTails,recoverSharedBridgePrefix,sharedBridgePaths} from '../lib/sharedBridge';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import PersonalSanadInput from './PersonalSanadInput';
 import type {BuilderLibrary} from '../lib/bookBuilder';
@@ -83,12 +83,13 @@ export default function ShaykhSanadTree(){
        const graph=preparedSanadGraph(savedPreparation,savedPreparation.tokens.map((token,i)=>({...token,personId:s.ids[i]})));
        const tail=savedPreparation.suffix.replace(/^\s*،\s*/u,'').trim();
        const matches=linked.map(bridge=>linkedBridgeTails(bridge,tail,s.ids.at(-1)!)).filter(tails=>tails!==null);
-       if(graph&&matches.length===1){
+       const joined=graph&&matches.length===1?joinSharedBridgeRoutes(graph.paths,matches[0],s.ids.at(-1)!):null;
+       if(graph&&joined){
         const tails=matches[0];
         const graphNames=Object.fromEntries([...tails.flat(),...graph.nodes].map(node=>[node.id,node.name]));
         const issuerKey='shaykh:'+sheikh.id;
         graphNames[issuerKey]=sheikh.name;
-        const graphRoutes=graph.paths.flatMap(path=>tails.map(end=>[...path,...end.map(node=>node.id)].reverse().concat(issuerKey)));
+        const graphRoutes=joined.map(path=>[...path].reverse().concat(issuerKey));
         const paths=[{id:sheikh.id+':'+s.id,label,routes:graphRoutes.map(route=>route.map(id=>graphNames[id])),graphRoutes,graphNames}];
         return {id:sheikh.id+':'+s.id,label,text,ids:s.ids,preparation,paths};
        }
