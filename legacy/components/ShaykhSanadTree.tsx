@@ -60,7 +60,7 @@ export default function ShaykhSanadTree(){
    try{
     const [{sheikhs},{sections},library]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'}),fetch('/api/book-builder',{headers:workspaceHeaders()}).then(async response=>response.ok?await response.json() as BuilderLibrary:null).catch(()=>null)]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
-    const linked=library?bridges.map(bridge=>linkSharedBridge(bridge,library.people)).filter(bridge=>bridge!==null):[];
+    const linked=library?bridges.map(bridge=>library.sharedBridgeGraphs?.find(graph=>graph.source.id===bridge.id&&graph.source.body===bridge.body)??linkSharedBridge(bridge,library.people)).filter(bridge=>bridge!==null):[];
     const groups=await Promise.all(sheikhs.map(async sheikh=>{
      const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null}];
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();

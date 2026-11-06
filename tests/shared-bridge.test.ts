@@ -1,6 +1,6 @@
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -36,3 +36,9 @@ assert.ok(routes.every(route=>route.filter(id=>id==='0').length===1&&route.at(-1
 assert.equal(linkedBridgeTails(linked!,tail,'wrong-id'),null);
 assert.equal(recoverSharedBridgePrefix(complete,[],[source]),null);
 assert.equal(recoverSharedBridgePrefix(complete.replace('زيد','سعيد'),ids,[source]),null);
+
+const review={version:1,sourceBody:body,identities:names.map((name,i)=>({name,personId:String(i),evidence:'reviewed fixture'}))};
+assert.deepEqual(reviewedSharedBridge(source,review,aliased)?.routes,linked?.routes);
+assert.equal(reviewedSharedBridge({...source,body:body+' '},review,aliased),null);
+assert.equal(reviewedSharedBridge(source,review,aliased.map(p=>p.id==='0'?{...p,archived:true}:p)),null);
+assert.equal(reviewedSharedBridge(source,{...review,identities:review.identities.slice(1)},aliased),null);

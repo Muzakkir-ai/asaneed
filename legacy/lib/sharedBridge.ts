@@ -4,6 +4,7 @@ import type {BuilderPerson} from './bookBuilder';
 import {sanadKey} from './unifiedSanad';
 
 export type SharedBridgeSource={id:string;body:string};
+export type SharedBridgeReview={version:1;sourceBody:string;identities:{name:string;personId:string;evidence:string}[]};
 
 /** Parse the explicit shared source grammar, preserving the source spelling of each narrator. */
 export function sharedBridgePaths(source:string){
@@ -77,4 +78,24 @@ export function linkedBridgeTails(bridge:NonNullable<ReturnType<typeof linkShare
   return null;
  });
  return paths.every(path=>path!==null)?paths:null;
+}
+
+/** A persisted review is bound to the exact source. Ignore stale and incomplete reviews. */
+export function reviewedSharedBridge(source:SharedBridgeSource,review:unknown,people:BuilderPerson[]){
+ if(!review||typeof review!=='object')return null;
+ const candidate=review as Partial<SharedBridgeReview>;
+ if(candidate.version!==1||candidate.sourceBody!==source.body||!Array.isArray(candidate.identities))return null;
+ const paths=sharedBridgePaths(source.body);
+ if(!paths)return null;
+ const active=new Set(people.filter(person=>!person.archived).map(person=>person.id));
+ const names=new Set(paths.flat());
+ const ids=new Map<string,string>();
+ for(const entry of candidate.identities){
+  if(!entry||!names.has(entry.name)||ids.has(entry.name)||!active.has(entry.personId)||typeof entry.evidence!=='string'||!entry.evidence.trim())return null;
+  ids.set(entry.name,entry.personId);
+ }
+ if(ids.size!==names.size)return null;
+ const routes=paths.map(path=>path.map(name=>({name,id:ids.get(name)!})));
+ if(routes.some(path=>new Set(path.map(node=>node.id)).size!==path.length))return null;
+ return {source,routes,unresolved:[]};
 }
