@@ -77,6 +77,13 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);
  assert.equal(captured.personalChain,personal+'، '+tail);
  assert.equal(records[0].sanadText,personal,'new draft composition does not rewrite its source');
+ const unknown='كما أخذته عن عبد الله، عن راوٍ محفوظ بلا تتمة';
+ await saveReading({sanadText:unknown,personalPersonIds:[student,meeting],continuationId:null});
+ assert.equal(records[0].sanadText,unknown);
+ assert.equal(records[0].continuationId,null);
+ library.sharedBridgeGraphs=[];
+ await assert.rejects(()=>call(issuance),/اختر تتمة مشتركة معتمدة/);
+ assert.equal(records[0].sanadText,unknown);
  admin=false;await assert.rejects(()=>call(input),/Permission denied/);assert.equal(records.length,3);
  console.log('PASS: one shared profile save, original-riwayah resolution, independent numbered routes, source/metadata preservation, individual-save guard and role denial');
 })().catch(e=>{console.error(e);process.exitCode=1});

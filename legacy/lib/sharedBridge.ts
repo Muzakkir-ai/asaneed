@@ -162,3 +162,17 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
  }
  throw Error('لا يوجد نص مشترك معتمد يطابق جميع مسارات نقطة الالتقاء');
 }
+
+/** A saved personal path is complete as an entry even when its onward path is unavailable. */
+export function personalSanadEndsAtSavedNarrator(text:string,ids:string[]){
+ const prepared=prepareSavedSanadPeople(text,true,'end');
+ return !!prepared&&ids.length>0&&ids.length===prepared.tokens.length&&ids.every(Boolean)
+  &&!!preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids[i]})));
+}
+
+export function automaticSharedBridgeId(text:string,ids:string[],bridges:ReviewedSharedBridge[]){
+ if(!personalSanadEndsAtSavedNarrator(text,ids))return null;
+ const options=savedSharedBridgeDiagram(text,ids,bridges)?.options??[];
+ if(options.length!==1)return null;
+ try{composeReferencedPersonalSanad(text,ids,bridges,options[0]);return options[0];}catch{return null;}
+}

@@ -1,6 +1,6 @@
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {automaticSharedBridgeId,personalSanadEndsAtSavedNarrator,composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -78,3 +78,10 @@ const rooted={...reviewed,routes:reviewed.routes.map(route=>[anchor,...route])};
 const rootPersonal='كما أخذته عن عبد الله، عن إبراهيم العُبيدي';
 assert.equal(composeReferencedPersonalSanad(rootPersonal,['student',anchor.id],[rooted],source.id),rootPersonal+'، '+body);
 assert.throws(()=>composeReferencedPersonalSanad(rootPersonal,['student','distinct-ubaydi'],[rooted],source.id),/نقطة الالتقاء/);
+
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed]),source.id);
+assert.equal(automaticSharedBridgeId(rootPersonal,['student',anchor.id],[rooted]),source.id);
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,another]),null);
+assert.equal(automaticSharedBridgeId(personal,ids,[]),null);
+assert.equal(personalSanadEndsAtSavedNarrator(personal,ids),true);
+assert.equal(personalSanadEndsAtSavedNarrator(complete,ids),false);
