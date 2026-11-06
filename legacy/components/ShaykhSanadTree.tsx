@@ -1,4 +1,6 @@
 import {verifiedOnwardSources,type OnwardContext} from '../lib/verifiedOnwardSources';
+import CombinedSanadView from './CombinedSanadView';
+import {combinedSanad} from '../lib/combinedSanad';
 import BranchPersonCard from './BranchPersonCard';
 import SanadPathView from './SanadPathView';
 import {useEffect,useState} from 'react';
@@ -14,7 +16,7 @@ import type {BuilderLibrary} from '../lib/bookBuilder';
 import {workspaceHeaders} from '../lib/workspaceSelection';
 import {Button} from '@project/components/ui/button';
 
-type Path={id:string;label:string;routes:string[][];graphRoutes?:string[][];graphNames?:Record<string,string>};
+type Path={source?:string;id:string;label:string;routes:string[][];graphRoutes?:string[][];graphNames?:Record<string,string>};
 type SavedChain={reason:string;id:string;label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>};
 type Branch={name:string;children:Map<string,Branch>;ends:Path[]};
 const rootName='الإمام ابن الجزري';
@@ -79,9 +81,10 @@ export default function ShaykhSanadTree(){
       const savedPreparation=s.preparation??recoverSharedBridgePrefix(s.text,s.ids,bridges);
       try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids,savedPreparation,s.text);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=savedPreparation||prepareSavedSanadPeople(text);
-      const diagram=savedSharedBridgeDiagram(s.text,s.ids,library?verifiedOnwardSources(library,s.context):[],savedPreparation,{id:sheikh.id,name:sheikh.name},s.continuationId??undefined,s.context)?.diagram;
+      const onward=library?verifiedOnwardSources(library,s.context):[];
+      const diagram=savedSharedBridgeDiagram(s.text,s.ids,onward,savedPreparation,{id:sheikh.id,name:sheikh.name},s.continuationId??undefined,s.context)?.diagram;
       if(diagram){
-       const paths=[{id:sheikh.id+':'+s.id,label,routes:diagram.paths.map(route=>route.map(id=>diagram.names[id])),graphRoutes:diagram.paths,graphNames:diagram.names}];
+       const paths=[{id:sheikh.id+':'+s.id,label,routes:diagram.paths.map(route=>route.map(id=>diagram.names[id])),graphRoutes:diagram.paths,graphNames:diagram.names,source:onward.find(item=>item.source.id===diagram.sourceId)?.source.title}];
        return {id:sheikh.id+':'+s.id,label,text,ids:s.ids,preparation,paths,reason:''};
       }
       const grouped=new Map<string,{students:Set<string>;rest:string[]}>();
@@ -122,6 +125,7 @@ export default function ShaykhSanadTree(){
   void load();return()=>{cancelled=true;};
  },[]);
  const selected=paths.find(path=>path.id===selectedId);
+ const selectedRoutes=selected?.graphRoutes;
  const selectedSource=missing.find(source=>source.id===selectedId);
  const root:Branch={name:rootName,children:new Map(),ends:[]};
  for(const path of selected?[]:paths)for(const route of path.routes){
@@ -138,7 +142,7 @@ export default function ShaykhSanadTree(){
   <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
    {paths.length+missing.length>0&&<label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selectedId} onChange={e=>setSelectedId(e.target.value)}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}{missing.map(source=><option key={source.id} value={source.id}>{source.label} · يحتاج مراجعة قبل الترقيم</option>)}</select></label>}
-   {selectedSource?<SavedShaykhChain key={selectedSource.id} {...selectedSource}/>:selected?<SanadPathView key={selected.id} paths={selected.graphRoutes??selected.routes} renderPerson={(name,positions)=><BranchPersonCard name={selected.graphNames?.[name]??name} number={positions[0]} badgeLabels={positions.map(arabicDigits)}/>}/>:paths.length>0?<ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} onSelect={path=>setSelectedId(path.id)}/></ul>:<p>تظهر الأسانيد أدناه كما حُفظت في ملفات المشايخ.</p>}
+   {selectedSource?<SavedShaykhChain key={selectedSource.id} {...selectedSource}/>:selected&&selectedRoutes&&combinedSanad(selectedRoutes)?<CombinedSanadView key={selected.id} paths={selectedRoutes} groupJazariStudents={Boolean(selected.graphRoutes)} source={selected.source??selected.label} renderPerson={(id,positions)=><BranchPersonCard name={selected.graphNames?.[id]??id} number={positions[0]??null} badgeLabels={positions.map(arabicDigits)}/>}/>:selected?<SanadPathView key={selected.id} paths={selected.graphRoutes??selected.routes} renderPerson={(name,positions)=><BranchPersonCard name={selected.graphNames?.[name]??name} number={positions[0]} badgeLabels={positions.map(arabicDigits)}/>}/>:paths.length>0?<ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} onSelect={path=>setSelectedId(path.id)}/></ul>:<p>تظهر الأسانيد أدناه كما حُفظت في ملفات المشايخ.</p>}
    {!selectedSource&&missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,ids,preparation,reason},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain reason={reason} text={text} ids={ids} preparation={preparation}/></details></li>)}</ul></details>}
   </>}
  </section>;

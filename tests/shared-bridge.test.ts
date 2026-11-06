@@ -1,5 +1,6 @@
 import {verifiedOnwardSources} from '../legacy/lib/verifiedOnwardSources';
 import type {BuilderChain,BuilderLibrary} from '../legacy/lib/bookBuilder';
+import {combinedSanad} from '../legacy/lib/combinedSanad';
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
 import {automaticSharedBridgeId,personalSanadEndsAtSavedNarrator,composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
@@ -113,3 +114,12 @@ const sameShaykh=verifiedOnwardSources({...library,reviewedPersonalGraphs:[{...r
 assert.ok(sameShaykh.some(source=>source.source.id==='private'));
 assert.ok(!verifiedOnwardSources({...library,reviewedPersonalGraphs:sameShaykh.filter(source=>source.source.id==='private')},{...hafsContext,shaykhId:'two'}).some(source=>source.source.id==='private'));
 assert.ok(!verifiedOnwardSources({...library,people:registry.map(person=>person.id==='routeTeacher'?{...person,archived:true}:person)}).some(source=>source.source.id==='route1'));
+const combined=combinedSanad([['jazari','umyuti','a','join'],['jazari','ansari','b','c','join'],['jazari','umyuti','b','c','join']])!;
+assert.deepEqual(combined.directStudents,['umyuti','ansari']);
+assert.deepEqual(combined.lengths,[4,5]);
+assert.deepEqual(combined.shortestRoutes,[0]);
+assert.equal(combined.rows.flat().filter(id=>id==='join').length,1);
+assert.deepEqual(combined.edges.filter(edge=>edge.from==='umyuti').map(edge=>edge.to),['a','b']);
+assert.equal(combined.edges.some(edge=>edge.from==='ansari'&&edge.to==='a'),false);
+assert.deepEqual(combined.edges.find(edge=>edge.from==='b'&&edge.to==='c')?.routes,[1,2]);
+assert.equal(combinedSanad([['a','b'],['b','a']]),null);

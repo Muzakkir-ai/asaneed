@@ -15,7 +15,7 @@ export async function loadBuilderLibrary(client:SupabaseClient,prefixOwnerId?:st
  const text=(check(sections)||[]).map(s=>s.payload as Record<string,string>).filter(s=>!s.ownerId);
  const continuationSections:ContinuationSection[]=(check(sections)||[]).filter(s=>!s.payload.ownerId).map(s=>({id:s.id,...s.payload}));
  const bridgeAnchors=people.filter(person=>!person.archived&&sanadKey(person.name)===sanadKey('إبراهيم العُبيدي'));
- const sharedBridgeGraphs=(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>reviewedSharedBridge({id:s.id,body:s.payload.body||''},s.payload.sharedBridgeReview,people)).filter(graph=>graph!==null).map(graph=>{
+ const sharedBridgeGraphs=(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>reviewedSharedBridge({id:s.id,title:s.payload.title,body:s.payload.body||''},s.payload.sharedBridgeReview,people)).filter(graph=>graph!==null).map(graph=>{
   if(bridgeAnchors.length!==1)return graph;
   const {id,name}=bridgeAnchors[0];
   return {...graph,routes:graph.routes.map(route=>[{id,name},...route])};

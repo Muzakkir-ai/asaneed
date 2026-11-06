@@ -138,7 +138,7 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:Revi
  const names=Object.fromEntries([...paths.flat(),...graph.nodes].map(node=>[node.id,node.name]));
  const issuerId=issuer?'shaykh:'+issuer.id:null;
  if(issuerId&&issuer)names[issuerId]=issuer.name;
- return {options:options.map(option=>option.id),diagram:{names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal,personalText:preparedSanadText({...personal,suffix:''})}};
+ return {options:options.map(option=>option.id),diagram:{sourceId:match.id,names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal,personalText:preparedSanadText({...personal,suffix:''})}};
 }
 
 export type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBridge>>;

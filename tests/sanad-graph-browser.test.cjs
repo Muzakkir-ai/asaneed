@@ -11,16 +11,20 @@ const {chromium}=require('playwright');
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/sanad-graph-review.tsx',route+'/page.tsx');
-  let privateGraph;
+  let privateGraph,combinedPaths;
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
    const {r,b,identities,qunbul}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
    const shared=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
    privateGraph=shared.reviewedSharedBridge(b,{version:1,sourceBody:b.body,identities},identities.map(({personId:id})=>({id,archived:false})));
    assert.ok(privateGraph);
+   assert.equal(r.ids.at(-1),'060652f9-bc67-4fd3-ae14-625a84e0bc08','fixture must use the current Ubaydi endpoint');
+   privateGraph.routes=privateGraph.routes.map(path=>[{id:r.ids.at(-1),name:'إبراهيم العُبيدي'},...path]);
    const fixture=fs.readFileSync(route+'/page.tsx','utf8');
+   const combined=shared.savedSharedBridgeDiagram(r.body,r.ids,[privateGraph],undefined,{id:'fixture',name:'أُوَيس أحمد حسين مقادم'}).diagram;
+   combinedPaths=combined.paths;
    const input=(label,record,preparation)=>'<div data-testid="'+label+'"><PersonalSanadInput issuer={{id:"fixture",name:"الشيخ التجريبي"}} value={'+JSON.stringify(record.body)+'} personIds={'+JSON.stringify(record.ids??[])+'} preparation={'+JSON.stringify(preparation??null)+'} readOnly onApply={()=>{}}/></div>';
    const qunbulPreparation=qunbul?require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadPeople.js').prepareSavedSanadPeople(qunbul.body):null;
-   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'</main>'));
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'<div data-testid="combined-hafs"><CombinedSanadView groupJazariStudents paths={'+JSON.stringify(combined.paths)+'} renderPerson={(id,positions)=><BranchPersonCard name={('+JSON.stringify(combined.names)+')[id]} number={positions[0]??null} badgeLabels={positions.map(position=>position.toLocaleString("ar"))}/>} /></div></main>'));
   }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
@@ -105,7 +109,7 @@ const {chromium}=require('playwright');
    const personal=reading.getByRole('tabpanel');
    await personal.getByRole('button',{name:/المسار ٢/}).waitFor();
    assert.equal(await personal.getByRole('button',{name:/المسار /}).count(),2);
-   assert.equal(await personal.locator('[data-sanad-node]').last().getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
+   assert.equal(await personal.locator('[data-sanad-node]').last().getByText(/إبراهيم الع/).count(),1);
    assert.equal(await personal.locator('[data-sanad-node]').getByText(/الجَزَرِي|بن شحاذة/).count(),0);
    await reading.getByRole('tab',{name:'السند المتصل الكامل'}).click();
    const hafs=graph('private-hafs');
@@ -117,13 +121,16 @@ const {chromium}=require('playwright');
     for(let i=0;i<10;i++){
      await controls.nth(i).click();
      const positions=await hafs.locator('[data-narrator-level]').evaluateAll(nodes=>nodes.map(node=>Number(node.getAttribute('data-narrator-level').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
-     assert.ok(positions.length>=11&&positions.length<=14);
+     assert.ok(positions.length===combinedPaths[i].length);
      assert.deepEqual(positions,positions.map((_,index)=>index+1));
      assert.equal(await hafs.getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
-     assert.equal(await hafs.getByText(/إبراهيم الع/).count(),0);
+     assert.equal(await hafs.getByText(/إبراهيم الع/).count(),1);
      const names=await hafs.locator('[data-sanad-node] .narrator-person-card p').allTextContents();
-     const meeting=names.findIndex(name=>name.includes('شمس الدين محمد بن عمر بن قاسم'));
-     assert.match(names[meeting-1],/عبد الرحمن بن شحاذة/);
+     const meeting=combinedPaths[i].indexOf('060652f9-bc67-4fd3-ae14-625a84e0bc08');
+     assert.match(names[meeting-4],/عبد الرحمن بن شحاذة/);
+     assert.match(names[meeting-3],/شمس الدين محمد بن عمر بن قاسم/);
+     assert.match(names[meeting-2],/أحمد بن رجب/);
+     assert.match(names[meeting-1],/الأَجهُور/);
      assert.match(names[meeting+1],/المرزوقي/);
     }
     await hafs.getByRole('button',{name:'عرض الكل',exact:true}).click();
@@ -137,6 +144,33 @@ const {chromium}=require('playwright');
     assert.ok(await qunbul.getByRole('tabpanel').getByText(/إبراهيم العُبَيدِي/).count());
     await qunbul.getByRole('tab',{name:'السند المتصل الكامل'}).click();
     assert.ok(await qunbul.getByRole('tabpanel').getByText(/لا يمكن عرض السند الكامل/).isVisible());
+   }
+   const combined=page.getByTestId('combined-hafs');
+   const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
+   const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
+   assert.deepEqual(actualEdges,expectedEdges);
+   for(const [node,port] of [['from','start'],['to','end']]){
+    const ports=await combined.locator('[data-from]').evaluateAll((edges,[node,port])=>edges.map(edge=>JSON.stringify([edge.dataset[node],edge.dataset[port]])),[node,port]);
+    assert.equal(new Set(ports).size,ports.length,'each edge has a separate card port');
+   }
+   assert.equal(await combined.locator('[data-combined-narrator]').count(),new Set(combinedPaths.flat()).size);
+   assert.ok(await combined.getByText('أصحاب ابن الجزري',{exact:true}).isVisible());
+   assert.ok(await combined.getByText('أعلى سند',{exact:false}).isVisible());
+   await combined.getByLabel('عرض المسارات').selectOption('9');
+   assert.deepEqual(await combined.locator('[data-from][opacity="1"]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort()),combinedPaths[9].slice(1).map((to,i)=>JSON.stringify([combinedPaths[9][i],to])).sort());
+   await combined.getByLabel('عرض المسارات').selectOption('');
+   if(process.env.ASANEED_COMBINED_SCREENSHOTS){
+    for(const width of [1100,390,320]){
+     await page.setViewportSize({width,height:900});
+     if(width<500){
+      const viewport=combined.locator('[data-sanad-viewport]');
+      await combined.getByRole('button',{name:'تكبير لقراءة الأسماء'}).click();
+      assert.ok(await viewport.evaluate(element=>element.scrollWidth>element.clientWidth));
+      await combined.getByRole('button',{name:'عرض الرسم كاملًا'}).click();
+      assert.ok(await viewport.evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+     }
+     await combined.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_COMBINED_SCREENSHOTS+'/combined-hafs-'+width+'.png'});
+    }
    }
    console.log('PASS authorized Hafs data: all 10 numbered paths and RTL bounds at three widths');
   }
