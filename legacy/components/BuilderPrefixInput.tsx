@@ -20,6 +20,7 @@ export default function BuilderPrefixInput({value,onChange,continuations=[],sele
  const savedPeople=library?.quranMeetingPeople||[];
  for(const person of savedPeople){if(!knownNames.has(sanadKey(person.name))){options.push({value:'person:'+person.id,name:person.name,description:'من أسانيد القرآن المحفوظة — اختيار ومراجعة التتمة'});knownNames.add(sanadKey(person.name));}}
  const chooseJunction=(id:string)=>{
+  setError('');
   const person=id.startsWith('person:')?savedPeople.find(p=>'person:'+p.id===id):undefined;
   if(person){setPendingPerson(id);setAnchor(person.name);setBody('');setReviewed(false);setAdding(true);onSelect('');onPendingChange?.(true);}
   else{setPendingPerson('');setAdding(false);onSelect(id);}
@@ -29,7 +30,7 @@ export default function BuilderPrefixInput({value,onChange,continuations=[],sele
 
  return <div className="space-y-3">
 
- {library&&onPersonCreated&&<section aria-label="إضافة السند بالأسماء المحفوظة" className="space-y-3">{!readOnly&&<h4 className="font-semibold">بناء السند الشخصي — إضافة الرواة</h4>}{readOnly&&!preparation&&!initialPersonIds?.length?<p className="whitespace-pre-wrap text-sm leading-loose">{value}</p>:<PersonalSanadPeople readOnly={readOnly} preparation={preparation} library={library} initialPersonIds={initialPersonIds} onPendingChange={onPendingChange} onPersonCreated={onPersonCreated} beforeApply={junctionControl} onApply={(text,ids)=>{if(showJunction&&!selectedId){setError('اختر نقطة الالتقاء أسفل الرواة أولًا');return;}setError('');if(onAssemble)onAssemble(text,ids);else{onChange(text);onPeopleChange?.(ids);onPendingChange?.(false);}}}/>}</section>}
+ {library&&onPersonCreated&&<section aria-label="إضافة السند بالأسماء المحفوظة" className="space-y-3">{!readOnly&&<h4 className="font-semibold">بناء السند الشخصي — إضافة الرواة</h4>}{readOnly&&!preparation&&!initialPersonIds?.length?<p className="whitespace-pre-wrap text-sm leading-loose">{value}</p>:<PersonalSanadPeople readOnly={readOnly} preparation={preparation} library={library} initialPersonIds={initialPersonIds} onPendingChange={onPendingChange} onPersonCreated={onPersonCreated} beforeApply={junctionControl} onApply={(text,ids)=>{if(showJunction&&!selectedId){setError(pendingPerson?'احفظ تتمة هذا الشيخ إلى ابن الجزري قبل اعتماد ترتيب الرواة':'اختر نقطة الالتقاء أسفل الرواة أولًا');return;}setError('');if(onAssemble)onAssemble(text,ids);else{onChange(text);onPeopleChange?.(ids);onPendingChange?.(false);}}}/>}</section>}
  {!library&&junctionControl}
  {!readOnly&&showJunction&&<p className="text-xs text-muted-foreground">أضف الرواة حتى شيخ نقطة الالتقاء، ثم اختره أسفل آخر راوٍ. اختر من التتمات الجاهزة أو من رجال أسانيد القرآن المحفوظة.</p>}
  {!readOnly&&value&&<details className="rounded-md border p-3"><summary className="cursor-pointer text-sm">السند المحفوظ / المعاينة النصية</summary><p className="mt-2 whitespace-pre-wrap text-sm leading-loose">{value}</p></details>}
