@@ -149,6 +149,14 @@ const {chromium}=require('playwright');
    const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
    const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedEdges);
+   const idFor=async name=>await combined.locator('[data-combined-narrator]').filter({hasText:name}).getAttribute('data-combined-narrator');
+   const umyuti=await idFor(/أحمد بن أسد/), samdasi=await idFor(/محمد بن إبراهيم السَمَد/);
+   const direct=combined.locator('[data-from="'+umyuti+'"][data-to="'+samdasi+'"]');
+   assert.equal(await direct.getAttribute('data-start'),await direct.getAttribute('data-end'),'Umyuti to Samdasi is vertical');
+   const maqdisi=await idFor(/ابن غانم/), yemeni=await idFor(/^.*عبد الرحمن بن شحاذة/);
+   const bypass=combined.locator('[data-from="'+maqdisi+'"][data-to="'+yemeni+'"]');
+   assert.ok(Math.abs(Number(await bypass.getAttribute('data-bypass'))-Number(await bypass.getAttribute('data-start')))<120,'the skipped rows use a nearby lane');
+
    const lower=await combined.locator('[data-local-bypass]').evaluateAll(edges=>edges.map(edge=>[edge.dataset.from,edge.dataset.to]));
    const shortBranch=combinedPaths.flat().find(id=>id==='08a271e7-1478-4078-9839-c03944625472');
    const reconvergence=combinedPaths.flat().find(id=>id==='96d7bf3f-efdd-4a8b-97bb-adc69abbd8aa');

@@ -36,6 +36,27 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
   outgoing.set(edge.from,[...(outgoing.get(edge.from)??[]),edge]);
   incoming.set(edge.to,[...(incoming.get(edge.to)??[]),edge]);
  }
+ // Give a direct, unshared child its teacher's column before placing the rest.
+ const columnCount=(width-48)/cell;
+ const columns=Array.from({length:columnCount},(_,i)=>width/2+(i-(columnCount-1)/2)*cell);
+ for(const [rank,row] of graph.rows.entries()){
+  if(rank===0||row.length<2)continue;
+  const reserved=new Set<number>(),placed=new Set<string>();
+  const previous=graph.rows[rank-1];
+  for(const id of row){
+   const parents=incoming.get(id)??[];
+   if(parents.length!==1||!previous.includes(parents[0].from))continue;
+   const x=points.get(parents[0].from)!.x;
+   if(!columns.includes(x)||reserved.has(x))continue;
+   points.set(id,{...points.get(id)!,x});reserved.add(x);placed.add(id);
+  }
+  for(const id of row){
+   if(placed.has(id))continue;
+   const point=points.get(id)!;
+   const x=columns.filter(x=>!reserved.has(x)).sort((a,b)=>Math.abs(a-point.x)-Math.abs(b-point.x))[0];
+   points.set(id,{...point,x});reserved.add(x);
+  }
+ }
  for(const edges of outgoing.values())edges.sort((a,b)=>points.get(a.to)!.x-points.get(b.to)!.x);
  for(const edges of incoming.values())edges.sort((a,b)=>points.get(a.from)!.x-points.get(b.from)!.x);
  // Keep a longer branch in its original lane while its sibling skips this row.
@@ -50,7 +71,12 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
   const siblingSkips=preceding.some(id=>id!==parent&&(outgoing.get(id)??[]).some(edge=>points.get(edge.to)!.y>point.y));
   if(siblingSkips)points.set(row[0],{...point,x:points.get(parent)!.x});
  }
- const port=(edges:typeof graph.edges,edge:typeof graph.edges[number])=>(edges.indexOf(edge)-(edges.length-1)/2)*Math.min(16,cardWidth/(edges.length+1));
+ const port=(edges:typeof graph.edges,edge:typeof graph.edges[number])=>{
+  const straight=edges.find(candidate=>points.get(candidate.from)!.x===points.get(candidate.to)!.x
+   &&points.get(candidate.to)!.y-points.get(candidate.from)!.y<=rowHeight+28);
+  const step=Math.min(16,cardWidth/(edges.length+1));
+  return (edges.indexOf(edge)-(straight?edges.indexOf(straight):(edges.length-1)/2))*step;
+ };
  const lanes=new Map<number,typeof graph.edges>();
  for(const edge of graph.edges){
   const y=points.get(edge.from)!.y;
@@ -85,14 +111,18 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
       const start=a.y+cardHeight,end=b.y-5;
       const mid=start+6+(row.indexOf(edge)+1)*22/(row.length+1);
       const skipped=b.y-a.y>rowHeight+28;
-      const laneClear=skipped&&[...points.values()].every(point=>point.y<=a.y||point.y>=b.y||Math.abs(point.x-x1)>cardWidth/2+8);
-      const bypass=laneClear?x1:8+graph.edges.indexOf(edge)*12/(graph.edges.length+1);
+      const obstacles=skipped?[...points.values()].filter(point=>point.y>a.y&&point.y<b.y):[];
+      const clearance=cardWidth/2+8;
+      const candidates=[x1,...obstacles.flatMap(point=>[point.x-clearance,point.x+clearance])];
+      const bypass=candidates.filter(x=>x>=8&&x<=width-8&&obstacles.every(point=>Math.abs(point.x-x)>=clearance))
+       .sort((left,right)=>Math.abs(left-x1)-Math.abs(right-x1))[0]??x1;
+      const laneClear=skipped&&bypass===x1;
       const connector=skipped
        ? `M${x1} ${start} V${mid} H${bypass} V${end-6-ins.indexOf(edge)*3} H${x2} V${end}`
        : `M${x1} ${start} V${mid} H${x2} V${end}`;
       return <g key={JSON.stringify([from,to])} opacity={active?1:.15}>
        <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
-       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} data-local-bypass={laneClear||undefined} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
+       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} data-local-bypass={laneClear||undefined} data-bypass={skipped?bypass:undefined} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
       </g>;
      })}
     </svg>
