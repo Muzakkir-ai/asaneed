@@ -9,17 +9,25 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
  const [route,setRoute]=useState<number|null>(null);
  const arrow=useId(),graph=combinedSanad(paths);
  const viewport=useRef<HTMLDivElement>(null);
+ const [available,setAvailable]=useState(0);
+ const [zoomed,setZoomed]=useState(false);
+ const width=graph?.rows.length?Math.max(...graph.rows.map(row=>row.length))*cell+48:0;
+ const compact=available>0&&available<width;
+ const scale=compact&&!zoomed?available/width:1;
  useEffect(()=>{
   const element=viewport.current;
   if(!element)return;
-  const center=()=>{element.scrollLeft=(element.scrollWidth-element.clientWidth)/2;};
-  center();
-  const observer=new ResizeObserver(center);
+  const measure=()=>setAvailable(Math.max(0,element.clientWidth-16));
+  measure();
+  const observer=new ResizeObserver(measure);
   observer.observe(element);
   return ()=>observer.disconnect();
- },[paths]);
+ },[width]);
+ useEffect(()=>{
+  const element=viewport.current;
+  if(element)element.scrollLeft=(element.scrollWidth-element.clientWidth)/2;
+ },[scale,width]);
  if(!graph?.rows.length)return null;
- const width=Math.max(...graph.rows.map(row=>row.length))*cell+48;
  const grouped=groupJazariStudents&&graph.directStudents.length>1;
  const points=new Map(graph.rows.flatMap((row,y)=>row.map((id,x)=>[id,{x:width/2+(row.length/2-x-.5)*cell,y:y*rowHeight+(grouped&&y>0?28:0)}] as const)));
  const height=graph.rows.length*rowHeight+(grouped?28:0);
@@ -34,9 +42,13 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
    </select>
   </div>
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
-  <p className="text-xs text-muted-foreground sm:hidden">مرّر أفقيًا لرؤية الفروع.</p>
+  {compact&&<div className="flex flex-wrap items-center gap-2">
+   <button type="button" aria-pressed={zoomed} className="rounded border px-2 py-1 text-xs" onClick={()=>setZoomed(value=>!value)}>{zoomed?'عرض الرسم كاملًا':'تكبير لقراءة الأسماء'}</button>
+   {zoomed&&<span className="text-xs text-muted-foreground">مرّر أفقيًا لرؤية الفروع.</span>}
+  </div>}
   <div ref={viewport} className="overflow-x-auto rounded-lg border p-2" dir="ltr" data-sanad-viewport="">
-   <div className="relative mx-auto" style={{width,height}}>
+   <div className="relative mx-auto overflow-hidden" style={{width:width*scale,height:height*scale}}>
+   <div className="absolute left-0 top-0 origin-top-left" style={{width,height,transform:`scale(${scale})`}}>
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
@@ -52,6 +64,7 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
      <div className="h-full overflow-y-auto [&>article]:min-h-full [&>article>div>div:last-child]:hidden">{renderPerson(id,sanadPositions(route===null?paths:[paths[route]],id))}</div>
     </div>)}
    </div>
+  </div>
   </div>
  </section>;
 }

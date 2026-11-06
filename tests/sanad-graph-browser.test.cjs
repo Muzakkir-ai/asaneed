@@ -153,7 +153,13 @@ const {chromium}=require('playwright');
    if(process.env.ASANEED_COMBINED_SCREENSHOTS){
     for(const width of [1100,390,320]){
      await page.setViewportSize({width,height:900});
-     await combined.locator('[data-sanad-viewport]').evaluate(element=>{element.scrollLeft=(element.scrollWidth-element.clientWidth)/2;});
+     if(width<500){
+      const viewport=combined.locator('[data-sanad-viewport]');
+      await combined.getByRole('button',{name:'تكبير لقراءة الأسماء'}).click();
+      assert.ok(await viewport.evaluate(element=>element.scrollWidth>element.clientWidth));
+      await combined.getByRole('button',{name:'عرض الرسم كاملًا'}).click();
+      assert.ok(await viewport.evaluate(element=>element.scrollWidth<=element.clientWidth+1));
+     }
      await combined.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_COMBINED_SCREENSHOTS+'/combined-hafs-'+width+'.png'});
     }
    }
