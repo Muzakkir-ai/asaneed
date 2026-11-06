@@ -1,6 +1,8 @@
+import {verifiedOnwardSources} from '../legacy/lib/verifiedOnwardSources';
+import type {BuilderChain,BuilderLibrary} from '../legacy/lib/bookBuilder';
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {automaticSharedBridgeId,personalSanadEndsAtSavedNarrator,composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -78,3 +80,36 @@ const rooted={...reviewed,routes:reviewed.routes.map(route=>[anchor,...route])};
 const rootPersonal='كما أخذته عن عبد الله، عن إبراهيم العُبيدي';
 assert.equal(composeReferencedPersonalSanad(rootPersonal,['student',anchor.id],[rooted],source.id),rootPersonal+'، '+body);
 assert.throws(()=>composeReferencedPersonalSanad(rootPersonal,['student','distinct-ubaydi'],[rooted],source.id),/نقطة الالتقاء/);
+
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed]),source.id);
+assert.equal(automaticSharedBridgeId(rootPersonal,['student',anchor.id],[rooted]),source.id);
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,another]),null);
+assert.equal(automaticSharedBridgeId(personal,ids,[]),null);
+assert.equal(personalSanadEndsAtSavedNarrator(personal,ids),true);
+assert.equal(personalSanadEndsAtSavedNarrator(complete,ids),false);
+
+const registry=['author','bookTeacher','routeTeacher','otherTeacher','student'].map(id=>({id,name:id,display_name:'',archived:false}));
+const branch=(...ids:string[])=>ids.map(person_id=>({person_id,route_source:false}));
+const chain:BuilderChain={id:'parent',book_id:'book',book_chain_id:null,route_code:'',kind:'book',title:'أصل الكتاب',qari_id:'',rawi:'',continuation:'',confirmed:true,archived:false,revision:1,branches:[branch('bookTeacher')]};
+const route:BuilderChain={...chain,id:'route1',kind:'route',book_chain_id:'parent',qari_id:'asim',rawi:'حفص',title:'طريق حفص',branches:[branch('routeTeacher')]};
+const other:BuilderChain={...route,id:'route2',rawi:'شعبة',branches:[branch('otherTeacher')]};
+const library:BuilderLibrary={people:registry,books:[{id:'book',title:'كتاب',author_id:'author',archived:false}],chains:[chain,route,other,{...route,id:'draft',confirmed:false}],suggestions:[],continuations:{}};
+const sourceIndex=verifiedOnwardSources(library);
+const bookOnly='كما أخذته عن student، عن bookTeacher';
+assert.deepEqual(savedSharedBridgeDiagram(bookOnly,['student','bookTeacher'],sourceIndex)?.options,['parent','route1','route2']);
+assert.equal(automaticSharedBridgeId(bookOnly,['student','bookTeacher'],sourceIndex),null);
+const hafsContext={qariId:'asim',rawi:'حفص'};
+const hafsSources=verifiedOnwardSources(library,hafsContext);
+assert.equal(automaticSharedBridgeId(bookOnly,['student','bookTeacher'],hafsSources,hafsContext),'route1');
+assert.deepEqual(savedSharedBridgeDiagram(bookOnly,['student','bookTeacher'],hafsSources,undefined,undefined,undefined,hafsContext)?.diagram?.paths,[['@ibn-al-jazari','bookTeacher','student']]);
+const routeOnly='كما أخذته عن student، عن routeTeacher';
+assert.equal(automaticSharedBridgeId(routeOnly,['student','routeTeacher'],hafsSources,hafsContext),'route1');
+assert.equal(composeReferencedPersonalSanad(routeOnly,['student','routeTeacher'],hafsSources,'route1'),routeOnly+'، عن author، عن bookTeacher، عن الإمام ابن الجزري');
+assert.equal(automaticSharedBridgeId(routeOnly,['student','routeTeacher'],verifiedOnwardSources(library,{qariId:'asim',rawi:'شعبة'})),null);
+assert.throws(()=>composeReferencedPersonalSanad(routeOnly,['student','routeTeacher'],sourceIndex,'route2'),/نقطة الالتقاء/);
+assert.ok(sourceIndex.every(item=>item.routes.every(path=>!path.some(node=>node.id==='routeTeacher')||!path.some(node=>node.id==='otherTeacher'))));
+
+const sameShaykh=verifiedOnwardSources({...library,reviewedPersonalGraphs:[{...reviewed,source:{...reviewed.source,id:'private',kind:'personal',shaykhId:'one',qariId:'asim',rawi:'حفص'}}]},{...hafsContext,shaykhId:'one'});
+assert.ok(sameShaykh.some(source=>source.source.id==='private'));
+assert.ok(!verifiedOnwardSources({...library,reviewedPersonalGraphs:sameShaykh.filter(source=>source.source.id==='private')},{...hafsContext,shaykhId:'two'}).some(source=>source.source.id==='private'));
+assert.ok(!verifiedOnwardSources({...library,people:registry.map(person=>person.id==='routeTeacher'?{...person,archived:true}:person)}).some(source=>source.source.id==='route1'));

@@ -1,4 +1,5 @@
-import {composeReferencedPersonalSanad} from '../lib/sharedBridge';
+import {verifiedOnwardSources} from '../lib/verifiedOnwardSources';
+import {composeReferencedPersonalSanad,personalSanadEndsAtSavedNarrator} from '../lib/sharedBridge';
 import {guestKubraRoutes,usesLibraryKubra} from '../lib/guestKubra';
 import {loadBuilderLibrary} from '../../lib/sanad-library';
 import {context as requestContext} from '../compat/context';
@@ -43,7 +44,9 @@ export default createEndpoint({
    if(continuationId){
     if(tariqNumber||input.unifiedSanad)throw Error('احفظ التتمة مستقلة عن الطريق');
     const library=await loadBuilderLibrary(requestContext().client);
-    composeReferencedPersonalSanad(sanadText,input.personalPersonIds??existing?.personalPersonIds??[],library.sharedBridgeGraphs??[],continuationId);
+    composeReferencedPersonalSanad(sanadText,input.personalPersonIds??existing?.personalPersonIds??[],verifiedOnwardSources(library,{qariId:input.qariId,rawi:input.rawi,shaykhId:shaykh.id}),continuationId);
+   }else if(!tariqNumber&&input.continuationId===null&&input.personalPersonIds?.length){
+    if(!personalSanadEndsAtSavedNarrator(sanadText,input.personalPersonIds))throw Error('راجع الرواة ونقطة الالتقاء');
    }else if(tariqNumber?sanadText.length<100:!reachesJunction({personalChain:sanadText,junction}))throw Error('Complete the sanad up to its selected junction');
    if(input.variantId&&!existing)throw Error('السند الشخصي غير متاح لهذه الرواية');
    if(input.unifiedSanad){const expected=await resolveHoldingSanad({qariId:input.qariId!,rawi:input.rawi,personalChain:sanadText,junction,unifiedSanad:input.unifiedSanad});if(expected!==sanadText)throw Error('تغير الطريق بعد المعاينة؛ أعد اختياره');}

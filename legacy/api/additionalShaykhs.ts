@@ -1,4 +1,5 @@
-import {composeReferencedPersonalSanad,savedSharedBridgeDiagram} from '../lib/sharedBridge';
+import {verifiedOnwardSources} from '../lib/verifiedOnwardSources';
+import {automaticSharedBridgeId,composeReferencedPersonalSanad,personalSanadEndsAtSavedNarrator} from '../lib/sharedBridge';
 import {guestKubraRoutes,usesLibraryKubra} from '../lib/guestKubra';
 import {loadBuilderLibrary} from '../../lib/sanad-library';
 import {resolveBuilderPrefix} from '../lib/builderPrefix';
@@ -65,9 +66,9 @@ export default createEndpoint({
    const continuationId=input.continuationId===undefined?savedRef:input.continuationId;
    if(continuationId){
     const reviewed=library??await loadBuilderLibrary(requestContext().client);
-    composeReferencedPersonalSanad(personalChain,input.personalPersonIds??[],reviewed.sharedBridgeGraphs??[],continuationId);
+    composeReferencedPersonalSanad(personalChain,input.personalPersonIds??[],verifiedOnwardSources(reviewed,{shaykhId:existing.id}),continuationId);
    }
-   if(!input.personalPersonIds?.length||(!continuationId&&!reachesJunction({personalChain,junction}))||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
+   if(!input.personalPersonIds?.length||(!continuationId&&(input.continuationId===null?!personalSanadEndsAtSavedNarrator(personalChain,input.personalPersonIds??[]):!reachesJunction({personalChain,junction})))||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
    await zite.additionalShaykhs.update({id:existing.id,record:input.sanadScope==='kubra'?{kubraContinuationId:continuationId,kubraPersonalChain:personalChain,kubraJunction:junction,kubraPersonalPersonIds:input.personalPersonIds}:{continuationId,personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),...(input.sharedSughraSanad===undefined?{}:{sharedSughraSanad:input.sharedSughraSanad}),sharedPeopleReviewed:true}});
   }
 
@@ -76,8 +77,8 @@ export default createEndpoint({
    const name=(input.name||'').trim(),personalChain=(input.personalChain??existing?.personalChain??'').trim();
    const readings=input.readings||[];
    if(name.length<3||name.length>220)throw new Error('Enter a valid sheikh name');
-   if(existing?.continuationId&&personalChain!==existing.personalChain)throw Error('حرر السند المرتبط بالتتمة من محرر السند الشخصي');
-   if(!existing?.continuationId&&personalChain&&(personalChain.length<25||personalChain.length>30000||!reachesJunction({personalChain,junction:input.junction||existing?.junction||'ubaydi'})))throw new Error('The general sanad must reach Ibn al-Jazari or Ibrahim al-Ubaydi');
+   if(existing?.continuationId!==undefined&&personalChain!==existing.personalChain)throw Error('حرر السند المرتبط بالتتمة من محرر السند الشخصي');
+   if(existing?.continuationId===undefined&&personalChain&&(personalChain.length<25||personalChain.length>30000||!reachesJunction({personalChain,junction:input.junction||existing?.junction||'ubaydi'})))throw new Error('The general sanad must reach Ibn al-Jazari or Ibrahim al-Ubaydi');
    if(!readings.length&&!input.mutoon?.length&&!(input.libraryKubra??(existing&&usesLibraryKubra(existing))))throw new Error('Add a qiraat riwayah or a matn');
    if(readings.some(r=>!QURRA.some(q=>q.id===r.qariId&&q.rawis.some(v=>v===r.rawi))))throw new Error('Choose the ijazah riwayat');
    if(input.id&&!existing)throw new Error('Unknown sheikh');
@@ -139,12 +140,13 @@ export default createEndpoint({
     if(!variant&&catalogRoute&&(known.kubraSanadMode==='individual'||(known.kubraSanadMode==='separate'&&!kubraChain)))throw Error('اختر سندًا شخصيًا لهذه الرواية من الكبرى أو احفظ سند الكبرى المشترك في ملف الشيخ');
     if(!variant&&!input.tariqNumber&&known.individualSughra&&!selected?.sanadText)throw Error('احفظ سندًا شخصيًا لهذه الرواية أو اختر سندًا محفوظًا عند الإصدار');
     const composePersonal=async(text:string,ids:string[],reference?:string|null)=>{
-     if(!reference&&(!ids.length||reachesJunction({personalChain:text,junction:'jazari'})||reachesJunction({personalChain:text,junction:'ubaydi'})))return text;
+     if(!reference&&(!ids.length||reachesJunction({personalChain:text,junction:'jazari'})||(reference===undefined&&reachesJunction({personalChain:text,junction:'ubaydi'}))))return text;
      const reviewed=library??await loadBuilderLibrary(requestContext().client);
-     const bridges=reviewed.sharedBridgeGraphs??[];
-     const options=reference?[reference]:savedSharedBridgeDiagram(text,ids,bridges)?.options??[];
-     if(options.length!==1)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
-     return composeReferencedPersonalSanad(text,ids,bridges,options[0]);
+     const context={qariId:imam.id,rawi,routeId:catalogRoute?.route.id,shaykhId:guest.id};
+     const bridges=verifiedOnwardSources(reviewed,context);
+     const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
+     if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
+     return composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
     };
     const kubraSeparate=known.kubraSanadMode==='separate';
     const catalogPersonal=catalogRoute?await composePersonal(variant?.sanadText||kubraChain,variant?.personalPersonIds??(kubraSeparate?known.kubraPersonalPersonIds:known.personalPersonIds),variant?variant.continuationId:kubraSeparate?known.kubraContinuationId:known.continuationId):'';
