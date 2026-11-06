@@ -45,10 +45,10 @@ function numberedPaths(source:string,ids:string[]){
  return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
-function BranchView({branch,depth,selected,onSelect}:{branch:Branch;depth:number;selected?:Path;onSelect:(path:Path)=>void}){
- return <li className="space-y-2"><span className={'inline-block rounded-lg border px-3 py-1 '+(selected?.names[depth-1]===branch.name?'border-primary bg-primary/10':'')}>{arabicDigits(depth)} · {branch.name}</span>
+function BranchView({branch,depth,selected,onSelect,branchFrom}:{branch:Branch;depth:number;branchFrom?:string;selected?:Path;onSelect:(path:Path)=>void}){
+ return <li className="min-w-0 space-y-2">{branchFrom?<span className="block text-xs text-primary">فرع من {branchFrom}</span>:depth>1&&<span aria-hidden="true" className="block text-center text-primary">↓</span>}<span className={'block w-full break-words rounded-lg border px-3 py-1 '+(selected?.names[depth-1]===branch.name?'border-primary bg-primary/10':'')}>{arabicDigits(depth)} · {branch.name}</span>
  {branch.ends.map(path=><Button key={path.id} type="button" size="sm" variant={selected?.id===path.id?'default':'outline'} onClick={()=>onSelect(path)}>{path.label}</Button>)}
- {branch.children.size>0&&<ul className="ms-3 space-y-2 border-s border-primary/30 ps-3">{[...branch.children.values()].map(child=><BranchView key={child.name} branch={child} depth={depth+1} selected={selected} onSelect={onSelect}/>)}</ul>}
+ {branch.children.size>0&&<ul className="min-w-0 space-y-2">{branch.children.size>1&&<li className="text-xs font-medium text-primary">↳ {arabicDigits(branch.children.size)} فروع</li>}{[...branch.children.values()].map(child=><BranchView key={child.name} branch={child} depth={depth+1} branchFrom={branch.children.size>1?branch.name:undefined} selected={selected} onSelect={onSelect}/>)}</ul>}
  </li>;
 }
 export default function ShaykhSanadTree(){
