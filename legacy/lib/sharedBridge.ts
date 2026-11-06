@@ -1,3 +1,5 @@
+import {prepareSavedSanadPeople} from './preparedSanadPeople';
+import {preparedSanadGraph} from './preparedSanadGraph';
 import type {BuilderPerson} from './bookBuilder';
 import {sanadKey} from './unifiedSanad';
 
@@ -43,4 +45,36 @@ export function linkSharedBridge(source:SharedBridgeSource,people:BuilderPerson[
 export function matchesSharedBridgeSuffix(source:string,tail:string){
  const body=source.trim();
  return body===tail||[...body.matchAll(/،\s*(?=عن\s)/gu)].some(match=>body.slice(match.index+match[0].length)===tail);
+}
+
+/** Recover the saved personal graph only at an exact, published continuation boundary. */
+export function recoverSharedBridgePrefix(source:string,ids:string[],bridges:SharedBridgeSource[]){
+ if(!ids.length||ids.some(id=>!id))return null;
+ const text=source.trim();
+ for(const match of text.matchAll(/،\s*(?=عن\s)/gu)){
+  const tail=text.slice(match.index+match[0].length);
+  if(!bridges.some(bridge=>matchesSharedBridgeSuffix(bridge.body,tail)))continue;
+  const head=prepareSavedSanadPeople(text.slice(0,match.index),true,'end');
+  if(head?.tokens.length!==ids.length)continue;
+  const graph=preparedSanadGraph(head,head.tokens.map((token,i)=>({...token,personId:ids[i]})));
+  if(graph)return {...head,suffix:text.slice(match.index)};
+ }
+ return null;
+}
+
+/** Join only paths whose first teacher follows the saved meeting identity. */
+export function linkedBridgeTails(bridge:NonNullable<ReturnType<typeof linkSharedBridge>>,tail:string,meetingId:string){
+ if(!bridge.routes||!matchesSharedBridgeSuffix(bridge.source.body,tail))return null;
+ const sourcePaths=sharedBridgePaths(tail);
+ if(!sourcePaths)return null;
+ const paths=sourcePaths.map(path=>{
+  for(const route of bridge.routes!){
+   const junction=route.findIndex(node=>node.id===meetingId);
+   if(junction<0)continue;
+   const rest=route.slice(junction+1);
+   if(rest.length===path.length&&rest.every((node,i)=>sanadKey(node.name)===sanadKey(path[i])))return rest;
+  }
+  return null;
+ });
+ return paths.every(path=>path!==null)?paths:null;
 }

@@ -1,5 +1,6 @@
+import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {linkSharedBridge,matchesSharedBridgeSuffix,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -19,3 +20,19 @@ assert.equal(linked?.routes?.[0][0].name,'البَقَرِيّ');
 assert.equal(linked?.source.body,body);
 assert.deepEqual(linkSharedBridge(source,[...aliased,{...people[1],id:'duplicate'}])?.unresolved,[{name:'مُحَمَّد',ids:['1','duplicate']}]);
 console.log('PASS exact continuation boundaries, parallel paths, shared junctions, aliases, source spelling and duplicate review');
+
+const personal='كما أخذته عن عبد الله، عن يوسف، عن إسماعيل (ح). وقرأ عبد الله أيضًا على يعقوب، عن إسماعيل، عن البَقَرِيّ';
+const ids=['student','teacher1','join','teacher2','join','0'];
+const complete=personal+'، '+tail;
+const recovered=recoverSharedBridgePrefix(complete,ids,[source]);
+assert.ok(recovered);
+const personalGraph=preparedSanadGraph(recovered,recovered.tokens.map((token,i)=>({...token,personId:ids[i]})));
+assert.deepEqual(personalGraph?.paths,[['student','teacher1','join','0'],['student','teacher2','join','0']]);
+const continuations=linkedBridgeTails(linked!,tail,'0');
+assert.deepEqual(continuations?.map(path=>path.map(node=>node.id)),[['1','2','6'],['1','3','4','6'],['1','3','5','6']]);
+const routes=personalGraph!.paths.flatMap(path=>continuations!.map(end=>[...path,...end.map(node=>node.id)]));
+assert.equal(routes.length,6);
+assert.ok(routes.every(route=>route.filter(id=>id==='0').length===1&&route.at(-1)==='6'));
+assert.equal(linkedBridgeTails(linked!,tail,'wrong-id'),null);
+assert.equal(recoverSharedBridgePrefix(complete,[],[source]),null);
+assert.equal(recoverSharedBridgePrefix(complete.replace('زيد','سعيد'),ids,[source]),null);
