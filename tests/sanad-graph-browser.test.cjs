@@ -59,6 +59,10 @@ const {chromium}=require('playwright');
    assert.equal(await graph('book').locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),width===1100?2:0);
    assert.ok(await page.locator('main.zite-app').evaluate(e=>e.scrollWidth<=e.clientWidth));
   }
+  const repeated=graph('repeated');
+  await repeated.getByRole('button',{name:/المسار ٢/}).click();
+  await repeated.getByRole('region',{name:'المسار ٢'}).getByRole('heading',{name:'المسار ٢'}).waitFor();
+  assert.equal(await repeated.locator('[data-sanad-node]').count(),3);
   const reading=page.getByTestId('reading'),g=graph('reading');
   await g.getByRole('button',{name:/المسار ٢/}).click();
   assert.deepEqual((await measure(g)).map(n=>n.position),['١','٢','٣','٤','٥']);

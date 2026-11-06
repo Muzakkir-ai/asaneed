@@ -1,4 +1,5 @@
 'use client';
+import SanadPathView from '../../legacy/components/SanadPathView';
 import ConnectedChainEditor from '../../legacy/components/ConnectedChainEditor';
 import SavedRouteGraph from '../../legacy/components/SavedRouteGraph';
 import PersonalSanadInput from '../../legacy/components/PersonalSanadInput';
@@ -25,6 +26,7 @@ export default function Review(){
   <div data-testid="book"><ConnectedChainEditor lib={library} start={author} startId={people[0].id} end={rawi} roles branches={branches} onChange={()=>{}} onCreate={async()=>{throw Error('fixture');}}/></div>
   <div data-testid="saved"><SavedRouteGraph library={library} route={route}/></div>
   <div data-testid="draft"><PersonalSanadInput value={'كما أخذته عن '+[author,first,meeting,rawi].join('، عن ')} personIds={[0,1,4,5].map(i=>people[i].id)} complete onApply={()=>{}}/></div>
+  <div data-testid="repeated"><SanadPathView paths={[[author,first],[author,second,author]]} renderPerson={name=><span>{name}</span>}/></div>
   <div data-testid="personal"><PersonalSanadInput value={source} personIds={personIds} complete readOnly onApply={()=>{}}/></div>
  </main>;
 }

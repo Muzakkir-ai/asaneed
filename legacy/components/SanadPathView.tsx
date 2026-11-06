@@ -10,6 +10,7 @@ export default function SanadPathView({paths,renderPerson,afterPerson,unconnecte
  const panel=useId();
  const selected=showPaths&&pathIndex!==null?paths[pathIndex]:undefined;
  const visible=selected?[selected]:paths;
+ const routeLabel=(index:number)=>'المسار '+arabicDigits((selected ? pathIndex ?? index : index)+1);
  const layout=sanadPathLayout(visible,true);
  const gap=(id:string,connector:'arrow'|'stem'|null)=><div className="sanad-graph-gap">
   {connector&&<span aria-hidden="true" className={connector==='arrow'?'sanad-graph-arrow':'sanad-graph-stem'}/>}
@@ -35,8 +36,8 @@ export default function SanadPathView({paths,renderPerson,afterPerson,unconnecte
     {paths.map((path,i)=><button key={i} type="button" aria-pressed={i===pathIndex} onClick={()=>setPathIndex(i)}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</button>)}
     <button className="prepared-graph-all" type="button" aria-pressed={!selected} onClick={()=>setPathIndex(null)}>عرض الكل</button>
    </div>}
-   {unconnected?<div className="space-y-2">{unconnected.map(id=><div key={id}>{renderPerson(id,[])}</div>)}</div>:layout?blocks(layout):visible.map((path,i)=><section key={i} className="mb-3 rounded-lg border p-3" aria-label={'المسار '+arabicDigits(i+1)}>
-    <h4 className="mb-2 text-sm font-semibold">المسار {arabicDigits(i+1)}</h4>
+   {unconnected?<div className="space-y-2">{unconnected.map(id=><div key={id}>{renderPerson(id,[])}</div>)}</div>:layout?blocks(layout):visible.map((path,i)=><section key={i} className="mb-3 rounded-lg border p-3" aria-label={routeLabel(i)}>
+    <h4 className="mb-2 text-sm font-semibold">{routeLabel(i)}</h4>
     {path.map((id,j)=><div key={j} data-sanad-node={id}>{renderPerson(id,[j+1])}{gap(id,j<path.length-1?'arrow':null)}</div>)}
    </section>)}
   </div>
