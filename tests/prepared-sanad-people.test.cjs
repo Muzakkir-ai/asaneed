@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});Object.assign(global,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});const {createRoot}=require('react-dom/client');
 (async()=>{await swc.loadBindings();const resolve=Module._resolveFilename,load=Module._load;
  Module._resolveFilename=function(id,parent,...args){if(id.startsWith('@project/components/'))id=path.resolve('legacy-ui',id.slice('@project/components/'.length));return resolve.call(this,id,parent,...args);};
- Module._load=function(id,parent,...args){if(id==='./ChainNarratorRow'&&parent.filename.endsWith('PersonalSanadPeople.tsx'))return {__esModule:true,default:({node,onChange})=>React.createElement('button',{type:'button','data-person-name':node.name,onClick:()=>onChange({name:'الاسم المعدل',personId:node.personId})},node.name)};return load.call(this,id,parent,...args);};
+ Module._load=function(id,parent,...args){if(id==='./ChainNarratorRow')return {__esModule:true,default:({node,onChange})=>React.createElement('button',{type:'button','data-person-name':node.name,onClick:()=>onChange({name:'الاسم المعدل',personId:node.personId})},node.name)};return load.call(this,id,parent,...args);};
  const compile=(m,file)=>m._compile(swc.transformSync(fs.readFileSync(file,'utf8'),{filename:file,jsc:{parser:{syntax:'typescript',tsx:file.endsWith('.tsx')},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'}}).code,file);require.extensions['.ts']=compile;require.extensions['.tsx']=compile;
  const {prepareSavedSanadPeople,preparedSanadText}=require('../legacy/lib/preparedSanadPeople.ts'),People=require('../legacy/components/PersonalSanadPeople.tsx').default;
  const prefix='كما أخذت ذلك عن الشيخ الأول، عن الشيخ الثاني، عن الشيخ الثاني والشيخة الثالثة، وهما عن الشيخ الرابع، عن الشيخ إبراهيم العُبَيدِي';
@@ -19,10 +19,10 @@ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});Object.ass
  const graphPrepared=prepareSavedSanadPeople(graphText),graphPeople=[...new Set(graphPrepared.tokens.map(t=>t.name))].map((name,i)=>({id:'saved-'+i,name,display_name:'',archived:false}));
  const graphRoot=createRoot(document.getElementById('root'));let graphApplied;
  await act(async()=>graphRoot.render(React.createElement(People,{library:{people:graphPeople},preparation:graphPrepared,onPersonCreated:()=>assert.fail('all graph people already saved'),onApply:(...args)=>graphApplied=args})));
- assert.equal(document.querySelectorAll('[data-graph-node]').length,8,'converging paths render one visible meeting node');assert.equal(graphApplied,undefined);
+ assert.equal(document.querySelectorAll('[data-sanad-node]').length,8,'converging paths render one visible meeting node');assert.equal(graphApplied,undefined);
  await act(async()=>document.querySelector('[data-person-name="الشيخ الملتقى"]').click());
  assert.equal(document.querySelector('[data-person-name="الاسم المعدل"]').textContent,'الاسم المعدل','explicit edits stay visible');
- await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='السند الأعلى٦ رواة').click());assert.equal(document.querySelectorAll('[data-graph-node]').length,6,'view selection only hides unrelated branch cards');
+ await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='المسار ١ · ٦ رواة').click());assert.equal(document.querySelectorAll('[data-sanad-node]').length,6,'view selection only hides unrelated branch cards');
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='تأكيد الرواة من النص السابق').click());
  assert.equal(graphApplied[0],graphText.replaceAll('الشيخ الملتقى','الاسم المعدل'),'one shared-node edit updates its source occurrences while retaining all connectors');
  await act(async()=>graphRoot.unmount());

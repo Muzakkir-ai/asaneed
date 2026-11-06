@@ -1,3 +1,11 @@
+## Shared sanad diagrams — 6 November 2026
+
+The sanad screens use one RTL narrator card and path renderer for personal and per-reading sanads, book and route editors, saved route previews and the additional-shaykh diagram. The reading editor loads the selected shaykh reading record or the shared profile source. The personal editor reads the holding or shared profile source. The books/routes builder and linked previews use structured book and route segments from the builder library. Saved text remains available for comparison.
+
+Numbering starts at the first visible narrator on each explicit path. A common narrator shows every applicable position in the all-path view. Parallel lanes have individual downward arrows into and out of their cards on wide screens. Narrow screens stack labeled lanes. While drafting a parallel shaykh, choosing the shared meeting narrator displays the branch inline. Complex overlapping choices that cannot be drawn without implying extra routes appear as separate paths. Ambiguous legacy prose stays available for review.
+
+Chromium fixtures matched card and arrow geometry across adapters at desktop and mobile widths, and exercised path selection, collapse, editing and draft parallel arrows. The sanad and personal-sanad suites pass. The change needs no migration or updates to saved records.
+
 ## Library-linked Kubrā and additional personal sanads — 6 November 2026
 
 Additional shaykh profiles can select the full Ṣughrā, individual Ṣughrā riwāyāt and library-linked Kubrā. Issuer 01 defaults to the Kubrā link, with an explicit profile setting to change it. Confirmed, active Kubrā library routes are resolved at read and issuance time using the shaykh’s saved personal prefix. Manually attached complete routes remain available when there is no matching catalog route.

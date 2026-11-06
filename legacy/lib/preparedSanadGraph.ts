@@ -26,16 +26,3 @@ export function preparedSanadGraph(source:PreparedSanadPeople,people:{name:strin
  nodes.sort((a,b)=>(depth.get(a.id)||0)-(depth.get(b.id)||0)||a.indices[0]-b.indices[0]);paths.sort((a,b)=>a.length-b.length);
  return {nodes,edges,paths};
 }
-
-/** All view uses the highest (shortest) rank; a selected path keeps its own actual rank. */
-export function preparedGraphLevels(graph:PreparedGraph,path?:string[]){
- const levels=new Map(graph.nodes.map(n=>[n.id,new Set<number>()]));
- for(const route of graph.paths)route.forEach((id,i)=>levels.get(id)?.add(route.length-i));
- const letters='أبجدهوزحطيكلمنسعفصقرشتثخذضظغ';
- const letter=(index:number):string=>index<letters.length?letters[index]:letter(Math.floor(index/letters.length)-1)+letters[index%letters.length];
- const shown=new Map<string,{level:number;suffix:string}[]>();
- for(const node of graph.nodes){const index=path?.indexOf(node.id);const ranks=path?(index!==undefined&&index>=0?[path.length-index]:[]):[Math.min(...levels.get(node.id)!)];
-  shown.set(node.id,ranks.map(level=>{const peers=graph.nodes.filter(n=>path?levels.get(n.id)!.has(level):Math.min(...levels.get(n.id)!)===level);return {level,suffix:peers.length>1?letter(peers.findIndex(n=>n.id===node.id)):''};}));
- }
- return shown;
-}
