@@ -1,3 +1,4 @@
+import {routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import {verifiedOnwardSources} from '../legacy/lib/verifiedOnwardSources';
 import type {BuilderChain,BuilderLibrary} from '../legacy/lib/bookBuilder';
 import {combinedSanad} from '../legacy/lib/combinedSanad';
@@ -123,3 +124,18 @@ assert.deepEqual(combined.edges.filter(edge=>edge.from==='umyuti').map(edge=>edg
 assert.equal(combined.edges.some(edge=>edge.from==='ansari'&&edge.to==='a'),false);
 assert.deepEqual(combined.edges.find(edge=>edge.from==='b'&&edge.to==='c')?.routes,[1,2]);
 assert.equal(combinedSanad([['a','b'],['b','a']]),null);
+
+const points=new Map([['root',{x:180}],['a',{x:80}],['b',{x:240}],['c',{x:320}],['d',{x:400}],['end',{x:180}]]);
+const direct=routeSanadConnectors([['root'],['end']],points,[{from:'root',to:'end',x1:180,x2:180}],480,100,70,false);
+assert.equal(direct.connectors[0].d,'M180 70 V113');
+const fan=routeSanadConnectors([['root'],['a','b','c','d'],['end']],points,[
+ {from:'root',to:'a',x1:156,x2:80},{from:'root',to:'b',x1:172,x2:240},
+ {from:'root',to:'c',x1:188,x2:320},{from:'root',to:'d',x1:204,x2:400},
+ {from:'a',to:'end',x1:80,x2:156},{from:'b',to:'end',x1:240,x2:172},
+ {from:'c',to:'end',x1:320,x2:188},{from:'d',to:'end',x1:400,x2:204},
+],480,100,70,false);
+const lane=(i:number)=>Number(/ V(\d+) H/u.exec(fan.connectors[i].d)?.[1]);
+assert.ok(Math.abs(lane(2)-lane(3))>=14);
+assert.ok(Math.abs(lane(6)-lane(7))>=14);
+const skipped=routeSanadConnectors([['root'],['a'],['end']],points,[{from:'root',to:'end',x1:180,x2:180}],480,100,70,false);
+assert.equal(skipped.connectors[0].bypass,180);
