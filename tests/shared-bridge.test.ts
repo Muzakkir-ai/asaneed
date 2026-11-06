@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {linkSharedBridge,matchesSharedBridgeSuffix,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+
+const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
+const body='عن البَقَرِيّ، '+tail;
+const source={id:'reviewed-source',body};
+const names=['البَقَرِيّ','مُحَمَّد','خالد','أحمد','زيد','عمرو','ابن الجزري'];
+const people=names.map((name,i)=>({id:String(i),name,archived:false,display_name:''}));
+people[0]={...people[0],name:'شمس الدين البقري'};
+const aliased=[{...people[0],aliases:[{name:'البقري',key:'البقري'}]},...people.slice(1)];
+assert.equal(matchesSharedBridgeSuffix(body,tail),true);
+assert.equal(matchesSharedBridgeSuffix(body,tail.replace('زيد','سعيد')),false);
+assert.equal(matchesSharedBridgeSuffix(body,tail.slice(3)),false);
+assert.equal(sharedBridgePaths('عن أحمد، عن ابن الجزري'),null);
+assert.equal(linkSharedBridge(source,people)?.routes,null);
+const linked=linkSharedBridge(source,aliased);
+assert.deepEqual(linked?.routes?.map(route=>route.map(node=>node.id)),[['0','1','2','6'],['0','1','3','4','6'],['0','1','3','5','6']]);
+assert.equal(linked?.routes?.[0][0].name,'البَقَرِيّ');
+assert.equal(linked?.source.body,body);
+assert.deepEqual(linkSharedBridge(source,[...aliased,{...people[1],id:'duplicate'}])?.unresolved,[{name:'مُحَمَّد',ids:['1','duplicate']}]);
+console.log('PASS exact continuation boundaries, parallel paths, shared junctions, aliases, source spelling and duplicate review');

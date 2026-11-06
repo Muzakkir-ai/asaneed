@@ -6,6 +6,7 @@ import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
 import {preparedSanadText,prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
+import {matchesSharedBridgeSuffix,sharedBridgePaths} from '../lib/sharedBridge';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import PersonalSanadInput from './PersonalSanadInput';
 import {Button} from '@project/components/ui/button';
@@ -28,25 +29,12 @@ function pathsFromPreparation(prepared:NonNullable<ReturnType<typeof prepareSave
  const graph=preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids.length===prepared.tokens.length?ids[i]:undefined})));
  return graph?{paths:graph.paths.map(path=>path.map(id=>graph.nodes.find(node=>node.id===id)!.name)),suffix:prepared.suffix}:null;
 }
-/** The shared Ubaydi text explicitly names its split and its parallel teachers. */
-function sharedBridgePaths(source:string){
- const match=/^(.*?)\s*\(ح\)\.\s*وقرأ (.+?) أيضًا على (.+?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)\s*$/u.exec(source.trim());
- if(!match)return null;
- const [,first,origin,second,teachers,end]=match;
- const main=linearNames(first);
- const pivot=main.findIndex(name=>sanadKey(name)===sanadKey(origin));
- if(pivot<0)return null;
- const rest=linearNames(second);
- const parallel=teachers.split(/،\s*و/u);
- if(!rest.length||parallel.length<2)return null;
- return [[...main,end],...parallel.map(teacher=>[...main.slice(0,pivot+1),...rest,teacher,end])];
-}
 function recoverSharedBridgePrefix(source:string,ids:string[],bridges:{body:string}[]){
  if(!ids.length)return null;
  const text=source.trim();
  for(const match of text.matchAll(/،\s*(?=عن\s)/gu)){
   const tail=text.slice(match.index+match[0].length);
-  if(!bridges.some(bridge=>bridge.body.trim().endsWith('، '+tail)||bridge.body.trim()===tail))continue;
+  if(!bridges.some(bridge=>matchesSharedBridgeSuffix(bridge.body,tail)))continue;
   const head=prepareSavedSanadPeople(text.slice(0,match.index),true,'end');
   if(head?.tokens.length!==ids.length||!pathsFromPreparation(head,ids))continue;
   return {...head,suffix:text.slice(match.index)};
