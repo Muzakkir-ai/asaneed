@@ -7,7 +7,7 @@ export function prepareSavedSanadPeople(source:string,reviewed=false,endpoint:'u
  const anchor=(endpoint==='jazari'?/(?:ابن\s+الجزري|محمد\s+بن\s+محمد\s+(?:بن\s+محمد\s+)?الجزري)(?=[.،؛\s]*$)/u:/ابراهيم\s+العبيدي/u).exec(normalized);if(!anchor)return null;
  let end=positions[anchor.index+anchor[0].length-1]+1;while(/[\u064b-\u065f\u0670]/u.test(source[end]||''))end++;
  const prefix=source.slice(0,end),tokens:PreparedSanadPeople['tokens']=[];
- const relations=[...prefix.matchAll(/(?:^(?:كما أخذت ذلك|كما أخذته)\s+عن\s+|،\s*(?:وهما\s+عن|وهو تلقى ذلك عن أخيه|عن)\s+|\(ح\)\.\s*وأخذ\s+[^،.]+?\s+أيضًا\s+عن\s+)/gu)];
+ const relations=[...prefix.matchAll(/(?:^(?:كما أخذت ذلك|كما أخذته|فأخبرته أني قرأت)\s+(?:عن|على)\s+|،\s*(?:وهما\s+عن|وهو تلقى ذلك عن أخيه|عن)\s+|\(ح\)\.\s*وأخذ\s+[^،.]+?\s+أيضًا\s+عن\s+)/gu)];
  if(!relations.length||relations[0].index!==0)return null;
  for(let i=0;i<relations.length;i++){
   const relation=relations[i],body=prefix.slice(relation.index!+relation[0].length,relations[i+1]?.index??prefix.length);

@@ -5,6 +5,7 @@ import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
 import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
+import PersonalSanadInput from './PersonalSanadInput';
 import {Button} from '@project/components/ui/button';
 
 type Path={id:string;label:string;names:string[]};
@@ -38,7 +39,7 @@ function BranchView({branch,depth,selected,onSelect}:{branch:Branch;depth:number
  </li>;
 }
 export default function ShaykhSanadTree(){
- const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<{label:string;text:string}[]>([]),[selected,setSelected]=useState<Path>(),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<{label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>}[]>([]),[selected,setSelected]=useState<Path>(),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{
   let cancelled=false;
   async function load(){
@@ -46,13 +47,14 @@ export default function ShaykhSanadTree(){
     const [{sheikhs},{sections}]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'})]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
     const groups=sheikhs.map(sheikh=>{
-     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain}];
+     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null}];
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
       try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text);}catch{/* Incomplete or ambiguous saved chain. */}
-      return {label,text,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
+      const preparation=s.preparation||prepareSavedSanadPeople(text);
+      return {label,text,ids:s.ids,preparation,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
      });
     });
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length)));}
@@ -76,8 +78,15 @@ export default function ShaykhSanadTree(){
   <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
    {paths.length>0?<><label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selected?.id||''} onChange={e=>setSelected(paths.find(path=>path.id===e.target.value))}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {arabicDigits(path.names.length)}</option>)}</select></label>
-    <ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} selected={selected} onSelect={setSelected}/></ul></>:<p>لا توجد أسانيد قابلة للعرض بعد.</p>}
-   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text},i)=><li key={i}><details><summary>{label}</summary><p className="whitespace-pre-wrap leading-loose">{text}</p></details></li>)}</ul></details>}
+    <ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} selected={selected} onSelect={setSelected}/></ul></>:<p>تظهر الأسانيد أدناه كما حُفظت في ملفات المشايخ.</p>}
+   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,ids,preparation},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain text={text} ids={ids} preparation={preparation}/></details></li>)}</ul></details>}
   </>}
  </section>;
+}
+
+function SavedShaykhChain({text,ids,preparation}:{text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>}){
+ return <div className="mt-3 space-y-3">
+  {(ids.length>0||preparation)&&<PersonalSanadInput value={text} personIds={ids} preparation={preparation} readOnly onApply={()=>{}}/>}
+  <p className="whitespace-pre-wrap leading-loose">{text}</p>
+ </div>;
 }
