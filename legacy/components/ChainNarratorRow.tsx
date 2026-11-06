@@ -1,3 +1,5 @@
+import NarratorManagement from './NarratorManagement';
+import {workspaceHeaders} from '../lib/workspaceSelection';
 import NarratorLinkStatus from './NarratorLinkStatus';
 import {useId,useState} from 'react';
 import {ArrowUp,ArrowDown,Trash2,Pencil,ChevronUp} from 'lucide-react';
@@ -7,9 +9,10 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import NarratorPicker from './NarratorPicker';
 import NarratorShortName from './NarratorShortName';
 type Node={editorKey?:string;name:string;source:boolean;personId?:string;sourceLevel?:'upper'|'branch'|null};
-export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,badgeLabels,connected,onChange,onCreate,onShortName,onMove,onRemove,onParallel,lockedLayout=false,initialEditing,readOnly=false}:{node:Node;index:number;count:number;number?:number;badgeLabels?:string[];connected?:boolean;lockedLayout?:boolean;initialEditing?:boolean;readOnly?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
+export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,badgeLabels,connected,onChange,onCreate,onShortName,onPersonUpdated,onMove,onRemove,onParallel,lockedLayout=false,initialEditing,readOnly=false}:{node:Node;index:number;count:number;number?:number;badgeLabels?:string[];connected?:boolean;lockedLayout?:boolean;initialEditing?:boolean;readOnly?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onPersonUpdated?:(sourceId:string,person:BuilderPerson)=>void;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
  const ordinal=number??index+1;
  const [editing,setEditing]=useState(initialEditing??!node.personId),panel=useId();
+ const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
  return <article className={`narrator-person-card min-w-0 rounded-lg border bg-background ${editing?'border-primary/40':''}`} dir="rtl">
  <div className="flex min-w-0 items-center gap-2 p-2 sm:p-3">
@@ -21,6 +24,14 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  {!readOnly&&editing&&<div id={panel} className="space-y-3 border-t p-3">
  <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>onChange({...node,...value})}/>
  {person&&<NarratorShortName key={person.id+':'+person.display_name} person={person} onSave={onShortName}/>}
+ {person&&lib.canManage===true&&onPersonUpdated&&<details className="rounded-lg border p-3">
+ <summary className="cursor-pointer text-sm font-medium">تعديل اسم الراوي أو دمجه</summary>
+ <fieldset disabled={busy} className="mt-3 min-w-0 space-y-2">
+ <NarratorManagement key={person.id} lib={lib} initialPerson={person} busy={busy} load={async()=>{}} onPersonUpdated={onPersonUpdated}
+ api={async body=>{const response=await fetch('/api/book-builder',{method:'POST',headers:{'content-type':'application/json',...workspaceHeaders()},body:JSON.stringify(body)});const result=await response.json();if(!response.ok)throw Error(result.error||'تعذر حفظ الراوي');return result;}}
+ run={async action=>{setBusy(true);setError('');try{await action();}catch(e){setError(e instanceof Error?e.message:'تعذر حفظ الراوي');}finally{setBusy(false);}}}/>
+ {error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
+ </fieldset></details>}
  <div className="flex flex-wrap items-center gap-1">{roles&&<label className="me-auto inline-flex shrink-0 items-center gap-2 whitespace-nowrap text-sm"><input type="checkbox" checked={node.source} onChange={e=>onChange({...node,source:e.target.checked,sourceLevel:e.target.checked?node.sourceLevel:null})}/>صاحب الطريق</label>}
  {!lockedLayout&&<><Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأعلى" disabled={index===0} onClick={()=>onMove(-1)}><ArrowUp aria-hidden="true" className="h-4 w-4"/></Button>
  <Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأسفل" disabled={index===count-1} onClick={()=>onMove(1)}><ArrowDown aria-hidden="true" className="h-4 w-4"/></Button>
