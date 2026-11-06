@@ -109,7 +109,7 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
   {!loading&&!loadError&&items.length===0&&<div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground">لا يوجد مشايخ إضافيون بعد. اختر إضافة شيخ جديد للبدء.</div>}
   </>}
   {viewing&&<section className="space-y-5" aria-label={'ملف الشيخ '+viewing.name}>
-   <Button variant="ghost" className="gap-2" onClick={()=>setViewing(null)}><ArrowRight className="h-4 w-4"/>العودة إلى المشايخ الإضافيين</Button>
+   <Button variant="ghost" size="icon" aria-label="العودة إلى المشايخ الإضافيين" title="العودة إلى المشايخ الإضافيين" onClick={()=>setViewing(null)}><ArrowRight aria-hidden="true"/></Button>
    <header className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-2xl font-bold">{viewing.name}</h2><p className="text-sm text-muted-foreground">ملف الشيخ وأسانيده وإجازاته</p></div>
     <div className="flex flex-wrap gap-2">
      <Button variant="outline" size="icon" aria-label="إعدادات الشيخ" title="إعدادات الشيخ" onClick={()=>{select(viewing);setSection('qiraat');}}><Settings className="h-5 w-5" aria-hidden="true"/></Button>
@@ -143,26 +143,26 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
   </>}
   {section==='profile'&&selected&&<AccountSetupPanel key={selected} issuerId={selected} name={form.name} email={form.email}/>}
   {section==='qiraat'&&<div className="editor-workspace space-y-3">
-   <fieldset className="rounded-xl border bg-card p-4 space-y-3">
+   <fieldset className="min-w-0 rounded-xl border bg-card p-4 space-y-3">
     <legend className="px-2 font-bold">كيف قرأ الشيخ؟</legend>
     <p className="text-sm text-muted-foreground">اختر العشر الصغرى كاملة أو روايات منها، وأضف الكبرى كاملة أو طرقًا محددة من إدارة الكتب والطرق.</p>
     <Button type="button" variant="outline" onClick={()=>setReadingOpen(true)}>اختيار القراءات والروايات</Button>
    </fieldset>
-   {form.readings.length>0&&<fieldset className="rounded-xl border bg-card p-4 space-y-3">
+   {form.readings.length>0&&<fieldset className="min-w-0 rounded-xl border bg-card p-4 space-y-3">
     <legend className="px-2 font-bold">هل قرأ روايات الصغرى بسند واحد؟</legend>
     {([
      ['shared','نعم، سند مشترك مع إمكانية إضافة أسانيد لبعض الروايات'],
      ['individual','لكل رواية سند شخصي مستقل'],
      ...(!form.individualSughra&&!form.sharedSughraSanad?[['legacy','استخدام الأسانيد المحفوظة حاليًا']]:[]),
-    ]).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="sughra-sanad-mode" className="mt-1 shrink-0 accent-primary" checked={mode===(form.individualSughra?'individual':form.sharedSughraSanad?'shared':'legacy')} onChange={()=>setForm(current=>({...current,individualSughra:mode==='individual',sharedSughraSanad:mode==='shared'}))}/>{label}</label>)}
+    ]).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="sughra-sanad-mode" className="mt-1 shrink-0 accent-primary" style={{width:18,minWidth:18,maxWidth:18,height:18,padding:0}} checked={mode===(form.individualSughra?'individual':form.sharedSughraSanad?'shared':'legacy')} onChange={()=>setForm(current=>({...current,individualSughra:mode==='individual',sharedSughraSanad:mode==='shared'}))}/><span className="min-w-0 flex-1">{label}</span></label>)}
    </fieldset>}
-   {form.libraryKubra&&<fieldset className="rounded-xl border bg-card p-4 space-y-3">
+   {form.libraryKubra&&<fieldset className="min-w-0 rounded-xl border bg-card p-4 space-y-3">
     <legend className="px-2 font-bold">كيف يُختار السند الشخصي للكبرى؟</legend>
     {([
      ['shared','السند نفسه المستخدم للصغرى أو السند الشخصي العام'],
      ['separate','سند مشترك للكبرى من شيخ آخر'],
      ['individual','اختيار سند شخصي مستقل لكل رواية عند الإصدار'],
-    ] as const).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="kubra-sanad-mode" className="mt-1 shrink-0 accent-primary" checked={mode===form.kubraSanadMode} onChange={()=>setField('kubraSanadMode',mode)}/>{label}</label>)}
+    ] as const).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="kubra-sanad-mode" className="mt-1 shrink-0 accent-primary" style={{width:18,minWidth:18,maxWidth:18,height:18,padding:0}} checked={mode===form.kubraSanadMode} onChange={()=>setField('kubraSanadMode',mode)}/><span className="min-w-0 flex-1">{label}</span></label>)}
     <p className="text-sm text-muted-foreground">بعد حفظ الإعدادات، أضف السند المشترك في ملف الشيخ أو أضف سندًا شخصيًا من بطاقة الرواية. يمكنك اختيار سند إضافي محفوظ عند إصدار الإجازة.</p>
    </fieldset>}
 {selected&&<details className="rounded-xl border p-3"><summary className="cursor-pointer font-medium">إدارة الكتب والطرق الإضافية</summary><div className="mt-3"><BookTariqBuilder key={selected} shaykhId={selected} shaykhName={form.name} initialPrefix={form.personalChain} onSaved={()=>{void additionalReadingSanads({action:'list',shaykhId:selected}).then(({sanads})=>{setSavedReadingSanads(sanads);setForm(v=>({...v,readings:[...v.readings,...sanads.filter(s=>!v.readings.some(r=>r.qariId===s.qariId&&r.rawi===s.rawi)).map(s=>({qariId:s.qariId,rawi:s.rawi}))]}));});onSaved(selected);void load();}}/></div></details>}<div className="flex justify-between items-center rounded-xl border p-4"><div><h3 className="font-semibold">القراءات والروايات</h3><p className="text-xs text-muted-foreground">{form.readings.length===20?'العشر الصغرى كاملة':compactReadingCount(form.readings)}{form.libraryKubra?' · العشر الكبرى':''}</p></div></div><ShaykhReadingsList variants={items.find(s=>s.id===selected)?.variants} shared={items.find(s=>s.id===selected)?.sharedSughraSanad} generalPrefix={form.personalChain} readings={form.readings} routes={items.find(s=>s.id===selected)?.routes||savedReadingSanads} labelRoute={shortRoute} onEdit={selected?openReading:undefined}/>{!selected&&<p className="text-xs text-muted-foreground">احفظ بيانات الشيخ والروايات، ثم أضف سنده من ملفه.</p>}</div>}
