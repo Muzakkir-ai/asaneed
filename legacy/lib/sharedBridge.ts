@@ -153,8 +153,8 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
   return index<0?[]:[JSON.stringify(route.slice(index+1).map(node=>node.id))];
  }));
  const source=bridge.source.body.trim();
- for(const boundary of source.matchAll(/،\s*(?=عن\s)/gu)){
-  const tail=source.slice(boundary.index+boundary[0].length);
+ const tails=[source,...[...source.matchAll(/،\s*(?=عن\s)/gu)].map(boundary=>source.slice(boundary.index+boundary[0].length))];
+ for(const tail of tails){
   const paths=linkedBridgeTails(bridge,tail,meeting);
   if(paths&&new Set(paths.map(path=>JSON.stringify(path.map(node=>node.id)))).size===keys.size){
    return text.trim().replace(/[.،؛]+$/u,'')+'، '+tail;

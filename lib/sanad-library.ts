@@ -4,14 +4,19 @@ import {QURRA} from '../legacy/lib/qurra';
 import {buildNarratorDirectory} from '../legacy/lib/narratorDirectory';
 import {UBAYDI_BRIDGE_TITLE,PERSONAL_BRIDGE_TITLE,savedPersonalMeetingPoints,validatePersonalBridge} from '../legacy/lib/builderPrefix';
 import type {BuilderLibrary} from '../legacy/lib/bookBuilder';
-import {resolveSanadContinuation,type ContinuationSection} from '../legacy/lib/unifiedSanad';
+import {resolveSanadContinuation,sanadKey,type ContinuationSection} from '../legacy/lib/unifiedSanad';
 function check<T>(r:{data:T;error:{message:string}|null}):T{if(r.error)throw Error(r.error.message);return r.data;}
 export async function loadBuilderLibrary(client:SupabaseClient,prefixOwnerId?:string):Promise<BuilderLibrary>{
  async function all(table:string){const rows:any[]=[];for(let n=0;;n+=1000){const page=check(await client.from(table).select('*').range(n,n+999))||[];rows.push(...page);if(page.length<1000)break;}return rows;}
  const [people,books,chains,nodes,sections,continuationSchema,personalHoldings]=await Promise.all([all('builder_people'),all('builder_books'),all('builder_chains'),all('builder_nodes'),client.from('workspace_records').select('id,payload').eq('kind','sanadSections'),client.from('builder_chains').select('continuation_ids').limit(0),prefixOwnerId?client.from('workspace_records').select('id,payload').eq('kind','ijazahHoldings').eq('payload->>ownerId',prefixOwnerId):Promise.resolve({data:[],error:null})]);
  const text=(check(sections)||[]).map(s=>s.payload as Record<string,string>).filter(s=>!s.ownerId);
  const continuationSections:ContinuationSection[]=(check(sections)||[]).filter(s=>!s.payload.ownerId).map(s=>({id:s.id,...s.payload}));
- const sharedBridgeGraphs=(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>reviewedSharedBridge({id:s.id,body:s.payload.body||''},s.payload.sharedBridgeReview,people)).filter(graph=>graph!==null);
+ const bridgeAnchors=people.filter(person=>!person.archived&&sanadKey(person.name)===sanadKey('إبراهيم العُبيدي'));
+ const sharedBridgeGraphs=(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>reviewedSharedBridge({id:s.id,body:s.payload.body||''},s.payload.sharedBridgeReview,people)).filter(graph=>graph!==null).map(graph=>{
+  if(bridgeAnchors.length!==1)return graph;
+  const {id,name}=bridgeAnchors[0];
+  return {...graph,routes:graph.routes.map(route=>[{id,name},...route])};
+ });
  const continuations:Record<string,string>={};for(const q of QURRA)for(const rawi of q.rawis){const resolved=resolveSanadContinuation(continuationSections,q.id,rawi);if(!resolved.missing.length)continuations[q.id+'|'+rawi]=resolved.text;}
  for(const chain of chains){if(chain.continuation_ids?.length){const resolved=resolveSanadContinuation(continuationSections,chain.qari_id,chain.rawi,chain.continuation_ids);chain.continuation=resolved.text;if(resolved.missing.length)chain.confirmed=false;}}
 

@@ -72,3 +72,9 @@ assert.equal(personalGraph?.paths.length,2);
 assert.throws(()=>composeReferencedPersonalSanad(complete,ids,[reviewed],source.id),/نقطة الالتقاء/,'composed prose cannot be saved as a referenced personal sanad');
 assert.throws(()=>composeReferencedPersonalSanad(personal,[...ids.slice(0,-1),'wrong'],[reviewed],source.id),/نقطة الالتقاء/);
 assert.throws(()=>composeReferencedPersonalSanad(personal,ids,[reviewed],'wrong-source'),/نقطة الالتقاء/);
+
+const anchor={id:'ubaydi',name:'إبراهيم العُبيدي'};
+const rooted={...reviewed,routes:reviewed.routes.map(route=>[anchor,...route])};
+const rootPersonal='كما أخذته عن عبد الله، عن إبراهيم العُبيدي';
+assert.equal(composeReferencedPersonalSanad(rootPersonal,['student',anchor.id],[rooted],source.id),rootPersonal+'، '+body);
+assert.throws(()=>composeReferencedPersonalSanad(rootPersonal,['student','distinct-ubaydi'],[rooted],source.id),/نقطة الالتقاء/);

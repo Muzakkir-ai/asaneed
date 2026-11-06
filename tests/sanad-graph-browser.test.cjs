@@ -13,12 +13,14 @@ const {chromium}=require('playwright');
   fs.copyFileSync('tests/fixtures/sanad-graph-review.tsx',route+'/page.tsx');
   let privateGraph;
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
-   const {r,b,identities}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
+   const {r,b,identities,qunbul}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
    const shared=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
    privateGraph=shared.reviewedSharedBridge(b,{version:1,sourceBody:b.body,identities},identities.map(({personId:id})=>({id,archived:false})));
    assert.ok(privateGraph);
    const fixture=fs.readFileSync(route+'/page.tsx','utf8');
-   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>', '<div data-testid="private-hafs"><PersonalSanadInput value={'+JSON.stringify(r.body)+'} personIds={'+JSON.stringify(r.ids)+'} readOnly onApply={()=>{}}/></div></main>'));
+   const input=(label,record,preparation)=>'<div data-testid="'+label+'"><PersonalSanadInput issuer={{id:"fixture",name:"الشيخ التجريبي"}} value={'+JSON.stringify(record.body)+'} personIds={'+JSON.stringify(record.ids??[])+'} preparation={'+JSON.stringify(preparation??null)+'} readOnly onApply={()=>{}}/></div>';
+   const qunbulPreparation=qunbul?require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadPeople.js').prepareSavedSanadPeople(qunbul.body):null;
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'</main>'));
   }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
@@ -97,6 +99,15 @@ const {chromium}=require('playwright');
   assert.equal(await draft.locator('.sanad-graph-split .sanad-graph-arrow:visible').count(),2);
   assert.equal(await draft.locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),2);
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
+   const reading=page.getByTestId('private-hafs');
+   await reading.getByRole('tab',{name:'السند الشخصي',exact:true}).waitFor();
+   assert.equal(await reading.getByRole('tab',{name:'السند الشخصي',exact:true}).getAttribute('aria-selected'),'true');
+   const personal=reading.getByRole('tabpanel');
+   await personal.getByRole('button',{name:/المسار ٢/}).waitFor();
+   assert.equal(await personal.getByRole('button',{name:/المسار /}).count(),2);
+   assert.equal(await personal.locator('[data-sanad-node]').last().getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
+   assert.equal(await personal.locator('[data-sanad-node]').getByText(/الجَزَرِي|بن شحاذة/).count(),0);
+   await reading.getByRole('tab',{name:'السند المتصل الكامل'}).click();
    const hafs=graph('private-hafs');
    const controls=hafs.getByRole('button',{name:/المسار /});
    await controls.first().waitFor();
@@ -106,7 +117,7 @@ const {chromium}=require('playwright');
     for(let i=0;i<10;i++){
      await controls.nth(i).click();
      const positions=await hafs.locator('[data-narrator-level]').evaluateAll(nodes=>nodes.map(node=>Number(node.getAttribute('data-narrator-level').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
-     assert.ok(positions.length>=10&&positions.length<=13);
+     assert.ok(positions.length>=11&&positions.length<=14);
      assert.deepEqual(positions,positions.map((_,index)=>index+1));
      assert.equal(await hafs.getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
      assert.equal(await hafs.getByText(/إبراهيم الع/).count(),0);
@@ -117,6 +128,15 @@ const {chromium}=require('playwright');
     }
     await hafs.getByRole('button',{name:'عرض الكل',exact:true}).click();
     assert.ok(await hafs.evaluate(element=>element.scrollWidth<=element.clientWidth));
+   }
+   await reading.getByRole('tab',{name:'السند الشخصي',exact:true}).click();
+   assert.equal(await reading.getByRole('tabpanel').getByRole('button',{name:/المسار /}).count(),2);
+   const qunbul=page.getByTestId('private-qunbul');
+   if(await qunbul.count()){
+    assert.equal(await qunbul.getByRole('tab',{name:'السند الشخصي',exact:true}).getAttribute('aria-selected'),'true');
+    assert.ok(await qunbul.getByRole('tabpanel').getByText(/إبراهيم العُبَيدِي/).count());
+    await qunbul.getByRole('tab',{name:'السند المتصل الكامل'}).click();
+    assert.ok(await qunbul.getByRole('tabpanel').getByText(/لا يمكن عرض السند الكامل/).isVisible());
    }
    console.log('PASS authorized Hafs data: all 10 numbered paths and RTL bounds at three widths');
   }
