@@ -67,7 +67,18 @@ export default function ShaykhSanadTree(){
       let names:string[][]=[],text=s.text;
       try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=s.preparation||prepareSavedSanadPeople(text);
-      return {label,text,ids:s.ids,preparation,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
+      const grouped=new Map<string,{students:Set<string>;rest:string[]}>();
+      for(const [,student,...rest] of names){
+       const key=JSON.stringify(rest);
+       const group=grouped.get(key)??{students:new Set<string>(),rest};
+       if(student)group.students.add(student);
+       grouped.set(key,group);
+      }
+      const paths=[...grouped.values()].map(({students,rest},i)=>{
+       const firstLevel=students.size>1?['أصحاب الجزري — '+[...students].join('، ')]:[...students];
+       return {id:sheikh.id+':'+s.id+':'+i,label:label+(grouped.size>1?' — فرع '+arabicDigits(i+1):''),names:[rootName,...firstLevel,...rest,sheikh.name]};
+      });
+      return {label,text,ids:s.ids,preparation,paths};
      });
     });
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length)));}
