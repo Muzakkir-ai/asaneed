@@ -16,17 +16,30 @@ function linearNames(source:string){
  if(/[().؛\n]|وقرأ|وأخذ|وهما|وهم|وهو| والشيخ/u.test(body))return [];
  return body.split(/،\s*عن\s+/u).map(part=>part.replace(/^(?:(?:كما أخذته|كما أخذت ذلك)\s+)?عن\s+/u,'').trim());
 }
-function graphPaths(source:string,endpoint:'ubaydi'|'jazari'){
+function graphPaths(source:string,endpoint:'ubaydi'|'jazari',ids:string[]=[]){
  const prepared=prepareSavedSanadPeople(source,false,endpoint);
  if(!prepared)return null;
- const graph=preparedSanadGraph(prepared,prepared.tokens);
+ const graph=preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids.length===prepared.tokens.length?ids[i]:undefined})));
  return graph?{paths:graph.paths.map(path=>path.map(id=>graph.nodes.find(node=>node.id===id)!.name)),suffix:prepared.suffix}:null;
 }
-function numberedPaths(source:string){
- const prefix=graphPaths(source,'ubaydi');
+/** The shared Ubaydi text explicitly names its split and its parallel teachers. */
+function sharedBridgePaths(source:string){
+ const match=/^(.*?)\s*\(ح\)\.\s*وقرأ (.+?) أيضًا على (.+?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)\s*$/u.exec(source.trim());
+ if(!match)return null;
+ const [,first,origin,second,teachers,end]=match;
+ const main=linearNames(first);
+ const pivot=main.findIndex(name=>sanadKey(name)===sanadKey(origin));
+ if(pivot<0)return null;
+ const rest=linearNames(second);
+ const parallel=teachers.split(/،\s*و/u);
+ if(!rest.length||parallel.length<2)return null;
+ return [[...main,end],...parallel.map(teacher=>[...main.slice(0,pivot+1),...rest,teacher,end])];
+}
+function numberedPaths(source:string,ids:string[]){
+ const prefix=graphPaths(source,'ubaydi',ids);
  const tail=prefix?.suffix.replace(/^\s*،\s*/u,'').trim()||'';
  const continuation=tail?graphPaths('كما أخذته '+tail,'jazari'):null;
- const endings=continuation?.paths||[linearNames(tail)];
+ const endings=sharedBridgePaths(tail)||continuation?.paths||[linearNames(tail)];
  const full=graphPaths(source,'jazari');
  const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):full?.paths||[linearNames(source)];
  return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
@@ -52,7 +65,7 @@ export default function ShaykhSanadTree(){
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
-      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text);}catch{/* Incomplete or ambiguous saved chain. */}
+      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=s.preparation||prepareSavedSanadPeople(text);
       return {label,text,ids:s.ids,preparation,paths:names.map((route,i)=>({id:sheikh.id+':'+s.id+':'+i,label:label+(names.length>1?' — فرع '+arabicDigits(i+1):''),names:[...route,sheikh.name]}))};
      });
