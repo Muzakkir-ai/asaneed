@@ -149,6 +149,11 @@ const {chromium}=require('playwright');
    const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
    const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedEdges);
+   const lower=await combined.locator('[data-local-bypass]').evaluateAll(edges=>edges.map(edge=>[edge.dataset.from,edge.dataset.to]));
+   const shortBranch=combinedPaths.flat().find(id=>id==='08a271e7-1478-4078-9839-c03944625472');
+   const reconvergence=combinedPaths.flat().find(id=>id==='96d7bf3f-efdd-4a8b-97bb-adc69abbd8aa');
+   assert.ok(lower.some(([from,to])=>from===shortBranch&&to===reconvergence),'shorter lower branch stays in its own lane');
+
    for(const [node,port] of [['from','start'],['to','end']]){
     const ports=await combined.locator('[data-from]').evaluateAll((edges,[node,port])=>edges.map(edge=>JSON.stringify([edge.dataset[node],edge.dataset[port]])),[node,port]);
     assert.equal(new Set(ports).size,ports.length,'each edge has a separate card port');
