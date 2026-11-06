@@ -24,14 +24,14 @@ import {Button} from '@project/components/ui/button';
 import {Input} from '@project/components/ui/input';
 import {Card,CardContent} from '@project/components/ui/card';
 import {Dialog,DialogContent,DialogHeader,DialogTitle} from '@project/components/ui/dialog';
-import {BookOpen,GraduationCap,Plus,PenLine,UserRound,Mail,ArrowRight} from 'lucide-react';
+import {BookOpen,GraduationCap,Plus,PenLine,Settings,UserRound,Mail,ArrowRight} from 'lucide-react';
 import {toast} from 'sonner';
 type Sheikh=AdditionalShaykhsOutputType['sheikhs'][number];
 type Reading={qariId:string;rawi:string;tariqNumber?:string;tariqName?:string;variantId?:string;newVariant?:boolean};
 type Matn={id?:string;catalogId?:string;name:string;category:string;sanadText:string;wordingText:string;introductionId:string;conclusionId:string;sanadFormatting:string};
 type Template={id:string;name:string;kind:string;body:string;formatting:string};
 const emptyMatn=():Matn=>({name:'',category:'',sanadText:'',wordingText:'',introductionId:'',conclusionId:'',sanadFormatting:'[]'});
-const blank={libraryKubra:false,email:'',mutoon:[] as Matn[],name:'',qualification:'',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'ubaydi' as 'ubaydi'|'jazari',readings:[] as Reading[]};
+const blank={kubraSanadMode:'shared' as Sheikh['kubraSanadMode'],individualSughra:false,sharedSughraSanad:false,libraryKubra:false,email:'',mutoon:[] as Matn[],name:'',qualification:'',teachingRole:'',madrasaName:'',madrasaPlace:'',personalChain:'',junction:'ubaydi' as 'ubaydi'|'jazari',readings:[] as Reading[]};
 export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(issuerId?:string)=>void;issuers?:{id:string;number?:string}[]}){
  const [loading,setLoading]=useState(true),[loadError,setLoadError]=useState('');
  const [items,setItems]=useState<Sheikh[]>([]);
@@ -81,7 +81,7 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
  useEffect(()=>{void load();contentManagement({action:'list'}).then(r=>setCatalog(r.catalog.filter(item=>item.status==='published'))).catch(()=>toast.error('تعذر تحميل فهرس المتون'));mutoonTemplates({action:'list'}).then(r=>setTemplates(r.templates)).catch(()=>{});},[]);
  const setField=(key:keyof typeof blank,value:any)=>setForm(x=>({...x,[key]:value}));
  const select=(s?:Sheikh,loadSanads=true)=>{setSelected(s?.id||'');setForm(s?{
-  libraryKubra:!!s.libraryKubra,email:s.email,mutoon:s.mutoon,name:s.name,qualification:s.qualification,teachingRole:s.teachingRole,
+  kubraSanadMode:s.kubraSanadMode,individualSughra:s.individualSughra,sharedSughraSanad:s.sharedSughraSanad,libraryKubra:!!s.libraryKubra,email:s.email,mutoon:s.mutoon,name:s.name,qualification:s.qualification,teachingRole:s.teachingRole,
   madrasaName:s.madrasaName,madrasaPlace:s.madrasaPlace,personalChain:s.personalChain,
   junction:s.junction,readings:s.readings}:blank);setSection('profile');setMatnOpen(false);setEditingOpen(true);setSavedReadingSanads([]);if(s&&loadSanads)void loadReadingSanads(s.id);};
  const toggle=(qariId:string,rawi:string)=>setForm(x=>{
@@ -112,7 +112,7 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
    <Button variant="ghost" className="gap-2" onClick={()=>setViewing(null)}><ArrowRight className="h-4 w-4"/>العودة إلى المشايخ الإضافيين</Button>
    <header className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-2xl font-bold">{viewing.name}</h2><p className="text-sm text-muted-foreground">ملف الشيخ وأسانيده وإجازاته</p></div>
     <div className="flex flex-wrap gap-2">
-     <Button variant="outline" className="gap-2" onClick={()=>select(viewing)}><PenLine className="h-4 w-4"/>تعديل بيانات الشيخ</Button>
+     <Button variant="outline" size="icon" aria-label="إعدادات الشيخ" title="إعدادات الشيخ" onClick={()=>{select(viewing);setSection('qiraat');}}><Settings className="h-5 w-5" aria-hidden="true"/></Button>
      <Button className="gap-2" onClick={()=>{select(viewing);setSection('qiraat');}}><Plus className="h-4 w-4"/>إضافة إجازة قراءات</Button>
      <Button className="gap-2" onClick={()=>{select(viewing);setSection('mutoon');setMatnIndex(null);setMatnDraft(emptyMatn());setMatnOpen(true);}}><Plus className="h-4 w-4"/>إضافة متن</Button>
     </div>
@@ -121,12 +121,13 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
    <div className="rounded-lg border p-4 space-y-2"><h3 className="font-bold">بيانات الشيخ</h3>{viewing.qualification&&<p>{viewing.qualification}</p>}{(viewing.teachingRole||viewing.madrasaName)&&<p>{[viewing.teachingRole,viewing.madrasaName].filter(Boolean).join(' ')}</p>}{viewing.madrasaPlace&&<p className="text-sm text-muted-foreground">{viewing.madrasaPlace}</p>}{viewing.email&&<p dir="ltr" className="text-sm">{viewing.email}</p>}</div>
    <section className="space-y-2"><h3 className="font-bold">ظهور المجيز في الشهادة</h3><IssuerProfilePreview displayName={viewing.name} issuerNumber={issuers.find(i=>i.id===viewing.id)?.number} profile={{footerLineStyles:'',printedName:viewing.name,scientificQualification:viewing.qualification,showScientificQualification:true,teachingRole:viewing.teachingRole,madrasaName:viewing.madrasaName,madrasaPlace:viewing.madrasaPlace,showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true,centerStampText:''}}/></section>
    {!editingOpen&&!readingEditor&&(viewing.readings.length>0||viewing.libraryKubra)&&<SharedShaykhSanad key={viewing.id+'|'+viewing.personalChain+'|'+viewing.sharedSughraSanad+'|'+viewing.preparedShared?.reviewed} shaykh={viewing} onSaved={sheikhs=>{setItems(sheikhs);setViewing(current=>current?sheikhs.find(s=>s.id===current.id)||current:null);toast.success('حُفظ السند المشترك');onSaved(viewing.id);}}/>}
+   {!editingOpen&&!readingEditor&&viewing.libraryKubra&&viewing.kubraSanadMode==='separate'&&<SharedShaykhSanad kubra key={viewing.id+'|kubra|'+viewing.kubraPersonalChain} shaykh={viewing} onSaved={sheikhs=>{setItems(sheikhs);setViewing(current=>current?sheikhs.find(s=>s.id===current.id)||current:null);toast.success('حُفظ السند المشترك');onSaved(viewing.id);}}/>}
    <section className="space-y-3"><h3 className="font-bold">إجازات القراءات — {viewing.readings.length?compactReadingCount(viewing.readings):viewing.libraryKubra?'العشر الكبرى':'لا توجد قراءات'}</h3>{viewing.readings.length===0&&!viewing.libraryKubra&&<p className="text-sm text-muted-foreground">لم تُضف إجازات قراءات بعد.</p>}<ShaykhReadingsList variants={viewing.variants} shared={viewing.sharedSughraSanad} readings={viewing.readings} routes={viewing.routes} labelRoute={shortRoute} onEdit={r=>void openReading(r,viewing)}/></section>
 
    <section className="space-y-3"><h3 className="font-bold">المتون العلمية — {viewing.mutoon.length}</h3>{viewing.mutoon.length===0&&<p className="text-sm text-muted-foreground">لم تُضف متون بعد.</p>}<ShaykhMatnCards mutoon={viewing.mutoon} onOpen={index=>{select(viewing);setSection('mutoon');setMatnIndex(index);setMatnDraft({...emptyMatn(),...viewing.mutoon[index]});setMatnOpen(true);}}/></section>
   </div></section>}
-  {editingOpen&&!readingEditor&&<EditorPage key={(selected||'new')+':'+section+':'+(matnOpen?'matn-'+(matnIndex??'new'):'profile')} title={matnOpen?matnDraft.name||'إضافة متن':section==='qiraat'?'إجازات القراءات':selected?form.name||'تعديل الشيخ':'إضافة شيخ جديد'} context={viewing?'المشايخ الإضافيون / '+viewing.name:'المشايخ الإضافيون'} backLabel={matnOpen?'العودة إلى متون الشيخ':viewing?'العودة إلى ملف الشيخ':'العودة إلى المشايخ'} busy={saving} saveRevision={matnSaveVersion} onBack={()=>{if(matnOpen){setMatnOpen(false);return;}setEditingOpen(false);setReadingOpen(false);}} onSave={save} saveLabel={matnOpen?'حفظ المتن':'حفظ بيانات الشيخ'} dirtyKey={JSON.stringify([form,matnOpen?matnDraft:null])}>
-  {!matnOpen&&<div className="additional-profile-tabs flex flex-wrap gap-2 border-b pb-3">{([{key:'profile',label:'بيانات الشيخ'},{key:'qiraat',label:'إجازات القراءات'},{key:'mutoon',label:'المتون العلمية'}] as const).map(t=><Button key={t.key} type="button" size="sm" variant={section===t.key?'default':'outline'} onClick={()=>setSection(t.key)}>{t.label}</Button>)}</div>}
+  {editingOpen&&!readingEditor&&<EditorPage key={(selected||'new')+':'+section+':'+(matnOpen?'matn-'+(matnIndex??'new'):'profile')} title={matnOpen?matnDraft.name||'إضافة متن':section==='qiraat'?'إعدادات القراءات والأسانيد':selected?form.name||'تعديل الشيخ':'إضافة شيخ جديد'} context={viewing?'المشايخ الإضافيون / '+viewing.name:'المشايخ الإضافيون'} backLabel={matnOpen?'العودة إلى متون الشيخ':viewing?'العودة إلى ملف الشيخ':'العودة إلى المشايخ'} busy={saving} saveRevision={matnSaveVersion} onBack={()=>{if(matnOpen){setMatnOpen(false);return;}setEditingOpen(false);setReadingOpen(false);}} onSave={save} saveLabel={matnOpen?'حفظ المتن':'حفظ بيانات الشيخ'} dirtyKey={JSON.stringify([form,matnOpen?matnDraft:null])}>
+  {!matnOpen&&<div className="additional-profile-tabs flex flex-wrap gap-2 border-b pb-3">{([{key:'profile',label:'بيانات الشيخ'},{key:'qiraat',label:'القراءات والأسانيد'},{key:'mutoon',label:'المتون العلمية'}] as const).map(t=><Button key={t.key} type="button" size="sm" variant={section===t.key?'default':'outline'} onClick={()=>setSection(t.key)}>{t.label}</Button>)}</div>}
   <div className="space-y-4">
   {section==='profile'&&<>
    <IssuerProfilePreview displayName={form.name} issuerNumber={issuers.find(i=>i.id===selected)?.number} profile={{footerLineStyles:'',printedName:form.name,scientificQualification:form.qualification,showScientificQualification:true,teachingRole:form.teachingRole,madrasaName:form.madrasaName,madrasaPlace:form.madrasaPlace,showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true,centerStampText:''}}/>
@@ -141,7 +142,30 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
    </div>
   </>}
   {section==='profile'&&selected&&<AccountSetupPanel key={selected} issuerId={selected} name={form.name} email={form.email}/>}
-  {section==='qiraat'&&<div className="editor-workspace space-y-3">{selected&&<details className="rounded-xl border p-3"><summary className="cursor-pointer font-medium">إدارة الكتب والطرق الإضافية</summary><div className="mt-3"><BookTariqBuilder key={selected} shaykhId={selected} shaykhName={form.name} initialPrefix={form.personalChain} onSaved={()=>{void additionalReadingSanads({action:'list',shaykhId:selected}).then(({sanads})=>{setSavedReadingSanads(sanads);setForm(v=>({...v,readings:[...v.readings,...sanads.filter(s=>!v.readings.some(r=>r.qariId===s.qariId&&r.rawi===s.rawi)).map(s=>({qariId:s.qariId,rawi:s.rawi}))]}));});onSaved(selected);void load();}}/></div></details>}<div className="flex justify-between items-center rounded-xl border p-4"><div><h3 className="font-semibold">القراءات والروايات</h3><p className="text-xs text-muted-foreground">{form.readings.length===20?'العشر الصغرى كاملة':compactReadingCount(form.readings)}{form.libraryKubra?' · العشر الكبرى':''}</p></div><Button variant="outline" onClick={()=>{setReadingOpen(true);}}>اختيار الروايات</Button></div><ShaykhReadingsList variants={items.find(s=>s.id===selected)?.variants} shared={items.find(s=>s.id===selected)?.sharedSughraSanad} generalPrefix={form.personalChain} readings={form.readings} routes={items.find(s=>s.id===selected)?.routes||savedReadingSanads} labelRoute={shortRoute} onEdit={selected?openReading:undefined}/>{!selected&&<p className="text-xs text-muted-foreground">احفظ بيانات الشيخ والروايات، ثم أضف سنده من ملفه.</p>}</div>}
+  {section==='qiraat'&&<div className="editor-workspace space-y-3">
+   <fieldset className="rounded-xl border bg-card p-4 space-y-3">
+    <legend className="px-2 font-bold">كيف قرأ الشيخ؟</legend>
+    <p className="text-sm text-muted-foreground">اختر العشر الصغرى كاملة أو روايات منها، وأضف الكبرى كاملة أو طرقًا محددة من إدارة الكتب والطرق.</p>
+    <Button type="button" variant="outline" onClick={()=>setReadingOpen(true)}>اختيار القراءات والروايات</Button>
+   </fieldset>
+   {form.readings.length>0&&<fieldset className="rounded-xl border bg-card p-4 space-y-3">
+    <legend className="px-2 font-bold">هل قرأ روايات الصغرى بسند واحد؟</legend>
+    {([
+     ['shared','نعم، سند مشترك مع إمكانية إضافة أسانيد لبعض الروايات'],
+     ['individual','لكل رواية سند شخصي مستقل'],
+     ...(!form.individualSughra&&!form.sharedSughraSanad?[['legacy','استخدام الأسانيد المحفوظة حاليًا']]:[]),
+    ]).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="sughra-sanad-mode" className="mt-1 shrink-0 accent-primary" checked={mode===(form.individualSughra?'individual':form.sharedSughraSanad?'shared':'legacy')} onChange={()=>setForm(current=>({...current,individualSughra:mode==='individual',sharedSughraSanad:mode==='shared'}))}/>{label}</label>)}
+   </fieldset>}
+   {form.libraryKubra&&<fieldset className="rounded-xl border bg-card p-4 space-y-3">
+    <legend className="px-2 font-bold">كيف يُختار السند الشخصي للكبرى؟</legend>
+    {([
+     ['shared','السند نفسه المستخدم للصغرى أو السند الشخصي العام'],
+     ['separate','سند مشترك للكبرى من شيخ آخر'],
+     ['individual','اختيار سند شخصي مستقل لكل رواية عند الإصدار'],
+    ] as const).map(([mode,label])=><label key={mode} className="flex items-start gap-3 rounded-lg border p-3"><input type="radio" name="kubra-sanad-mode" className="mt-1 shrink-0 accent-primary" checked={mode===form.kubraSanadMode} onChange={()=>setField('kubraSanadMode',mode)}/>{label}</label>)}
+    <p className="text-sm text-muted-foreground">بعد حفظ الإعدادات، أضف السند المشترك في ملف الشيخ أو أضف سندًا شخصيًا من بطاقة الرواية. يمكنك اختيار سند إضافي محفوظ عند إصدار الإجازة.</p>
+   </fieldset>}
+{selected&&<details className="rounded-xl border p-3"><summary className="cursor-pointer font-medium">إدارة الكتب والطرق الإضافية</summary><div className="mt-3"><BookTariqBuilder key={selected} shaykhId={selected} shaykhName={form.name} initialPrefix={form.personalChain} onSaved={()=>{void additionalReadingSanads({action:'list',shaykhId:selected}).then(({sanads})=>{setSavedReadingSanads(sanads);setForm(v=>({...v,readings:[...v.readings,...sanads.filter(s=>!v.readings.some(r=>r.qariId===s.qariId&&r.rawi===s.rawi)).map(s=>({qariId:s.qariId,rawi:s.rawi}))]}));});onSaved(selected);void load();}}/></div></details>}<div className="flex justify-between items-center rounded-xl border p-4"><div><h3 className="font-semibold">القراءات والروايات</h3><p className="text-xs text-muted-foreground">{form.readings.length===20?'العشر الصغرى كاملة':compactReadingCount(form.readings)}{form.libraryKubra?' · العشر الكبرى':''}</p></div></div><ShaykhReadingsList variants={items.find(s=>s.id===selected)?.variants} shared={items.find(s=>s.id===selected)?.sharedSughraSanad} generalPrefix={form.personalChain} readings={form.readings} routes={items.find(s=>s.id===selected)?.routes||savedReadingSanads} labelRoute={shortRoute} onEdit={selected?openReading:undefined}/>{!selected&&<p className="text-xs text-muted-foreground">احفظ بيانات الشيخ والروايات، ثم أضف سنده من ملفه.</p>}</div>}
   {section==='mutoon'&&
    <div className="additional-mutoon-panel space-y-3 rounded-lg border p-4"><div className="matn-list-header flex justify-between gap-3 items-center"><div><h3 className="font-semibold">إجازات المتون العلمية</h3><p className="text-xs text-muted-foreground">إضافة متن مع اسمه وتصنيفه وسنده الكامل وكلمات إجازته</p></div><Button type="button" variant="outline" onClick={()=>{setMatnIndex(null);setMatnDraft(emptyMatn());setMatnOpen(true)}}>إضافة متن</Button></div><ShaykhMatnCards mutoon={form.mutoon} onOpen={index=>{setMatnIndex(index);setMatnDraft({...emptyMatn(),...form.mutoon[index]});setMatnOpen(true);}} onRemove={index=>setForm(v=>({...v,mutoon:v.mutoon.filter((_,i)=>i!==index)}))}/>{matnOpen&&<div className="additional-matn-editor rounded-lg border bg-muted/20 p-3 space-y-3"><label className="block text-sm">المتن المنشور
     <select className="block w-full rounded border bg-background p-2" value={matnDraft.catalogId??''} onChange={event=>{

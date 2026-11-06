@@ -159,3 +159,5 @@ PR #5 correction validation update: Chrome desktop (1280px), mobile viewports (3
 
 
 Matn heading follow-up: shared independent SVG sizing, legacy/current/default precedence and real two-line artwork/PDF zoom invariance are checked on PR #5. Review saved defaults in an authenticated account before any release. Existing per-certificate legacy overrides intentionally remain effective; choose «استخدام إعدادات المتن» to inherit changed matn defaults. Physical print and native mobile export still require device review. Production approval is still required.
+
+تحقّق من خيارات إعدادات الشيخ وإصدار رواية من الصغرى وطريق مرتبط من الكبرى عند تغيير منطق الأسانيد المشتركة.

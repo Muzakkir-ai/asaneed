@@ -43,6 +43,15 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await assert.rejects(()=>call({...issuance,personalSanadId:variant.id}),/fixture-stop-before-write/);assert.equal(captured.personalChain,variantText);
  await assert.rejects(()=>call({...issuance,tariqNumber:'1031',personalSanadId:variant.id}),/fixture-stop-before-write/);assert.equal(captured.unifiedSanad.prefix,variantText);
  await assert.rejects(()=>call({...issuance,rawi:'ورش',personalSanadId:variant.id}),/غير مضافة|اختر سندًا شخصيًا/);
+ guest.kubraSanadMode='separate';
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1031'}),/احفظ سند الكبرى/);
+ await call({...input,sanadScope:'kubra',personalChain:variantText});
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1031'}),/fixture-stop-before-write/);
+ assert.equal(captured.unifiedSanad.prefix,variantText);
+ assert.equal(guest.personalChain,updated);
+ guest.kubraSanadMode='individual';
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1031'}),/اختر سندًا شخصيًا/);
+ await assert.rejects(()=>call({...issuance,tariqNumber:'1031',personalSanadId:variant.id}),/fixture-stop-before-write/);
  admin=false;await assert.rejects(()=>call(input),/Permission denied/);assert.equal(records.length,3);
  console.log('PASS: one shared profile save, original-riwayah resolution, independent numbered routes, source/metadata preservation, individual-save guard and role denial');
 })().catch(e=>{console.error(e);process.exitCode=1});
