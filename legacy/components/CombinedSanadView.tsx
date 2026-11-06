@@ -38,6 +38,18 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
  }
  for(const edges of outgoing.values())edges.sort((a,b)=>points.get(a.to)!.x-points.get(b.to)!.x);
  for(const edges of incoming.values())edges.sort((a,b)=>points.get(a.from)!.x-points.get(b.from)!.x);
+ // Keep a longer branch in its original lane while its sibling skips this row.
+ for(const [rank,row] of graph.rows.entries()){
+  if(row.length!==1||rank===0)continue;
+  const point=points.get(row[0])!;
+  const parents=incoming.get(row[0])??[];
+  if(parents.length!==1)continue;
+  const parent=parents[0].from;
+  const preceding=graph.rows[rank-1];
+  if(preceding.length<2||!preceding.includes(parent))continue;
+  const siblingSkips=preceding.some(id=>id!==parent&&(outgoing.get(id)??[]).some(edge=>points.get(edge.to)!.y>point.y));
+  if(siblingSkips)points.set(row[0],{...point,x:points.get(parent)!.x});
+ }
  const port=(edges:typeof graph.edges,edge:typeof graph.edges[number])=>(edges.indexOf(edge)-(edges.length-1)/2)*Math.min(16,cardWidth/(edges.length+1));
  const lanes=new Map<number,typeof graph.edges>();
  for(const edge of graph.edges){
@@ -72,12 +84,15 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
       const x1=a.x+port(out,edge),x2=b.x+port(ins,edge);
       const start=a.y+cardHeight,end=b.y-5;
       const mid=start+6+(row.indexOf(edge)+1)*22/(row.length+1);
-      const connector=b.y-a.y>rowHeight+28
-       ? `M${x1} ${start} V${mid} H${8+graph.edges.indexOf(edge)*12/(graph.edges.length+1)} V${end-6-ins.indexOf(edge)*3} H${x2} V${end}`
+      const skipped=b.y-a.y>rowHeight+28;
+      const laneClear=skipped&&[...points.values()].every(point=>point.y<=a.y||point.y>=b.y||Math.abs(point.x-x1)>cardWidth/2+8);
+      const bypass=laneClear?x1:8+graph.edges.indexOf(edge)*12/(graph.edges.length+1);
+      const connector=skipped
+       ? `M${x1} ${start} V${mid} H${bypass} V${end-6-ins.indexOf(edge)*3} H${x2} V${end}`
        : `M${x1} ${start} V${mid} H${x2} V${end}`;
       return <g key={JSON.stringify([from,to])} opacity={active?1:.15}>
        <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
-       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
+       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} data-local-bypass={laneClear||undefined} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
       </g>;
      })}
     </svg>
