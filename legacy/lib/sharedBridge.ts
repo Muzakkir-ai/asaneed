@@ -111,7 +111,7 @@ export function joinSharedBridgeRoutes(personalPaths:string[][],tails:{id:string
 }
 
 /** Compose a saved personal sanad and its exact reviewed continuation for any viewer. */
-export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:NonNullable<ReturnType<typeof reviewedSharedBridge>>[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string},continuationId?:string){
+export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:ReviewedSharedBridge[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string},continuationId?:string){
  const separated=prepareSavedSanadPeople(source,true,'end');
  const personal=preparation?.reviewed&&preparedSanadText(preparation).trim()===source.trim()
   ?preparation:recoverSharedBridgePrefix(source,ids,bridges.map(bridge=>bridge.source))??(separated?.tokens.length===ids.length?separated:null);
@@ -137,4 +137,28 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:NonN
  const issuerId=issuer?'shaykh:'+issuer.id:null;
  if(issuerId&&issuer)names[issuerId]=issuer.name;
  return {options:options.map(option=>option.id),diagram:{names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal,personalText:preparedSanadText({...personal,suffix:''})}};
+}
+
+type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBridge>>;
+
+/** Validate the stored prefix and preserve the exact reviewed transmission wording for issuance. */
+export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string){
+ const selected=bridges.filter(bridge=>bridge.source.id===continuationId);
+ const resolved=savedSharedBridgeDiagram(text,ids,selected,undefined,undefined,continuationId)?.diagram;
+ if(!resolved||resolved.personalText!==text.trim().replace(/[.،؛]+$/u,''))throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+ const bridge=selected[0];
+ const meeting=ids.at(-1)!;
+ const keys=new Set(bridge.routes.flatMap(route=>{
+  const index=route.findIndex(node=>node.id===meeting);
+  return index<0?[]:[JSON.stringify(route.slice(index+1).map(node=>node.id))];
+ }));
+ const source=bridge.source.body.trim();
+ for(const boundary of source.matchAll(/،\s*(?=عن\s)/gu)){
+  const tail=source.slice(boundary.index+boundary[0].length);
+  const paths=linkedBridgeTails(bridge,tail,meeting);
+  if(paths&&new Set(paths.map(path=>JSON.stringify(path.map(node=>node.id)))).size===keys.size){
+   return text.trim().replace(/[.،؛]+$/u,'')+'، '+tail;
+  }
+ }
+ throw Error('لا يوجد نص مشترك معتمد يطابق جميع مسارات نقطة الالتقاء');
 }

@@ -1,6 +1,6 @@
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -65,3 +65,10 @@ const another={...reviewed,source:{...reviewed.source,id:'another'}};
 assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.options,['reviewed-source','another']);
 assert.equal(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.diagram,null);
 assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another],undefined,undefined,'another')?.diagram?.paths,separated?.paths);
+
+const draft=composeReferencedPersonalSanad(personal,ids,[reviewed],source.id);
+assert.equal(draft,complete,'issuance appends the reviewed wording at the saved meeting ID');
+assert.equal(personalGraph?.paths.length,2);
+assert.throws(()=>composeReferencedPersonalSanad(complete,ids,[reviewed],source.id),/نقطة الالتقاء/,'composed prose cannot be saved as a referenced personal sanad');
+assert.throws(()=>composeReferencedPersonalSanad(personal,[...ids.slice(0,-1),'wrong'],[reviewed],source.id),/نقطة الالتقاء/);
+assert.throws(()=>composeReferencedPersonalSanad(personal,ids,[reviewed],'wrong-source'),/نقطة الالتقاء/);
