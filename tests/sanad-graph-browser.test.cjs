@@ -109,6 +109,11 @@ const {chromium}=require('playwright');
      assert.ok(positions.length>=10&&positions.length<=13);
      assert.deepEqual(positions,positions.map((_,index)=>index+1));
      assert.equal(await hafs.getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
+     assert.equal(await hafs.getByText(/إبراهيم الع/).count(),0);
+     const names=await hafs.locator('[data-sanad-node] .narrator-person-card p').allTextContents();
+     const meeting=names.findIndex(name=>name.includes('شمس الدين محمد بن عمر بن قاسم'));
+     assert.match(names[meeting-1],/عبد الرحمن بن شحاذة/);
+     assert.match(names[meeting+1],/المرزوقي/);
     }
     await hafs.getByRole('button',{name:'عرض الكل',exact:true}).click();
     assert.ok(await hafs.evaluate(element=>element.scrollWidth<=element.clientWidth));

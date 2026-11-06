@@ -47,12 +47,21 @@ assert.equal(reviewedSharedBridge(source,review,aliased.map(p=>p.id==='0'?{...p,
 assert.equal(reviewedSharedBridge(source,{...review,identities:review.identities.slice(1)},aliased),null);
 
 const reviewed=reviewedSharedBridge(source,review,aliased)!;
-const diagram=savedSharedBridgeDiagram(complete,ids,[reviewed]);
+const diagram=savedSharedBridgeDiagram(complete,ids,[reviewed])?.diagram;
 assert.equal(diagram?.paths.length,6);
 assert.ok(diagram.paths.every(path=>path[0]==='6'&&path.filter(id=>id==='0').length===1));
 assert.equal(savedSharedBridgeDiagram(complete,[],[reviewed]),null);
-assert.equal(savedSharedBridgeDiagram(complete.replace('زيد','سعيد'),ids,[reviewed]),null);
+assert.equal(savedSharedBridgeDiagram(complete.replace('زيد','سعيد'),ids,[reviewed])?.diagram??null,null);
 const lateTail='عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const beforeParallel='عن أحمد، '+lateTail;
 assert.deepEqual(linkedBridgeTails(reviewed,beforeParallel,'1'),null,'the branch-origin continuation cannot skip its other path');
 assert.deepEqual(linkedBridgeTails(reviewed,lateTail,'3'),null,'an unattested text boundary cannot be joined');
+
+const separated=savedSharedBridgeDiagram(personal,ids,[reviewed])?.diagram;
+assert.deepEqual(separated?.paths,diagram?.paths);
+assert.equal(separated?.personalText,personal);
+assert.equal(diagram?.personalText,personal);
+const another={...reviewed,source:{...reviewed.source,id:'another'}};
+assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.options,['reviewed-source','another']);
+assert.equal(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.diagram,null);
+assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another],undefined,undefined,'another')?.diagram?.paths,separated?.paths);

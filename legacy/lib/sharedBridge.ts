@@ -111,20 +111,30 @@ export function joinSharedBridgeRoutes(personalPaths:string[][],tails:{id:string
 }
 
 /** Compose a saved personal sanad and its exact reviewed continuation for any viewer. */
-export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:NonNullable<ReturnType<typeof reviewedSharedBridge>>[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string}){
+export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:NonNullable<ReturnType<typeof reviewedSharedBridge>>[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string},continuationId?:string){
+ const separated=prepareSavedSanadPeople(source,true,'end');
  const personal=preparation?.reviewed&&preparedSanadText(preparation).trim()===source.trim()
-  ?preparation:recoverSharedBridgePrefix(source,ids,bridges.map(bridge=>bridge.source));
+  ?preparation:recoverSharedBridgePrefix(source,ids,bridges.map(bridge=>bridge.source))??(separated?.tokens.length===ids.length?separated:null);
  if(!personal||!ids.length||ids.length!==personal.tokens.length||ids.some(id=>!id))return null;
  const graph=preparedSanadGraph(personal,personal.tokens.map((token,i)=>({...token,personId:ids[i]})));
  if(!graph)return null;
  const meetingId=ids.at(-1)!;
  const tail=personal.suffix.replace(/^\s*،\s*/u,'').trim();
- const matches=bridges.map(bridge=>linkedBridgeTails(bridge,tail,meetingId)).filter(paths=>paths!==null);
- if(matches.length!==1)return null;
- const joined=joinSharedBridgeRoutes(graph.paths,matches[0],meetingId);
- if(!joined)return null;
- const names=Object.fromEntries([...matches[0].flat(),...graph.nodes].map(node=>[node.id,node.name]));
+ const options=bridges.flatMap(bridge=>{
+  const paths=tail?linkedBridgeTails(bridge,tail,meetingId):bridge.routes.flatMap(route=>{
+   const index=route.findIndex(node=>node.id===meetingId);
+   return index>=0?[route.slice(index+1)]:[];
+  });
+  if(!paths?.length)return [];
+  const unique=[...new Map(paths.map(path=>[JSON.stringify(path.map(node=>node.id)),path])).values()];
+  const joined=joinSharedBridgeRoutes(graph.paths,unique,meetingId);
+  return joined?[{id:bridge.source.id,paths:unique,joined}]:[];
+ });
+ const match=continuationId?options.find(option=>option.id===continuationId):options.length===1?options[0]:undefined;
+ if(!match)return {options:options.map(option=>option.id),diagram:null};
+ const {joined,paths}=match;
+ const names=Object.fromEntries([...paths.flat(),...graph.nodes].map(node=>[node.id,node.name]));
  const issuerId=issuer?'shaykh:'+issuer.id:null;
  if(issuerId&&issuer)names[issuerId]=issuer.name;
- return {names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal};
+ return {options:options.map(option=>option.id),diagram:{names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal,personalText:preparedSanadText({...personal,suffix:''})}};
 }

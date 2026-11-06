@@ -79,7 +79,7 @@ export default function ShaykhSanadTree(){
       const savedPreparation=s.preparation??recoverSharedBridgePrefix(s.text,s.ids,bridges);
       try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids,savedPreparation,s.text);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=savedPreparation||prepareSavedSanadPeople(text);
-      const diagram=savedSharedBridgeDiagram(s.text,s.ids,linked,savedPreparation,{id:sheikh.id,name:sheikh.name});
+      const diagram=savedSharedBridgeDiagram(s.text,s.ids,linked,savedPreparation,{id:sheikh.id,name:sheikh.name})?.diagram;
       if(diagram){
        const paths=[{id:sheikh.id+':'+s.id,label,routes:diagram.paths.map(route=>route.map(id=>diagram.names[id])),graphRoutes:diagram.paths,graphNames:diagram.names}];
        return {id:sheikh.id+':'+s.id,label,text,ids:s.ids,preparation,paths,reason:''};
