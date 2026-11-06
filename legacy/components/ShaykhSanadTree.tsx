@@ -5,12 +5,13 @@ import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/ap
 import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
-import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
+import {preparedSanadText,prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import PersonalSanadInput from './PersonalSanadInput';
 import {Button} from '@project/components/ui/button';
 
 type Path={id:string;label:string;routes:string[][]};
+type SavedChain={id:string;label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>};
 type Branch={name:string;children:Map<string,Branch>;ends:Path[]};
 const rootName='الإمام ابن الجزري';
 function linearNames(source:string){
@@ -21,6 +22,9 @@ function linearNames(source:string){
 function graphPaths(source:string,endpoint:'ubaydi'|'jazari',ids:string[]=[]){
  const prepared=prepareSavedSanadPeople(source,false,endpoint);
  if(!prepared)return null;
+ return pathsFromPreparation(prepared,ids);
+}
+function pathsFromPreparation(prepared:NonNullable<ReturnType<typeof prepareSavedSanadPeople>>,ids:string[]){
  const graph=preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids.length===prepared.tokens.length?ids[i]:undefined})));
  return graph?{paths:graph.paths.map(path=>path.map(id=>graph.nodes.find(node=>node.id===id)!.name)),suffix:prepared.suffix}:null;
 }
@@ -37,16 +41,18 @@ function sharedBridgePaths(source:string){
  if(!rest.length||parallel.length<2)return null;
  return [[...main,end],...parallel.map(teacher=>[...main.slice(0,pivot+1),...rest,teacher,end])];
 }
-function numberedPaths(source:string,ids:string[]){
- const prefix=graphPaths(source,'ubaydi',ids);
- const tail=prefix?.suffix.replace(/^\s*،\s*/u,'').trim()||'';
+function numberedPaths(source:string,ids:string[],preparation:SavedChain['preparation'],savedText:string){
+ const saved=preparation?.reviewed&&preparedSanadText(preparation).trim()===savedText.trim()?pathsFromPreparation(preparation,ids):null;
+ const prefix=saved||graphPaths(source,'ubaydi',ids);
+ const suffix=saved&&source.startsWith(savedText.trim())?saved.suffix+source.slice(savedText.trim().length):prefix?.suffix;
+ const tail=suffix?.replace(/^\s*،\s*/u,'').trim()||'';
  const continuation=tail?graphPaths('كما أخذته '+tail,'jazari'):null;
  const endings=sharedBridgePaths(tail)||continuation?.paths||[linearNames(tail)];
  const parallel=/^(.*?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)\s*$/u.exec(source.trim());
  const parallelHead=parallel?linearNames(parallel[1]):[];
  const parallelPaths=parallel&&parallelHead.length?parallel[2].split(/،\s*و/u).map(name=>[...parallelHead,name,parallel[3]]):null;
  const full=graphPaths(source,'jazari');
- const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):parallelPaths||full?.paths||[linearNames(source)];
+ const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):saved?.paths||parallelPaths||full?.paths||[linearNames(source)];
  return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
@@ -57,7 +63,7 @@ function BranchView({branch,depth,selected,onSelect,branchFrom}:{branch:Branch;d
  </li>;
 }
 export default function ShaykhSanadTree(){
- const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<{label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>}[]>([]),[selected,setSelected]=useState<Path>(),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<SavedChain[]>([]),[selectedId,setSelectedId]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{
   let cancelled=false;
   async function load(){
@@ -79,7 +85,7 @@ export default function ShaykhSanadTree(){
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
-      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids);}catch{/* Incomplete or ambiguous saved chain. */}
+      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids,s.preparation??null,s.text);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=s.preparation||prepareSavedSanadPeople(text);
       const grouped=new Map<string,{students:Set<string>;rest:string[]}>();
       for(const [,student,...rest] of names){
@@ -92,7 +98,8 @@ export default function ShaykhSanadTree(){
       for(const {students,rest} of grouped.values()){
        const firstLevel=students.size>1?['أصحاب الجزري — '+[...students].join('، ')]:[...students];
        const route=[rootName,...firstLevel,...rest,sheikh.name];
-       const junction=route.findIndex(name=>/ابراهيم العبيدي$/u.test(sanadKey(name)));
+       const meetingName=s.preparation?.reviewed?s.preparation.tokens.at(-1)?.name:undefined;
+       const junction=route.findIndex(name=>meetingName?sanadKey(name)===sanadKey(meetingName):/ابراهيم العبيدي$/u.test(sanadKey(name)));
        const key=JSON.stringify(junction<0?route:route.slice(junction));
        const routes=personalBranches.get(key)??[];
        routes.push(route);
@@ -103,7 +110,7 @@ export default function ShaykhSanadTree(){
        label:label+(personalBranches.size>1?' — فرع '+arabicDigits(i+1):''),
        routes,
       }));
-      return {label,text,ids:s.ids,preparation,paths};
+      return {id:sheikh.id+':'+s.id,label,text,ids:s.ids,preparation,paths};
      });
     }));
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length)));}
@@ -112,6 +119,8 @@ export default function ShaykhSanadTree(){
   }
   void load();return()=>{cancelled=true;};
  },[]);
+ const selected=paths.find(path=>path.id===selectedId);
+ const selectedSource=missing.find(source=>source.id===selectedId);
  const root:Branch={name:rootName,children:new Map(),ends:[]};
  for(const path of selected?[]:paths)for(const route of path.routes){
   let branch=root;
@@ -126,9 +135,9 @@ export default function ShaykhSanadTree(){
   <h3 className="font-bold">أسانيد المشايخ</h3>
   <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
-   {paths.length>0?<><label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selected?.id||''} onChange={e=>setSelected(paths.find(path=>path.id===e.target.value))}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}</select></label>
-    {selected?<SanadPathView key={selected.id} paths={selected.routes} renderPerson={(name,positions)=><BranchPersonCard name={name} number={positions[0]} badgeLabels={positions.map(arabicDigits)}/>}/>:<ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} onSelect={setSelected}/></ul>}</>:<p>تظهر الأسانيد أدناه كما حُفظت في ملفات المشايخ.</p>}
-   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,ids,preparation},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain text={text} ids={ids} preparation={preparation}/></details></li>)}</ul></details>}
+   {paths.length+missing.length>0&&<label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selectedId} onChange={e=>setSelectedId(e.target.value)}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}{missing.map(source=><option key={source.id} value={source.id}>{source.label} · يحتاج مراجعة قبل الترقيم</option>)}</select></label>}
+   {selectedSource?<SavedShaykhChain key={selectedSource.id} {...selectedSource}/>:selected?<SanadPathView key={selected.id} paths={selected.routes} renderPerson={(name,positions)=><BranchPersonCard name={name} number={positions[0]} badgeLabels={positions.map(arabicDigits)}/>}/>:paths.length>0?<ul className="rounded-xl border bg-card p-3"><BranchView branch={root} depth={1} onSelect={path=>setSelectedId(path.id)}/></ul>:<p>تظهر الأسانيد أدناه كما حُفظت في ملفات المشايخ.</p>}
+   {!selectedSource&&missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,ids,preparation},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain text={text} ids={ids} preparation={preparation}/></details></li>)}</ul></details>}
   </>}
  </section>;
 }
