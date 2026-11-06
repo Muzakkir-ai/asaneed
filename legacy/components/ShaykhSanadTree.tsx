@@ -1,5 +1,5 @@
 import {useEffect,useState} from 'react';
-import {additionalShaykhs,sanadSections} from '../lib/api';
+import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/api';
 import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
@@ -40,8 +40,11 @@ function numberedPaths(source:string,ids:string[]){
  const tail=prefix?.suffix.replace(/^\s*،\s*/u,'').trim()||'';
  const continuation=tail?graphPaths('كما أخذته '+tail,'jazari'):null;
  const endings=sharedBridgePaths(tail)||continuation?.paths||[linearNames(tail)];
+ const parallel=/^(.*?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)\s*$/u.exec(source.trim());
+ const parallelHead=parallel?linearNames(parallel[1]):[];
+ const parallelPaths=parallel&&parallelHead.length?parallel[2].split(/،\s*و/u).map(name=>[...parallelHead,name,parallel[3]]):null;
  const full=graphPaths(source,'jazari');
- const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):full?.paths||[linearNames(source)];
+ const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):parallelPaths||full?.paths||[linearNames(source)];
  return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
@@ -59,9 +62,18 @@ export default function ShaykhSanadTree(){
    try{
     const [{sheikhs},{sections}]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'})]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
-    const groups=sheikhs.map(sheikh=>{
+    const groups=await Promise.all(sheikhs.map(async sheikh=>{
      const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null}];
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
+     const {sanads}=await additionalReadingSanads({action:'list',shaykhId:sheikh.id});
+     const seen=new Set(sources.map(s=>sanadKey(s.text).replace(/[.،؛]+$/u,'')));
+     for(const sanad of sanads){
+      const text=sanad.unifiedSanad?.prefix||(!sanad.tariqNumber?sanad.sanadText:'');
+      const key=sanadKey(text).replace(/[.،؛]+$/u,'');
+      if(!key||seen.has(key))continue;
+      seen.add(key);
+      sources.push({id:sanad.id,label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null});
+     }
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
@@ -91,7 +103,7 @@ export default function ShaykhSanadTree(){
       }));
       return {label,text,ids:s.ids,preparation,paths};
      });
-    });
+    }));
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>!row.paths.length)));}
    }catch(e){if(!cancelled)setError(e instanceof Error?e.message:'تعذر تحميل أسانيد المشايخ');}
    finally{if(!cancelled)setLoading(false);}
