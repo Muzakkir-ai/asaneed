@@ -1,4 +1,4 @@
-import {usesSharedSughra,profileHasSharedSughraCoverage} from '../lib/sharedShaykhSanad';
+import {usesSharedSughra} from '../lib/sharedShaykhSanad';
 import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {context as requestContext} from '../compat/context';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
@@ -48,7 +48,6 @@ export default createEndpoint({
   if(input.action==='saveShared'){
    if(!input.id)throw Error('اختر الشيخ أولًا');
    const existing=await zite.additionalShaykhs.findOne({id:input.id});
-   if(input.sharedSughraSanad&&!profileHasSharedSughraCoverage(existing))throw Error('احفظ السند من محرر الرواية');
    const personalChain=(input.personalChain||'').trim(),junction=input.junction||'ubaydi';
    if(!input.personalPersonIds?.length||!reachesJunction({personalChain,junction})||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
    await zite.additionalShaykhs.update({id:existing.id,record:{personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),sharedSughraSanad:input.sharedSughraSanad===true,sharedPeopleReviewed:true}});

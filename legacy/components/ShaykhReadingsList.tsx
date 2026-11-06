@@ -1,5 +1,5 @@
 import {ijazahCoverage} from '../lib/ijazahCoverage';
-import {shortReadingLabel} from '../lib/qurra';
+import {QURRA,shortReadingLabel} from '../lib/qurra';
 import {compactRouteBook} from '../lib/bookBuilder';
 import {BookOpen,ArrowUpLeft} from 'lucide-react';
 type Reading={qariId:string;rawi:string;tariqNumber?:string;tariqName?:string};
@@ -12,7 +12,9 @@ export default function ShaykhReadingsList({readings,routes,onEdit,labelRoute,ge
  const row=(r:Reading,label?:string,key=r.qariId+'|'+r.rawi)=>{
   const editable=onEdit&&!(shared&&!r.tariqNumber);
   const name=shortReadingLabel(r.qariId,r.rawi),className="workspace-action-card workspace-book-card w-full h-auto min-w-0 items-start justify-start gap-3 whitespace-normal text-start";
-  const content=<><span className="workspace-card-icon" aria-hidden="true"><BookOpen className="h-5 w-5"/></span><span className="min-w-0 flex-1 space-y-1"><span className="workspace-card-title block font-bold">{name}</span><span className="block text-xs text-muted-foreground">{shared&&!r.tariqNumber?'نفس السند المشترك':specific(r)?'سند مختلف لهذه الرواية':'إجازة قراءات'}</span><span className="workspace-card-badge">{label||(shared?'السند المشترك':'الطريق الأصلي')}</span></span>{editable&&<span className="workspace-card-arrow" aria-hidden="true"><ArrowUpLeft className="h-4 w-4"/></span>}</>;
+  const family=QURRA.find(q=>q.id===r.qariId)?.family;
+  const book=label||(family==='seven'?'الشاطبية والتيسير':family==='three'?'الدرة والتحبير':'');
+  const content=<><span className="workspace-card-icon" aria-hidden="true"><BookOpen className="h-5 w-5"/></span><span className="min-w-0 flex-1 space-y-1"><span className="workspace-card-title block font-bold">{name}</span><span className="block text-xs text-muted-foreground">{shared&&!r.tariqNumber?'نفس السند المشترك':specific(r)?'سند مختلف لهذه الرواية':'إجازة قراءات'}</span>{book&&<span className="workspace-card-badge">{book}</span>}</span>{editable&&<span className="workspace-card-arrow" aria-hidden="true"><ArrowUpLeft className="h-4 w-4"/></span>}</>;
   return editable?<button key={key} type="button" className={className} aria-label={'فتح سند '+name+(label?' — '+label:'')} onClick={()=>onEdit(r)}>{content}</button>:<article key={key} className={className} style={{cursor:'default'}}>{content}</article>;
  };
  const original=<div className="grid gap-2 sm:grid-cols-2">{readings.map(r=>row(r))}</div>;

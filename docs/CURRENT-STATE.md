@@ -1,3 +1,9 @@
+## Shared personal sanad for additional shaykhs — 6 November 2026
+
+A shaykh with any configured qiraat can enable one personal sanad for all their standard riwayat. Issuance uses that sanad automatically. Numbered routes use their own complete chains. Turning the setting off restores individual-riwayah selection. Standard cards display the book pair from the reading catalog. Advanced book and route management opens on demand from the readings settings.
+
+The personal-sanad suite verifies partial coverage, shared issuance, numbered routes and restoration of separate sanads. Production build passed. Previous live release: 8180a12 (PR #33).
+
 ## View sanad first, edit explicitly — 6 November 2026
 
 Existing personal sanads open in viewing mode, with narrator cards, arrows, ranks and All/individual-route selection. «تعديل السند» reveals narrator pencils, building instructions, meeting-point controls, preparation/adoption and add/reorder tools; «عرض السند» returns to the viewing layout. Existing source prose without saved narrator structure is shown verbatim instead of a fake empty card. Blank new drafts still start in editing mode.
