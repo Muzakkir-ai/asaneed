@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {prepareSavedSanadPeople,preparedSanadText} from '../legacy/lib/preparedSanadPeople';
-import {preparedSanadGraph,preparedGraphLevels} from '../legacy/lib/preparedSanadGraph';
+import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
+import {sanadPositions,sanadPathLayout} from '../legacy/lib/sanadPathLayout';
 const text='كما أخذته عن الشيخ الأول، عن الشيخ الثاني، عن الشيخ الملتقى(ح). وأخذ الشيخ الثاني أيضًا عن الشيخ الثالث، عن الشيخ الملتقى(ح). وأخذ الشيخ الثالث أيضًا عن الشيخ الرابع، عن الشيخ الملتقى، عن الشيخ الخامس، عن الشيخ السادس، عن الشيخ إبراهيم العُبَيدِي';
 const prepared=prepareSavedSanadPeople(text)!;assert.ok(prepared);
 const people=prepared.tokens.map((t,i)=>({name:t.name,personId:t.name==='الشيخ الملتقى'?'meeting':'person-'+i}));
@@ -14,7 +15,9 @@ const linear=prepareSavedSanadPeople('كما أخذته عن الشيخ الأو
 
 const joint=prepareSavedSanadPeople('كما أخذته عن الشيخ الأول، عن الشيخ الثاني والشيخة الثالثة، وهما عن الشيخ إبراهيم العُبَيدِي')!;const jointGraph=preparedSanadGraph(joint,joint.tokens.map((t,i)=>({name:t.name,personId:String(i)})))!;assert.deepEqual(jointGraph.paths,[['0','1','3'],['0','2','3']],'joint teachers are parallel sources at the same transmission depth');
 
-const jointLevels=preparedGraphLevels(jointGraph);assert.deepEqual(jointLevels.get('1'),[{level:2,suffix:'أ'}]);assert.deepEqual(jointLevels.get('2'),[{level:2,suffix:'ب'}]);assert.deepEqual(jointLevels.get('3'),[{level:1,suffix:''}]);assert.deepEqual(jointLevels.get('0'),[{level:3,suffix:''}]);
-const multi=preparedGraphLevels(graph);assert.deepEqual(multi.get('person-0')!.map(r=>r.level),[6],'All view keeps only the highest rank (fewest transmitters to the junction)');assert.deepEqual(preparedGraphLevels(graph,graph.paths[0]).get('person-0')!.map(r=>r.level),[6],'single view shows the selected route distance');assert.deepEqual(preparedGraphLevels(graph,graph.paths[0]).get('person-9'),[{level:1,suffix:''}]);assert.equal(preparedSanadText(prepared),text,'numbering never rewrites source text');
-
-assert.deepEqual(multi.get('person-0'),[{level:6,suffix:''}],'a highest-rank singleton has no peer suffix');assert.deepEqual(multi.get('person-1'),[{level:5,suffix:'أ'}]);assert.deepEqual(multi.get('person-3'),[{level:5,suffix:'ب'}]);assert.deepEqual(multi.get('person-5'),[{level:5,suffix:'ج'}]);assert.equal(preparedGraphLevels(graph,graph.paths[2]).get('person-0')![0].level,8,'longer selected route retains its actual rank');
+assert.deepEqual(sanadPositions(jointGraph.paths,'1'),[2]);
+assert.deepEqual(sanadPositions(jointGraph.paths,'2'),[2]);
+assert.deepEqual(sanadPositions(graph.paths,'person-9'),[6,7,8]);
+assert.deepEqual(sanadPositions([graph.paths[2]],'person-9'),[8]);
+assert.ok(sanadPathLayout(graph.paths,true),'nested direct links still reconverge in a single diagram');
+assert.equal(preparedSanadText(prepared),text,'numbering never rewrites source text');

@@ -1,42 +1,9 @@
-import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
+import type {ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
-import {preparedGraphLevels,type PreparedGraph,type PreparedGraphNode} from '../lib/preparedSanadGraph';
+import type {PreparedGraph,PreparedGraphNode} from '../lib/preparedSanadGraph';
+import SanadPathView from './SanadPathView';
+
 export default function PreparedSanadGraph({graph,renderNode}:{graph:PreparedGraph;renderNode:(node:PreparedGraphNode,ordinal:number,labels:string[])=>ReactNode}){
- const arrowId=useId().replace(/:/g,'');
- const [pathIndex,setPathIndex]=useState<number|null>(null),[drawing,setDrawing]=useState<{d:string;on:boolean}[]>([]);
- const host=useRef<HTMLDivElement>(null),path=pathIndex===null?undefined:graph.paths[pathIndex];
- const levels=preparedGraphLevels(graph,path);
- const visible=path?path.map(id=>graph.nodes.find(node=>node.id===id)!):graph.nodes,edges=path?path.slice(1).map((to,i)=>({from:path[i],to})):graph.edges,signature=JSON.stringify(graph);
- const neighborhood=(id:string)=>JSON.stringify([edges.filter(edge=>edge.to===id).map(edge=>edge.from).sort(),edges.filter(edge=>edge.from===id).map(edge=>edge.to).sort()]);
- const rows:PreparedGraphNode[][]=[];
- for(const node of visible){
-  const previous=rows.at(-1);
-  if(!path&&previous&&neighborhood(previous[0].id)===neighborhood(node.id))previous.push(node);
-  else rows.push([node]);
- }
- useEffect(()=>{
-  const element=host.current;if(!element)return;
-  const draw=()=>{const frame=element.getBoundingClientRect(),boxes=new Map<string,DOMRect>();element.querySelectorAll<HTMLElement>('[data-graph-node]').forEach(node=>boxes.set(node.dataset.graphNode!,node.getBoundingClientRect()));let shortcut=0;const result:{d:string;on:boolean}[]=[];
-   const drawnRows=new Set<string>();
-   for(const edge of edges){const a=boxes.get(edge.from),b=boxes.get(edge.to);if(!a||!b)continue;const from=visible.findIndex(n=>n.id===edge.from),to=visible.findIndex(n=>n.id===edge.to);const active=!!path;let d:string;
-    const fromRow=rows.findIndex(row=>row.some(node=>node.id===edge.from));
-    const toRow=rows.findIndex(row=>row.some(node=>node.id===edge.to));
-    if(toRow===fromRow+1&&(rows[fromRow].length>1||rows[toRow].length>1)){
-     const key=fromRow+':'+toRow;
-     if(drawnRows.has(key))continue;
-     drawnRows.add(key);
-     const bottom=Math.max(...rows[fromRow].map(node=>boxes.get(node.id)?.bottom??a.bottom));
-     const top=Math.min(...rows[toRow].map(node=>boxes.get(node.id)?.top??b.top));
-     const center=frame.width/2;
-     d=`M ${center} ${bottom-frame.top+3} L ${center} ${top-frame.top-4}`;
-    }else if(to===from+1){d=`M ${a.left-frame.left+a.width/2} ${a.bottom-frame.top} L ${b.left-frame.left+b.width/2} ${b.top-frame.top-4}`;}
-    else{const left=shortcut++%2===0,x=left?7:frame.width-7,ax=left?a.left-frame.left:a.right-frame.left,bx=left?b.left-frame.left-4:b.right-frame.left+4;d=`M ${ax} ${a.top-frame.top+a.height/2} L ${x} ${a.top-frame.top+a.height/2} L ${x} ${b.top-frame.top+b.height/2} L ${bx} ${b.top-frame.top+b.height/2}`;}
-    result.push({d,on:active});
-   }
-   result.sort((a,b)=>Number(a.on)-Number(b.on));setDrawing(previous=>JSON.stringify(previous)===JSON.stringify(result)?previous:result);
-  };
-  const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(draw);observer?.observe(element);element.querySelectorAll('[data-graph-node]').forEach(n=>observer?.observe(n));window.addEventListener('resize',draw);draw();document.fonts?.ready.then(draw);return()=>{observer?.disconnect();window.removeEventListener('resize',draw);};
- },[signature,pathIndex]);
- const shortest=graph.paths[0].length;
- return <section className="prepared-sanad-graph" aria-label="الفروع المتصلة عند ح">{graph.paths.length>1&&<div className="prepared-graph-paths" role="group" aria-label="عرض الأسانيد">{graph.paths.map((p,i)=><button key={p.join('|')} type="button" aria-pressed={p===path} onClick={()=>setPathIndex(i)}><strong>{i===0?'السند الأعلى':p.length===shortest?'سند موازٍ '+arabicDigits(i):'فرع ح '+arabicDigits(i)}</strong><span>{arabicDigits(p.length)} رواة</span></button>)}<button className="prepared-graph-all" type="button" aria-pressed={!path} onClick={()=>setPathIndex(null)}><strong>عرض الكل</strong><span>{arabicDigits(graph.paths.length)} أسانيد</span></button></div>}<div ref={host} className="prepared-graph-canvas"><svg className="prepared-graph-wires" aria-hidden="true"><defs><marker id={arrowId+'-active'} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M1 1 L6 3.5 L1 6" fill="none" stroke="hsl(var(--primary))" strokeWidth="1.4"/></marker><marker id={arrowId+'-muted'} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M1 1 L6 3.5 L1 6" fill="none" stroke="hsl(var(--muted-foreground)/.4)" strokeWidth="1.2"/></marker></defs>{drawing.map((edge,i)=><path key={i} d={edge.d} fill="none" stroke={edge.on?'hsl(var(--primary))':'hsl(var(--muted-foreground)/.35)'} strokeWidth={edge.on?2:1.2} markerEnd={'url(#'+arrowId+(edge.on?'-active':'-muted')+')'}/>)}</svg>{rows.map(row=><div key={row[0].id} className={row.length>1?'prepared-graph-node grid grid-cols-1 gap-3 sm:grid-cols-2':'prepared-graph-node'}>{row.map(node=><div key={node.id} data-graph-node={node.id} data-selected={!!path} className="relative min-w-0">{!path&&node.turn&&<span className="prepared-graph-turn">ح</span>}{renderNode(node,visible.indexOf(node)+1,levels.get(node.id)!.map(rank=>arabicDigits(rank.level)+(rank.suffix?' '+rank.suffix:'')))}</div>)}</div>)}</div><p className="text-xs text-muted-foreground">الترقيم من نقطة الالتقاء: الرواة في الرتبة نفسها يشتركون في الرقم وتُميّزهم الحروف. في عرض الكل تظهر أعلى رتبة للراوي، وعند اختيار سند تظهر رتبته في ذلك السند.</p><p className="text-xs text-muted-foreground" aria-live="polite">{path?`السند المحدد: ${arabicDigits(path.length)} رواة حتى نقطة الالتقاء، بحسب النص المحفوظ.`:'جميع الأسانيد ظاهرة حتى نقطة الالتقاء، بحسب النص المحفوظ.'}</p></section>;
+ const entries=new Map(graph.nodes.map(node=>[node.id,node]));
+ return <SanadPathView paths={graph.paths} renderPerson={(id,positions)=>renderNode(entries.get(id)!,positions[0],positions.map(arabicDigits))}/>;
 }

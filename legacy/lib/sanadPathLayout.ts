@@ -1,6 +1,6 @@
 export type SanadPathBlock={kind:'person';id:string}|{kind:'split';lanes:SanadPathBlock[][]};
 /** Decompose only explicit person-ID paths; keep repeated splits and meeting points. */
-export function sanadPathLayout(input:string[][]):SanadPathBlock[]|null{
+export function sanadPathLayout(input:string[][],exactRoutes=false):SanadPathBlock[]|null{
  const paths=input.filter((p,i,all)=>all.findIndex(q=>JSON.stringify(q)===JSON.stringify(p))===i);
  if(!paths.length)return [];
  if(paths.some(p=>new Set(p).size!==p.length))return null;
@@ -8,9 +8,9 @@ export function sanadPathLayout(input:string[][]):SanadPathBlock[]|null{
  if(paths.some(p=>JSON.stringify(p.filter(id=>common.includes(id)))!==JSON.stringify(common)))return null;
  function layout(rows:string[][]):SanadPathBlock[]|null{
   if(rows.every(p=>!p.length))return [];
-  if(rows.some(p=>!p.length))return null;
+  if(!exactRoutes&&rows.some(p=>!p.length))return null;
   const first=rows[0][0];
-  if(rows.every(p=>p[0]===first)){const rest=layout(rows.map(p=>p.slice(1)));return rest?[{kind:'person',id:first},...rest]:null;}
+  if(first!==undefined&&rows.every(p=>p[0]===first)){const rest=layout(rows.map(p=>p.slice(1)));return rest?[{kind:'person',id:first},...rest]:null;}
   const meeting=rows[0].find(id=>rows.every(p=>p.includes(id)));
   const heads=rows.map(p=>meeting?p.slice(0,p.indexOf(meeting)):p);
   const groups=[...new Set(heads.map(p=>p[0]))].map(id=>heads.filter(p=>p[0]===id));
@@ -22,5 +22,14 @@ export function sanadPathLayout(input:string[][]):SanadPathBlock[]|null{
   const tail=meeting?layout(rows.map(p=>p.slice(p.indexOf(meeting)))):[];
   return tail?[{kind:'split',lanes:lanes as SanadPathBlock[][]},...tail]:null;
  }
- return layout(paths);
+ const result=layout(paths);
+ // Two independent-looking splits may encode correlated choices. Keep those
+ // explicit routes separate so the diagram cannot imply an unsaved combination.
+ const routeCount=(blocks:SanadPathBlock[]):number=>blocks.reduce((count,block)=>block.kind==='person'?count:count*block.lanes.reduce((sum,lane)=>sum+routeCount(lane),0),1);
+ return !exactRoutes||!result||routeCount(result)===paths.length?result:null;
+}
+
+/** A shared narrator can occur at different positions on different routes. */
+export function sanadPositions(paths:string[][],id:string){
+ return [...new Set(paths.flatMap(path=>path.flatMap((person,i)=>person===id?[i+1]:[])))].sort((a,b)=>a-b);
 }
