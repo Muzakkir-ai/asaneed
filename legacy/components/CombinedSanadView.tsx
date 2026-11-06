@@ -1,4 +1,4 @@
-import {useId,useState,type ReactNode} from 'react';
+import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
 import {sanadPositions} from '../lib/sanadPathLayout';
@@ -8,6 +8,16 @@ const cell=208,rowHeight=166,cardWidth=192,cardHeight=118;
 export default function CombinedSanadView({paths,renderPerson,groupJazariStudents,source}:{paths:string[][];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string}){
  const [route,setRoute]=useState<number|null>(null);
  const arrow=useId(),graph=combinedSanad(paths);
+ const viewport=useRef<HTMLDivElement>(null);
+ useEffect(()=>{
+  const element=viewport.current;
+  if(!element)return;
+  const center=()=>{element.scrollLeft=(element.scrollWidth-element.clientWidth)/2;};
+  center();
+  const observer=new ResizeObserver(center);
+  observer.observe(element);
+  return ()=>observer.disconnect();
+ },[paths]);
  if(!graph?.rows.length)return null;
  const width=Math.max(...graph.rows.map(row=>row.length))*cell+48;
  const grouped=groupJazariStudents&&graph.directStudents.length>1;
@@ -24,7 +34,8 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
    </select>
   </div>
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
-  <div className="overflow-x-auto rounded-lg border p-2" dir="ltr">
+  <p className="text-xs text-muted-foreground sm:hidden">مرّر أفقيًا لرؤية الفروع.</p>
+  <div ref={viewport} className="overflow-x-auto rounded-lg border p-2" dir="ltr" data-sanad-viewport="">
    <div className="relative mx-auto" style={{width,height}}>
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>

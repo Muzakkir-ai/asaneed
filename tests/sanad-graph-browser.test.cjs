@@ -153,7 +153,8 @@ const {chromium}=require('playwright');
    if(process.env.ASANEED_COMBINED_SCREENSHOTS){
     for(const width of [1100,390,320]){
      await page.setViewportSize({width,height:900});
-     await combined.screenshot({path:process.env.ASANEED_COMBINED_SCREENSHOTS+'/combined-hafs-'+width+'.png'});
+     await combined.locator('[data-sanad-viewport]').evaluate(element=>{element.scrollLeft=(element.scrollWidth-element.clientWidth)/2;});
+     await combined.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_COMBINED_SCREENSHOTS+'/combined-hafs-'+width+'.png'});
     }
    }
    console.log('PASS authorized Hafs data: all 10 numbered paths and RTL bounds at three widths');
