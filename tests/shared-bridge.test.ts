@@ -1,0 +1,47 @@
+import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
+import assert from 'node:assert/strict';
+import {joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+
+const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
+const body='عن البَقَرِيّ، '+tail;
+const source={id:'reviewed-source',body};
+const names=['البَقَرِيّ','مُحَمَّد','خالد','أحمد','زيد','عمرو','ابن الجزري'];
+const people=names.map((name,i)=>({id:String(i),name,archived:false,display_name:''}));
+people[0]={...people[0],name:'شمس الدين البقري'};
+const aliased=[{...people[0],aliases:[{name:'البقري',key:'البقري'}]},...people.slice(1)];
+assert.equal(matchesSharedBridgeSuffix(body,tail),true);
+assert.equal(matchesSharedBridgeSuffix(body,tail.replace('زيد','سعيد')),false);
+assert.equal(matchesSharedBridgeSuffix(body,tail.slice(3)),false);
+assert.equal(sharedBridgePaths('عن أحمد، عن ابن الجزري'),null);
+assert.equal(linkSharedBridge(source,people)?.routes,null);
+const linked=linkSharedBridge(source,aliased);
+assert.deepEqual(linked?.routes?.map(route=>route.map(node=>node.id)),[['0','1','2','6'],['0','1','3','4','6'],['0','1','3','5','6']]);
+assert.equal(linked?.routes?.[0][0].name,'البَقَرِيّ');
+assert.equal(linked?.source.body,body);
+assert.deepEqual(linkSharedBridge(source,[...aliased,{...people[1],id:'duplicate'}])?.unresolved,[{name:'مُحَمَّد',ids:['1','duplicate']}]);
+console.log('PASS exact continuation boundaries, parallel paths, shared junctions, aliases, source spelling and duplicate review');
+
+const personal='كما أخذته عن عبد الله، عن يوسف، عن إسماعيل (ح). وقرأ عبد الله أيضًا على يعقوب، عن إسماعيل، عن البَقَرِيّ';
+const ids=['student','teacher1','join','teacher2','join','0'];
+const complete=personal+'، '+tail;
+const recovered=recoverSharedBridgePrefix(complete,ids,[source]);
+assert.ok(recovered);
+const personalGraph=preparedSanadGraph(recovered,recovered.tokens.map((token,i)=>({...token,personId:ids[i]})));
+assert.deepEqual(personalGraph?.paths,[['student','teacher1','join','0'],['student','teacher2','join','0']]);
+const continuations=linkedBridgeTails(linked!,tail,'0');
+assert.deepEqual(continuations?.map(path=>path.map(node=>node.id)),[['1','2','6'],['1','3','4','6'],['1','3','5','6']]);
+const routes=joinSharedBridgeRoutes(personalGraph!.paths,continuations!,'0');
+assert.ok(routes);
+assert.equal(joinSharedBridgeRoutes([['student','wrong-junction']],continuations!,'0'),null);
+assert.equal(joinSharedBridgeRoutes([['student','1','0']],continuations!,'0'),null);
+assert.equal(routes.length,6);
+assert.ok(routes.every(route=>route.filter(id=>id==='0').length===1&&route.at(-1)==='6'));
+assert.equal(linkedBridgeTails(linked!,tail,'wrong-id'),null);
+assert.equal(recoverSharedBridgePrefix(complete,[],[source]),null);
+assert.equal(recoverSharedBridgePrefix(complete.replace('زيد','سعيد'),ids,[source]),null);
+
+const review={version:1,sourceBody:body,identities:names.map((name,i)=>({name,personId:String(i),evidence:'reviewed fixture'}))};
+assert.deepEqual(reviewedSharedBridge(source,review,aliased)?.routes,linked?.routes);
+assert.equal(reviewedSharedBridge({...source,body:body+' '},review,aliased),null);
+assert.equal(reviewedSharedBridge(source,review,aliased.map(p=>p.id==='0'?{...p,archived:true}:p)),null);
+assert.equal(reviewedSharedBridge(source,{...review,identities:review.identities.slice(1)},aliased),null);

@@ -1,3 +1,4 @@
+import {linkedBridgeTails,reviewedSharedBridge} from '../legacy/lib/sharedBridge';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {QURRA} from '../legacy/lib/qurra';
 import {buildNarratorDirectory} from '../legacy/lib/narratorDirectory';
@@ -10,6 +11,7 @@ export async function loadBuilderLibrary(client:SupabaseClient,prefixOwnerId?:st
  const [people,books,chains,nodes,sections,continuationSchema,personalHoldings]=await Promise.all([all('builder_people'),all('builder_books'),all('builder_chains'),all('builder_nodes'),client.from('workspace_records').select('id,payload').eq('kind','sanadSections'),client.from('builder_chains').select('continuation_ids').limit(0),prefixOwnerId?client.from('workspace_records').select('id,payload').eq('kind','ijazahHoldings').eq('payload->>ownerId',prefixOwnerId):Promise.resolve({data:[],error:null})]);
  const text=(check(sections)||[]).map(s=>s.payload as Record<string,string>).filter(s=>!s.ownerId);
  const continuationSections:ContinuationSection[]=(check(sections)||[]).filter(s=>!s.payload.ownerId).map(s=>({id:s.id,...s.payload}));
+ const sharedBridgeGraphs=(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE).map(s=>reviewedSharedBridge({id:s.id,body:s.payload.body||''},s.payload.sharedBridgeReview,people)).filter(graph=>graph!==null);
  const continuations:Record<string,string>={};for(const q of QURRA)for(const rawi of q.rawis){const resolved=resolveSanadContinuation(continuationSections,q.id,rawi);if(!resolved.missing.length)continuations[q.id+'|'+rawi]=resolved.text;}
  for(const chain of chains){if(chain.continuation_ids?.length){const resolved=resolveSanadContinuation(continuationSections,chain.qari_id,chain.rawi,chain.continuation_ids);chain.continuation=resolved.text;if(resolved.missing.length)chain.confirmed=false;}}
 
@@ -42,6 +44,18 @@ export async function loadBuilderLibrary(client:SupabaseClient,prefixOwnerId?:st
    });
   }
  }
+ const sharedBridgeMeetingPoints=sharedBridgeGraphs.flatMap(graph=>{
+  const source=graph.source.body.trim();
+  return [...source.matchAll(/،\s*(?=عن\s)/gu)].flatMap(boundary=>{
+   const body=source.slice(boundary.index+boundary[0].length);
+   const anchorIds=[...new Set(graph.routes.flat().map(node=>node.id))].filter(id=>linkedBridgeTails(graph,body,id));
+   if(anchorIds.length!==1)return [];
+   const anchorName=activePeople.get(anchorIds[0]);
+   if(!anchorName)return [];
+   try{validatePersonalBridge(anchorName,body);}catch{return [];}
+   return [{id:'shared-bridge:'+graph.source.id+':'+boundary.index,title:UBAYDI_BRIDGE_TITLE,anchorName,body}];
+  });
+ });
  const suggestions=[...new Set(text.filter(s=>s.title?.startsWith('CHAIN:')).flatMap(s=>(s.body||'').split(/(?:^|[،.])\s*عن\s+/u)).map(s=>s.trim().replace(/[،.]+$/u,'')).filter(s=>s.length>=8&&s.length<180&&!/[\n؛]|وقرأ|وهم|وهما|صاحب القراءة|صاحب الرواية/u.test(s)))];
- return {quranMeetingPeople,unificationReady:!continuationSchema.error,continuationSections,prefixContinuations:[...(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE||prefixOwnerId&&s.payload.ownerId===prefixOwnerId&&s.payload.sectionType==='personal'&&s.payload.title?.startsWith(PERSONAL_BRIDGE_TITLE)).map(s=>({id:s.id,title:s.payload.title,body:s.payload.body||'',...(s.payload.title.startsWith(PERSONAL_BRIDGE_TITLE)?{anchorName:s.payload.title.slice(PERSONAL_BRIDGE_TITLE.length)}:{})})),...bookMeetingPoints.values(),...savedPersonalMeetingPoints((check(personalHoldings)||[]).map(h=>({id:h.id,unifiedSanad:h.payload.unifiedSanad||(h.payload.personalPersonIds?.length?{prefix:h.payload.personalChain,prefixPersonIds:h.payload.personalPersonIds}:null)})),people)],people,books,chains:chains.map(c=>({...c,branches:[...new Set<number>(nodes.filter(n=>n.chain_id===c.id).map(n=>n.branch))].sort((a,b)=>a-b).map(b=>nodes.filter(n=>n.chain_id===c.id&&n.branch===b).sort((a,b)=>a.position-b.position).map(n=>({person_id:n.person_id,route_source:n.route_source,source_level:n.source_level}))),...(!nodes.some(n=>n.chain_id===c.id)?{branches:[[]]}:{})})),suggestions:[...new Set([...suggestions,...quranDirectory.people.map(p=>p.name)])],continuations};
+ return {sharedBridgeGraphs,quranMeetingPeople,unificationReady:!continuationSchema.error,continuationSections,prefixContinuations:[...(check(sections)||[]).filter(s=>!s.payload.ownerId&&s.payload.title===UBAYDI_BRIDGE_TITLE||prefixOwnerId&&s.payload.ownerId===prefixOwnerId&&s.payload.sectionType==='personal'&&s.payload.title?.startsWith(PERSONAL_BRIDGE_TITLE)).map(s=>({id:s.id,title:s.payload.title,body:s.payload.body||'',...(s.payload.title.startsWith(PERSONAL_BRIDGE_TITLE)?{anchorName:s.payload.title.slice(PERSONAL_BRIDGE_TITLE.length)}:{})})),...sharedBridgeMeetingPoints,...bookMeetingPoints.values(),...savedPersonalMeetingPoints((check(personalHoldings)||[]).map(h=>({id:h.id,unifiedSanad:h.payload.unifiedSanad||(h.payload.personalPersonIds?.length?{prefix:h.payload.personalChain,prefixPersonIds:h.payload.personalPersonIds}:null)})),people)],people,books,chains:chains.map(c=>({...c,branches:[...new Set<number>(nodes.filter(n=>n.chain_id===c.id).map(n=>n.branch))].sort((a,b)=>a-b).map(b=>nodes.filter(n=>n.chain_id===c.id&&n.branch===b).sort((a,b)=>a.position-b.position).map(n=>({person_id:n.person_id,route_source:n.route_source,source_level:n.source_level}))),...(!nodes.some(n=>n.chain_id===c.id)?{branches:[[]]}:{})})),suggestions:[...new Set([...suggestions,...quranDirectory.people.map(p=>p.name)])],continuations};
 }
