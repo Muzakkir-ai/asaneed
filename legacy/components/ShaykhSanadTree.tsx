@@ -69,6 +69,9 @@ export default function ShaykhSanadTree(){
      for(const sanad of sanads){
       const text=sanad.unifiedSanad?.prefix||(!sanad.tariqNumber?sanad.sanadText:'');
       const key=sanadKey(text).replace(/[.،؛]+$/u,'');
+      // A legacy reading prefix can be a shorter copy of the active shared sanad.
+      const sharedKey=sanadKey(sheikh.personalChain).replace(/[.،؛]+$/u,'');
+      if(sheikh.sharedSughraSanad&&!sanad.tariqNumber&&!sanad.variantName&&!sanad.unifiedSanad&&key&&sharedKey.startsWith(key+'، '))continue;
       if(!key||seen.has(key))continue;
       seen.add(key);
       sources.push({id:sanad.id,label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null});
