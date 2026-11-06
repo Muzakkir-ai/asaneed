@@ -1,3 +1,4 @@
+import {verifiedOnwardSources} from '../lib/verifiedOnwardSources';
 import {automaticSharedBridgeId,composeReferencedPersonalSanad,personalSanadEndsAtSavedNarrator} from '../lib/sharedBridge';
 import {guestKubraRoutes,usesLibraryKubra} from '../lib/guestKubra';
 import {loadBuilderLibrary} from '../../lib/sanad-library';
@@ -65,7 +66,7 @@ export default createEndpoint({
    const continuationId=input.continuationId===undefined?savedRef:input.continuationId;
    if(continuationId){
     const reviewed=library??await loadBuilderLibrary(requestContext().client);
-    composeReferencedPersonalSanad(personalChain,input.personalPersonIds??[],reviewed.sharedBridgeGraphs??[],continuationId);
+    composeReferencedPersonalSanad(personalChain,input.personalPersonIds??[],verifiedOnwardSources(reviewed,{shaykhId:existing.id}),continuationId);
    }
    if(!input.personalPersonIds?.length||(!continuationId&&(input.continuationId===null?!personalSanadEndsAtSavedNarrator(personalChain,input.personalPersonIds??[]):!reachesJunction({personalChain,junction})))||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
    await zite.additionalShaykhs.update({id:existing.id,record:input.sanadScope==='kubra'?{kubraContinuationId:continuationId,kubraPersonalChain:personalChain,kubraJunction:junction,kubraPersonalPersonIds:input.personalPersonIds}:{continuationId,personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),...(input.sharedSughraSanad===undefined?{}:{sharedSughraSanad:input.sharedSughraSanad}),sharedPeopleReviewed:true}});
@@ -141,8 +142,9 @@ export default createEndpoint({
     const composePersonal=async(text:string,ids:string[],reference?:string|null)=>{
      if(!reference&&(!ids.length||reachesJunction({personalChain:text,junction:'jazari'})||(reference===undefined&&reachesJunction({personalChain:text,junction:'ubaydi'}))))return text;
      const reviewed=library??await loadBuilderLibrary(requestContext().client);
-     const bridges=reviewed.sharedBridgeGraphs??[];
-     const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges);
+     const context={qariId:imam.id,rawi,routeId:catalogRoute?.route.id,shaykhId:guest.id};
+     const bridges=verifiedOnwardSources(reviewed,context);
+     const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
      if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
      return composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
     };

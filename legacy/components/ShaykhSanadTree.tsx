@@ -1,3 +1,4 @@
+import {verifiedOnwardSources,type OnwardContext} from '../lib/verifiedOnwardSources';
 import BranchPersonCard from './BranchPersonCard';
 import SanadPathView from './SanadPathView';
 import {useEffect,useState} from 'react';
@@ -60,9 +61,8 @@ export default function ShaykhSanadTree(){
    try{
     const [{sheikhs},{sections},library]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'}),fetch('/api/book-builder',{headers:workspaceHeaders()}).then(async response=>response.ok?await response.json() as BuilderLibrary:null).catch(()=>null)]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
-    const linked=library?.sharedBridgeGraphs??[];
     const groups=await Promise.all(sheikhs.map(async sheikh=>{
-     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared,continuationId:sheikh.continuationId},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null,continuationId:sheikh.kubraContinuationId}];
+     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared,continuationId:sheikh.continuationId,context:{shaykhId:sheikh.id} as OnwardContext},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null,continuationId:sheikh.kubraContinuationId,context:{shaykhId:sheikh.id} as OnwardContext}];
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
      const {sanads}=await additionalReadingSanads({action:'list',shaykhId:sheikh.id});
      const seen=new Set(sources.map(s=>sanadKey(s.text).replace(/[.،؛]+$/u,'')));
@@ -71,7 +71,7 @@ export default function ShaykhSanadTree(){
       const key=sanadKey(text).replace(/[.،؛]+$/u,'');
       if(!key||seen.has(key))continue;
       seen.add(key);
-      sources.push({id:sanad.id,label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null,continuationId:sanad.continuationId});
+      sources.push({id:sanad.id,label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null,continuationId:sanad.continuationId,context:{qariId:sanad.qariId,rawi:sanad.rawi,shaykhId:sheikh.id}});
      }
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
@@ -79,7 +79,7 @@ export default function ShaykhSanadTree(){
       const savedPreparation=s.preparation??recoverSharedBridgePrefix(s.text,s.ids,bridges);
       try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids,savedPreparation,s.text);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=savedPreparation||prepareSavedSanadPeople(text);
-      const diagram=savedSharedBridgeDiagram(s.text,s.ids,linked,savedPreparation,{id:sheikh.id,name:sheikh.name},s.continuationId??undefined)?.diagram;
+      const diagram=savedSharedBridgeDiagram(s.text,s.ids,library?verifiedOnwardSources(library,s.context):[],savedPreparation,{id:sheikh.id,name:sheikh.name},s.continuationId??undefined,s.context)?.diagram;
       if(diagram){
        const paths=[{id:sheikh.id+':'+s.id,label,routes:diagram.paths.map(route=>route.map(id=>diagram.names[id])),graphRoutes:diagram.paths,graphNames:diagram.names}];
        return {id:sheikh.id+':'+s.id,label,text,ids:s.ids,preparation,paths,reason:''};

@@ -1,9 +1,10 @@
+import {contextualOnwardIds,type OnwardContext} from './verifiedOnwardSources';
 import {preparedSanadText,prepareSavedSanadPeople} from './preparedSanadPeople';
 import {preparedSanadGraph} from './preparedSanadGraph';
 import type {BuilderPerson} from './bookBuilder';
 import {sanadKey} from './unifiedSanad';
 
-export type SharedBridgeSource={id:string;body:string};
+export type SharedBridgeSource={id:string;body:string;title?:string;kind?:'book'|'route'|'personal';shaykhId?:string;bookId?:string;parentId?:string;qariId?:string;rawi?:string};
 export type SharedBridgeReview={version:1;sourceBody:string;identities:{name:string;personId:string;evidence:string}[]};
 
 /** Parse the explicit shared source grammar, preserving the source spelling of each narrator. */
@@ -111,7 +112,7 @@ export function joinSharedBridgeRoutes(personalPaths:string[][],tails:{id:string
 }
 
 /** Compose a saved personal sanad and its exact reviewed continuation for any viewer. */
-export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:ReviewedSharedBridge[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string},continuationId?:string){
+export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:ReviewedSharedBridge[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string},continuationId?:string,context:OnwardContext={}){
  const separated=prepareSavedSanadPeople(source,true,'end');
  const personal=preparation?.reviewed&&preparedSanadText(preparation).trim()===source.trim()
   ?preparation:recoverSharedBridgePrefix(source,ids,bridges.map(bridge=>bridge.source))??(separated?.tokens.length===ids.length?separated:null);
@@ -123,14 +124,15 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:Revi
  const options=bridges.flatMap(bridge=>{
   const paths=tail?linkedBridgeTails(bridge,tail,meetingId):bridge.routes.flatMap(route=>{
    const index=route.findIndex(node=>node.id===meetingId);
-   return index>=0?[route.slice(index+1)]:[];
+   return index>=0&&index<route.length-1?[route.slice(index+1)]:[];
   });
   if(!paths?.length)return [];
   const unique=[...new Map(paths.map(path=>[JSON.stringify(path.map(node=>node.id)),path])).values()];
   const joined=joinSharedBridgeRoutes(graph.paths,unique,meetingId);
   return joined?[{id:bridge.source.id,paths:unique,joined}]:[];
  });
- const match=continuationId?options.find(option=>option.id===continuationId):options.length===1?options[0]:undefined;
+ const preferred=contextualOnwardIds(options.map(option=>option.id),bridges,context);
+ const match=options.find(option=>option.id===(continuationId||(preferred.length===1?preferred[0]:undefined)));
  if(!match)return {options:options.map(option=>option.id),diagram:null};
  const {joined,paths}=match;
  const names=Object.fromEntries([...paths.flat(),...graph.nodes].map(node=>[node.id,node.name]));
@@ -139,7 +141,7 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:Revi
  return {options:options.map(option=>option.id),diagram:{names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal,personalText:preparedSanadText({...personal,suffix:''})}};
 }
 
-type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBridge>>;
+export type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBridge>>;
 
 /** Validate the stored prefix and preserve the exact reviewed transmission wording for issuance. */
 export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string){
@@ -148,6 +150,17 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
  if(!resolved||resolved.personalText!==text.trim().replace(/[.،؛]+$/u,''))throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
  const bridge=selected[0];
  const meeting=ids.at(-1)!;
+ if(bridge.source.kind){
+  const tails=new Map<string,string>();
+  for(const route of bridge.routes){
+   const index=route.findIndex(node=>node.id===meeting);
+   if(index<0||index===route.length-1)continue;
+   const tail=route.slice(index+1);
+   tails.set(JSON.stringify(tail.map(node=>node.id)),tail.map(node=>'عن '+node.name).join('، '));
+  }
+  const personal=text.trim().replace(/[.،؛]+$/u,'');
+  return [...tails.values()].map(tail=>personal+'، '+tail).join('\n\n(ح)\n\n');
+ }
  const keys=new Set(bridge.routes.flatMap(route=>{
   const index=route.findIndex(node=>node.id===meeting);
   return index<0?[]:[JSON.stringify(route.slice(index+1).map(node=>node.id))];
@@ -170,9 +183,9 @@ export function personalSanadEndsAtSavedNarrator(text:string,ids:string[]){
   &&!!preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids[i]})));
 }
 
-export function automaticSharedBridgeId(text:string,ids:string[],bridges:ReviewedSharedBridge[]){
+export function automaticSharedBridgeId(text:string,ids:string[],bridges:ReviewedSharedBridge[],context:OnwardContext={}){
  if(!personalSanadEndsAtSavedNarrator(text,ids))return null;
- const options=savedSharedBridgeDiagram(text,ids,bridges)?.options??[];
+ const options=contextualOnwardIds(savedSharedBridgeDiagram(text,ids,bridges)?.options??[],bridges,context);
  if(options.length!==1)return null;
  try{composeReferencedPersonalSanad(text,ids,bridges,options[0]);return options[0];}catch{return null;}
 }
