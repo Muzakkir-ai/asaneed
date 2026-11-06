@@ -439,9 +439,13 @@
 .zite-app .sanad-graph-arrow{inset-block-end:6px}
 .zite-app .sanad-graph-arrow::after{content:'';position:absolute;bottom:0;left:-4px;width:7px;height:7px;border-right:1px solid hsl(var(--muted-foreground)/.7);border-bottom:1px solid hsl(var(--muted-foreground)/.7);transform:rotate(45deg)}
 .zite-app .sanad-graph-action{position:absolute;inset-inline-end:0;inset-block-start:50%;transform:translateY(-50%)}
-.zite-app .sanad-graph-junction{position:relative;height:2.25rem}
+.zite-app .sanad-graph-junction{position:relative;height:2.75rem;flex-shrink:0}
 .zite-app .connected-chain-lane:has(>.sanad-graph-split){position:relative}
 @media(min-width:701px){
+ .zite-app [data-sanad-node]:has(+.connected-chain-split:not([data-many-lanes]))>.sanad-graph-gap,
+ .zite-app .connected-chain-split:not([data-many-lanes])>.connected-chain-lane:has(>.sanad-graph-merge)>div>[data-sanad-node]:last-child>.sanad-graph-gap:has(>.sanad-graph-stem){height:0}
+ .zite-app [data-sanad-node]:has(+.connected-chain-split:not([data-many-lanes]))>.sanad-graph-gap>.sanad-graph-action,
+ .zite-app .connected-chain-split:not([data-many-lanes])>.connected-chain-lane:has(>.sanad-graph-merge)>div>[data-sanad-node]:last-child>.sanad-graph-gap:has(>.sanad-graph-stem)>.sanad-graph-action{inset-block-start:1.375rem;z-index:1}
  .zite-app .connected-chain-split:not([data-many-lanes])>.connected-chain-lane:has(>.sanad-graph-split)>div>.sanad-graph-lane-label{position:absolute;inset-inline-start:0;inset-block-start:0}
 }
 @media(max-width:700px){

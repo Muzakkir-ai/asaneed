@@ -49,6 +49,20 @@ const {chromium}=require('playwright');
    assert.equal(expected.length,6);
    for(const id of ['reading','saved','personal'])assert.deepEqual(await measure(graph(id)),expected,id+' geometry at '+width);
    if(width===1100){
+    const gaps=await graph('book').evaluate(element=>{
+     const bounds=node=>node.querySelector('.narrator-person-card').getBoundingClientRect();
+     const [start,split,end]=[...element.querySelector('.flow-root').children].filter(child=>child.matches('[data-sanad-node], .connected-chain-split'));
+     const lanes=[...split.querySelectorAll(':scope > .connected-chain-lane')];
+     const laneCards=lanes.map(lane=>[...lane.querySelectorAll('[data-sanad-node]')]);
+     const straight=laneCards.find(cards=>cards.length===2);
+     return {
+      straight:bounds(straight[1]).top-bounds(straight[0]).bottom,
+      entry:Math.min(...laneCards.map(cards=>bounds(cards[0]).top))-bounds(start).bottom,
+      exit:bounds(end).top-Math.max(...laneCards.map(cards=>bounds(cards.at(-1)).bottom)),
+     };
+    });
+    assert.equal(gaps.entry,gaps.straight,'split has the regular card gap');
+    assert.equal(gaps.exit,gaps.straight,'merge has the regular card gap');
     const arrows=await arrowGeometry(graph('book'));
     assert.ok(arrows[0][0]>arrows[2][0],'first branch is on the right');
     for(const id of ['reading','saved','personal'])assert.deepEqual(await arrowGeometry(graph(id)),arrows);
