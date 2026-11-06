@@ -1,4 +1,4 @@
-import {prepareSavedSanadPeople} from './preparedSanadPeople';
+import {preparedSanadText,prepareSavedSanadPeople} from './preparedSanadPeople';
 import {preparedSanadGraph} from './preparedSanadGraph';
 import type {BuilderPerson} from './bookBuilder';
 import {sanadKey} from './unifiedSanad';
@@ -66,7 +66,10 @@ export function recoverSharedBridgePrefix(source:string,ids:string[],bridges:Sha
 /** Join only paths whose first teacher follows the saved meeting identity. */
 export function linkedBridgeTails(bridge:NonNullable<ReturnType<typeof linkSharedBridge>>,tail:string,meetingId:string){
  if(!bridge.routes||!matchesSharedBridgeSuffix(bridge.source.body,tail))return null;
- const sourcePaths=sharedBridgePaths(tail);
+ const parallel=/^(.*?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)$/u.exec(tail);
+ const sourcePaths=sharedBridgePaths(tail)??(parallel&&!/\(ح\)|وقرأ|وأخذ/u.test(parallel[1])
+  ?parallel[2].split(/،\s*و/u).map(teacher=>[...parallel[1].split(/،\s*عن\s+/u).map(name=>name.replace(/^عن\s+/u,'')),teacher,parallel[3]])
+  :null);
  if(!sourcePaths)return null;
  const paths=sourcePaths.map(path=>{
   for(const route of bridge.routes!){
@@ -105,4 +108,23 @@ export function joinSharedBridgeRoutes(personalPaths:string[][],tails:{id:string
  if(!personalPaths.length||!tails.length||personalPaths.some(path=>path.at(-1)!==meetingId))return null;
  const joined=personalPaths.flatMap(path=>tails.map(tail=>[...path,...tail.map(node=>node.id)]));
  return joined.every(path=>new Set(path).size===path.length)?joined:null;
+}
+
+/** Compose a saved personal sanad and its exact reviewed continuation for any viewer. */
+export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:NonNullable<ReturnType<typeof reviewedSharedBridge>>[],preparation?:ReturnType<typeof recoverSharedBridgePrefix>,issuer?:{id:string;name:string}){
+ const personal=preparation?.reviewed&&preparedSanadText(preparation).trim()===source.trim()
+  ?preparation:recoverSharedBridgePrefix(source,ids,bridges.map(bridge=>bridge.source));
+ if(!personal||!ids.length||ids.length!==personal.tokens.length||ids.some(id=>!id))return null;
+ const graph=preparedSanadGraph(personal,personal.tokens.map((token,i)=>({...token,personId:ids[i]})));
+ if(!graph)return null;
+ const meetingId=ids.at(-1)!;
+ const tail=personal.suffix.replace(/^\s*،\s*/u,'').trim();
+ const matches=bridges.map(bridge=>linkedBridgeTails(bridge,tail,meetingId)).filter(paths=>paths!==null);
+ if(matches.length!==1)return null;
+ const joined=joinSharedBridgeRoutes(graph.paths,matches[0],meetingId);
+ if(!joined)return null;
+ const names=Object.fromEntries([...matches[0].flat(),...graph.nodes].map(node=>[node.id,node.name]));
+ const issuerId=issuer?'shaykh:'+issuer.id:null;
+ if(issuerId&&issuer)names[issuerId]=issuer.name;
+ return {names,paths:joined.map(path=>issuerId?[...path].reverse().concat(issuerId):[...path].reverse()),preparation:personal};
 }

@@ -11,15 +11,14 @@ const {chromium}=require('playwright');
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/sanad-graph-review.tsx',route+'/page.tsx');
+  let privateGraph;
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
-   const {r,b}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
+   const {r,b,identities}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
    const shared=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
-   const prep=shared.recoverSharedBridgePrefix(r.body,r.ids,[b]);
-   const graph=require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadGraph.js').preparedSanadGraph(prep,prep.tokens.map((node,i)=>({...node,personId:r.ids[i]})));
-   const tails=shared.sharedBridgePaths(prep.suffix.replace(/^،\s*/u,''));
-   const routes=graph.paths.flatMap(path=>tails.map(tail=>[...path.map(id=>graph.nodes.find(node=>node.id===id).name),...tail].reverse()));
+   privateGraph=shared.reviewedSharedBridge(b,{version:1,sourceBody:b.body,identities},identities.map(({personId:id})=>({id,archived:false})));
+   assert.ok(privateGraph);
    const fixture=fs.readFileSync(route+'/page.tsx','utf8');
-   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>', '<div data-testid="private-hafs"><SanadPathView paths={'+JSON.stringify(routes)+'} renderPerson={(name,positions)=><span data-position={positions.join(",")}>{name}</span>}/></div></main>'));
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>', '<div data-testid="private-hafs"><PersonalSanadInput value={'+JSON.stringify(r.body)+'} personIds={'+JSON.stringify(r.ids)+'} readOnly onApply={()=>{}}/></div></main>'));
   }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
@@ -33,7 +32,7 @@ const {chromium}=require('playwright');
   assert.ok(fixture,'fixture route rendered');
   browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{});
   const page=await browser.newPage();
-  await page.route('**/api/book-builder',request=>request.fulfill({json:JSON.parse(fixture)}));
+  await page.route('**/api/book-builder',request=>request.fulfill({json:{...JSON.parse(fixture),sharedBridgeGraphs:privateGraph?[privateGraph]:[]}}));
   await page.goto(url);
   await page.evaluate(()=>document.fonts.ready);
   const graph=(id)=>page.getByTestId(id).locator('.sanad-graph').last();
@@ -100,12 +99,13 @@ const {chromium}=require('playwright');
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
    const hafs=graph('private-hafs');
    const controls=hafs.getByRole('button',{name:/المسار /});
+   await controls.first().waitFor();
    assert.equal(await controls.count(),10);
    for(const width of [1100,390,320]){
     await page.setViewportSize({width,height:900});
     for(let i=0;i<10;i++){
      await controls.nth(i).click();
-     const positions=await hafs.locator('[data-position]').evaluateAll(nodes=>nodes.map(node=>Number(node.getAttribute('data-position'))));
+     const positions=await hafs.locator('[data-narrator-level]').evaluateAll(nodes=>nodes.map(node=>Number(node.getAttribute('data-narrator-level').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)))));
      assert.ok(positions.length>=10&&positions.length<=13);
      assert.deepEqual(positions,positions.map((_,index)=>index+1));
      assert.equal(await hafs.getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);

@@ -1,6 +1,6 @@
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -45,3 +45,14 @@ assert.deepEqual(reviewedSharedBridge(source,review,aliased)?.routes,linked?.rou
 assert.equal(reviewedSharedBridge({...source,body:body+' '},review,aliased),null);
 assert.equal(reviewedSharedBridge(source,review,aliased.map(p=>p.id==='0'?{...p,archived:true}:p)),null);
 assert.equal(reviewedSharedBridge(source,{...review,identities:review.identities.slice(1)},aliased),null);
+
+const reviewed=reviewedSharedBridge(source,review,aliased)!;
+const diagram=savedSharedBridgeDiagram(complete,ids,[reviewed]);
+assert.equal(diagram?.paths.length,6);
+assert.ok(diagram.paths.every(path=>path[0]==='6'&&path.filter(id=>id==='0').length===1));
+assert.equal(savedSharedBridgeDiagram(complete,[],[reviewed]),null);
+assert.equal(savedSharedBridgeDiagram(complete.replace('زيد','سعيد'),ids,[reviewed]),null);
+const lateTail='عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
+const beforeParallel='عن أحمد، '+lateTail;
+assert.deepEqual(linkedBridgeTails(reviewed,beforeParallel,'1'),null,'the branch-origin continuation cannot skip its other path');
+assert.deepEqual(linkedBridgeTails(reviewed,lateTail,'3'),null,'an unattested text boundary cannot be joined');
