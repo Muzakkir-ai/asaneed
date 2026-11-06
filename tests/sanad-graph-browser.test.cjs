@@ -11,16 +11,18 @@ const {chromium}=require('playwright');
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/sanad-graph-review.tsx',route+'/page.tsx');
-  let privateGraph;
+  let privateGraph,combinedPaths;
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
    const {r,b,identities,qunbul}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
    const shared=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
    privateGraph=shared.reviewedSharedBridge(b,{version:1,sourceBody:b.body,identities},identities.map(({personId:id})=>({id,archived:false})));
    assert.ok(privateGraph);
    const fixture=fs.readFileSync(route+'/page.tsx','utf8');
+   const combined=shared.savedSharedBridgeDiagram(r.body,r.ids,[privateGraph],undefined,{id:'fixture',name:'أُوَيس أحمد حسين مقادم'}).diagram;
+   combinedPaths=combined.paths;
    const input=(label,record,preparation)=>'<div data-testid="'+label+'"><PersonalSanadInput issuer={{id:"fixture",name:"الشيخ التجريبي"}} value={'+JSON.stringify(record.body)+'} personIds={'+JSON.stringify(record.ids??[])+'} preparation={'+JSON.stringify(preparation??null)+'} readOnly onApply={()=>{}}/></div>';
    const qunbulPreparation=qunbul?require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadPeople.js').prepareSavedSanadPeople(qunbul.body):null;
-   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'</main>'));
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'<div data-testid="combined-hafs"><CombinedSanadView groupJazariStudents paths={'+JSON.stringify(combined.paths)+'} renderPerson={(id,positions)=><BranchPersonCard name={('+JSON.stringify(combined.names)+')[id]} number={positions[0]??null} badgeLabels={positions.map(position=>position.toLocaleString("ar"))}/>} /></div></main>'));
   }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
@@ -137,6 +139,22 @@ const {chromium}=require('playwright');
     assert.ok(await qunbul.getByRole('tabpanel').getByText(/إبراهيم العُبَيدِي/).count());
     await qunbul.getByRole('tab',{name:'السند المتصل الكامل'}).click();
     assert.ok(await qunbul.getByRole('tabpanel').getByText(/لا يمكن عرض السند الكامل/).isVisible());
+   }
+   const combined=page.getByTestId('combined-hafs');
+   const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
+   const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
+   assert.deepEqual(actualEdges,expectedEdges);
+   assert.equal(await combined.locator('[data-combined-narrator]').count(),new Set(combinedPaths.flat()).size);
+   assert.ok(await combined.getByText('أصحاب ابن الجزري',{exact:true}).isVisible());
+   assert.ok(await combined.getByText('أعلى سند',{exact:false}).isVisible());
+   await combined.getByLabel('عرض المسارات').selectOption('9');
+   assert.deepEqual(await combined.locator('[data-from][opacity="1"]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort()),combinedPaths[9].slice(1).map((to,i)=>JSON.stringify([combinedPaths[9][i],to])).sort());
+   await combined.getByLabel('عرض المسارات').selectOption('');
+   if(process.env.ASANEED_COMBINED_SCREENSHOTS){
+    for(const width of [1100,390,320]){
+     await page.setViewportSize({width,height:900});
+     await combined.screenshot({path:process.env.ASANEED_COMBINED_SCREENSHOTS+'/combined-hafs-'+width+'.png'});
+    }
    }
    console.log('PASS authorized Hafs data: all 10 numbered paths and RTL bounds at three widths');
   }

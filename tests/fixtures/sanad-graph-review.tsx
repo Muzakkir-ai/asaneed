@@ -1,4 +1,6 @@
 'use client';
+import CombinedSanadView from '../../legacy/components/CombinedSanadView';
+import BranchPersonCard from '../../legacy/components/BranchPersonCard';
 import SanadPathView from '../../legacy/components/SanadPathView';
 import ConnectedChainEditor from '../../legacy/components/ConnectedChainEditor';
 import SavedRouteGraph from '../../legacy/components/SavedRouteGraph';
