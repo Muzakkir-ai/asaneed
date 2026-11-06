@@ -11,6 +11,16 @@ const {chromium}=require('playwright');
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/sanad-graph-review.tsx',route+'/page.tsx');
+  if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
+   const {r,b}=JSON.parse(process.env.ASANEED_PRIVATE_HAFS_FIXTURE);
+   const shared=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
+   const prep=shared.recoverSharedBridgePrefix(r.body,r.ids,[b]);
+   const graph=require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadGraph.js').preparedSanadGraph(prep,prep.tokens.map((node,i)=>({...node,personId:r.ids[i]})));
+   const tails=shared.sharedBridgePaths(prep.suffix.replace(/^،\s*/u,''));
+   const routes=graph.paths.flatMap(path=>tails.map(tail=>[...path.map(id=>graph.nodes.find(node=>node.id===id).name),...tail].reverse()));
+   const fixture=fs.readFileSync(route+'/page.tsx','utf8');
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>', '<div data-testid="private-hafs"><SanadPathView paths={'+JSON.stringify(routes)+'} renderPerson={(name,positions)=><span data-position={positions.join(",")}>{name}</span>}/></div></main>'));
+  }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
   server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--webpack','--hostname','127.0.0.1','--port','3111'],{detached:process.platform!=='win32',stdio:'inherit'});
@@ -87,6 +97,24 @@ const {chromium}=require('playwright');
   await draft.getByLabel('التقاء الفرعين').selectOption('saved-2');
   assert.equal(await draft.locator('.sanad-graph-split .sanad-graph-arrow:visible').count(),2);
   assert.equal(await draft.locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),2);
+  if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
+   const hafs=graph('private-hafs');
+   const controls=hafs.getByRole('button',{name:/المسار /});
+   assert.equal(await controls.count(),10);
+   for(const width of [1100,390,320]){
+    await page.setViewportSize({width,height:900});
+    for(let i=0;i<10;i++){
+     await controls.nth(i).click();
+     const positions=await hafs.locator('[data-position]').evaluateAll(nodes=>nodes.map(node=>Number(node.getAttribute('data-position'))));
+     assert.ok(positions.length>=10&&positions.length<=13);
+     assert.deepEqual(positions,positions.map((_,index)=>index+1));
+     assert.equal(await hafs.getByText(/شمس الدين محمد بن عمر بن قاسم/).count(),1);
+    }
+    await hafs.getByRole('button',{name:'عرض الكل',exact:true}).click();
+    assert.ok(await hafs.evaluate(element=>element.scrollWidth<=element.clientWidth));
+   }
+   console.log('PASS authorized Hafs data: all 10 numbered paths and RTL bounds at three widths');
+  }
   console.log('PASS shared sanad geometry, Arabic RTL, branch positions, mobile and editing controls');
  }finally{
   await browser?.close();

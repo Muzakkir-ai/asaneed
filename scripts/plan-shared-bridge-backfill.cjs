@@ -1,7 +1,8 @@
 const fs=require('node:fs');
 const {reviewedSharedBridge}=require('../.vercel/shared-bridge-tests/legacy/lib/sharedBridge.js');
 
-const input=process.argv[2];
+const [input,mode,...extra]=process.argv.slice(2);
+if(extra.length||mode&&mode!=='--apply')throw Error('Expected a review file and optional --apply. Default output rolls back.');
 if(!input)throw Error('Pass a private JSON file containing source, people and reviewed identities.');
 const {source,people,identities}=JSON.parse(fs.readFileSync(input,'utf8'));
 const uuid=/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
@@ -26,6 +27,6 @@ process.stdout.write([
  "      and (not (payload ? 'sharedBridgeReview') or payload->'sharedBridgeReview'="+literal(JSON.stringify(review))+'::jsonb);',
  "  if not found then raise exception 'Shared source or review changed'; end if;",
  'end $$;',
- 'commit;',
+ mode==='--apply'?'commit;':'rollback;',
  '',
 ].join('\n').replaceAll('$$', '$bridge_review$'));

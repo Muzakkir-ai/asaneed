@@ -47,7 +47,7 @@ function numberedPaths(source:string,ids:string[],preparation:SavedChain['prepar
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
 function BranchView({branch,depth,selected,onSelect,branchFrom}:{branch:Branch;depth:number;branchFrom?:string;selected?:Path;onSelect:(path:Path)=>void}){
- return <li className="min-w-0 space-y-2">{branchFrom?<span className="block text-xs text-primary">فرع من {branchFrom}</span>:depth>1&&<span aria-hidden="true" className="block text-center text-primary">↓</span>}<BranchPersonCard name={branch.name} number={depth}/>
+ return <li className="min-w-0 space-y-2">{branchFrom?<span className="block text-xs text-primary">فرع من {branchFrom}</span>:depth>1&&<div aria-hidden="true" className="sanad-graph-gap"><span className="sanad-graph-arrow"/></div>}<BranchPersonCard name={branch.name} number={depth}/>
  {branch.ends.map(path=><Button key={path.id} type="button" size="sm" variant={selected?.id===path.id?'default':'outline'} onClick={()=>onSelect(path)}>{path.label}</Button>)}
  {branch.children.size>0&&<ul className="min-w-0 space-y-2">{depth===1?<li className="text-sm font-semibold text-primary">أصحاب الجزري</li>:branch.children.size>1&&<li className="text-xs font-medium text-primary">↳ {arabicDigits(branch.children.size)} فروع</li>}{[...branch.children.values()].map(child=><BranchView key={child.name} branch={child} depth={depth+1} branchFrom={depth>1&&branch.children.size>1?branch.name:undefined} selected={selected} onSelect={onSelect}/>)}</ul>}
  </li>;
