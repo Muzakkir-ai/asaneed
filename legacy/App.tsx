@@ -62,7 +62,20 @@ function PrivateApp() {
   const [directory,setDirectory]=useState<WorkspaceDirectory|null>(null);
   const [directoryError,setDirectoryError]=useState('');
   const [target,setTarget]=useState(''),[editInspection,setEditInspection]=useState(false);
-  const [active,setActive]=useState(user?.role==='student'?'mycerts':'certs');
+  const [active,setActivePage]=useState(()=>{
+    const fallback=user?.role==='student'?'mycerts':'certs';
+    const page=new URLSearchParams(window.location.search).get('page')||'';
+    const allowed=['profile','mycerts','asaneed','narrators',...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];
+    return allowed.includes(page)?page:fallback;
+  });
+  const setActive=(page:string)=>{
+    if(page===active)return;
+    const url=new URL(window.location.href);
+    for(const key of ['shaykh','qari','rawi','tariq','variant','settings'])url.searchParams.delete(key);
+    url.searchParams.set('page',page);
+    window.history.replaceState(window.history.state,'',url);
+    setActivePage(page);
+  };
   const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('asaneed-sidebar')==='collapsed');
   const scopeVersion=useRef(0);
   const person=directory?.accounts.find(a=>a.id===(target||directory.actorId));

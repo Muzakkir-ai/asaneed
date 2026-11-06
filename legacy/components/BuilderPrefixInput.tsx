@@ -25,13 +25,20 @@ export default function BuilderPrefixInput({value,onChange,continuations=[],sele
   if(person){setPendingPerson(id);setAnchor(person.name);setBody('');setReviewed(false);setAdding(true);onSelect('');onPendingChange?.(true);}
   else{setPendingPerson('');setAdding(false);onSelect(id);}
  };
- const junctionControl=showJunction&&!readOnly?<MeetingPointSelector options={options} value={pendingPerson||selectedId} onChange={chooseJunction}/>:null;
+ const junctionControl=(move?:(name:string,path:string[],changing:boolean)=>boolean)=>showJunction&&!readOnly?<MeetingPointSelector options={options} value={pendingPerson||selectedId} onChange={id=>{
+  const option=options.find(o=>o.value===id);
+  const linear=selected&&!/[؛().\n]|وقرأ|وأخذ|وهو|وهما|وهم/u.test(selected.body.trim().replace(/[.،؛]+$/u,''))?selected.body:'';
+  const steps=linear.trim().replace(/[.،؛]+$/u,'').split(/،\s*عن\s+/u).map(step=>step.replace(/^عن\s+/u,''))||[];
+  const end=option?steps.findIndex(step=>sanadKey(step)===sanadKey(option.name)):-1;
+  if(option&&move&&!move(option.name,end>=0?steps.slice(0,end+1):[],!!selectedId))return;
+  chooseJunction(id);
+ }}/>:null;
  const selectedPerson=savedPeople.find(p=>'person:'+p.id===pendingPerson);
 
  return <div className="space-y-3">
 
  {library&&onPersonCreated&&<section aria-label="إضافة السند بالأسماء المحفوظة" className="space-y-3">{!readOnly&&<h4 className="font-semibold">بناء السند الشخصي — إضافة الرواة</h4>}{readOnly&&!preparation&&!initialPersonIds?.length?<p className="whitespace-pre-wrap text-sm leading-loose">{value}</p>:<PersonalSanadPeople readOnly={readOnly} preparation={preparation} library={library} initialPersonIds={initialPersonIds} onPendingChange={onPendingChange} onPersonCreated={onPersonCreated} beforeApply={junctionControl} onApply={(text,ids)=>{if(showJunction&&!selectedId){setError(pendingPerson?'احفظ تتمة هذا الشيخ إلى ابن الجزري قبل اعتماد ترتيب الرواة':'اختر نقطة الالتقاء أسفل الرواة أولًا');return;}setError('');if(onAssemble)onAssemble(text,ids);else{onChange(text);onPeopleChange?.(ids);onPendingChange?.(false);}}}/>}</section>}
- {!library&&junctionControl}
+ {!library&&junctionControl()}
  {!readOnly&&showJunction&&<p className="text-xs text-muted-foreground">أضف الرواة حتى شيخ نقطة الالتقاء، ثم اختره أسفل آخر راوٍ. اختر من التتمات الجاهزة أو من رجال أسانيد القرآن المحفوظة.</p>}
  {!readOnly&&value&&<details className="rounded-md border p-3"><summary className="cursor-pointer text-sm">السند المحفوظ / المعاينة النصية</summary><p className="mt-2 whitespace-pre-wrap text-sm leading-loose">{value}</p></details>}
  {!readOnly&&!library&&<details className="rounded-md border p-3"><summary className="cursor-pointer text-sm">إدخال نصي قديم / متقدم</summary><label className="block text-sm space-y-1">{selected?'سندي الشخصي إلى '+prefixBridgeAnchor(selected):'السند الشخصي إلى إبراهيم العبيدي أو الإمام ابن الجزري'}<Textarea rows={4} value={value} onChange={e=>{onChange(e.target.value);onPeopleChange?.([]);}} placeholder={selected?'عن الشيخ… حتى '+prefixBridgeAnchor(selected):'عن الشيخ… حتى إبراهيم العبيدي أو الإمام ابن الجزري'}/></label></details>}

@@ -16,7 +16,7 @@ import IssuerProfilePreview from './IssuerProfilePreview';
 import SavedRoutePicker from './SavedRoutePicker';
 import BookTariqBuilder from './BookTariqBuilder';
 import {ijazahCoverage,compactReadingCount} from '../lib/ijazahCoverage';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {additionalShaykhs,additionalReadingSanads,mutoonTemplates,contentManagement,type AdditionalShaykhsOutputType} from '../lib/api';
 import MatnFormatting,{MatnPreview,parseMatnFormat} from './MatnFormatting';
 import {QURRA,displayRawi,shortReadingLabel,shortQariName} from '../lib/qurra';
@@ -84,6 +84,38 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
   kubraSanadMode:s.kubraSanadMode,individualSughra:s.individualSughra,sharedSughraSanad:s.sharedSughraSanad,libraryKubra:!!s.libraryKubra,email:s.email,mutoon:s.mutoon,name:s.name,qualification:s.qualification,teachingRole:s.teachingRole,
   madrasaName:s.madrasaName,madrasaPlace:s.madrasaPlace,personalChain:s.personalChain,
   junction:s.junction,readings:s.readings}:blank);setSection('profile');setMatnOpen(false);setEditingOpen(true);setSavedReadingSanads([]);if(s&&loadSanads)void loadReadingSanads(s.id);};
+ const restoringLink=useRef(true);
+ useEffect(()=>{
+  if(!restoringLink.current||loading||loadError)return;
+  restoringLink.current=false;
+  const params=new URLSearchParams(window.location.search);
+  const owner=items.find(item=>item.id===params.get('shaykh'));
+  if(!owner)return;
+  setViewing(owner);
+  const qariId=params.get('qari'),rawi=params.get('rawi');
+  if(qariId&&rawi&&QURRA.some(q=>q.id===qariId&&q.rawis.some(r=>r===rawi))){
+   void openReading({qariId,rawi,tariqNumber:params.get('tariq')||undefined,variantId:params.get('variant')||undefined},owner);
+  }else if(params.get('settings')){
+   select(owner);
+   const tab=params.get('settings');
+   if(tab==='qiraat'||tab==='mutoon')setSection(tab);
+  }
+ },[loading,loadError,items]);
+ useEffect(()=>{
+  if(restoringLink.current||loading||loadError)return;
+  const url=new URL(window.location.href);
+  if(url.searchParams.get('page')!=='extra-sheikhs')return;
+  for(const key of ['shaykh','qari','rawi','tariq','variant','settings'])url.searchParams.delete(key);
+  const owner=readingEditor||editingOpen?selected:viewing?.id;
+  if(owner)url.searchParams.set('shaykh',owner);
+  if(readingEditor&&!readingEditor.newVariant){
+   url.searchParams.set('qari',readingEditor.qariId);
+   url.searchParams.set('rawi',readingEditor.rawi);
+   if(readingEditor.tariqNumber)url.searchParams.set('tariq',readingEditor.tariqNumber);
+   if(readingEditor.variantId)url.searchParams.set('variant',readingEditor.variantId);
+  }else if(owner&&editingOpen)url.searchParams.set('settings',section);
+  if(url.href!==window.location.href)window.history.replaceState(window.history.state,'',url);
+ },[loading,loadError,viewing,selected,editingOpen,section,readingEditor]);
  const toggle=(qariId:string,rawi:string)=>setForm(x=>{
   const exists=x.readings.some(r=>r.qariId===qariId&&r.rawi===rawi);
   return {...x,readings:exists?x.readings.filter(r=>r.qariId!==qariId||r.rawi!==rawi):[...x.readings,{qariId,rawi}]};
