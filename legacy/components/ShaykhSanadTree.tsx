@@ -5,7 +5,7 @@ import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/ap
 import {arabicDigits} from '../lib/arabicDigits';
 import {UBAYDI_BRIDGE_TITLE,resolveBuilderPrefix} from '../lib/builderPrefix';
 import {sanadKey} from '../lib/unifiedSanad';
-import {prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
+import {preparedSanadText,prepareSavedSanadPeople} from '../lib/preparedSanadPeople';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import PersonalSanadInput from './PersonalSanadInput';
 import {Button} from '@project/components/ui/button';
@@ -22,6 +22,9 @@ function linearNames(source:string){
 function graphPaths(source:string,endpoint:'ubaydi'|'jazari',ids:string[]=[]){
  const prepared=prepareSavedSanadPeople(source,false,endpoint);
  if(!prepared)return null;
+ return pathsFromPreparation(prepared,ids);
+}
+function pathsFromPreparation(prepared:NonNullable<ReturnType<typeof prepareSavedSanadPeople>>,ids:string[]){
  const graph=preparedSanadGraph(prepared,prepared.tokens.map((token,i)=>({...token,personId:ids.length===prepared.tokens.length?ids[i]:undefined})));
  return graph?{paths:graph.paths.map(path=>path.map(id=>graph.nodes.find(node=>node.id===id)!.name)),suffix:prepared.suffix}:null;
 }
@@ -38,16 +41,18 @@ function sharedBridgePaths(source:string){
  if(!rest.length||parallel.length<2)return null;
  return [[...main,end],...parallel.map(teacher=>[...main.slice(0,pivot+1),...rest,teacher,end])];
 }
-function numberedPaths(source:string,ids:string[]){
- const prefix=graphPaths(source,'ubaydi',ids);
- const tail=prefix?.suffix.replace(/^\s*،\s*/u,'').trim()||'';
+function numberedPaths(source:string,ids:string[],preparation:SavedChain['preparation'],savedText:string){
+ const saved=preparation?.reviewed&&preparedSanadText(preparation).trim()===savedText.trim()?pathsFromPreparation(preparation,ids):null;
+ const prefix=saved||graphPaths(source,'ubaydi',ids);
+ const suffix=saved&&source.startsWith(savedText.trim())?saved.suffix+source.slice(savedText.trim().length):prefix?.suffix;
+ const tail=suffix?.replace(/^\s*،\s*/u,'').trim()||'';
  const continuation=tail?graphPaths('كما أخذته '+tail,'jazari'):null;
  const endings=sharedBridgePaths(tail)||continuation?.paths||[linearNames(tail)];
  const parallel=/^(.*?)،\s*عن مشايخ؛\s*منهم (.+?)،\s*وهم على (.+?)\s*$/u.exec(source.trim());
  const parallelHead=parallel?linearNames(parallel[1]):[];
  const parallelPaths=parallel&&parallelHead.length?parallel[2].split(/،\s*و/u).map(name=>[...parallelHead,name,parallel[3]]):null;
  const full=graphPaths(source,'jazari');
- const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):parallelPaths||full?.paths||[linearNames(source)];
+ const routes=prefix&&tail?prefix.paths.flatMap(path=>endings.map(end=>[...path,...end])):saved?.paths||parallelPaths||full?.paths||[linearNames(source)];
  return routes.filter(names=>names.length&&names.every(name=>name.length>=2&&name.length<=250&&!/[،؛.()]/u.test(name))&&/(?:ابن الجزري|محمد بن محمد (?:بن محمد )?الجزري)$/u.test(sanadKey(names.at(-1)!)))
   .map(names=>[rootName,...names.slice(0,-1).reverse()]);
 }
@@ -80,7 +85,7 @@ export default function ShaykhSanadTree(){
      return sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
-      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids);}catch{/* Incomplete or ambiguous saved chain. */}
+      try{text=resolveBuilderPrefix(s.text,bridges).text;names=numberedPaths(text,s.ids,s.preparation??null,s.text);}catch{/* Incomplete or ambiguous saved chain. */}
       const preparation=s.preparation||prepareSavedSanadPeople(text);
       const grouped=new Map<string,{students:Set<string>;rest:string[]}>();
       for(const [,student,...rest] of names){
@@ -93,7 +98,8 @@ export default function ShaykhSanadTree(){
       for(const {students,rest} of grouped.values()){
        const firstLevel=students.size>1?['أصحاب الجزري — '+[...students].join('، ')]:[...students];
        const route=[rootName,...firstLevel,...rest,sheikh.name];
-       const junction=route.findIndex(name=>/ابراهيم العبيدي$/u.test(sanadKey(name)));
+       const meetingName=s.preparation?.reviewed?s.preparation.tokens.at(-1)?.name:undefined;
+       const junction=route.findIndex(name=>meetingName?sanadKey(name)===sanadKey(meetingName):/ابراهيم العبيدي$/u.test(sanadKey(name)));
        const key=JSON.stringify(junction<0?route:route.slice(junction));
        const routes=personalBranches.get(key)??[];
        routes.push(route);
