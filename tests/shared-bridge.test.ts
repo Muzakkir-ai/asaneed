@@ -1,3 +1,4 @@
+import {isInheritedPersonalSanad} from '../legacy/lib/sharedShaykhSanad';
 import {routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import {verifiedOnwardSources} from '../legacy/lib/verifiedOnwardSources';
 import type {BuilderChain,BuilderLibrary} from '../legacy/lib/bookBuilder';
@@ -139,3 +140,18 @@ assert.ok(Math.abs(lane(2)-lane(3))>=14);
 assert.ok(Math.abs(lane(6)-lane(7))>=14);
 const skipped=routeSanadConnectors([['root'],['a'],['end']],points,[{from:'root',to:'end',x1:180,x2:180}],480,100,70,false);
 assert.equal(skipped.connectors[0].bypass,180);
+
+const inheritedPrefix = 'عن محمد، عن إبراهيم';
+const sharedPersonal = inheritedPrefix + '، عن أحمد';
+for (const mode of ['sughra', 'kubra']) {
+ for (let qari = 0; qari < 10; qari++) {
+  for (let rawi = 0; rawi < 2; rawi++) {
+   const inherited = {mode, qari, rawi, sanadText: inheritedPrefix + '.'};
+   assert.equal(isInheritedPersonalSanad(sharedPersonal, inherited), true);
+   assert.equal(isInheritedPersonalSanad(sharedPersonal, {...inherited, tariqNumber:'1061'}), false);
+   assert.equal(isInheritedPersonalSanad(sharedPersonal, {...inherited, variantName:'distinct'}), false);
+   assert.equal(isInheritedPersonalSanad(sharedPersonal, {...inherited, personalPersonIds:['different']}, ['saved']), false);
+  }
+ }
+}
+assert.equal(isInheritedPersonalSanad(sharedPersonal, {sanadText:'عن محمد، عن إبرا'}), false);
