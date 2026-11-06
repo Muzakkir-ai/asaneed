@@ -17,7 +17,8 @@ import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
 const matn=z.object({id:z.string().uuid().optional(),catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
-const shaykh=z.object({libraryKubra:z.boolean().default(false),variants:z.array(choice.extend({id:z.string(),name:z.string()})).default([]),sharedSughraSanad:z.boolean().default(false),personalPersonIds:z.array(z.string()).default([]),preparedShared:z.object({version:z.literal(1),tokens:z.array(z.object({before:z.string(),name:z.string()})),suffix:z.string(),reviewed:z.boolean()}).nullable().optional(),
+const kubraSanadMode=z.enum(['shared','separate','individual']);
+const shaykh=z.object({kubraSanadMode:kubraSanadMode.default('shared'),individualSughra:z.boolean().default(false),kubraPersonalChain:z.string().default(''),kubraPersonalPersonIds:z.array(z.string()).default([]),kubraJunction:z.enum(['ubaydi','jazari']).default('ubaydi'),libraryKubra:z.boolean().default(false),variants:z.array(choice.extend({id:z.string(),name:z.string()})).default([]),sharedSughraSanad:z.boolean().default(false),personalPersonIds:z.array(z.string()).default([]),preparedShared:z.object({version:z.literal(1),tokens:z.array(z.object({before:z.string(),name:z.string()})),suffix:z.string(),reviewed:z.boolean()}).nullable().optional(),
  id:z.string(),name:z.string(),qualification:z.string(),teachingRole:z.string(),
  madrasaName:z.string(),madrasaPlace:z.string(),personalChain:z.string(),
  routes:z.array(z.object({qariId:z.string(),rawi:z.string(),tariqNumber:z.string(),tariqName:z.string(),automatic:z.boolean().optional()})),junction:z.enum(['ubaydi','jazari']),readings:z.array(choice),email:z.string(),mutoon:z.array(matn),
@@ -29,7 +30,7 @@ export default createEndpoint({
    action:z.enum(['list','save','saveShared','issue']).default('list'),id:z.string().optional(),
    name:z.string().optional(),qualification:z.string().optional(),teachingRole:z.string().optional(),
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
-   libraryKubra:z.boolean().optional(),personalSanadId:z.string().uuid().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
+   libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
    tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
@@ -50,7 +51,7 @@ export default createEndpoint({
     const extension=extensionFor(x.id);let mutoon: z.infer<typeof matn>[]=[];try{mutoon=matn.array().parse(JSON.parse(extension?.mutoonJson||'[]'));}catch{}
     const libraryKubra=usesLibraryKubra(x);
     const variants=routeRecords.filter(r=>r.shaykhId===x.id&&r.variantName).map(r=>({id:r.id,qariId:r.qariId||'',rawi:r.rawi||'',name:r.variantName!}));
-    return {libraryKubra,variants,sharedSughraSanad:usesSharedSughra(x),personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:[...(libraryKubra?automaticChoices:[]),...routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})).filter(r=>!libraryKubra||!automatic.some(a=>a.tariqNumber===r.tariqNumber&&a.rawi===r.rawi&&a.qariId===r.qariId))],id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
+    return {libraryKubra,variants,kubraSanadMode:x.kubraSanadMode,individualSughra:x.individualSughra,kubraPersonalChain:x.kubraPersonalChain,kubraPersonalPersonIds:x.kubraPersonalPersonIds,kubraJunction:x.kubraJunction,sharedSughraSanad:usesSharedSughra(x),personalPersonIds:x.personalPersonIds||[],preparedShared:x.prepareSharedNarratorBoxes?prepareSavedSanadPeople(x.personalChain||'',x.sharedPeopleReviewed===true):null,routes:[...(libraryKubra?automaticChoices:[]),...routeRecords.filter(r=>r.shaykhId===x.id&&r.tariqNumber&&r.tariqName).map(r=>({qariId:r.qariId||'',rawi:r.rawi||'',tariqNumber:r.tariqNumber||'',tariqName:r.tariqName||''})).filter(r=>!libraryKubra||!automatic.some(a=>a.tariqNumber===r.tariqNumber&&a.rawi===r.rawi&&a.qariId===r.qariId))],id:x.id,email:extension?.email||'',mutoon,name:x.name||'',qualification:x.qualification||'',teachingRole:x.teachingRole||'',
       madrasaName:x.madrasaName||'',madrasaPlace:x.madrasaPlace||'',personalChain:x.personalChain||'',
       junction:(x.junction==='jazari'?'jazari':'ubaydi') as 'ubaydi'|'jazari',readings};
   };
@@ -60,7 +61,7 @@ export default createEndpoint({
    const existing=await zite.additionalShaykhs.findOne({id:input.id});
    const personalChain=(input.personalChain||'').trim(),junction=input.junction||'ubaydi';
    if(!input.personalPersonIds?.length||!reachesJunction({personalChain,junction})||personalChain.length>30000)throw Error('اعتمد الرواة ونقطة الالتقاء قبل حفظ السند المشترك');
-   await zite.additionalShaykhs.update({id:existing.id,record:{personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),sharedSughraSanad:input.sharedSughraSanad===true,sharedPeopleReviewed:true}});
+   await zite.additionalShaykhs.update({id:existing.id,record:input.sanadScope==='kubra'?{kubraPersonalChain:personalChain,kubraJunction:junction,kubraPersonalPersonIds:input.personalPersonIds}:{personalChain,junction,personalPersonIds:input.personalPersonIds,prepareSharedNarratorBoxes:!!prepareSavedSanadPeople(personalChain,true),...(input.sharedSughraSanad===undefined?{}:{sharedSughraSanad:input.sharedSughraSanad}),sharedPeopleReviewed:true}});
   }
 
   if(input.action==='save'){
@@ -88,7 +89,11 @@ export default createEndpoint({
      item.category=match.category;
     }
    }
-   const record={...(input.libraryKubra===undefined?{}:{libraryKubra:input.libraryKubra}),name,qualification:input.qualification?.trim()||'',teachingRole:input.teachingRole?.trim()||'',
+   const record={
+    ...(input.kubraSanadMode===undefined?{}:{kubraSanadMode:input.kubraSanadMode}),
+    ...(input.individualSughra===undefined?{}:{individualSughra:input.individualSughra}),
+    ...(input.sharedSughraSanad===undefined?{}:{sharedSughraSanad:input.sharedSughraSanad}),
+    ...(input.libraryKubra===undefined?{}:{libraryKubra:input.libraryKubra}),name,qualification:input.qualification?.trim()||'',teachingRole:input.teachingRole?.trim()||'',
     madrasaName:input.madrasaName?.trim()||'',madrasaPlace:input.madrasaPlace?.trim()||'',
     readingsJson:JSON.stringify([...new Map(readings.map(x=>[x.qariId+'|'+x.rawi,x])).values()]),
     personalChain,junction:input.junction||existing?.junction||'ubaydi',createdBy:existing?.createdBy||context.user.id};
@@ -122,7 +127,10 @@ export default createEndpoint({
     const selected=specific.find(x=>!x.variantName&&x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
     if(input.tariqNumber&&!selected&&!catalogRoute)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
     const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
-    const prefix=catalogRoute?resolveBuilderPrefix(variant?.sanadText||known.personalChain,library!.prefixContinuations).text:'';
+    const kubraChain=known.kubraSanadMode==='separate'?known.kubraPersonalChain:known.personalChain;
+    if(!variant&&catalogRoute&&(known.kubraSanadMode==='individual'||(known.kubraSanadMode==='separate'&&!kubraChain)))throw Error('اختر سندًا شخصيًا لهذه الرواية من الكبرى أو احفظ سند الكبرى المشترك في ملف الشيخ');
+    if(!variant&&!input.tariqNumber&&known.individualSughra&&!selected?.sanadText)throw Error('احفظ سندًا شخصيًا لهذه الرواية أو اختر سندًا محفوظًا عند الإصدار');
+    const prefix=catalogRoute?resolveBuilderPrefix(variant?.sanadText||kubraChain,library!.prefixContinuations).text:'';
     const preview=catalogRoute?builderPreview(catalogRoute.book,catalogRoute.parent,catalogRoute.route,library!.people,prefix):undefined;
     const chain=preview?.text||variant?.sanadText||(useShared?known.personalChain:selected?.sanadText||known.personalChain);
     const junction=catalogRoute?'jazari':variant?.junction||(useShared?known.junction:selected?.junction||known.junction);
