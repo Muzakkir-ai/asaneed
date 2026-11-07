@@ -16,7 +16,7 @@ import type {BuilderLibrary} from '../lib/bookBuilder';
 import {workspaceHeaders} from '../lib/workspaceSelection';
 
 type Path={id:string;label:string;routes:string[][];names:Record<string,string>;routeLabels:string[]};
-type SavedChain={reason:string;id:string;label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>};
+type SavedChain={savedRoutes?:string[][];reason:string;id:string;label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>};
 function linearNames(source:string){
  const body=source.trim().replace(/[.،؛]+$/u,'');
  if(/[().؛\n]|وقرأ|وأخذ|وهما|وهم|وهو| والشيخ/u.test(body))return [];
@@ -80,7 +80,7 @@ export default function ShaykhSanadTree(){
       if(diagram&&combinedSanad(diagram.paths)){
        const title=onward.find(item=>item.source.id===diagram.sourceId)?.source.title;
        const routeLabels=diagram.paths.map(()=>[label,title].filter(Boolean).join(' — '));
-       return {id,label,text,ids:s.ids,preparation,paths:[{id,label,routes:diagram.paths,names:diagram.names,routeLabels}],reason:''};
+       return {id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes:diagram.paths,names:diagram.names,routeLabels}],reason:''};
       }
       const witnesses=s.continuationId?onward.filter(item=>item.source.id===s.continuationId):onward;
       const resolved=library&&!s.ids.length?names.flatMap(path=>{
@@ -100,9 +100,9 @@ export default function ShaykhSanadTree(){
        const routeIds=new Set(routes.flat());
        const graphNames=Object.fromEntries(library!.people.filter(person=>routeIds.has(person.id)).map(person=>[person.id,person.display_name||person.name]));
        graphNames[issuer]=sheikh.name;
-       if(combinedSanad(routes))return {id:incomplete?id+':review':id,label,text,ids:s.ids,preparation,paths:[{id,label,routes,names:graphNames,routeLabels}],reason:incomplete?reason:''};
+       if(combinedSanad(routes))return {id:incomplete?id+':review':id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes,names:graphNames,routeLabels}],reason:incomplete?reason:''};
       }
-      return {id,label,text,ids:s.ids,preparation,paths:[],reason};
+      return {id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[],reason};
      });
     }));
     if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>row.reason)));}
@@ -119,11 +119,11 @@ export default function ShaykhSanadTree(){
   <h3 className="font-bold">أسانيد المشايخ</h3>
   <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
-   {paths.length+missing.length>0&&<label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selectedId} onChange={e=>setSelectedId(e.target.value)}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}{missing.map(source=><option key={source.id} value={source.id}>{source.label} · يحتاج مراجعة قبل الترقيم</option>)}</select></label>}
+   {paths.length+missing.length>0&&<label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selectedId} onChange={e=>setSelectedId(e.target.value)}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}{missing.map(source=><option key={source.id} value={source.id}>{source.label} · عرض السند المحفوظ</option>)}</select></label>}
    {selectedSource?<SavedShaykhChain key={selectedSource.id} {...selectedSource}/>:selected?<CompactShaykhPath key={selected.id} path={selected}/>:combined?.rows.length
-    ?<CompactShaykhPath key="all" path={{id:'all',label:'الأسانيد المعتمدة',routes:allRoutes,names:Object.assign({},...paths.map(path=>path.names)),routeLabels:paths.flatMap(path=>path.routeLabels)}}/>
+    ?<CompactShaykhPath key="all" path={{id:'all',label:'الأجزاء المرتبطة بهويات الرواة',routes:allRoutes,names:Object.assign({},...paths.map(path=>path.names)),routeLabels:paths.flatMap(path=>path.routeLabels)}}/>
     :paths.length>0&&<p role="status" className="text-sm text-muted-foreground">يتعذر عرض المسارات معًا في رسم بلا دورات. اختر سندًا من القائمة.</p>}
-   {!selectedSource&&missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,reason},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain reason={reason} text={text}/></details></li>)}</ul></details>}
+   {!selectedSource&&missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,reason,savedRoutes},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain reason={reason} text={text} savedRoutes={savedRoutes}/></details></li>)}</ul></details>}
   </>}
  </section>;
 }
@@ -132,9 +132,20 @@ function CompactShaykhPath({path}:{path:Path}){
  return <CombinedSanadView paths={path.routes} routeLabels={path.routeLabels} groupJazariStudents source={path.label} renderPerson={(id,positions)=><BranchPersonCard name={path.names[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>;
 }
 
-function SavedShaykhChain({text,reason}:{reason:string;text:string}){
+function SavedShaykhChain({text,reason,savedRoutes}:{reason:string;text:string;savedRoutes?:string[][]}){
+ const [route,setRoute]=useState(0);
+ const saved=savedRoutes?.[route];
  return <div className="mt-3 space-y-3">
   <p className="text-sm text-muted-foreground">{reason}</p>
+  {saved&&<>
+   <p className="text-sm font-medium">المسار من النص المحفوظ</p>
+   {savedRoutes!.length>1&&<select aria-label="مسارات النص المحفوظ" className="rounded border bg-background p-1 text-sm" value={route} onChange={event=>setRoute(Number(event.target.value))}>
+    {savedRoutes!.map((_,index)=><option key={index} value={index}>المسار {arabicDigits(index+1)}</option>)}
+   </select>}
+   <ol className="mx-auto grid max-w-sm gap-2" dir="rtl">
+    {saved.map((name,index)=><li key={index}><BranchPersonCard name={name} number={index+1}/></li>)}
+   </ol>
+  </>}
   <p className="whitespace-pre-wrap leading-loose">{text}</p>
  </div>;
 }
