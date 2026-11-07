@@ -149,25 +149,28 @@ const {chromium}=require('playwright');
    const expectedEdges=[...new Set(combinedPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
    const actualEdges=await combined.locator('[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedEdges);
-   const idFor=async name=>await combined.locator('[data-combined-narrator]').filter({hasText:name}).getAttribute('data-combined-narrator');
-   const umyuti=await idFor(/أحمد بن أسد/), samdasi=await idFor(/محمد بن إبراهيم السَمَد/);
-   const direct=combined.locator('[data-from="'+umyuti+'"][data-to="'+samdasi+'"]');
-   assert.equal(await direct.getAttribute('data-start'),await direct.getAttribute('data-end'),'Umyuti to Samdasi is vertical');
-   const maqdisi=await idFor(/ابن غانم/), yemeni=await idFor(/^.*عبد الرحمن بن شحاذة/);
-   const bypass=combined.locator('[data-from="'+maqdisi+'"][data-to="'+yemeni+'"]');
-   assert.ok(Math.abs(Number(await bypass.getAttribute('data-bypass'))-Number(await bypass.getAttribute('data-start')))<120,'the skipped rows use a nearby lane');
-
-   const lower=await combined.locator('[data-local-bypass]').evaluateAll(edges=>edges.map(edge=>[edge.dataset.from,edge.dataset.to]));
-   const shortBranch=combinedPaths.flat().find(id=>id==='08a271e7-1478-4078-9839-c03944625472');
-   const reconvergence=combinedPaths.flat().find(id=>id==='96d7bf3f-efdd-4a8b-97bb-adc69abbd8aa');
-   assert.ok(lower.some(([from,to])=>from===shortBranch&&to===reconvergence),'shorter lower branch stays in its own lane');
-
+   const collisions=await combined.evaluate(graph=>{
+    const cards=[...graph.querySelectorAll('[data-combined-narrator]')];
+    return [...graph.querySelectorAll('path[data-from]')].flatMap(edge=>{
+     const length=edge.getTotalLength();
+     return cards.filter(card=>{
+      if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))return false;
+      const left=card.offsetLeft,top=card.offsetTop;
+      for(let d=0;d<=length;d+=3){
+       const {x,y}=edge.getPointAtLength(d);
+       if(x>left&&x<left+card.offsetWidth&&y>top&&y<top+card.offsetHeight)return true;
+      }
+      return false;
+     }).map(card=>card.dataset.combinedNarrator);
+    });
+   });
+   assert.deepEqual(collisions,[],'connectors avoid unrelated narrator cards');
    for(const [node,port] of [['from','start'],['to','end']]){
     const ports=await combined.locator('[data-from]').evaluateAll((edges,[node,port])=>edges.map(edge=>JSON.stringify([edge.dataset[node],edge.dataset[port]])),[node,port]);
     assert.equal(new Set(ports).size,ports.length,'each edge has a separate card port');
    }
    assert.equal(await combined.locator('[data-combined-narrator]').count(),new Set(combinedPaths.flat()).size);
-   assert.ok(await combined.getByText('أصحاب ابن الجزري',{exact:true}).isVisible());
+   assert.equal(await combined.getByText('أصحاب ابن الجزري',{exact:true}).count(),0);
    assert.equal(await combined.getByText('أعلى سند',{exact:false}).count(),0);
    const cardPositions=await combined.locator('[data-combined-narrator]').evaluateAll(cards=>Object.fromEntries(cards.map(card=>[
     card.dataset.combinedNarrator,[...card.querySelectorAll('[data-narrator-level],[data-narrator-secondary-level]')].map(circle=>Number(circle.textContent.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))))
@@ -176,6 +179,7 @@ const {chromium}=require('playwright');
     const expected=[...new Set(combinedPaths.filter(path=>path.includes(id)).map(path=>path.indexOf(id)+1))].sort((a,b)=>a-b);
     assert.deepEqual(cardPositions[id],expected);
    }
+   await combined.getByText('تفاصيل فروع السند',{exact:true}).click();
    await combined.getByLabel('عرض المسارات').selectOption('9');
    assert.deepEqual(await combined.locator('[data-from][opacity="1"]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort()),combinedPaths[9].slice(1).map((to,i)=>JSON.stringify([combinedPaths[9][i],to])).sort());
    await combined.getByLabel('عرض المسارات').selectOption('');

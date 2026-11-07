@@ -1,3 +1,5 @@
+import {placeSanad} from '../legacy/lib/sanadPlacement';
+import {routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
 const paths=[['j','a','s','q','i'],['j','b','s','m','i']];
@@ -30,3 +32,12 @@ assert.deepEqual(sanadPositions(reconvergingPaths,'shared'),[2,3,4,5]);
 assert.deepEqual(sanadPositions(reconvergingPaths,'tail'),[3,4,5,6]);
 
 import './verified-legacy-sanad.test';
+
+const placementRows=[['root'],['a','b'],['d','c'],['end']];
+const placementEdges=[{from:'root',to:'a'},{from:'root',to:'b'},{from:'a',to:'c'},{from:'b',to:'d'},{from:'c',to:'end'},{from:'d',to:'end'}];
+const placement=placeSanad(placementRows,placementEdges,496,224);
+assert.equal(placement.get('a'),placement.get('c'));
+assert.equal(placement.get('b'),placement.get('d'));
+assert.equal(placement.get('end'),248);
+const routed=routeSanadConnectors([['root'],['child']],new Map([['root',{x:100}],['child',{x:140}]]),[{from:'root',to:'child',x1:100,x2:140}],300,192,80,false,new Map([['root',180],['child',60]]));
+assert.match(routed.connectors[0].d,/^M100 180 V190 H140 V227$/);

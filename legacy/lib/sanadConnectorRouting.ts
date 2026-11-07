@@ -24,7 +24,7 @@ export function routeSanadConnectors(rows:string[][],centers:ReadonlyMap<string,
   const obstacles=rows.slice(from+1,to).flat().map(id=>centers.get(id)!.x);
   const clearance=cardWidth/2+8;
   const conflicts=vertical.filter(lane=>lane.from<to&&lane.to>from);
-  const candidates=[edge.x1,edge.x2,...obstacles.flatMap(x=>[x-clearance,x+clearance]),...conflicts.flatMap(lane=>[lane.x-spacing,lane.x+spacing]),8,width-8];
+  const candidates=[edge.x1,edge.x2,(edge.x1+edge.x2)/2,...obstacles.flatMap(x=>[x-clearance,x+clearance]),...conflicts.flatMap(lane=>[lane.x-spacing,lane.x+spacing]),8,width-8];
   const clear=candidates.filter(x=>x>=8&&x<=width-8&&obstacles.every(center=>Math.abs(center-x)>=clearance));
   const separated=clear.filter(x=>conflicts.every(lane=>Math.abs(lane.x-x)>=spacing));
   const distance=(x:number)=>Math.abs(x-edge.x1)+Math.abs(x-edge.x2);
@@ -37,8 +37,8 @@ export function routeSanadConnectors(rows:string[][],centers:ReadonlyMap<string,
  const tops=[0];
  for(let rank=0;rank<rows.length;rank++)tops.push(tops[rank]+rowHeights[rank]+Math.max(48,20+spacing*gaps[rank].length)+(grouped&&rank===0?28:0));
  const connectors=routes.map(({edge,from,to,x,exit,entry})=>{
-  const start=tops[from]+heightOf(edge.from),end=tops[to]-5;
-  const y=(rank:number,lane:number)=>tops[rank]+cardHeight+10+lane*spacing;
+  const start=tops[from]+heightOf(edge.from),end=tops[to]-1;
+  const y=(rank:number,lane:number)=>tops[rank]+rowHeights[rank]+10+lane*spacing;
   let d=`M${edge.x1} ${start}`;
   if(exit!==null)d+=` V${y(from,exit)} H${x}`;
   if(entry!==null)d+=` V${y(to-1,entry)} H${edge.x2}`;
