@@ -3,7 +3,7 @@ type Track={left:number;right:number};
 const spacing=14;
 
 /** Route in rank gaps and reserve clear vertical lanes for edges that skip cards. */
-export function routeSanadConnectors(rows:string[][],centers:ReadonlyMap<string,{x:number}>,ports:SanadPort[],width:number,cardWidth:number,cardHeight:number,grouped:boolean){
+export function routeSanadConnectors(rows:string[][],centers:ReadonlyMap<string,{x:number}>,ports:SanadPort[],width:number,cardWidth:number,cardHeight:number,grouped:boolean,cardHeights?:ReadonlyMap<string,number>){
  const ranks=new Map(rows.flatMap((row,rank)=>row.map(id=>[id,rank] as const)));
  const gaps=rows.map(()=>[] as Track[][]);
  const vertical:{x:number;from:number;to:number}[]=ports.flatMap(edge=>{
@@ -32,10 +32,12 @@ export function routeSanadConnectors(rows:string[][],centers:ReadonlyMap<string,
   vertical.push({x,from,to});
   return {edge,from,to,x,exit:track(from,edge.x1,x),entry:track(to-1,x,edge.x2)};
  });
+ const heightOf=(id:string)=>cardHeights?.get(id)??cardHeight;
+ const rowHeights=rows.map(row=>Math.max(...row.map(heightOf)));
  const tops=[0];
- for(let rank=0;rank<rows.length;rank++)tops.push(tops[rank]+cardHeight+Math.max(48,20+spacing*gaps[rank].length)+(grouped&&rank===0?28:0));
+ for(let rank=0;rank<rows.length;rank++)tops.push(tops[rank]+rowHeights[rank]+Math.max(48,20+spacing*gaps[rank].length)+(grouped&&rank===0?28:0));
  const connectors=routes.map(({edge,from,to,x,exit,entry})=>{
-  const start=tops[from]+cardHeight,end=tops[to]-5;
+  const start=tops[from]+heightOf(edge.from),end=tops[to]-5;
   const y=(rank:number,lane:number)=>tops[rank]+cardHeight+10+lane*spacing;
   let d=`M${edge.x1} ${start}`;
   if(exit!==null)d+=` V${y(from,exit)} H${x}`;

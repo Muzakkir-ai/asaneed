@@ -1,15 +1,29 @@
 import {routeSanadConnectors} from '../lib/sanadConnectorRouting';
-import {useEffect,useId,useRef,useState,type ReactNode} from 'react';
+import {useEffect,useLayoutEffect,useId,useRef,useState,type ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
 import {sanadPositions} from '../lib/sanadPathLayout';
 
-const cell=208,rowHeight=166,cardWidth=192,cardHeight=118;
+const cell=208,rowHeight=166,cardWidth=192,initialCardHeight=80;
 
 export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJazariStudents,source,review}:{paths:string[][];routeLabels?:string[];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean}){
  const [route,setRoute]=useState<number|null>(null);
  const arrow=useId(),graph=combinedSanad(paths);
  const viewport=useRef<HTMLDivElement>(null);
+ const canvas=useRef<HTMLDivElement>(null);
+ const [cardHeights,setCardHeights]=useState<ReadonlyMap<string,number>>(new Map());
+ useLayoutEffect(()=>{
+  const cards=Array.from(canvas.current?.querySelectorAll<HTMLElement>('[data-combined-narrator]')??[]);
+  if(!cards.length)return;
+  const measure=()=>{
+   const heights=new Map(cards.map(card=>[card.dataset.combinedNarrator!,card.offsetHeight]));
+   setCardHeights(previous=>previous.size===heights.size&&[...heights].every(([id,height])=>previous.get(id)===height)?previous:heights);
+  };
+  measure();
+  const observer=new ResizeObserver(measure);
+  cards.forEach(card=>observer.observe(card));
+  return ()=>observer.disconnect();
+ },[paths]);
  const [available,setAvailable]=useState(0);
  const [zoomed,setZoomed]=useState(false);
  const width=graph?.rows.length?Math.max(...graph.rows.map(row=>row.length))*cell+48:0;
@@ -80,7 +94,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJ
  const ports=graph.edges.map(edge=>({from:edge.from,to:edge.to,
   x1:points.get(edge.from)!.x+port(outgoing.get(edge.from)!,edge),
   x2:points.get(edge.to)!.x+port(incoming.get(edge.to)!,edge)}));
- const {tops,height,connectors}=routeSanadConnectors(graph.rows,points,ports,width,cardWidth,cardHeight,Boolean(grouped));
+ const {tops,height,connectors}=routeSanadConnectors(graph.rows,points,ports,width,cardWidth,initialCardHeight,Boolean(grouped),cardHeights);
  graph.rows.forEach((row,rank)=>row.forEach(id=>points.set(id,{...points.get(id)!,y:tops[rank]})));
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
   <div className="flex flex-wrap items-center gap-3">
@@ -98,7 +112,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJ
   </div>}
   <div ref={viewport} className="overflow-x-auto rounded-lg border p-2" dir="ltr" data-sanad-viewport="">
    <div className="relative mx-auto overflow-hidden" style={{width:width*scale,height:height*scale}}>
-   <div className="absolute left-0 top-0 origin-top-left" style={{width,height,transform:`scale(${scale})`}}>
+   <div ref={canvas} className="absolute left-0 top-0 origin-top-left" style={{width,height,transform:`scale(${scale})`}}>
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
@@ -113,8 +127,8 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJ
      })}
     </svg>
     {grouped&&<p dir="rtl" className="absolute right-5 text-sm font-semibold text-primary" style={{top:tops[1]-23}}>أصحاب ابن الجزري</p>}
-    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={route!==null&&!paths[route]?.includes(id)?'absolute opacity-40':'absolute'} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth,height:cardHeight}}>
-     <div className="h-full overflow-y-auto [&>article]:min-h-full [&>article>div>div:last-child]:hidden">{renderPerson(id,sanadPositions(route===null?paths:[paths[route]],id))}</div>
+    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={route!==null&&!paths[route]?.includes(id)?'absolute opacity-40':'absolute'} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
+     <div className="[&>article>div>div:last-child]:hidden">{renderPerson(id,sanadPositions(route===null?paths:[paths[route]],id))}</div>
     </div>)}
    </div>
   </div>
