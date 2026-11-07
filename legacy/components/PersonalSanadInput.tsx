@@ -42,6 +42,8 @@ export default function PersonalSanadInput({value,personIds=[],complete=false,pr
  const [viewSource,setViewSource]=useState('');
  const resolved=savedSharedBridgeDiagram(personalPrefix?.text??value,personalPrefix?.ids??personIds,onward,initialPreparation,issuer,viewSource||continuationId||undefined,context);
  const diagram=resolved?.diagram;
+ const meetingId=(personalPrefix?.ids??personIds).at(-1);
+ const meeting=library?.people.find(person=>person.id===meetingId&&!person.archived);
  const recovered=issuer&&library?recoverSharedBridgePrefix(personalPrefix?.text??value,personalPrefix?.ids??personIds,(library.sharedBridgeGraphs??[]).map(bridge=>bridge.source)):null;
  const savedBranch=personIds.length>0&&draft.includes('(ح)');
  const fullPreparation=savedBranch?prepareSavedSanadPeople(draft,true,'end'):null;
@@ -54,7 +56,12 @@ export default function PersonalSanadInput({value,personIds=[],complete=false,pr
    onApply(text,ids,'jazari',sourceId);setDraft(text);markPending(false);return;
   }
   const composed=complete?text:resolveBuilderPrefix(text,library?.prefixContinuations,selected).text;if(complete&&composed.trim().length<100)throw Error('أكمل رواة السند إلى النبي ﷺ ثم اعتمد الترتيب');if(!complete&&(saveContinuation||diagram?.personalText===value.trim())&&composed!==text.trim())throw Error('اختر تتمة مشتركة معتمدة مرتبطة بهوية راوي نقطة الالتقاء لحفظها مستقلة عن السند الشخصي.');onApply(composed,ids,'jazari',saveContinuation?null:undefined);setDraft(composed);markPending(false);}catch(e){markPending(true);setError(e instanceof Error?e.message:'راجع نقطة الالتقاء');}};
- return <section className="space-y-3" aria-label="محرر السند الشخصي بالرواة" data-sanad-mode={editing?"edit":"view"}>{!readOnly&&<div className="flex justify-end"><Button type="button" variant="outline" onClick={()=>setEditing(v=>!v)}>{editing?"عرض السند":"تعديل السند"}</Button></div>}{editing&&!complete&&!preparation&&draft&&!personIds.length&&<Button type="button" variant="outline" onClick={()=>{const prepared=prepareSavedSanadPeople(draft);if(!prepared){setError('راجع الرواة والفروع قبل إعداد هذا السند.');return;}setPreparation(prepared);markPending(true);setRevision(v=>v+1);}}>إعداد الرواة من السند السابق للمراجعة</Button>}{editing&&preparation&&<p className="text-sm text-muted-foreground">راجع الرواة والفروع حتى نقطة الالتقاء قبل التأكيد.</p>}{editing&&complete&&!preparation&&<p className="text-sm text-muted-foreground">هذا سند كامل: أدخل الرواة بالترتيب إلى النبي ﷺ. راجع السند قبل حفظه.</p>}{library?<>{issuer&&!editing?<Tabs defaultValue="personal" dir="rtl">
+ return <section className="space-y-3" aria-label="محرر السند الشخصي بالرواة" data-sanad-mode={editing?"edit":"view"}>{!readOnly&&<div className="flex justify-end"><Button type="button" variant="outline" onClick={()=>setEditing(v=>!v)}>{editing?"عرض السند":"تعديل السند"}</Button></div>}{saveContinuation&&(!complete||personalPrefix)&&<div className="rounded-md border px-3 py-2 text-sm">
+  <strong>نقطة الالتقاء</strong>
+  {meeting&&<p>{meeting.display_name||meeting.name}</p>}
+  {editing&&<p className="text-muted-foreground">اختر راوي نقطة الالتقاء آخرَ راوٍ في السند الشخصي، ثم اعتمد ترتيب الرواة.</p>}
+  {!editing&&!meeting&&<p className="text-muted-foreground">لم تُربط نقطة الالتقاء براوٍ محفوظ.</p>}
+ </div>}{editing&&!complete&&!preparation&&draft&&!personIds.length&&<Button type="button" variant="outline" onClick={()=>{const prepared=prepareSavedSanadPeople(draft);if(!prepared){setError('راجع الرواة والفروع قبل إعداد هذا السند.');return;}setPreparation(prepared);markPending(true);setRevision(v=>v+1);}}>إعداد الرواة من السند السابق للمراجعة</Button>}{editing&&preparation&&<p className="text-sm text-muted-foreground">راجع الرواة والفروع حتى نقطة الالتقاء قبل التأكيد.</p>}{editing&&complete&&!preparation&&<p className="text-sm text-muted-foreground">هذا سند كامل: أدخل الرواة بالترتيب إلى النبي ﷺ. راجع السند قبل حفظه.</p>}{library?<>{issuer&&!editing?<Tabs defaultValue="personal" dir="rtl">
   <TabsList aria-label="نوع عرض السند" className="grid h-auto w-full grid-cols-2">
    <TabsTrigger value="personal" className="whitespace-normal">السند الشخصي</TabsTrigger>
    <TabsTrigger value="complete" className="whitespace-normal">السند المتصل الكامل</TabsTrigger>
