@@ -88,6 +88,7 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
    if(from+1===to&&edge.x1===edge.x2&&routed[i].length===1)continue;
    const obstacles=cards.filter(card=>card.id!==edge.from&&card.id!==edge.to&&card.top>=base.tops[from]&&card.top<=base.tops[to]);
    const others=routed.flatMap((route,j)=>j===i?[]:route.map(bounds)).filter(b=>b.bottom>=base.tops[from]&&b.top<=base.tops[to]);
+   const start=base.tops[from]+heightOf(edge.from),end=base.tops[to]-1;
    const score=(route:Segment[])=>{
     let collisions=0,touches=0;
     for(const segment of route){
@@ -95,14 +96,14 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      collisions+=obstacles.filter(card=>b.right>=card.left-4&&b.left<=card.right+4&&b.bottom>card.top&&b.top<card.bottom).length;
      for(const other of others)touches+=interaction(b,other);
     }
-    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12;
+    const sidePorts=(Math.abs(route[0]?.a.y-start)>1?1:0)+(Math.abs(route.at(-1)?.b.y-end)>1?1:0);
+    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+sidePorts*120;
    };
    let best=routed[i],bestScore=score(best);
    const candidate=(points:Point[])=>{
     const route=segments(points),cost=score(route);
     if(cost<bestScore-.001){best=route;bestScore=cost;}
    };
-   const start=base.tops[from]+heightOf(edge.from),end=base.tops[to]-1;
    const options=(id:string,original:number)=>{
     const center=centers.get(id)!.x,offset=Math.round(cardWidth*.33);
     return [original,center,center-offset,center+offset];
@@ -120,6 +121,31 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      .filter(x=>x>=8&&x<=width-8&&clear(x)).sort((a,b)=>Math.abs(a-x1)+Math.abs(a-x2)-Math.abs(b-x1)-Math.abs(b-x2));
     for(const x of channels.slice(0,8))for(const exit of gaps(from))for(const entry of gaps(to-1)){
      candidate([{x:x1,y:start},{x:x1,y:exit},{x,y:exit},{x,y:entry},{x:x2,y:entry},{x:x2,y:end}]);
+    }
+   }
+   // Long bypasses can attach to either side of a card instead of its bottom/top.
+   // Only outward-facing channels are permitted, so the line cannot cross its own card.
+   if(to>from+1){
+    type SideOption={x:number;y:number;direction:-1|0|1};
+    const sides=(id:string,rank:number):SideOption[]=>{
+     const center=centers.get(id)!.x,y=base.tops[rank]+heightOf(id)/2;
+     return [{x:center-cardWidth/2,y,direction:-1},{x:center+cardWidth/2,y,direction:1}];
+    };
+    const sources:SideOption[]=[{x:edge.x1,y:start,direction:0},...sides(edge.from,from)];
+    const destinations:SideOption[]=[{x:edge.x2,y:end,direction:0},...sides(edge.to,to)];
+    const intermediate=obstacles.filter(card=>card.top>base.tops[from]&&card.top<base.tops[to]);
+    const clear=(x:number)=>intermediate.every(card=>x<=card.left-8||x>=card.right+8);
+    const outward=(port:SideOption,x:number)=>port.direction===0||port.direction<0&&x<=port.x-8||port.direction>0&&x>=port.x+8;
+    for(const source of sources)for(const destination of destinations){
+     if(source.direction===0&&destination.direction===0)continue;
+     const channels=[...new Set([source.x,destination.x,(source.x+destination.x)/2,base.connectors[i].bypass!,...intermediate.flatMap(card=>[card.left-8,card.right+8]),8,width-8])]
+      .filter(x=>x>=8&&x<=width-8&&clear(x)&&outward(source,x)&&outward(destination,x))
+      .sort((a,b)=>Math.abs(a-source.x)+Math.abs(a-destination.x)-Math.abs(b-source.x)-Math.abs(b-destination.x));
+     const exits=source.direction===0?gaps(from).slice(0,2):[source.y];
+     const entries=destination.direction===0?gaps(to-1).slice(0,2):[destination.y];
+     for(const x of channels.slice(0,6))for(const exit of exits)for(const entry of entries){
+      candidate([{x:source.x,y:source.y},{x:source.x,y:exit},{x,y:exit},{x,y:entry},{x:destination.x,y:entry},{x:destination.x,y:destination.y}]);
+     }
     }
    }
    routed[i]=best;
