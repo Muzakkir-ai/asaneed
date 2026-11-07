@@ -17,6 +17,9 @@ import {workspaceHeaders} from '../lib/workspaceSelection';
 
 type Path={id:string;label:string;routes:string[][];names:Record<string,string>;routeLabels:string[]};
 type SavedChain={savedRoutes?:string[][];reason:string;id:string;label:string;text:string;ids:string[];preparation:ReturnType<typeof prepareSavedSanadPeople>};
+type Reading={qariId:string;rawi:string};
+const readingKey=(reading:Reading)=>JSON.stringify([reading.qariId,reading.rawi]);
+type ShaykhGroup={id:string;name:string;readings:Reading[];rows:(SavedChain&{paths:Path[];reading:string;sourceId:string;alternate:boolean})[]};
 function linearNames(source:string){
  const body=source.trim().replace(/[.،؛]+$/u,'');
  if(/[().؛\n]|وقرأ|وأخذ|وهما|وهم|وهو| والشيخ/u.test(body))return [];
@@ -48,7 +51,7 @@ function numberedPaths(source:string,ids:string[],preparation:SavedChain['prepar
 }
 
 export default function ShaykhSanadTree(){
- const [paths,setPaths]=useState<Path[]>([]),[missing,setMissing]=useState<SavedChain[]>([]),[selectedId,setSelectedId]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
+ const [groups,setGroups]=useState<ShaykhGroup[]>([]),[shaykhId,setShaykhId]=useState(''),[readingId,setReadingId]=useState(''),[sourceId,setSourceId]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(true);
  useEffect(()=>{
   let cancelled=false;
   async function load(){
@@ -56,7 +59,7 @@ export default function ShaykhSanadTree(){
     const [{sheikhs},{sections},library]=await Promise.all([additionalShaykhs({action:'list'}),sanadSections({action:'list'}),fetch('/api/book-builder',{headers:workspaceHeaders()}).then(async response=>response.ok?await response.json() as BuilderLibrary:null).catch(()=>null)]);
     const bridges=sections.filter(s=>!s.ownerId&&s.title===UBAYDI_BRIDGE_TITLE);
     const groups=await Promise.all(sheikhs.map(async sheikh=>{
-     const sources=[{id:'shared',label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared,continuationId:sheikh.continuationId,context:{shaykhId:sheikh.id} as OnwardContext},{id:'kubra',label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null,continuationId:sheikh.kubraContinuationId,context:{shaykhId:sheikh.id} as OnwardContext}];
+     const sources=[{id:'shared',alternate:false,label:'السند الشخصي',text:sheikh.personalChain,ids:sheikh.personalPersonIds,preparation:sheikh.preparedShared,continuationId:sheikh.continuationId,context:{shaykhId:sheikh.id} as OnwardContext},{id:'kubra',alternate:false,label:'سند شخصي مستقل',text:sheikh.kubraPersonalChain,ids:sheikh.kubraPersonalPersonIds,preparation:null,continuationId:sheikh.kubraContinuationId,context:{shaykhId:sheikh.id} as OnwardContext}];
      if(sources[0].text.trim()===sources[1].text.trim())sources.pop();
      const {sanads}=await additionalReadingSanads({action:'list',shaykhId:sheikh.id});
      const seen=new Set(sources.map(s=>sanadKey(s.text).replace(/[.،؛]+$/u,'')));
@@ -66,9 +69,9 @@ export default function ShaykhSanadTree(){
       const key=sanadKey(text).replace(/[.،؛]+$/u,'');
       if(!key||(!sanad.variantName&&!sanad.unifiedSanad&&!sanad.continuationId&&!sanad.personalPersonIds?.length&&seen.has(key)))continue;
       seen.add(key);
-      sources.push({id:sanad.id,label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null,continuationId:sanad.continuationId,context:{qariId:sanad.qariId,rawi:sanad.rawi,shaykhId:sheikh.id}});
+      sources.push({id:sanad.id,alternate:Boolean(sanad.variantName||sanad.tariqNumber),label:[sanad.rawi,sanad.variantName,sanad.tariqName].filter(Boolean).join(' — '),text,ids:sanad.personalPersonIds??[],preparation:sanad.preparedPeople??null,continuationId:sanad.continuationId,context:{qariId:sanad.qariId,rawi:sanad.rawi,shaykhId:sheikh.id}});
      }
-     return sources.filter(s=>s.text.trim()).map(s=>{
+     const rows=sources.filter(s=>s.text.trim()).map(s=>{
       const label=sheikh.name+' — '+s.label;
       let names:string[][]=[],text=s.text;
       const savedPreparation=s.preparation??recoverSharedBridgePrefix(s.text,s.ids,bridges);
@@ -77,10 +80,11 @@ export default function ShaykhSanadTree(){
       const onward=library?verifiedOnwardSources(library,s.context):[];
       const diagram=savedSharedBridgeDiagram(s.text,s.ids,onward,savedPreparation,{id:sheikh.id,name:sheikh.name},s.continuationId??undefined,s.context)?.diagram;
       const id=sheikh.id+':'+s.id;
+      const meta={reading:s.context.qariId&&s.context.rawi?readingKey({qariId:s.context.qariId,rawi:s.context.rawi}):'',sourceId:s.id,alternate:s.alternate};
       if(diagram&&combinedSanad(diagram.paths)){
        const title=onward.find(item=>item.source.id===diagram.sourceId)?.source.title;
        const routeLabels=diagram.paths.map(()=>[label,title].filter(Boolean).join(' — '));
-       return {id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes:diagram.paths,names:diagram.names,routeLabels}],reason:''};
+       return {...meta,id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes:diagram.paths,names:diagram.names,routeLabels}],reason:''};
       }
       const witnesses=s.continuationId?onward.filter(item=>item.source.id===s.continuationId):onward;
       const resolved=library&&!s.ids.length?names.flatMap(path=>{
@@ -100,30 +104,65 @@ export default function ShaykhSanadTree(){
        const routeIds=new Set(routes.flat());
        const graphNames=Object.fromEntries(library!.people.filter(person=>routeIds.has(person.id)).map(person=>[person.id,person.display_name||person.name]));
        graphNames[issuer]=sheikh.name;
-       if(combinedSanad(routes))return {id:incomplete?id+':review':id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes,names:graphNames,routeLabels}],reason:incomplete?reason:''};
+       if(combinedSanad(routes))return {...meta,id:incomplete?id+':review':id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[{id,label,routes,names:graphNames,routeLabels}],reason:incomplete?reason:''};
       }
-      return {id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[],reason};
+      return {...meta,id,label,text,savedRoutes:names.map(route=>[...route,sheikh.name]),ids:s.ids,preparation,paths:[],reason};
      });
+     const readings=[...new Map([...sheikh.readings,...sanads].filter(r=>r.qariId&&r.rawi).map(r=>[readingKey(r),{qariId:r.qariId,rawi:r.rawi}])).values()];
+     return {id:sheikh.id,name:sheikh.name,readings,rows};
     }));
-    if(!cancelled){setPaths(groups.flatMap(group=>group.flatMap(row=>row.paths)));setMissing(groups.flatMap(group=>group.filter(row=>row.reason)));}
+    if(!cancelled)setGroups(groups);
    }catch(e){if(!cancelled)setError(e instanceof Error?e.message:'تعذر تحميل أسانيد المشايخ');}
    finally{if(!cancelled)setLoading(false);}
   }
   void load();return()=>{cancelled=true;};
  },[]);
- const selected=paths.find(path=>path.id===selectedId);
- const selectedSource=missing.find(source=>source.id===selectedId);
- const allRoutes=paths.flatMap(path=>path.routes);
+ const shaykh=groups.find(group=>group.id===shaykhId);
+ const readingRows=shaykh?.rows.filter(row=>row.reading===readingId)??[];
+ const rows=readingId&&shaykh
+  ?[...readingRows,...(readingRows.some(row=>!row.alternate)?[]:shaykh.rows.filter(row=>row.sourceId==='shared'))]
+  :shaykh?.rows??groups.flatMap(group=>group.rows);
+ const sources=rows.filter(row=>row.paths.length);
+ const distinctSources=new Set(sources.map(row=>JSON.stringify(row.paths.flatMap(path=>path.routes))));
+ const paths=(sourceId?rows.filter(row=>row.id===sourceId):rows).flatMap(row=>row.paths);
+ const missing=rows.filter(row=>row.reason);
+ const branches=new Map<string,{route:string[];labels:Set<string>}>();
+ for(const path of paths){
+  path.routes.forEach((route,index)=>{
+   const key=JSON.stringify(route);
+   const branch=branches.get(key)??{route,labels:new Set<string>()};
+   branch.labels.add(path.routeLabels[index]);
+   branches.set(key,branch);
+  });
+ }
+ const allRoutes=[...branches.values()].map(branch=>branch.route);
+ const routeLabels=[...branches.values()].map(branch=>[...branch.labels].join(' / '));
  const combined=combinedSanad(allRoutes);
- return <section className="space-y-4" aria-label="أسانيد المشايخ">
+ return <section className="space-y-4" aria-label="أسانيد المشايخ" dir="rtl">
   <h3 className="font-bold">أسانيد المشايخ</h3>
-  <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري. اختر سندًا شخصيًا لعرض رواته حتى الشيخ.</p>
+  <p className="text-sm text-muted-foreground">يبدأ الترقيم من الإمام ابن الجزري.</p>
   {loading?<p role="status">جارٍ تحميل الأسانيد…</p>:error?<p role="alert">{error}</p>:<>
-   {paths.length+missing.length>0&&<label className="block text-sm">الشيخ والسند الشخصي<select className="mt-1 block w-full rounded-lg border bg-background p-2" value={selectedId} onChange={e=>setSelectedId(e.target.value)}><option value="">عرض جميع الأسانيد الشخصية</option>{paths.map(path=><option key={path.id} value={path.id}>{path.label} · {[...new Set(path.routes.map(route=>route.length))].sort((a,b)=>a-b).map(arabicDigits).join(' / ')}</option>)}{missing.map(source=><option key={source.id} value={source.id}>{source.label} · عرض السند المحفوظ</option>)}</select></label>}
-   {selectedSource?<SavedShaykhChain key={selectedSource.id} {...selectedSource}/>:selected?<CompactShaykhPath key={selected.id} path={selected}/>:combined?.rows.length
-    ?<CompactShaykhPath key="all" path={{id:'all',label:'الأجزاء المرتبطة بهويات الرواة',routes:allRoutes,names:Object.assign({},...paths.map(path=>path.names)),routeLabels:paths.flatMap(path=>path.routeLabels)}}/>
-    :paths.length>0&&<p role="status" className="text-sm text-muted-foreground">يتعذر عرض المسارات معًا في رسم بلا دورات. اختر سندًا من القائمة.</p>}
-   {!selectedSource&&missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(({label,text,reason,savedRoutes},i)=><li key={i}><details><summary>{label}</summary><SavedShaykhChain reason={reason} text={text} savedRoutes={savedRoutes}/></details></li>)}</ul></details>}
+   {groups.length>0&&<div className="grid gap-3 sm:grid-cols-2">
+    <label className="block min-w-0 rounded-lg border p-3 text-sm">اختر الشيخ
+     <select className="mt-2 block w-full rounded border bg-background p-2" value={shaykhId} onChange={event=>{setShaykhId(event.target.value);setReadingId('');setSourceId('');}}>
+      <option value="">جميع المشايخ</option>{groups.map(group=><option key={group.id} value={group.id}>{group.name}</option>)}
+     </select>
+    </label>
+    {shaykh&&<label className="block min-w-0 rounded-lg border p-3 text-sm">اختر الرواية
+     <select className="mt-2 block w-full rounded border bg-background p-2" value={readingId} onChange={event=>{setReadingId(event.target.value);setSourceId('');}}>
+      <option value="">جميع الروايات</option>{shaykh.readings.map(reading=><option key={readingKey(reading)} value={readingKey(reading)}>{reading.rawi}</option>)}
+     </select>
+    </label>}
+   </div>}
+   {shaykh&&distinctSources.size>1&&<label className="block text-sm">السند الشخصي
+    <select className="mt-1 block w-full rounded border bg-background p-2" value={sourceId} onChange={event=>setSourceId(event.target.value)}>
+     <option value="">جميع الأسانيد المطابقة</option>{sources.map(row=><option key={row.id} value={row.id}>{row.label.slice(shaykh.name.length+3)}</option>)}
+    </select>
+   </label>}
+   {combined?.rows.length
+    ?<CompactShaykhPath key={JSON.stringify([shaykhId,readingId,sourceId])} path={{id:'combined',label:shaykh?.name??'الأسانيد المرتبطة بهويات الرواة',routes:allRoutes,names:Object.assign({},...paths.map(path=>path.names)),routeLabels}}/>
+    :<p role="status" className="text-sm text-muted-foreground">{paths.length?'يتعذر جمع هذه الأسانيد في رسم بلا دورات. اختر سندًا محددًا.':'لا يوجد سند مرتبط بهذه الخيارات.'}</p>}
+   {missing.length>0&&<details className="rounded-lg border p-3"><summary>أسانيد تحتاج مراجعة قبل الترقيم ({arabicDigits(missing.length)})</summary><ul className="list-disc space-y-1 ps-5">{missing.map(row=><li key={row.id}><details><summary>{row.label}</summary><SavedShaykhChain {...row}/></details></li>)}</ul></details>}
   </>}
  </section>;
 }

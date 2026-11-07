@@ -97,13 +97,18 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJ
  const {tops,height,connectors}=routeSanadConnectors(graph.rows,points,ports,width,cardWidth,initialCardHeight,Boolean(grouped),cardHeights);
  graph.rows.forEach((row,rank)=>row.forEach(id=>points.set(id,{...points.get(id)!,y:tops[rank]})));
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
+  {paths.length>1&&<details className="rounded-lg border p-2">
+   <summary className="cursor-pointer text-sm">تفاصيل فروع السند</summary>
   <div className="flex flex-wrap items-center gap-3">
    <select aria-label="عرض المسارات" value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
     <option value="">عرض الكل</option>
-    {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة{routeLabels?.[i]?' — '+routeLabels[i]:''}</option>)}
+    {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</option>)}
    </select>
   </div>
   {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">اختر مسارًا لتتبّع اتصالاته. اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
+
+   {route!==null&&routeLabels?.[route]&&<p className="text-xs text-muted-foreground">{routeLabels[route]}</p>}
+  </details>}
   {review&&<p className="text-xs text-muted-foreground">عرض من النص المحفوظ · هويات الرواة أو مواضع الالتقاء تحتاج مراجعة.</p>}
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
   {compact&&<div className="flex flex-wrap items-center gap-2">
