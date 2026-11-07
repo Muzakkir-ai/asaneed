@@ -1,0 +1,33 @@
+name: Sanad graph regression
+
+on:
+  pull_request:
+    paths:
+      - 'legacy/components/CombinedSanadView.tsx'
+      - 'legacy/lib/sanadConnectorRouting.ts'
+      - 'legacy/lib/sanadPlacement.ts'
+      - 'tests/sanad-graph-browser.test.cjs'
+      - 'tests/fixtures/sanad-graph-review.tsx'
+      - '.github/workflows/sanad-graph-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  chromium-graph:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run RTL sanad graph regressions
+        run: npm run test:sanad:graph
+        env:
+          CI: 'true'
+          ASANEED_SANAD_REVIEW_SCREENSHOTS: /tmp
