@@ -6,7 +6,7 @@ import {sanadPositions} from '../lib/sanadPathLayout';
 
 const cell=208,rowHeight=166,cardWidth=192,cardHeight=118;
 
-export default function CombinedSanadView({paths,renderPerson,groupJazariStudents,source}:{paths:string[][];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string}){
+export default function CombinedSanadView({paths,renderPerson,groupJazariStudents,source,review}:{paths:string[][];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean}){
  const [route,setRoute]=useState<number|null>(null);
  const arrow=useId(),graph=combinedSanad(paths);
  const viewport=useRef<HTMLDivElement>(null);
@@ -92,6 +92,7 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
     {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</option>)}
    </select>
   </div>
+  {review&&<p className="text-xs text-muted-foreground">عرض من النص المحفوظ · هويات الرواة أو مواضع الالتقاء تحتاج مراجعة.</p>}
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
   {compact&&<div className="flex flex-wrap items-center gap-2">
    <button type="button" aria-pressed={zoomed} className="rounded border px-2 py-1 text-xs" onClick={()=>setZoomed(value=>!value)}>{zoomed?'عرض الرسم كاملًا':'تكبير لقراءة الأسماء'}</button>
