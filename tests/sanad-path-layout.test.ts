@@ -28,3 +28,5 @@ const reconvergingPaths=[
 assert.deepEqual(sanadPositions(reconvergingPaths,'root'),[1]);
 assert.deepEqual(sanadPositions(reconvergingPaths,'shared'),[2,3,4,5]);
 assert.deepEqual(sanadPositions(reconvergingPaths,'tail'),[3,4,5,6]);
+
+import './verified-legacy-sanad.test';
