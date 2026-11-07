@@ -153,7 +153,7 @@ const {chromium}=require('playwright');
   await reading.getByRole('button',{name:'تعديل السند',exact:true}).click();
   await reading.locator('[data-sanad-mode=edit]').waitFor();
   await g.locator('[data-sanad-node]').first().waitFor();
-  assert.deepEqual(await measure(g),await measure(graph('book')));
+  assertAligned(await measure(g),await measure(graph('book')),'editing restores saved graph columns');
   await g.getByRole('button',{name:'تعديل الراوي 1',exact:true}).click();
   assert.ok(await g.getByRole('combobox',{name:'اسم الراوي بصيغة الجر'}).isVisible());
   await reading.getByRole('button',{name:'عرض السند',exact:true}).click();
