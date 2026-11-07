@@ -96,7 +96,7 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      collisions+=obstacles.filter(card=>b.right>=card.left-4&&b.left<=card.right+4&&b.bottom>card.top&&b.top<card.bottom).length;
      for(const other of others)touches+=interaction(b,other);
     }
-    const sidePorts=(Math.abs(route[0]?.a.y-start)>1?1:0)+(Math.abs(route.at(-1)?.b.y-end)>1?1:0);
+    const sidePorts=(Math.abs((route[0]?.a.y??start)-start)>1?1:0)+(Math.abs((route.at(-1)?.b.y??end)-end)>1?1:0);
     return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+sidePorts*120;
    };
    let best=routed[i],bestScore=score(best);
