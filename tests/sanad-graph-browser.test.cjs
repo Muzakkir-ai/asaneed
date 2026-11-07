@@ -74,6 +74,54 @@ const {chromium}=require('playwright');
    assert.equal(await graph('book').locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),width===1100?2:0);
    assert.ok(await page.locator('main.zite-app').evaluate(e=>e.scrollWidth<=e.clientWidth));
   }
+  // Always check the reported branch shapes, even without a private Hafs fixture.
+  const regression=page.getByTestId('combined-regression');
+  const regressionPaths=[
+   ['jazari','uqabi','ibnGhanim','ibnShuhadha','end'],
+   ['jazari','nuwayri','umyuti','samdasi','ibnShuhadha','end'],
+   ['jazari','umyuti','samdasi','ibnShuhadha','end'],
+  ];
+  const expectedRegressionEdges=[...new Set(regressionPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
+  for(const width of [1100,390,320]){
+   await page.setViewportSize({width,height:900});
+   const actualEdges=await regression.locator('path[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
+   assert.deepEqual(actualEdges,expectedRegressionEdges,'saved links at '+width);
+   assert.equal(await regression.locator('[data-combined-narrator]').count(),new Set(regressionPaths.flat()).size);
+   const collisions=await regression.evaluate(section=>{
+    const graph=section.querySelector('[data-sanad-viewport]');
+    const cards=[...graph.querySelectorAll('[data-combined-narrator]')];
+    return [...graph.querySelectorAll('path[data-from]')].flatMap(edge=>{
+     const total=edge.getTotalLength();
+     return cards.filter(card=>{
+      if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))return false;
+      for(let distance=0;distance<=total;distance+=3){
+       const {x,y}=edge.getPointAtLength(distance);
+       if(x>card.offsetLeft&&x<card.offsetLeft+card.offsetWidth&&y>card.offsetTop&&y<card.offsetTop+card.offsetHeight)return true;
+      }
+      return false;
+     }).map(card=>[edge.dataset.from,edge.dataset.to,card.dataset.combinedNarrator]);
+    });
+   });
+   assert.deepEqual(collisions,[],'unrelated narrator cards remain clear at '+width);
+   if(process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS){
+    await regression.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+width+'.png'});
+   }
+  }
+  await regression.getByText('تفاصيل فروع السند',{exact:true}).click();
+  await regression.getByLabel('عرض المسارات').selectOption('0');
+  assert.equal(await regression.locator('path[data-from]').count(),4,'selection hides links not in the saved route');
+  await regression.getByLabel('عرض المسارات').selectOption('');
+  await regression.locator('[data-trace-person="umyuti"]').click();
+  assert.equal(await regression.locator('path[data-from][opacity="1"]').count(),3,'trace shows the selected narrator’s direct connections');
+  await regression.getByRole('button',{name:'إلغاء التحديد'}).click();
+  const unlabelled=page.getByTestId('combined-no-labels');
+  await unlabelled.getByText('تفاصيل فروع السند',{exact:true}).click();
+  await unlabelled.getByLabel('عرض المسارات').selectOption('0');
+  assert.equal(await unlabelled.locator('path[data-from]').count(),4,'selection also hides other routes without route labels');
+  const invalid=page.getByTestId('combined-invalid');
+  assert.ok(await invalid.getByText(/تعذر تكوين رسم واحد/).isVisible(),'cyclic graphs must explain the fallback');
+  assert.equal(await invalid.locator('.narrator-person-card').count(),4,'all saved occurrences remain visible on invalid paths');
+
   const repeated=graph('repeated');
   await repeated.getByRole('button',{name:/المسار ٢/}).click();
   await repeated.getByRole('region',{name:'المسار ٢'}).getByRole('heading',{name:'المسار ٢'}).waitFor();
