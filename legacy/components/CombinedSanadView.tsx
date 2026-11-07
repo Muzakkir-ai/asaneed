@@ -1,5 +1,5 @@
 import {placeSanad} from '../lib/sanadPlacement';
-import {routeSanadConnectors} from '../lib/sanadConnectorRouting';
+import {optimizeSanadPorts} from '../lib/sanadConnectorRouting';
 import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
@@ -62,7 +62,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const ports=graph.edges.map(edge=>({from:edge.from,to:edge.to,
   x1:points.get(edge.from)!.x+port(outgoing.get(edge.from)!,edge),
   x2:points.get(edge.to)!.x+port(incoming.get(edge.to)!,edge)}));
- const {tops,height,connectors}=routeSanadConnectors(graph.rows,points,ports,width,cardWidth,initialCardHeight,false,cardHeights);
+ const {tops,height,connectors}=optimizeSanadPorts(graph.rows,points,ports,width,cardWidth,initialCardHeight,cardHeights);
  graph.rows.forEach((row,rank)=>row.forEach(id=>points.set(id,{...points.get(id)!,y:tops[rank]})));
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
   {paths.length>1&&<details className="rounded-lg border p-2">
@@ -91,11 +91,10 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
      {graph.edges.map(({from,to,routes},index)=>{
       const active=route===null||routes.includes(route);
       if(routeLabels&&!active)return null;
-      const {x1,x2}=ports[index],{d:connector,bypass}=connectors[index];
-      const skipped=bypass!==undefined,laneClear=skipped&&bypass===x1;
+      const {x1,x2,d:connector}=connectors[index];
       return <g key={JSON.stringify([from,to])} opacity={active?1:.15}>
        <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
-       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} data-local-bypass={laneClear||undefined} data-bypass={skipped?bypass:undefined} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
+       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active?2:1} opacity={active?1:.15} markerEnd={`url(#${arrow})`}/>
       </g>;
      })}
     </svg>

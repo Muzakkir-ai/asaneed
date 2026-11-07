@@ -1,5 +1,5 @@
 import {placeSanad} from '../legacy/lib/sanadPlacement';
-import {routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
+import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
 const paths=[['j','a','s','q','i'],['j','b','s','m','i']];
@@ -41,3 +41,12 @@ assert.equal(placement.get('b'),placement.get('d'));
 assert.equal(placement.get('end'),248);
 const routed=routeSanadConnectors([['root'],['child']],new Map([['root',{x:100}],['child',{x:140}]]),[{from:'root',to:'child',x1:100,x2:140}],300,192,80,false,new Map([['root',180],['child',60]]));
 assert.match(routed.connectors[0].d,/^M100 180 V190 H140 V227$/);
+
+const portRows=[['jazari'],['uqabi','umyuti','nuwayri']];
+const portCenters=new Map([['jazari',{x:350}],['uqabi',{x:126}],['umyuti',{x:350}],['nuwayri',{x:574}]]);
+const testPorts=portRows[1].map(to=>({from:'jazari',to,x1:350,x2:portCenters.get(to)!.x}));
+const routedPorts=optimizeSanadPorts(portRows,portCenters,testPorts,700,192,80,new Map()).connectors;
+assert.equal(new Set(routedPorts.map(x=>x.x1)).size,3);
+assert.equal(routedPorts[1].x1,350);
+assert.equal(routedPorts[1].x2,350);
+assert.ok(routedPorts[0].x1<350&&routedPorts[2].x1>350);
