@@ -6,7 +6,7 @@ import {sanadPositions} from '../lib/sanadPathLayout';
 
 const cell=208,rowHeight=166,cardWidth=192,cardHeight=118;
 
-export default function CombinedSanadView({paths,renderPerson,groupJazariStudents,source,review}:{paths:string[][];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean}){
+export default function CombinedSanadView({paths,routeLabels,renderPerson,groupJazariStudents,source,review}:{paths:string[][];routeLabels?:string[];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean}){
  const [route,setRoute]=useState<number|null>(null);
  const arrow=useId(),graph=combinedSanad(paths);
  const viewport=useRef<HTMLDivElement>(null);
@@ -86,9 +86,10 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
   <div className="flex flex-wrap items-center gap-3">
    <select aria-label="عرض المسارات" value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
     <option value="">عرض الكل</option>
-    {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</option>)}
+    {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة{routeLabels?.[i]?' — '+routeLabels[i]:''}</option>)}
    </select>
   </div>
+  {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">اختر مسارًا لتتبّع اتصالاته. اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
   {review&&<p className="text-xs text-muted-foreground">عرض من النص المحفوظ · هويات الرواة أو مواضع الالتقاء تحتاج مراجعة.</p>}
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
   {compact&&<div className="flex flex-wrap items-center gap-2">
@@ -102,6 +103,7 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
      <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
       const active=route===null||routes.includes(route);
+      if(routeLabels&&!active)return null;
       const {x1,x2}=ports[index],{d:connector,bypass}=connectors[index];
       const skipped=bypass!==undefined,laneClear=skipped&&bypass===x1;
       return <g key={JSON.stringify([from,to])} opacity={active?1:.15}>
