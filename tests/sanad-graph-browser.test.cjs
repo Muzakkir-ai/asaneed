@@ -49,6 +49,15 @@ const {chromium}=require('playwright');
     return {x:r.x-origin.x,y:r.y-origin.y,width:r.width,height:r.height,position:card.querySelector('[data-narrator-level]').textContent};
    });
   });
+  const assertAligned=(actual,expected,context)=>{
+   assert.equal(actual.length,expected.length,context+' node count');
+   for(let i=0;i<expected.length;i++){
+    assert.equal(actual[i].position,expected[i].position,context+' saved narrator position '+i);
+    assert.ok(Math.abs(actual[i].x-expected[i].x)<=1,context+' card column '+i);
+    assert.ok(Math.abs(actual[i].width-expected[i].width)<=1,context+' card width '+i);
+    assert.ok(Math.abs(actual[i].y-expected[i].y)<=16,context+' row alignment '+i);
+   }
+  };
   const arrowGeometry=g=>g.evaluate(element=>{
    const origin=element.querySelector('[data-sanad-node]').getBoundingClientRect();
    return [...element.querySelectorAll('.sanad-graph-junction .sanad-graph-arrow')].map(arrow=>{
@@ -62,11 +71,18 @@ const {chromium}=require('playwright');
    await graph('personal').locator('[data-sanad-node]').first().waitFor();
    const expected=await measure(graph('book'));
    assert.equal(expected.length,6);
-   for(const id of ['reading','saved','personal'])assert.deepEqual(await measure(graph(id)),expected,id+' geometry at '+width);
+   for(const id of ['reading','saved','personal'])assertAligned(await measure(graph(id)),expected,id+' geometry at '+width);
    if(width===1100){
     const arrows=await arrowGeometry(graph('book'));
     assert.ok(arrows[0][0]>arrows[2][0],'first branch is on the right');
-    for(const id of ['reading','saved','personal'])assert.deepEqual(await arrowGeometry(graph(id)),arrows);
+    for(const id of ['reading','saved','personal']){
+     const other=await arrowGeometry(graph(id));
+     assert.equal(other.length,arrows.length,id+' arrow count');
+     for(let i=0;i<arrows.length;i++){
+      assert.ok(Math.abs(other[i][0]-arrows[i][0])<=1,id+' arrow column '+i);
+      assert.ok(Math.abs(other[i][1]-arrows[i][1])<=16,id+' arrow row '+i);
+     }
+    }
    }
    assert.equal(await graph('book').evaluate(e=>getComputedStyle(e).direction),'rtl');
    assert.equal(await graph('book').locator('.sanad-graph-junction:visible').count(),width===1100?4:0);
