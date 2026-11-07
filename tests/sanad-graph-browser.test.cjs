@@ -24,7 +24,7 @@ const {chromium}=require('playwright');
    combinedPaths=combined.paths;
    const input=(label,record,preparation)=>'<div data-testid="'+label+'"><PersonalSanadInput issuer={{id:"fixture",name:"الشيخ التجريبي"}} value={'+JSON.stringify(record.body)+'} personIds={'+JSON.stringify(record.ids??[])+'} preparation={'+JSON.stringify(preparation??null)+'} readOnly onApply={()=>{}}/></div>';
    const qunbulPreparation=qunbul?require('../.vercel/shared-bridge-tests/legacy/lib/preparedSanadPeople.js').prepareSavedSanadPeople(qunbul.body):null;
-   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'<div data-testid="combined-hafs"><CombinedSanadView groupJazariStudents paths={'+JSON.stringify(combined.paths)+'} renderPerson={(id,positions)=><BranchPersonCard name={('+JSON.stringify(combined.names)+')[id]} number={positions[0]??null} badgeLabels={positions.map(position=>position.toLocaleString("ar"))}/>} /></div></main>'));
+   fs.writeFileSync(route+'/page.tsx',fixture.replace('</main>',input('private-hafs',r)+(qunbul?input('private-qunbul',qunbul,qunbulPreparation):'')+'<div data-testid="combined-hafs"><CombinedSanadView groupJazariStudents paths={'+JSON.stringify(combined.paths)+'} renderPerson={(id,positions)=><BranchPersonCard name={('+JSON.stringify(combined.names)+')[id]} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>} /></div></main>'));
   }
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   const url='http://127.0.0.1:3111/'+slug;
@@ -168,7 +168,14 @@ const {chromium}=require('playwright');
    }
    assert.equal(await combined.locator('[data-combined-narrator]').count(),new Set(combinedPaths.flat()).size);
    assert.ok(await combined.getByText('أصحاب ابن الجزري',{exact:true}).isVisible());
-   assert.ok(await combined.getByText('أعلى سند',{exact:false}).isVisible());
+   assert.equal(await combined.getByText('أعلى سند',{exact:false}).count(),0);
+   const cardPositions=await combined.locator('[data-combined-narrator]').evaluateAll(cards=>Object.fromEntries(cards.map(card=>[
+    card.dataset.combinedNarrator,[...card.querySelectorAll('[data-narrator-level],[data-narrator-secondary-level]')].map(circle=>Number(circle.textContent.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))))
+   ])));
+   for(const id of new Set(combinedPaths.flat())){
+    const expected=[...new Set(combinedPaths.filter(path=>path.includes(id)).map(path=>path.indexOf(id)+1))].sort((a,b)=>a-b);
+    assert.deepEqual(cardPositions[id],expected);
+   }
    await combined.getByLabel('عرض المسارات').selectOption('9');
    assert.deepEqual(await combined.locator('[data-from][opacity="1"]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort()),combinedPaths[9].slice(1).map((to,i)=>JSON.stringify([combinedPaths[9][i],to])).sort());
    await combined.getByLabel('عرض المسارات').selectOption('');

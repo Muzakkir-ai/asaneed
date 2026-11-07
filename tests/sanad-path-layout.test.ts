@@ -17,3 +17,14 @@ const unequal=[['j','a','i'],['j','b','c','i']];
 assert.ok(sanadPathLayout(unequal,true));
 assert.deepEqual(sanadPositions(unequal,'i'),[3,4]);
 assert.deepEqual(sanadPositions([unequal[1]],'i'),[4]);
+
+const reconvergingPaths=[
+ ['root','shared','tail'],
+ ['root','a','shared','tail'],
+ ['root','b','shared','tail'],
+ ['root','a','c','shared','tail'],
+ ['root','b','d','e','shared','tail'],
+];
+assert.deepEqual(sanadPositions(reconvergingPaths,'root'),[1]);
+assert.deepEqual(sanadPositions(reconvergingPaths,'shared'),[2,3,4,5]);
+assert.deepEqual(sanadPositions(reconvergingPaths,'tail'),[3,4,5,6]);

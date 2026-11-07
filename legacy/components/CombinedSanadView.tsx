@@ -84,9 +84,6 @@ export default function CombinedSanadView({paths,renderPerson,groupJazariStudent
  graph.rows.forEach((row,rank)=>row.forEach(id=>points.set(id,{...points.get(id)!,y:tops[rank]})));
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
   <div className="flex flex-wrap items-center gap-3">
-   <span className="text-sm font-semibold">أعلى سند <strong className="ms-1 rounded-full bg-primary px-3 py-1 text-lg text-primary-foreground">{arabicDigits(graph.lengths[0])}</strong></span>
-   {graph.shortestRoutes.length>1&&<span className="text-xs text-muted-foreground">{arabicDigits(graph.shortestRoutes.length)} مسارات في أعلى سند</span>}
-   {graph.lengths.slice(1).map(length=><span key={length} aria-label={'طول سند '+arabicDigits(length)} className="rounded-full border px-2 py-0.5 text-xs">{arabicDigits(length)}</span>)}
    <select aria-label="عرض المسارات" value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
     <option value="">عرض الكل</option>
     {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</option>)}

@@ -126,7 +126,7 @@ export default function ShaykhSanadTree(){
 function CompactShaykhPath({path}:{path:Path}){
  const verified=path.graphRoutes&&combinedSanad(path.graphRoutes)?path.graphRoutes:null;
  const legacy=verified?null:legacyCompactPaths(path.routes);
- return <CombinedSanadView paths={verified??legacy!.paths} groupJazariStudents={Boolean(verified)} source={path.source??path.label} review={!verified} renderPerson={(id,positions)=><BranchPersonCard name={legacy?.names[id]??path.graphNames?.[id]??id} number={positions[0]??null} badgeLabels={positions.map(arabicDigits)}/>}/>;
+ return <CombinedSanadView paths={verified??legacy!.paths} groupJazariStudents={Boolean(verified)} source={path.source??path.label} review={!verified} renderPerson={(id,positions)=><BranchPersonCard name={legacy?.names[id]??path.graphNames?.[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>;
 }
 
 function legacyCompactPaths(paths:string[][]){
@@ -141,7 +141,7 @@ function SavedShaykhChain({text,ids,preparation,reason}:{reason:string;text:stri
  const graph=saved?buildPreparedGraph(saved,saved.tokens.map((token,i)=>({...token,personId:saved.tokens.length===ids.length?ids[i]:undefined}))):null;
  const names=new Map(graph?.nodes.map(node=>[node.id,node.name]));
  return <div className="mt-3 space-y-3"><p className="text-sm text-muted-foreground">{reason}</p>
-  {graph&&combinedSanad(graph.paths)?<CombinedSanadView paths={graph.paths} review renderPerson={(id,positions)=><BranchPersonCard name={names.get(id)??id} number={positions[0]??null}/>}/>:saved&&<div className="grid gap-2 sm:grid-cols-2">{saved.tokens.map((token,i)=><BranchPersonCard key={i} name={token.name} number={null}/>)}</div>}
+  {graph&&combinedSanad(graph.paths)?<CombinedSanadView paths={graph.paths} review renderPerson={(id,positions)=><BranchPersonCard name={names.get(id)??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>:saved&&<div className="grid gap-2 sm:grid-cols-2">{saved.tokens.map((token,i)=><BranchPersonCard key={i} name={token.name} number={null}/>)}</div>}
   <p className="whitespace-pre-wrap leading-loose">{text}</p>
  </div>;
 }
