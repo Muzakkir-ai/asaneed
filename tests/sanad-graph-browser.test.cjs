@@ -120,7 +120,7 @@ const {chromium}=require('playwright');
     };
    }));
    for(const position of tracePlacements){
-    assert.ok(position.horizontalOffset<=2,'trace icon centered beneath number at '+width);
+    assert.ok(position.horizontalOffset<=2,'trace icon centered beneath number at '+width+': '+JSON.stringify(position));
     assert.ok(position.gapBelowNumber>=-0.5,'trace icon stays below number at '+width);
     assert.ok(position.iconSmaller,'trace icon smaller than main number: '+JSON.stringify(position));
     assert.ok(position.insideCard&&position.beforeSecondary,'trace icon must not overlap route badges at '+width);
