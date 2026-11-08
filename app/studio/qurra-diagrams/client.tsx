@@ -7,7 +7,7 @@ import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
 import SimpleRouteEditor from './SimpleRouteEditor';
 import {QURRA,displayRawi,shortQariName} from '../../../legacy/lib/qurra';
 import {savedRawiName} from '../../../legacy/lib/rawiIdentity';
-import {buildQurraTransmissionData,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
+import {buildQurraTransmissionData,sharedJazariDaniPaths,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
 import {workspaceHeaders} from '../../../legacy/lib/workspaceSelection';
@@ -50,18 +50,22 @@ export default function QurraTransmissionWorkspace(){
 
  const data=useMemo(()=>library?buildQurraTransmissionData(library):null,[library]);
  const candidates=(data?.witnesses||[]).filter(w=>w.stage===stage);
+ const sharedStage=stage==='jazari-dani';
+ const sharedPaths=sharedJazariDaniPaths(candidates);
  const qariOptions=QURRA.filter(q=>candidates.some(w=>w.qariId===q.id));
  const activeQari=qariOptions.some(q=>q.id===qari)?qari:qariOptions[0]?.id||'';
  const routeOptions=[...new Map(candidates.filter(w=>w.qariId===activeQari).map(w=>[w.routeId,w])).values()];
  const activeRoute=routeOptions.some(w=>w.routeId===route)?route:routeOptions[0]?.routeId||'';
- const chosen=showAll?candidates:candidates.filter(w=>w.routeId===activeRoute);
+ // Jazari → Dani is a common chain. Do not choose Qalun or any other reading
+ // just because its saved route happens to be the first witness.
+ const chosen=sharedStage?sharedPaths:showAll?candidates:candidates.filter(w=>w.routeId===activeRoute);
  const paths=chosen.map(w=>w.ids);
  const grouped=groupSimilarSanadRoutes(paths);
- const current=routeOptions.find(w=>w.routeId===activeRoute);
+ const current=sharedStage?undefined:routeOptions.find(w=>w.routeId===activeRoute);
  const currentChain=library?.chains.find(c=>c.id===activeRoute&&!c.archived&&c.kind==='route');
  const editingChain=library?.chains.find(c=>c.id===editingRouteId&&!c.archived&&c.kind==='route');
  const currentBook=library?.books.find(b=>b.id===current?.bookId);
- const unreviewed=chosen.some(w=>!w.routeConfirmed||!w.parentConfirmed);
+ const unreviewed=(sharedStage?candidates:chosen).some(w=>!w.routeConfirmed||!w.parentConfirmed);
  const coverage=stage==='jazari-three'?QURRA.filter(q=>q.family==='three'):QURRA.filter(q=>q.family==='seven');
  const covered=new Set(candidates.map(w=>w.qariId));
  const changeStage=(next:QurraStage)=>{setStage(next);setQari('');setRoute('');setShowAll(false);setEditingRouteId('');};
@@ -70,7 +74,7 @@ export default function QurraTransmissionWorkspace(){
   <header className="flex flex-wrap items-center justify-between gap-3">
    <div>
     <h1 className="text-xl font-bold sm:text-2xl">مخططات أسانيد القراء</h1>
-    <p className="mt-1 text-sm text-muted-foreground">اختر الرواية، شاهد سندها، وعدّل الرواة مباشرةً.</p>
+    <p className="mt-1 text-sm text-muted-foreground">{sharedStage?'السند المشترك بين ابن الجزري والداني، دون اختيار قارئ أو رواية.':'اختر الرواية، شاهد سندها، وعدّل الرواة مباشرةً.'}</p>
    </div>
    <div className="inline-flex items-center gap-1 rounded-lg border bg-background px-3 py-2 text-sm text-muted-foreground">
     <GitBranch size={16} aria-hidden="true"/> أسانيد محفوظة
@@ -95,7 +99,7 @@ export default function QurraTransmissionWorkspace(){
   {error&&<p role="alert" className="rounded-lg border border-destructive/40 p-4 text-sm text-destructive">{error}</p>}
 
   {data&&<section className="space-y-3">
-   <div className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2 sm:p-4">
+   {!sharedStage&&<div className="grid gap-3 rounded-xl border bg-card p-3 sm:grid-cols-2 sm:p-4">
     <label className="block min-w-0 text-sm font-medium">القارئ
      <select aria-label="القارئ" className="mt-1 w-full rounded-md border bg-background p-2.5 text-sm" value={activeQari}
       onChange={event=>{setQari(event.target.value);setRoute('');setShowAll(false);setEditingRouteId('');}}>
@@ -108,25 +112,25 @@ export default function QurraTransmissionWorkspace(){
       {routeOptions.map(w=><option key={w.routeId} value={w.routeId}>{displayRawi(w.qariId,w.rawi)} · {w.book} · {w.title}</option>)}
      </select>
     </label>
-   </div>
+   </div>}
    {!candidates.length&&<p role="status" className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">لا توجد طرق محفوظة لهذه المرحلة. يمكنك إضافة الطريق من مكتبة الكتب والطرق.</p>}
    {candidates.length>0&&<div className="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
     {!editingChain&&<div className="flex flex-wrap items-center justify-between gap-3">
      <div className="min-w-0">
-      <h2 className="font-semibold">{showAll?'جميع الأسانيد المحفوظة':current?displayRawi(current.qariId,current.rawi)+' عن '+shortQariName(current.qariId):'السند المحفوظ'}</h2>
-      <p className="mt-1 text-xs text-muted-foreground">{showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} مسار</p>
+      <h2 className="font-semibold">{sharedStage?'السند المشترك: ابن الجزري ← الداني':showAll?'جميع الأسانيد المحفوظة':current?displayRawi(current.qariId,current.rawi)+' عن '+shortQariName(current.qariId):'السند المحفوظ'}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{sharedStage?arabicDigits(paths.length)+' أسانيد مستقلة من '+arabicDigits(candidates.length)+' شواهد محفوظة':showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} مسار</p>
      </div>
-     <div className="flex flex-wrap gap-2">
+     {!sharedStage&&<div className="flex flex-wrap gap-2">
       <button type="button" aria-pressed={showAll} onClick={()=>setShowAll(v=>!v)}
        className="rounded-md border px-3 py-2 text-sm hover:bg-muted">{showAll?'عرض الرواية المختارة':'عرض جميع المسارات'}</button>
       {library?.canManage&&currentChain&&!showAll&&<button type="button" onClick={()=>setEditingRouteId(currentChain.id)}
        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Pencil size={15}/> تعديل هذا السند</button>}
-     </div>
+     </div>}
     </div>}
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
      paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths}
-      routeLabels={chosen.map(w=>shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
+      routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
       :<p className="p-4 text-sm text-muted-foreground">لا توجد وصلة محفوظة.</p>}
@@ -141,6 +145,7 @@ export default function QurraTransmissionWorkspace(){
     <summary className="cursor-pointer font-semibold">المصادر والمراجعة والمعلومات المتقدمة</summary>
     <div className="mt-3 space-y-3 text-xs text-muted-foreground">
      <p>{stages.find(item=>item.id===stage)?.description}</p>
+     {sharedStage&&<p>تُعرض الأسانيد المتطابقة مرة واحدة، مع بقاء مصادرها المحفوظة منفصلة.</p>}
      {current&&<div className="space-y-1 rounded-lg bg-muted/40 p-3">
       <p><strong className="text-foreground">المصدر:</strong> {current.book} — {current.title}</p>
       <p><strong className="text-foreground">حالة الطريق:</strong> {current.routeConfirmed?'محفوظ ومعتمد':'محفوظ وقيد المراجعة'}</p>
@@ -148,10 +153,10 @@ export default function QurraTransmissionWorkspace(){
       <p>إكمال الرواة لا يعتمد الاتصال إلى الإمام تلقائيًا. التتمات المشتركة تُراجع منفصلة، وتبقى الأسانيد القديمة محفوظة.</p>
      </div>}
      {data.skipped>0&&<p>هناك {arabicDigits(data.skipped)} مقاطع لم تُعرض بسبب فقدان هوية أو رابط محفوظ صالح.</p>}
-     <div>
+     {!sharedStage&&<div>
       <strong className="text-foreground">تغطية القراء</strong>
       <div className="mt-2 flex flex-wrap gap-2">{coverage.map(q=><span key={q.id} className="rounded border px-2 py-1">{shortQariName(q.id)}: {covered.has(q.id)?'محفوظ':'غير متاح'}</span>)}</div>
-     </div>
+     </div>}
      {showAll&&<div className="max-h-40 overflow-auto space-y-1">{[...new Map(chosen.map(w=>[w.routeId,w])).values()].map(w=><p key={w.routeId}>{displayRawi(w.qariId,w.rawi)} — {w.book} — {w.title}</p>)}</div>}
     </div>
    </details>
