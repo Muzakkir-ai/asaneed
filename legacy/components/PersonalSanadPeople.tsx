@@ -1,6 +1,7 @@
 import {arabicDigits} from '../lib/arabicDigits';
 import SanadPathView from './SanadPathView';
 import PreparedSanadGraph from './PreparedSanadGraph';
+import {renderSanadSequence,sanadSubjectName} from '../lib/branchedSanad';
 import {preparedSanadGraph} from '../lib/preparedSanadGraph';
 import {GitFork,Plus} from 'lucide-react';
 import {useLayoutEffect,useRef,useState,type ReactNode} from 'react';
@@ -55,6 +56,25 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
    row?.scrollIntoView?.({block:'nearest'});
   });
  };
+ const generate=(sequence:Node[])=>{
+  const text=preparation?preparedSanadText(preparation,sequence.map(n=>n.name)):'كما أخذته '+renderSanadSequence(sequence.map(n=>n.name));
+  if(!parallel)return {text,ids:sequence.map(n=>n.personId!)};
+  const origin=sequence.findIndex(n=>n.key===parallel.origin),join=sequence.findIndex(n=>n.key===parallel.join);
+  if(origin<0||join<=origin+1)throw Error('اختر راويًا لاحقًا تلتقي عنده الفروع بعد راوٍ واحد على الأقل');
+  const alternate=parallel.nodes.map(n=>library.people.find(p=>p.id===n.personId&&!p.archived));
+  if(!alternate.length||alternate.some(p=>!p))throw Error('اختر أو احفظ كل راوٍ في الفرع الموازي');
+  if(new Set(alternate.map(p=>p!.id)).size!==alternate.length||alternate.some(p=>sequence.some(n=>n.personId===p!.id)))throw Error('اختر نقطة التقاء الفرعين من القائمة بدل تكرار راوٍ من السند الأصلي');
+  const tail=sequence.slice(join);
+  const ids=[...sequence.slice(0,join+1).map(n=>n.personId!),...alternate.map(p=>p!.id),...tail.map(n=>n.personId!)];
+  if(ids.length>100)throw Error('الحد الأقصى مئة خانة راوٍ');
+  const first=renderSanadSequence(sequence.slice(0,join+1).map(n=>n.name));
+  const second=renderSanadSequence([...alternate.map(p=>p!.name),...tail.map(n=>n.name)]).replace(/^عن /u,'');
+  return {text:'كما أخذته '+first+' (ح). وقرأ '+sanadSubjectName(sequence[origin].name)+' أيضًا على '+second,ids};
+ };
+ let generatedPreview='';
+ if(!readOnly&&nodes.every(n=>n.name.trim())){
+  try{generatedPreview=generate(nodes).text;}catch{/* An incomplete branch has no textual preview yet. */}
+ }
  const adopt=async()=>{
   setError('');setBusy(true);
   try{
@@ -68,21 +88,9 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
     created.set(sanadKey(node.name),person);node.personId=person.id;
    }
    setNodes(next);
-   const text=preparation?preparedSanadText(preparation,next.map(n=>n.name)):'كما أخذته عن '+next.map(n=>library.people.find(p=>p.id===n.personId)!.name).join('، عن ');
-   if(parallel){
-    const origin=next.findIndex(n=>n.key===parallel.origin),join=next.findIndex(n=>n.key===parallel.join);
-    if(origin<0||join<=origin+1)throw Error('اختر راويًا لاحقًا تلتقي عنده الفروع بعد راوٍ واحد على الأقل');
-    const alternate=parallel.nodes.map(n=>library.people.find(p=>p.id===n.personId&&!p.archived));
-    if(!alternate.length||alternate.some(p=>!p))throw Error('اختر أو احفظ كل راوٍ في الفرع الموازي');
-    const ids=[...next.slice(0,join+1).map(n=>n.personId!),...alternate.map(p=>p!.id),...next.slice(join).map(n=>n.personId!)];
-    if(ids.length>100)throw Error('الحد الأقصى مئة خانة راوٍ');
-    if(new Set(alternate.map(p=>p!.id)).size!==alternate.length||alternate.some(p=>next.some(n=>n.personId===p!.id)))throw Error('اختر نقطة التقاء الفرعين من القائمة بدل تكرار راوٍ من السند الأصلي');
-    const first=next.slice(0,join+1).map(n=>n.name).join('، عن ');
-    const second=[...alternate.map(p=>p!.name),...next.slice(join).map(n=>n.name)].join('، عن ');
-    onApply('كما أخذته عن '+first+' (ح). وقرأ '+next[origin].name+' أيضًا على '+second,ids);
-    return;
-   }
-   onApply(text,next.map(n=>n.personId!));
+   const generated=generate(next);
+   if(preparation&&!preparedSanadGraph(preparation,next))throw Error('تعذر التحقق من الفروع؛ راجع ألفاظ الاتصال في النص المحفوظ');
+   onApply(generated.text,generated.ids);
   }catch(e){setError(e instanceof Error?e.message:'تعذر اعتماد الرواة');}finally{setBusy(false);}
  };
  const graph=preparation?preparedSanadGraph(preparation,nodes):null;
@@ -109,6 +117,10 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  <label className="block text-sm">التقاء الفرعين<select className="block w-full rounded-lg border bg-background p-2" value={parallel.join} onChange={e=>changeParallel({...parallel,join:e.target.value})}><option value="">اختر الراوي المشترك</option>{nodes.slice(nodes.findIndex(n=>n.key===parallel.origin)+2).filter(n=>n.personId).map(n=><option key={n.key} value={n.key}>{n.name}</option>)}</select></label>
  <Button type="button" size="sm" variant="outline" onClick={()=>changeParallel(null)}>إلغاء الفرع</Button>
  </section>}
+ {!readOnly&&generatedPreview&&<details open className="rounded-lg border p-3">
+  <summary className="cursor-pointer text-sm font-semibold">النص المولّد من الرسم</summary>
+  <p className="mt-2 whitespace-pre-wrap text-sm leading-loose">{generatedPreview}</p>
+ </details>}
  {!readOnly&&<>{onwardIds&&nodes.at(-1)?.personId&&<p role="status" className="text-xs text-muted-foreground">
   {onwardIds.has(nodes.at(-1)!.personId!)
    ?'له اتصال إسنادي محفوظ. يمكنك إنهاء السند هنا.'
