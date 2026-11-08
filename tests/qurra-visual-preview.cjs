@@ -103,7 +103,7 @@ const library={
   await page.getByLabel('اختر طريقًا محفوظًا لاستكماله').selectOption('route-qalun');
   await page.getByRole('heading',{name:'طريق قالون',exact:true}).waitFor();
   await page.getByText('آخر راوٍ محفوظ في كل فرع:',{exact:false}).first().waitFor();
-  await page.getByText('أبي الفتح فارس',{exact:false}).first().waitFor();
+  await page.getByText('أبو الفتح فارس',{exact:false}).first().waitFor();
   const editorShot=path.join(output,'05-manual-route-extension-desktop.png');
   await page.screenshot({path:editorShot,fullPage:true,animations:'disabled'});
   assert.ok(fs.statSync(editorShot).size>2000,'Manual edit screenshot generated');
