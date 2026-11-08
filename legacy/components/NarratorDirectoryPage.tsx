@@ -55,7 +55,6 @@ export default function NarratorDirectoryPage(){
    <div className="flex flex-wrap items-center justify-between gap-2">
      <div><h2 className="flex items-center gap-2 text-xl font-bold"><Network className="h-5 w-5 text-primary"/> رجال الأسانيد</h2><p className="mt-1 text-sm text-muted-foreground">المشايخ والتلاميذ كما وردوا في أسانيد القراءات العشر وسند الشيخ ذكاء الله</p></div>
      <div className="flex flex-wrap items-center gap-2">
-      <a href="/studio?page=qurra-diagrams" className="inline-flex rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/15">مخططات أسانيد القراء</a>
       {data&&<span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{people.length} اسمًا</span>}
      </div>
    </div>
