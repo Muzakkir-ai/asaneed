@@ -31,14 +31,20 @@ export default function QurraHistoricalPanel({section}:{
    <CombinedSanadView paths={section.paths} review
     routeLabels={section.paths.map((_,index)=>'المسار '+arabicDigits(index+1))}
     renderPerson={(id,positions)=><BranchPersonCard name={name(id)} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
-   :<p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-    الفروع محفوظة نصًّا. لم يمكن رسمها بأمان دون افتراض اتصالات إضافية؛ راجعها في بطاقات النص أدناه.
-   </p>}
-  {(showSource||!section.paths.length)&&<div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+   :<div className="space-y-2">
+    <p className="text-xs text-muted-foreground">الفروع التالية مقتبسة من النص المحفوظ؛ كل بطاقة تمثل مسارًا نصيًّا لا وصلات جديدة.</p>
+    <div className="grid gap-3 sm:grid-cols-2">
+     {section.branches.map((body,index)=><article key={index} className="rounded-lg border border-dashed bg-background p-3">
+      <p className="mb-2 text-xs font-semibold text-primary">الفرع {arabicDigits(index+1)}</p>
+      <p className="break-words whitespace-pre-wrap text-sm leading-8">{body}</p>
+     </article>)}
+    </div>
+   </div>}
+  {showSource&&<div className="space-y-2 rounded-lg border bg-muted/20 p-3">
    <p className="text-xs font-semibold text-muted-foreground">النص المحفوظ كما هو (دون تغيير)</p>
    <p className="whitespace-pre-wrap break-words text-sm leading-8">{section.body}</p>
   </div>}
-  {section.branches.length>1&&<details className="rounded-md border px-3 py-2 text-sm">
+  {section.paths.length>0&&section.branches.length>1&&<details className="rounded-md border px-3 py-2 text-sm">
    <summary className="cursor-pointer font-medium">تفاصيل الفروع النصية ({arabicDigits(section.branches.length)})</summary>
    <div className="mt-3 grid gap-2 sm:grid-cols-2">
     {section.branches.map((body,index)=><div key={index} className="rounded-md border bg-background p-3">
