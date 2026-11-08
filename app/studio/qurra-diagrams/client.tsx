@@ -42,12 +42,12 @@ export default function QurraTransmissionWorkspace(){
  const qariOptions=[...new Set(candidates.map(w=>w.qariId))];
  const routeOptions=[...new Map(candidates.filter(w=>qari==='all'||w.qariId===qari).map(w=>[w.routeId,w.title])).entries()];
  const paths=chosen.map(w=>w.ids),groups=groupSimilarSanadRoutes(paths);
- const unreviewed=chosen.some(w=>!w.parentConfirmed);
+ const unreviewed=chosen.some(w=>(w.stage==='jazari-dani'||w.stage==='jazari-three')&&!w.parentConfirmed);
  const coverage=stage==='jazari-three'?QURRA.filter(q=>q.family==='three'):QURRA.filter(q=>q.family==='seven');
  const covered=new Set(candidates.map(w=>w.qariId));
  return <main dir="rtl" className="mx-auto w-full max-w-[1500px] space-y-5 p-3 sm:p-6">
   <header className="space-y-3 rounded-xl border bg-background p-4">
-   <a href="/studio?page=narrators" className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى الكتب والطرق</a>
+   <a href="/studio?page=asaneed" className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى الكتب والطرق</a>
    <h1 className="text-2xl font-bold">مخططات أسانيد القراء</h1>
    <p className="text-sm text-muted-foreground">مساحة مستقلة لتجميع الأسانيد المحفوظة وفق هويات الرواة وروابطهم الفعلية؛ لا تضيف وصلات غير مسجلة، ولا تغيّر أسانيد المشايخ.</p>
   </header>
@@ -105,7 +105,7 @@ export default function QurraTransmissionWorkspace(){
      {chosen.map(w=><div key={w.id} className="rounded-lg border p-2 text-sm">
       <strong>{shortQariName(w.qariId)} — {w.rawi}</strong>
       <p>{w.book} — {w.title}</p>
-      <p className="text-xs text-muted-foreground">{arabicDigits(w.ids.length)} رواة بهويات محفوظة · {w.parentConfirmed?'إسناد الكتاب معتمد':'إسناد الكتاب يحتاج مراجعة'} · المسار لا يمتد تلقائيًا إلى الإمام</p>
+      <p className="text-xs text-muted-foreground">{arabicDigits(w.ids.length)} رواة بهويات محفوظة · {w.stage==='jazari-dani'||w.stage==='jazari-three'?(w.parentConfirmed?'إسناد الكتاب معتمد':'إسناد الكتاب يحتاج مراجعة'):'مقطع من إسناد الرواية'} · المسار لا يمتد تلقائيًا إلى الإمام</p>
      </div>)}
     </div>}
    </section>
