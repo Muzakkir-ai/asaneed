@@ -45,7 +45,9 @@ export default createEndpoint({
   // Keep source, sourceSnapshot, studentName, editor and other draft fields.
   // Only the PDF layout key is modified; this never writes a final snapshot.
   const next={...(record.draft&&typeof record.draft==='object'&&!Array.isArray(record.draft)?record.draft:{} as Record<string,unknown>)};
-  if(input.action==='reset')delete next.certificatePrintStyle;
+  // A reset is a deliberate system-default choice for this certificate,
+  // not a return to the user's shared sanad-wide styling.
+  if(input.action==='reset')next.certificatePrintStyle={version:1,systemDefault:true,printMode:'number'};
   else next.certificatePrintStyle={
    version:1,settings:style.parse(input.settings),printMode:input.printMode??'number',
   };
