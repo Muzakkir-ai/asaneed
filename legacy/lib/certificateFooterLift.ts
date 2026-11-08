@@ -21,7 +21,7 @@ export function certificateFooterLift({
  // repeated resize/zoom measurements converge rather than walking upward.
  const naturalFooterTop=footerTop+previousLift*scale;
  const gapMm=(naturalFooterTop-bodyBottom)/pxPerMm;
- if(!Number.isFinite(gapMm))return 0;
+ if(!Number.isFinite(gapMm)||gapMm<=12.001)return 0;
  // Gentle lift: maximum 10mm for short certificates, only a few mm for
  // medium ones, and no lift for long certificates with <=12mm free space.
  const liftMm=Math.max(0,Math.min(10,(gapMm-12)*0.75,gapMm-12));
