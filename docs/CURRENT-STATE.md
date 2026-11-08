@@ -1,3 +1,9 @@
+## Certificate issuer footer anchored to bottom safe area — 8 November 2026
+
+The landscape A4 certificate reserves a 30 mm bottom signing area for the mujeez, signature/date, and registration information, with a separate 6 mm gap before the actual footer contents. The footer rests approximately 8 mm above the paper bottom (about 6 mm inward from the ornamental border); older QR-mode certificates reserve 36 mm for the QR. Short ijazah texts no longer pull the footer upward through auto-centering. For historical unfixed headers, restrained composition balancing may raise the footer at most 4 mm and never lower it. Preview and native print use the same bottom padding. Certificate data, typography settings, and snapshot content remain unchanged.
+
+Validation: Vercel preview build for commit `344bcaa7` became READY (deployment `dpl_9xhtd6GSu8PnJAfEVQ5p2QcnjnaE`). Pinned-footer unit regression assertions were added; no authenticated visual print preview, Safari test, or physical printer test was performed. Production release should be verified separately.
+
 ## Shared sanad diagrams — 6 November 2026
 
 The sanad screens use one RTL narrator card and path renderer for personal and per-reading sanads, book and route editors, saved route previews and the additional-shaykh diagram. The reading editor loads the selected shaykh reading record or the shared profile source. The personal editor reads the holding or shared profile source. The books/routes builder and linked previews use structured book and route segments from the builder library. Saved text remains available for comparison.
