@@ -1,0 +1,47 @@
+name: Asaneed Visual Preview
+
+# Runs exclusively in GitHub Actions. No Vercel deployment or credentials.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'tests/qurra-visual-preview.cjs'
+      - 'tests/fixtures/qurra-visual-preview.tsx'
+      - '.github/workflows/asaneed-visual-preview.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    name: Generate desktop and mobile screenshots
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+      ASANEED_VISUAL_PREVIEW_DIR: artifacts/visual-preview/qurra
+      ASANEED_SANAD_REVIEW_SCREENSHOTS: artifacts/visual-preview/narrator-graph
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Take Qurra transmission workspace screenshots (synthetic data)
+        run: node tests/qurra-visual-preview.cjs
+      - name: Prepare narrator graph screenshot output
+        run: mkdir -p "$ASANEED_SANAD_REVIEW_SCREENSHOTS"
+      - name: Take narrator graph screenshots (existing regression fixture)
+        run: npm run test:sanad:graph
+      - name: Upload offline Asaneed screenshot gallery
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: asaneed-visual-preview
+          path: artifacts/visual-preview/
+          if-no-files-found: error
+          retention-days: 14
