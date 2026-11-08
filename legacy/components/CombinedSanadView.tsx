@@ -1,6 +1,7 @@
 import {Waypoints} from 'lucide-react';
 import {placeSanad} from '../lib/sanadPlacement';
 import {optimizeSanadPorts} from '../lib/sanadConnectorRouting';
+import {sharedSanadBuses} from '../lib/sanadSharedBus';
 import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
@@ -9,12 +10,20 @@ import {groupSimilarSanadRoutes} from '../lib/sanadRouteGrouping';
 
 const initialCardHeight=80;
 
-export default function CombinedSanadView({paths,routeLabels,renderPerson,source,review,spacious=false}:{paths:string[][];routeLabels?:string[];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean;spacious?:boolean}){
+export default function CombinedSanadView({paths,routeLabels,renderPerson,source,review,spacious=false,sharedSanads=false,personNames}:{paths:string[][];routeLabels?:string[];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean;spacious?:boolean;sharedSanads?:boolean;personNames?:Record<string,string>}){
  const cell=spacious?276:224,cardWidth=spacious?228:192;
  const [route,setRoute]=useState<number|null>(null);
  const [focused,setFocused]=useState<string|null>(null);
  const arrow=useId(),graph=useMemo(()=>combinedSanad(paths),[paths]);
  const routeGroups=useMemo(()=>groupSimilarSanadRoutes(paths),[paths]);
+ const commonNarrators=useMemo(()=>new Set(paths[0]?.filter(id=>paths.every(path=>path.includes(id)))??[]),[paths]);
+ const sharedGroupLabel=(indices:number[],index:number)=>{
+  const representative=paths[indices[0]]||[];
+  const distinct=representative.slice(1,-1).filter(id=>!commonNarrators.has(id));
+  const labels=(distinct.length?distinct:representative.slice(1,-1)).slice(0,2);
+  const names=labels.map(id=>personNames?.[id]||id).join('، ');
+  return 'السند '+arabicDigits(index+1)+(names?' · '+names:'');
+ };
  const currentIndices=route===null?paths.map((_,i)=>i):routeGroups[route]??[];
  const shownPaths=currentIndices.map(i=>paths[i]);
  const viewport=useRef<HTMLDivElement>(null);
@@ -78,18 +87,28 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
   x1:points.get(edge.from)!.x+port(outgoing.get(edge.from)!,edge),
   x2:points.get(edge.to)!.x+port(incoming.get(edge.to)!,edge)}));
  const {tops,height,connectors}=optimizeSanadPorts(graph.rows,points,ports,width,cardWidth,initialCardHeight,cardHeights);
+ // Consolidate complete many-to-many adjacencies only while showing ALL
+ // saved paths. A filtered sanad always uses its individual actual edges.
+ const buses=route===null?sharedSanadBuses(graph.rows,graph.edges):[];
+ const bundledEdges=new Set(buses.flatMap(bus=>bus.edgeIndices));
+ const busesAtRank=(rank:number)=>buses.filter(bus=>bus.rank===rank);
+ const busY=(rank:number,index:number)=>{
+  const bottom=Math.max(...graph.rows[rank].map(id=>tops[rank]+(cardHeights.get(id)??initialCardHeight)));
+  const count=busesAtRank(rank).length;
+  return Math.round(bottom+(tops[rank+1]-bottom)*(index+1)/(count+1));
+ };
  graph.rows.forEach((row,rank)=>row.forEach(id=>points.set(id,{...points.get(id)!,y:tops[rank]})));
  return <section dir="rtl" aria-label="السند المتصل" className="min-w-0 space-y-3">
   {paths.length>1&&<details className="rounded-lg border p-2">
-   <summary className="cursor-pointer text-sm">تفاصيل فروع السند</summary>
+   <summary className="cursor-pointer text-sm">{sharedSanads?'تفاصيل أسانيد ابن الجزري إلى الداني':'تفاصيل فروع السند'}</summary>
   <div className="flex flex-wrap items-center gap-3">
-   <select aria-label="عرض المسارات" value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
-    <option value="">عرض الكل</option>
-    {routeGroups.map((indices,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {indices.length>1?arabicDigits(indices.length)+' فروع متقاربة':arabicDigits(paths[indices[0]].length)+' رواة'}</option>)}
+   <select aria-label={sharedSanads?'اختيار السند المشترك':'عرض المسارات'} value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
+    <option value="">{sharedSanads?'عرض جميع الأسانيد':'عرض الكل'}</option>
+    {routeGroups.map((indices,i)=><option value={i} key={i}>{sharedSanads?sharedGroupLabel(indices,i):'المسار '+arabicDigits(i+1)+' · '+(indices.length>1?arabicDigits(indices.length)+' فروع متقاربة':arabicDigits(paths[indices[0]].length)+' رواة')}</option>)}
    </select>
   </div>
-  {routeGroups.length<paths.length&&<p className="text-xs text-muted-foreground">{arabicDigits(routeGroups.length)} مسارات معروضة، تضم {arabicDigits(paths.length)} أوجه محفوظة. يُجمع اختلاف راوٍ أو راويين بين الشيخ والتلميذ في مسار واحد، مع إبقاء الأسانيد الأصلية منفصلة.</p>}
-  {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">اختر مسارًا لتتبّع اتصالاته. اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
+  {routeGroups.length<paths.length&&<p className="text-xs text-muted-foreground">{sharedSanads?'أسانيد مميّزة: '+arabicDigits(routeGroups.length)+'، مع بقاء '+arabicDigits(paths.length)+' وجه محفوظ مستقلًّا.':'مسارات معروضة: '+arabicDigits(routeGroups.length)+'، تضم '+arabicDigits(paths.length)+' أوجه محفوظة.'} يُجمع اختلاف راوٍ أو راويين بين الشيخ والتلميذ في مسار واحد دون تغيير أي سند.</p>}
+  {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">{sharedSanads?'اختر سندًا بحسب رجال إسناده، لا بحسب الرواية أو الطريق.':'اختر مسارًا لتتبّع اتصالاته.'} اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
 
    {route!==null&&routeLabels&&<p className="text-xs text-muted-foreground">{[...new Set((routeGroups[route]??[]).map(i=>routeLabels[i]).filter(Boolean))].join(' / ')}</p>}
   </details>}
@@ -106,6 +125,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
+      if(bundledEdges.has(index))return null;
       const active=route===null||routes.some(index=>currentIndices.includes(index));
       if(!active)return null;
       const {x1,x2,d:connector}=connectors[index];
@@ -113,6 +133,22 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
       return <g key={JSON.stringify([from,to])} opacity={traced?1:.15}>
        <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
        <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active||focused!==null&&traced?2:1} opacity={traced?1:.15} markerEnd={`url(#${arrow})`}/>
+      </g>;
+     })}
+     {buses.map((bus,index)=>{
+      const rankBuses=busesAtRank(bus.rank);
+      const y=busY(bus.rank,rankBuses.indexOf(bus));
+      const xOf=(id:string)=>points.get(id)!.x;
+      const xs=[...bus.from,...bus.to].map(xOf);
+      const left=Math.min(...xs),right=Math.max(...xs);
+      const traced=focused===null||bus.from.includes(focused)||bus.to.includes(focused);
+      const sourcePaths=bus.from.map(id=>'M'+xOf(id)+' '+(tops[bus.rank]+(cardHeights.get(id)??initialCardHeight))+' V'+y);
+      const targetPaths=bus.to.map(id=>'M'+xOf(id)+' '+y+' V'+(tops[bus.rank+1]-1));
+      return <g key={'shared-'+bus.rank+'-'+index} data-sanad-bus={bus.rank} data-bundled-edges={bus.edgeIndices.join(',')} opacity={traced?1:.15}>
+       {[...sourcePaths,'M'+left+' '+y+' H'+right,...targetPaths].map((d,j)=><path key={'clear-'+j} d={d} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>)}
+       {sourcePaths.map((d,j)=><path key={'in-'+j} d={d} data-bus-source={bus.from[j]} fill="none" stroke="currentColor" strokeWidth={focused!==null&&traced?2:1}/>)}
+       <path d={'M'+left+' '+y+' H'+right} data-bus-trunk="" stroke="currentColor" fill="none" strokeWidth={focused!==null&&traced?2:1}/>
+       {targetPaths.map((d,j)=><path key={'out-'+j} d={d} data-bus-target={bus.to[j]} fill="none" stroke="currentColor" strokeWidth={focused!==null&&traced?2:1} markerEnd={`url(#${arrow})`}/>)}
       </g>;
      })}
     </svg>
