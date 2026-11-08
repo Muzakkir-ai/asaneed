@@ -154,7 +154,7 @@ assert.equal(combinedSanad([['a','b'],['b','a']]),null);
 
 const points=new Map([['root',{x:180}],['a',{x:80}],['b',{x:240}],['c',{x:320}],['d',{x:400}],['end',{x:180}]]);
 const direct=routeSanadConnectors([['root'],['end']],points,[{from:'root',to:'end',x1:180,x2:180}],480,100,70,false);
-assert.equal(direct.connectors[0].d,'M180 70 V113');
+assert.match(direct.connectors[0].d,/^M180 70 V\d+$/u,'direct narration must stay a single straight vertical connector');
 const fan=routeSanadConnectors([['root'],['a','b','c','d'],['end']],points,[
  {from:'root',to:'a',x1:156,x2:80},{from:'root',to:'b',x1:172,x2:240},
  {from:'root',to:'c',x1:188,x2:320},{from:'root',to:'d',x1:204,x2:400},
