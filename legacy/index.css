@@ -183,15 +183,14 @@
 /* Fixed-width centered sanad text area: 297mm page minus 16mm on each side. */
 .print-area > .certificate-content { width: 265mm; max-width: 100%; margin-inline: auto; }
 
-/* Center the whole Basmalah-to-footer composition as one measured group.
-   Keep original internal spacing; content that cannot fit the 12mm A4
-   safety margin automatically falls back to the established layout. */
+/* Preserve the full print content height while balancing the heading:
+   short ijazah text must NEVER pull the issuer footer up the page. */
 .print-area.certificate-auto-center-fit > .certificate-content {
-  height:auto !important;
+  height:100% !important;
   transform:translateY(var(--certificate-center-shift,0px));
 }
 .print-area.certificate-auto-center-fit .certificate-footer {
-  margin-top:3mm !important;
+  margin-top:auto !important;
 }
 /* Five original vector glyphs form ONE centered heading beneath ijazah.svg.
    No flex gap, letter spacing, text shaping, or SVG overlap adjustments;
@@ -259,8 +258,13 @@
 .certificate-composed-sanad .certificate-conclusion { text-align: center !important; text-align-last: center !important; }
 
 /* Certificate issuer footer: three invisible-border columns, two rows, total 265 mm. */
-.certificate-footer { width:265mm; max-width:100%; flex-shrink:0; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; line-height:1.2; }
-.certificate-footer-table { width:100%; table-layout:fixed; border-collapse:collapse; border:0 !important; }
+/* Bottom-anchored signing zone: 30mm reserved above the page safe edge.
+   The first 6mm separates sanad text from actual footer content. The table
+   expands inside the zone, keeping dates and registration near the border. */
+.certificate-footer { width:265mm; max-width:100%; flex-shrink:0; display:flex; flex-direction:column; box-sizing:border-box; min-height:30mm; padding-top:6mm; margin-top:auto; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; line-height:1.2; }
+.certificate-footer-table { width:100%; height:100%; flex:1; table-layout:fixed; border-collapse:collapse; border:0 !important; }
+/* Historical QR certificates need additional space for the full QR and label. */
+.print-area.certificate-qr-footer .certificate-footer { min-height:36mm; }
 .certificate-footer-table td { border:0 !important; padding:0 2mm; vertical-align:top; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; }
 /* Anchor every first-row footer heading to the bottom of its cell. */
 .certificate-footer-head td { vertical-align:bottom !important; padding-bottom:1mm; }
