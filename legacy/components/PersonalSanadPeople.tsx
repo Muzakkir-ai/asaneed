@@ -10,12 +10,13 @@ import {sanadKey} from '../lib/unifiedSanad';
 import {preparedSanadText,type PreparedSanadPeople} from '../lib/preparedSanadPeople';
 import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import ChainNarratorRow from './ChainNarratorRow';
+import {assemblePersonalSanadBranches,type PersonalSanadBranch} from '../lib/personalSanadBranches';
 type Node={name:string;personId?:string;key:string};
 export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,onwardIds,readOnly=false}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;onwardIds?:ReadonlySet<string>;readOnly?:boolean}){
  const matches=(name:string)=>library.people.filter(p=>!p.archived&&[p.name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(value=>sanadKey(value)===sanadKey(name)));
  const [nodes,setNodes]=useState<Node[]>(()=>preparation?preparation.tokens.map((t,i)=>{const found=matches(t.name);return {key:`prepared-${i}`,name:t.name,personId:initialPersonIds.length===preparation.tokens.length?initialPersonIds[i]:found.length===1?found[0].id:undefined};}):initialPersonIds.length?initialPersonIds.map((id,i)=>({key:`saved-${i}`,personId:id,name:library.people.find(p=>p.id===id)?.name||'راوٍ غير متاح'})):[{name:'',key:'first'}]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
- const [parallel,setParallel]=useState<{origin:string;join:string;nodes:Node[]}|null>(null);
- const changeParallel=(value:typeof parallel)=>{setParallel(value);onPendingChange?.(true);};
+ const [branches,setBranches]=useState<PersonalSanadBranch[]>([]);
+ const changeBranches=(next:PersonalSanadBranch[])=>{setBranches(next);onPendingChange?.(true);};
  const blankNarrator=()=>({name:'',key:crypto.randomUUID()});
  const viewportAnchor=useRef<{row:string;top:number}|null>(null);
  const keepRowInPlace=(row:string)=>{
@@ -68,33 +69,36 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
     created.set(sanadKey(node.name),person);node.personId=person.id;
    }
    setNodes(next);
-   const text=preparation?preparedSanadText(preparation,next.map(n=>n.name)):'كما أخذته عن '+next.map(n=>library.people.find(p=>p.id===n.personId)!.name).join('، عن ');
-   if(parallel){
-    const origin=next.findIndex(n=>n.key===parallel.origin),join=next.findIndex(n=>n.key===parallel.join);
-    if(origin<0||join<=origin+1)throw Error('اختر راويًا لاحقًا تلتقي عنده الفروع بعد راوٍ واحد على الأقل');
-    const alternate=parallel.nodes.map(n=>library.people.find(p=>p.id===n.personId&&!p.archived));
-    if(!alternate.length||alternate.some(p=>!p))throw Error('اختر أو احفظ كل راوٍ في الفرع الموازي');
-    const ids=[...next.slice(0,join+1).map(n=>n.personId!),...alternate.map(p=>p!.id),...next.slice(join).map(n=>n.personId!)];
-    if(ids.length>100)throw Error('الحد الأقصى مئة خانة راوٍ');
-    if(new Set(alternate.map(p=>p!.id)).size!==alternate.length||alternate.some(p=>next.some(n=>n.personId===p!.id)))throw Error('اختر نقطة التقاء الفرعين من القائمة بدل تكرار راوٍ من السند الأصلي');
-    const first=next.slice(0,join+1).map(n=>n.name).join('، عن ');
-    const second=[...alternate.map(p=>p!.name),...next.slice(join).map(n=>n.name)].join('، عن ');
-    onApply('كما أخذته عن '+first+' (ح). وقرأ '+next[origin].name+' أيضًا على '+second,ids);
-    return;
-   }
-   onApply(text,next.map(n=>n.personId!));
+   if(preparation){onApply(preparedSanadText(preparation,next.map(n=>n.name)),next.map(n=>n.personId!));return;}
+   const result=assemblePersonalSanadBranches(next,branches);
+   onApply(result.text,result.ids);
   }catch(e){setError(e instanceof Error?e.message:'تعذر اعتماد الرواة');}finally{setBusy(false);}
  };
  const graph=preparation?preparedSanadGraph(preparation,nodes):null;
  const renderRow=(i:number,ordinal:number|null=i+1,indices=[i],labels?:string[],turn=false)=>{const node=nodes[i];return <ChainNarratorRow node={{...node,editorKey:node.key,source:false}} number={ordinal} badgeLabels={labels} sourceMarker={turn?'(ح)':undefined} index={i} count={nodes.length} lib={library} roles={false} readOnly={readOnly} lockedLayout={!!preparation} initialEditing={preparation?false:undefined} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onPersonUpdated={(sourceId,person)=>{const source=library.people.find(p=>p.id===sourceId);if(source&&sourceId!==person.id)onPersonCreated({...source,archived:true});onPersonCreated(person);update(v=>v.map(n=>n.personId===sourceId?{...n,personId:person.id,name:person.name}:n));}} onChange={value=>{if(value.personId)keepRowInPlace(node.key);update(v=>v.map((n,j)=>indices.includes(j)?{...n,...value}:n));}} onRemove={()=>update(v=>v.filter((_,j)=>j!==i))} onMove={direction=>update(v=>{const next=[...v];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next;})}/>;};
- const addAfter=(index:number)=><div className="flex justify-end gap-2">{!parallel&&index<nodes.length-1&&nodes[index-1]?.personId&&<Button type="button" size="sm" variant="outline" className="h-8 w-8 rounded-full p-0" aria-label="إضافة شيخ موازٍ" title="إضافة شيخ موازٍ" onClick={()=>changeParallel({origin:nodes[index-1].key,join:'',nodes:[blankNarrator()]})}><GitFork aria-hidden="true"/></Button>}<Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full p-0" title="إضافة راوٍ بعده" disabled={nodes.length>=100} onClick={()=>insert(index)}><Plus aria-hidden="true" className="h-4 w-4"/><span className="sr-only">إضافة راوٍ بعده</span></Button></div>;
- const origin=parallel?nodes.findIndex(node=>node.key===parallel.origin):-1;
- const join=parallel?nodes.findIndex(node=>node.key===parallel.join):-1;
+ const createBranch=(originIndex:number)=>{
+  if(!nodes[originIndex]?.personId||originIndex>=nodes.length-1)return;
+  changeBranches([...branches,{id:crypto.randomUUID(),origin:nodes[originIndex].key,join:nodes.at(-1)?.key||'',nodes:[blankNarrator()]}]);setError('');
+ };
+ const addAfter=(index:number)=>{
+  const originIndex=index-1,canFork=originIndex<nodes.length-1&&!!nodes[originIndex]?.personId;
+  return <div className="flex flex-wrap justify-end gap-2">
+   {canFork&&<Button type="button" size="sm" variant="outline" className="h-8 gap-1" aria-label={'إضافة فرع بعد الراوي '+arabicDigits(index)} title="إضافة فرع" onClick={()=>createBranch(originIndex)}><GitFork aria-hidden="true" className="h-3.5 w-3.5"/>إضافة فرع</Button>}
+   <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full p-0" title="إضافة راوٍ بعده" disabled={nodes.length>=100} onClick={()=>insert(index)}><Plus aria-hidden="true" className="h-4 w-4"/><span className="sr-only">إضافة راوٍ بعده</span></Button>
+  </div>;
+ };
  const mainPath=nodes.map(node=>node.key);
- const parallelPath=parallel&&origin>=0&&join>origin+1&&parallel.nodes.length
-  ? [...mainPath.slice(0,origin+1),...parallel.nodes.map(node=>node.key),...mainPath.slice(join)]
-  : null;
- const renderParallel=(key:string,positions:number[])=>{if(!parallel)return null;const i=parallel.nodes.findIndex(node=>node.key===key),node=parallel.nodes[i];return <ChainNarratorRow number={positions[0]} node={{...node,source:false}} index={i} count={parallel.nodes.length} lib={library} roles={false} onCreate={create} onChange={value=>changeParallel({...parallel,nodes:parallel.nodes.map((n,j)=>j===i?{...n,...value}:n)})} onMove={direction=>{const ordered=[...parallel.nodes];[ordered[i],ordered[i+direction]]=[ordered[i+direction],ordered[i]];changeParallel({...parallel,nodes:ordered});}} onRemove={()=>changeParallel({...parallel,nodes:parallel.nodes.filter((_,j)=>j!==i)})}/>;};
+ const connectedBranchPaths=branches.flatMap(branch=>{
+  const origin=nodes.findIndex(node=>node.key===branch.origin),join=nodes.findIndex(node=>node.key===branch.join);
+  return origin>=0&&join>origin&&branch.nodes.length?[[...mainPath.slice(0,origin+1),...branch.nodes.map(node=>node.key),...mainPath.slice(join)]]:[];
+ });
+ const renderParallel=(key:string,positions:number[])=>{
+  const branchIndex=branches.findIndex(branch=>branch.nodes.some(node=>node.key===key));
+  if(branchIndex<0)return null;
+  const branch=branches[branchIndex],i=branch.nodes.findIndex(node=>node.key===key),node=branch.nodes[i];
+  const edit=(updater:(value:PersonalSanadBranch)=>PersonalSanadBranch)=>changeBranches(branches.map((v,j)=>j===branchIndex?updater(v):v));
+  return <ChainNarratorRow node={{...node,source:false}} number={positions[0]??null} index={i} count={branch.nodes.length} lib={library} roles={false} readOnly={readOnly} previous={i===0?nodes.find(n=>n.key===branch.origin)?.personId:branch.nodes[i-1]?.personId} next={i===branch.nodes.length-1?nodes.find(n=>n.key===branch.join)?.personId:branch.nodes[i+1]?.personId} onCreate={create} onChange={value=>edit(v=>({...v,nodes:v.nodes.map((n,j)=>j===i?{...n,...value}:n)}))} onMove={direction=>edit(v=>{const ordered=[...v.nodes];[ordered[i],ordered[i+direction]]=[ordered[i+direction],ordered[i]];return {...v,nodes:ordered};})} onRemove={()=>edit(v=>({...v,nodes:v.nodes.filter((_,j)=>j!==i)}))}/>;
+ };
  return <fieldset disabled={busy} className="space-y-3 min-w-0" aria-busy={busy}>
  {!readOnly&&<p className="text-xs text-muted-foreground">{preparation?'الرواة مُعدّون من النص السابق للمراجعة. تبقى ألفاظ الاتصال والفروع والتكرارات كما كُتبت، وتُحفظ الأسماء عند التأكيد.':'أضف شيوخ سندك بالترتيب، من شيخك المباشر حتى نهاية سندك الشخصي.'}</p>}
  {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=>renderRow(entry.indices[0],ordinal,entry.indices,labels,entry.turn)}/>:<SanadPathView paths={preparation?[]:parallelPath?[mainPath,parallelPath]:[mainPath]} unconnected={preparation?nodes.map(node=>node.key):undefined} renderPerson={(key,positions)=>{
