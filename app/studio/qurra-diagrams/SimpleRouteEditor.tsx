@@ -141,7 +141,7 @@ export default function SimpleRouteEditor({library,route,onSaved,onClose}:{
      <button type="button" disabled={busy} onClick={()=>modify(row=>[...row,{...newNode(),name:targetPerson.name,personId:targetPerson.id}])}
       className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm text-primary hover:bg-primary/10"><Plus size={14}/> إضافة هذا الراوي إلى السند</button>:
      <p className="text-xs text-muted-foreground">لم تُطابق هوية هذا الراوي في المكتبة. استخدم خانة «إضافة الراوي التالي» وابحث عن اسمه.</p>}
-    <p className="text-xs text-muted-foreground">راجع اتصال هذا الراوي بمن قبله قبل الحفظ. ويمكنك بعد ذلك إضافة الإمام من قائمة الأسماء المحفوظة.</p>
+    <p className="text-xs text-muted-foreground">أضفه بعد مراجعة المصدر، ثم أضف الإمام من الأسماء المحفوظة.</p>
    </div>
   </div>
   {changed&&<p role="status" className="text-xs text-muted-foreground">لديك تغييرات غير محفوظة. سيُحفظ الطريق بوصفه «قيد المراجعة» حتى تُراجع التتمة المعتمدة بصورة مستقلة.</p>}
