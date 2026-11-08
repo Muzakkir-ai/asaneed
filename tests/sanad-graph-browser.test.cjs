@@ -223,14 +223,14 @@ const {chromium}=require('playwright');
   const originalEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
    paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
   await dense.locator('summary').first().click();
-  await dense.getByLabel('عرض المسارات').selectOption('0');
+  await dense.getByLabel('عرض سند واحد بعينه').selectOption('0');
   const filteredEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
    paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
   assert.ok(filteredEdges.length<originalEdges.length,
    'selecting one sanad removes unrelated paths from the new geometry');
   assert.ok(filteredEdges.every(pair=>originalEdges.includes(pair)),
    'filtering cannot synthesize an edge missing from the selected sanad');
-  await dense.getByLabel('عرض المسارات').selectOption('');
+  await dense.getByLabel('عرض سند واحد بعينه').selectOption('');
   await dense.locator('[data-sanad-routing-switch]').click();
   assert.equal(await dense.locator('g[data-routing-part]').count(),0,
    'per-view rollback immediately restores the old connector system');
