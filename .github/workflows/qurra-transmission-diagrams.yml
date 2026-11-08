@@ -1,0 +1,28 @@
+name: Qurra transmission diagram workspace
+
+on:
+  pull_request:
+    paths:
+      - 'legacy/lib/qurraTransmissionData.ts'
+      - 'app/studio/qurra-diagrams/**'
+      - 'legacy/components/NarratorDirectoryPage.tsx'
+      - 'tests/sanad-path-layout.test.ts'
+      - '.github/workflows/qurra-transmission-diagrams.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-staged-diagrams:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:sanad
