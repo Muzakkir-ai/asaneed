@@ -60,7 +60,7 @@ export default function QurraTransmissionWorkspace(){
  const selectedChain=selectedRoute&&library?.chains.find(c=>c.id===selectedRoute.routeId&&!c.archived);
  const lastSavedPeople=selectedChain?.branches.map(branch=>branch.at(-1)?.person_id).filter((id):id is string=>!!id)||[];
  const selectedContinuation=selectedRoute?resolveSanadContinuation(library?.continuationSections||[],selectedRoute.qariId,selectedRoute.rawi,selectedChain?.continuation_ids||undefined):null;
- const unreviewed=chosen.some(w=>(w.stage==='jazari-dani'||w.stage==='jazari-three')&&!w.parentConfirmed);
+ const unreviewed=chosen.some(w=>!w.routeConfirmed||((w.stage==='jazari-dani'||w.stage==='jazari-three')&&!w.parentConfirmed));
  const coverage=stage==='jazari-three'?QURRA.filter(q=>q.family==='three'):QURRA.filter(q=>q.family==='seven');
  const covered=new Set(candidates.map(w=>w.qariId));
  return <div dir="rtl" className="mx-auto w-full max-w-[1500px] space-y-5 p-3 sm:p-6">
@@ -128,7 +128,7 @@ export default function QurraTransmissionWorkspace(){
      {chosen.map(w=><div key={w.id} className="rounded-lg border p-2 text-sm">
       <strong>{shortQariName(w.qariId)} — {w.rawi}</strong>
       <p>{w.book} — {w.title}</p>
-      <p className="text-xs text-muted-foreground">{arabicDigits(w.ids.length)} رواة بهويات محفوظة · {w.stage==='jazari-dani'||w.stage==='jazari-three'?(w.parentConfirmed?'إسناد الكتاب معتمد':'إسناد الكتاب يحتاج مراجعة'):'مقطع من إسناد الرواية'} · المسار لا يمتد تلقائيًا إلى الإمام</p>
+      <p className="text-xs text-muted-foreground">{arabicDigits(w.ids.length)} رواة بهويات محفوظة · {w.routeConfirmed?'الطريق محفوظ ومعتمد':'الطريق مسودة تحتاج مراجعة'} · {w.stage==='jazari-dani'||w.stage==='jazari-three'?(w.parentConfirmed?'إسناد الكتاب معتمد':'إسناد الكتاب يحتاج مراجعة'):'مقطع من إسناد الرواية'} · المسار لا يمتد تلقائيًا إلى الإمام</p>
      </div>)}
     </div>}
    </section>
@@ -150,7 +150,7 @@ export default function QurraTransmissionWorkspace(){
      <BookTariqBuilder key={selectedRoute.routeId} inline initialRouteId={selectedRoute.routeId} onLibraryChange={refreshLibrary} onSaved={refreshLibrary}/>
     </div>}
     {!editableRoutes.length&&<p className="text-xs text-muted-foreground">لا يوجد طريق محفوظ في هذه المرحلة. غيّر التصفية أو افتح «الكتب والطرق» لإضافة طريق جديد.</p>}
-    <p className="text-xs text-muted-foreground">إضافة الرواة تتم في محرر الطرق؛ أما التتمة المشتركة من الراوي إلى الإمام ثم الصحابة والنبي ﷺ فتبقى مراجعة مستقلة في إدارة النصوص المشتركة. لن تُضاف وصلات إلى الرسم تلقائيًا من النص غير المعتمد.</p>
+    <p className="text-xs text-muted-foreground">إضافة الرواة تتم في محرر الطرق. إذا عدّلت طريقًا معتمدًا فقد يصبح مسودة تنتظر إعادة المراجعة، لكنه سيبقى ظاهرًا هنا في الرسم. أما التتمة من الراوي إلى الإمام ثم الصحابة والنبي ﷺ فتبقى مراجعة مستقلة؛ لن تُضاف وصلات تلقائيًا من نص غير معتمد.</p>
    </section>}
    <aside className="space-y-1 rounded-xl border border-dashed p-4 text-sm">
     <h2 className="font-semibold">المرحلة اللاحقة: من القراء إلى الصحابة ثم النبي ﷺ</h2>
