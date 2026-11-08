@@ -1,9 +1,16 @@
-import type {AdditionalReadingSanadsOutputType} from './api';
+import type {PreparedSanadPeople} from './preparedSanadPeople';
 
-type SavedReading=AdditionalReadingSanadsOutputType['sanads'][number];
+/** Independent of endpoint modules so copying is safe in both the browser and tests. */
+export type ReusablePersonalSanad={
+ sanadText:string;
+ personalPersonIds?:string[]|null;
+ preparedPeople?:PreparedSanadPeople|null;
+ junction:'ubaydi'|'jazari';
+ continuationId?:string|null;
+};
 
 /** Reuse narrator identities only; a reviewed onward link is scoped to the original reading. */
-export function copyPersonalSanadToReading(source:SavedReading){
+export function copyPersonalSanadToReading(source:ReusablePersonalSanad){
  return {
   text:source.sanadText,
   personIds:[...(source.personalPersonIds||[])],
