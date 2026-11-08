@@ -20,7 +20,7 @@ export default function QurraHistoricalPanel({section}:{
   <div className="flex flex-wrap items-center justify-between gap-3">
    <div>
     <h2 className="text-base font-semibold">{shortQariName(section.qariId)}{section.kind==='rawi-imam'?' · '+displayRawi(section.qariId,section.rawi):''}</h2>
-    <p className="text-xs text-muted-foreground">{section.kind==='imam-sahaba'?'مخطط من فهرس رجال الأسانيد · يحتاج مراجعة':'النص المحفوظ · يحتاج مراجعة'}</p>
+    <p className="text-xs text-muted-foreground">{section.paths.length?'رسم من علاقات رجال الأسانيد في النص المختار · يحتاج مراجعة':'فروع نصية محفوظة · تحتاج مراجعة'}</p>
    </div>
    <button type="button" onClick={()=>setShowSource(v=>!v)} aria-expanded={showSource}
     className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
@@ -28,9 +28,20 @@ export default function QurraHistoricalPanel({section}:{
    </button>
   </div>
   {section.paths.length?
-   <CombinedSanadView paths={section.paths} review spacious={section.kind==='imam-sahaba'}
-    routeLabels={section.paths.map((_,index)=>'المسار '+arabicDigits(index+1))}
-    renderPerson={(id,positions)=><BranchPersonCard name={name(id)} label={section.kind==='imam-sahaba'?(id.startsWith('sahabi:')?'صحابي':id==='imam:'+section.qariId?'إمام القراءة':undefined):undefined} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
+   <div className="space-y-2">
+    <p className="text-xs text-muted-foreground">الأسماء كاملة من فهرس رجال الأسانيد، مع الاحتفاظ بكل فرع وموضع التقاء. مرّر أفقيًا لقراءة المخطط دون تصغير الأسماء.</p>
+    <CombinedSanadView paths={section.paths} review spacious
+     routeLabels={section.paths.map((_,index)=>'الفرع '+arabicDigits(index+1))}
+     renderPerson={(id,positions)=>{
+      const label=id==='prophet'?'النبي ﷺ'
+       :id.startsWith('sahabi:')?'صحابي'
+       :section.kind==='rawi-imam'&&id==='imam:'+section.qariId?'إمام القراءة'
+       :section.kind==='rawi-imam'&&section.paths.some(path=>path[0]===id)?'صاحب الرواية'
+       :section.kind==='imam-sahaba'&&id==='imam:'+section.qariId?'إمام القراءة'
+       :undefined;
+      return <BranchPersonCard name={name(id)} label={label} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>;
+     }}/>
+   </div>
    :<div className="space-y-2">
     <p className="text-xs text-muted-foreground">الفروع التالية مقتبسة من النص المحفوظ؛ كل بطاقة تمثل مسارًا نصيًّا لا وصلات جديدة.</p>
     <div className="grid gap-3 sm:grid-cols-2">
