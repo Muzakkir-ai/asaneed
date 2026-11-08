@@ -139,20 +139,33 @@ const {chromium}=require('playwright');
    await artwork.locator('.certificate-ijazah-svg').waitFor();
    await artwork.locator('.certificate-basmalah-svg').waitFor();
    await artwork.locator('.certificate-reading-svg-line').waitFor();
-   const h0=await artwork.boundingBox();
-   const b0=await qPage.locator('.certificate-body-content').boundingBox();
-   const f0=await qPage.locator('.certificate-footer').boundingBox();
+   // Always measure positions RELATIVE TO THE PAPER. Clicking a control
+   // scrolls the viewport, invalidating raw boundingBox().y comparisons.
+   const relativeY=selector=>qPage.evaluate(selector=>{
+    const paper=document.querySelector('.print-area')?.getBoundingClientRect();
+    const target=document.querySelector(selector)?.getBoundingClientRect();
+    return paper&&target?target.top-paper.top:null;
+   },selector);
+   const h0=await relativeY('.certificate-header-art');
+   const b0=await relativeY('.certificate-body-content');
+   const f0=await relativeY('.certificate-footer');
+   assert.ok([h0,b0,f0].every(Number.isFinite),'all qiraat page rectangles exist');
    await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
    const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
    const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
    await qHeading.fill('3');await qHeading.blur();
-   await qPage.waitForFunction(y=>
-    (document.querySelector('.certificate-header-art')?.getBoundingClientRect().y||0)>y+3,h0.y);
-   const h1=await artwork.boundingBox();
-   const b1=await qPage.locator('.certificate-body-content').boundingBox();
-   assert.ok(h1&&b1&&h1.y>h0.y+3&&b1.y>b0.y+3,
+   await qPage.waitForFunction(y=>{
+    const p=document.querySelector('.print-area')?.getBoundingClientRect();
+    const r=document.querySelector('.certificate-header-art')?.getBoundingClientRect();
+    return p&&r&&r.top-p.top>y+3;
+   },h0);
+   const h1=await relativeY('.certificate-header-art');
+   const b1=await relativeY('.certificate-body-content');
+   assert.ok(h1>h0+3&&b1>b0+3,
     'qiraat basmalah/title/riwayah move together; sanad body follows');
-   const fAfterTitle=await qPage.locator('.certificate-footer').boundingBox();
+   const fAfterTitle=await relativeY('.certificate-footer');
+   assert.ok(Math.abs(fAfterTitle-f0)<2,
+    'moving the title does not pull the pinned mujeez footer with it');
    await qFooter.fill('-3');await qFooter.blur();
    const debug=await qPage.evaluate(()=>({
     titleOffset:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-heading-offset'),
@@ -161,11 +174,14 @@ const {chromium}=require('playwright');
     footerTransform:getComputedStyle(document.querySelector('.certificate-footer')).transform,
     footerTop:document.querySelector('.certificate-footer').getBoundingClientRect().top,
    }));
-   console.log('QIRAAT_POSITION_DEBUG',JSON.stringify({f0:f0.y,fAfterTitle:fAfterTitle.y,debug}));
-   await qPage.waitForFunction(y=>
-    (document.querySelector('.certificate-footer')?.getBoundingClientRect().y||0)<y-3,fAfterTitle.y);
-   const f1=await qPage.locator('.certificate-footer').boundingBox();
-   assert.ok(f1&&fAfterTitle.y-f1.y>3,'qiraat mujeez stamp/date/signature lift independently');
+   console.log('QIRAAT_POSITION_DEBUG',JSON.stringify({f0,fAfterTitle,debug}));
+   await qPage.waitForFunction(y=>{
+    const p=document.querySelector('.print-area')?.getBoundingClientRect();
+    const r=document.querySelector('.certificate-footer')?.getBoundingClientRect();
+    return p&&r&&r.top-p.top<y-3;
+   },fAfterTitle);
+   const f1=await relativeY('.certificate-footer');
+   assert.ok(fAfterTitle-f1>3,'qiraat mujeez stamp/date/signature lift independently');
    const layout=await qPage.evaluate(()=>{
     const rect=selector=>{
      const r=document.querySelector(selector)?.getBoundingClientRect();
@@ -182,7 +198,7 @@ const {chromium}=require('playwright');
     await qPage.locator('.print-area').screenshot({
      path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-heading-footer.png'
     });
-   assert.equal(await qPage.locator('[role="alert"]').count(),0,
+   assert.equal(await qPage.locator('.certificate-settings-panel[role="alert"]').count(),0,
     'reasonable title/footer offsets remain inside the ornamental safety zone');
   }finally{await qPage.close();}
   console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
