@@ -1737,3 +1737,16 @@ Constrain images and videos to the parent width and preserve their intrinsic asp
 
 .zite-app .container{width:100%;max-width:none;padding-inline:4%}.zite-app .studio-header .container{gap:16px;flex-wrap:wrap}.zite-app .studio-header-actions{flex-wrap:wrap;justify-content:flex-end}.zite-app .studio-header-brand{flex:1;min-width:210px}.zite-app .studio-header h1{white-space:normal}.zite-app .studio-admin-tools{white-space:nowrap}@media(max-width:640px){.zite-app .studio-header-brand{width:100%}.zite-app .studio-header-actions{width:100%;justify-content:flex-start}.zite-app .studio-header .container{padding-block:12px}}body>main:has(.zite-app){max-width:none;padding:0}.zite-app main{max-width:none;margin:0 auto}.zite-app form{max-width:none}.zite-app button{margin-top:0}.zite-app h1,.zite-app h2,.zite-app p{margin-top:0}
 @media print{html:has(.zite-app .print-area),body:has(.zite-app .print-area),body>main:has(.zite-app .print-area){width:297mm!important;height:210mm!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important}body:has(.zite-app .print-area){visibility:hidden}.zite-app .print-area,.zite-app .print-area *{visibility:visible!important}}
+/* Reserve space directly beneath the main sanad number for the compact trace icon. */
+.zite-app [data-combined-narrator] .narrator-person-card > div:first-child { min-height: 80px; }
+/* Graph trace buttons stay compact even when global mobile touch-target rules apply. */
+.zite-app [data-combined-narrator] button[data-trace-person] {
+  width: 20px !important;
+  min-width: 20px !important;
+  max-width: 20px !important;
+  height: 20px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
