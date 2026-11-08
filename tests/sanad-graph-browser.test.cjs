@@ -98,9 +98,9 @@ const {chromium}=require('playwright');
    ['data-long-clear','unobstructed long continuation'],
   ]){
    const path=await straightCases.getAttribute(attribute);
-   assert.match(path,/^M-?[\\d.]+ -?[\\d.]+ V-?[\\d.]+$/,description+' must be one vertical segment');
+   assert.match(path,/^M-?[\d.]+ -?[\d.]+ V-?[\d.]+$/,description+' must be one vertical segment');
   }
-  assert.match(await straightCases.getAttribute('data-long-blocked'),/H-?[\\d.]+/,
+  assert.match(await straightCases.getAttribute('data-long-blocked'),/H-?[\d.]+/,
    'an intervening narrator card must keep a real bypass');
 
   // Always check the reported branch shapes, even without a private Hafs fixture.
