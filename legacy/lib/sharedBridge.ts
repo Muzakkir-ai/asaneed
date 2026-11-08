@@ -142,6 +142,36 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:Revi
 }
 
 export type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBridge>>;
+/** Same narrator identity despite an optional scholarly title and vowel marks.
+ * Do not rewrite published sanad prose: only use this for a verified identity join.
+ */
+export function isIbrahimUbaydiName(name:string):boolean{
+ const identity=sanadKey(name).replace(/^(?:الشيخ|شيخ)\s+/u,'');
+ return identity===sanadKey('إبراهيم العُبيدي');
+}
+
+/** Root the existing, independently reviewed continuation at its unique
+ * narrator identity. If the directory is ambiguous, keep the source
+ * unresolved instead of guessing an ID or changing its text.
+ */
+export function attachIbrahimUbaydiRoot(
+ graphs:ReviewedSharedBridge[],
+ people:ReadonlyArray<{id:string;name:string;archived:boolean;display_name?:string|null;aliases?:ReadonlyArray<{name:string}>}>
+):ReviewedSharedBridge[]{
+ const candidates=people.filter(person=>!person.archived
+  &&[person.name,person.display_name,...(person.aliases??[]).map(alias=>alias.name)]
+   .some(name=>typeof name==='string'&&isIbrahimUbaydiName(name)));
+ if(candidates.length!==1)return graphs;
+ const anchor=candidates[0];
+ return graphs.map(graph=>({
+  ...graph,
+  routes:graph.routes.map(route=>
+   route[0]?.id===anchor.id||route.some(node=>node.id===anchor.id)
+    ?route:[{id:anchor.id,name:anchor.name},...route])
+ }));
+}
+
+
 
 /** Validate the stored prefix and preserve the exact reviewed transmission wording for issuance. */
 export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string){
