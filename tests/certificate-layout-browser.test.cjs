@@ -31,7 +31,7 @@ const {chromium}=require('playwright');
    request.fulfill({json:{...mock,formatting:JSON.stringify(formatted)}});
   });
   await page.route('**/api/workspace/certificateDraftFormatting',async request=>{
-   const input=request.postDataJSON();
+   const input=request.request().postDataJSON();
    changes.push(input);
    if(input.action==='save')settings={settings:input.settings,printMode:input.printMode};
    if(input.action==='reset')settings=null;
