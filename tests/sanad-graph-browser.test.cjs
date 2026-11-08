@@ -274,8 +274,8 @@ const {chromium}=require('playwright');
     nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
    assert.equal(drops.filter(ids=>incoming.every(edge=>ids.includes(edge.index))).length,1,
     fixture+' merges all teachers before exactly one final arrow');
-   assert.equal(await section.locator('g[data-routing-part="single"]').count(),0,
-    fixture+' must keep all visible edges in coordinated shared groups');
+   assert.ok(await section.locator('g[data-routing-part="bus"]').count()>0,
+    fixture+' must use the coordinated bus renderer, not fallback to old lines');
    const collisions=await section.evaluate(element=>{
     const cards=[...element.querySelectorAll('[data-combined-narrator]')];
     return [...element.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
