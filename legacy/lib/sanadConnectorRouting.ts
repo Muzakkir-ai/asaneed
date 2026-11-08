@@ -97,13 +97,29 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      for(const other of others)touches+=interaction(b,other);
     }
     const sidePorts=(Math.abs((route[0]?.a.y??start)-start)>1?1:0)+(Math.abs((route.at(-1)?.b.y??end)-end)>1?1:0);
-    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+sidePorts*120;
+    const portMovement=Math.abs((route[0]?.a.x??edge.x1)-edge.x1)+Math.abs((route.at(-1)?.b.x??edge.x2)-edge.x2);
+    // A tiny lateral jog is visually worse than one clean vertical connection.
+    const smallJogs=route.filter(segment=>segment.a.y===segment.b.y&&length(segment)<24).length;
+    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+sidePorts*120+portMovement*.5+smallJogs*18;
    };
    let best=routed[i],bestScore=score(best);
    const candidate=(points:Point[])=>{
     const route=segments(points),cost=score(route);
     if(cost<bestScore-.001){best=route;bestScore=cost;}
    };
+   // Start by checking for a shared vertical corridor inside both narrator cards.
+   // The collision score also tests intervening cards and already routed arrows,
+   // so this only wins when the straight connector really is unobstructed.
+   const sourceCenter=centers.get(edge.from)!.x,targetCenter=centers.get(edge.to)!.x;
+   const inset=12,half=cardWidth/2;
+   const sharedLeft=Math.max(sourceCenter-half+inset,targetCenter-half+inset);
+   const sharedRight=Math.min(sourceCenter+half-inset,targetCenter+half-inset);
+   if(sharedLeft<=sharedRight){
+    const clamp=(x:number)=>Math.max(sharedLeft,Math.min(sharedRight,x));
+    const sharedXs=[edge.x1,edge.x2,(edge.x1+edge.x2)/2,(sourceCenter+targetCenter)/2,sourceCenter,targetCenter]
+     .map(clamp);
+    for(const x of new Set(sharedXs))candidate([{x,y:start},{x,y:end}]);
+   }
    const options=(id:string,original:number)=>{
     const center=centers.get(id)!.x,offset=Math.round(cardWidth*.33);
     return [original,center,center-offset,center+offset];
