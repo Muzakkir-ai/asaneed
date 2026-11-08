@@ -118,7 +118,7 @@ export default function QurraTransmissionWorkspace(){
     {!editingChain&&<div className="flex flex-wrap items-center justify-between gap-3">
      <div className="min-w-0">
       <h2 className="font-semibold">{sharedStage?'السند المشترك: ابن الجزري ← الداني':showAll?'جميع الأسانيد المحفوظة':current?displayRawi(current.qariId,current.rawi)+' عن '+shortQariName(current.qariId):'السند المحفوظ'}</h2>
-      <p className="mt-1 text-xs text-muted-foreground">{sharedStage?arabicDigits(paths.length)+' أسانيد مستقلة من '+arabicDigits(candidates.length)+' شواهد محفوظة':showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} مسار</p>
+      <p className="mt-1 text-xs text-muted-foreground">{sharedStage?'مسارات محفوظة: '+arabicDigits(paths.length)+' · شواهد: '+arabicDigits(candidates.length):showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} مسار</p>
      </div>
      {!sharedStage&&<div className="flex flex-wrap gap-2">
       <button type="button" aria-pressed={showAll} onClick={()=>setShowAll(v=>!v)}
