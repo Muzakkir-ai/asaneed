@@ -1,0 +1,89 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {execFileSync,spawn}=require('node:child_process');
+const {chromium}=require('playwright');
+
+(async()=>{
+ const temp=fs.mkdtempSync('app/certificate-layout-review-');
+ const slug=temp.slice(4),url='http://127.0.0.1:3112/'+slug;
+ let server,browser;
+ try{
+  fs.copyFileSync('tests/fixtures/certificate-layout-review.tsx',temp+'/page.tsx');
+  execFileSync(process.execPath,['scripts/build-studio.cjs']);
+  server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--webpack','--hostname','127.0.0.1','--port','3112'],
+   {detached:process.platform!=='win32',stdio:'inherit'});
+  let html='';
+  for(let i=0;i<90&&!html;i++){
+   try{const res=await fetch(url);if(res.ok)html=await res.text();}catch{}
+   if(!html)await new Promise(resolve=>setTimeout(resolve,300));
+  }
+  assert.ok(html,'synthetic certificate fixture served');
+  const source=html.match(/<script[^>]*id="certificate-review-data"[^>]*>(.*?)<\/script>/)?.[1];
+  assert.ok(source,'certificate fixture preview JSON rendered');
+  const mock=JSON.parse(source);
+  browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{});
+  const page=await browser.newPage({viewport:{width:1440,height:980}});
+  const changes=[];
+  let settings=null;
+  await page.route('**/api/workspace/certificateDraftPreview',request=>{
+   let formatted=JSON.parse(mock.formatting);
+   if(settings)formatted={...formatted,settings:settings.settings,draftPrintMode:settings.printMode};
+   request.fulfill({json:{...mock,formatting:JSON.stringify(formatted)}});
+  });
+  await page.route('**/api/workspace/certificateDraftFormatting',async request=>{
+   const input=request.postDataJSON();
+   changes.push(input);
+   if(input.action==='save')settings={settings:input.settings,printMode:input.printMode};
+   if(input.action==='reset')settings=null;
+   await request.fulfill({json:{saved:input.action==='save'}});
+  });
+  await page.goto(url);
+  await page.locator('.print-area .certificate-footer').waitFor();
+  await page.evaluate(()=>document.fonts.ready);
+  const panel=page.locator('.certificate-settings-panel').first();
+  await panel.locator('summary').click();
+  await page.getByLabel('جزء الشهادة').selectOption('reading');
+  const headingControl=page.getByRole('spinbutton',{name:'المسافة بعد السند',exact:true});
+  await headingControl.fill('6');
+  await headingControl.blur();
+  const headingValue=await headingControl.inputValue();
+  assert.equal(Number(headingValue),6,'Matn spacing control works in certificate viewer');
+  await page.getByLabel('جزء الشهادة').selectOption('conclusion');
+  const offsetControl=page.getByRole('spinbutton',{name:'رفع أو خفض الخاتمة',exact:true});
+  const before=await page.locator('[data-matn-section="conclusion"]').boundingBox();
+  await offsetControl.fill('5');
+  await offsetControl.blur();
+  const after=await page.locator('[data-matn-section="conclusion"]').boundingBox();
+  assert.ok(before&&after&&after.y>before.y+10,'khatima moves down in document flow');
+  await page.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).click();
+  assert.equal(changes.at(-1)?.action,'save','draft Save sends only print settings');
+  assert.equal(changes.at(-1)?.settings?.matnHeading?.sectionGapAfterSanadMm,6,
+   'new section gap persists in certificate-specific settings');
+  assert.equal(changes.at(-1)?.settings?.matnHeading?.conclusionOffsetMm,5,
+   'khatima offset persists in certificate-specific settings');
+  assert.ok(!changes.some(change=>change.action==='finalize'),'saving never triggers final approval');
+
+  if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS){
+   const out=process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS;
+   await page.locator('.print-area').screenshot({path:out+'/certificate-print-desktop.png'});
+   await panel.screenshot({path:out+'/certificate-tanseeq-controls.png'});
+  }
+
+  await page.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
+  assert.equal(changes.at(-1)?.action,'reset','restore uses separate non-final action');
+  await page.getByLabel('جزء الشهادة').selectOption('conclusion');
+  assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الخاتمة',exact:true}).inputValue()),0,
+   'system restore clears this certificate-specific khatima adjustment');
+  await page.setViewportSize({width:390,height:844});
+  if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS){
+   await page.locator('.print-area').screenshot({
+    path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-print-mobile.png'
+   });
+  }
+  console.log('PASS PDF viewer matn spacing, khatima movement, per-certificate draft save/reset and responsive print');
+ }finally{
+  if(browser)await browser.close().catch(()=>{});
+  if(server?.pid)try{if(process.platform==='win32')server.kill();else process.kill(-server.pid,'SIGTERM');}catch{}
+  fs.rmSync(temp,{recursive:true,force:true});
+ }
+})().catch(err=>{console.error(err);process.exitCode=1;});
