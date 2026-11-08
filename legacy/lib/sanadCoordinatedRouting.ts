@@ -38,10 +38,51 @@ const pathFrom=(points:{x:number;y:number}[])=>{
  }).join('');
 };
 
+/** A shared incoming bus is reserved for a natural group of neighbouring
+ * students of ONE upstream narrator. Otherwise teachers keep independent
+ * arrows to their common recipient: neither a shortcut from another level,
+ * a distant row position, nor differing shuyukh may be visually merged.
+ *
+ * This only reads existing graph edges; it never creates an isnad link.
+ */
+export function canShareSanadFanIn(
+ sources:readonly string[],
+ rows:readonly (readonly string[])[],
+ edges:readonly {from:string;to:string}[],
+ centers?:ReadonlyMap<string,{x:number}>,
+ cardWidth=192,
+):boolean{
+ const unique=[...new Set(sources)];
+ if(unique.length<2)return false;
+ const rankOf=new Map(rows.flatMap((row,rank)=>row.map(id=>[id,rank] as const)));
+ const rank=rankOf.get(unique[0]);
+ if(rank===undefined||rank<1||unique.some(id=>rankOf.get(id)!==rank))return false;
+ const row=rows[rank];
+ const positions=unique.map(id=>row.indexOf(id)).sort((a,b)=>a-b);
+ // An intervening narrator makes the two teachers visually non-neighbours.
+ if(positions.some((index,i)=>index<0||(i>0&&index!==positions[i-1]+1)))return false;
+ // There must be one *immediate* common upstream teacher in the saved graph.
+ const upstream=unique.map(id=>new Set(edges.filter(edge=>edge.to===id
+  &&rankOf.get(edge.from)===rank-1).map(edge=>edge.from)));
+ if(![...upstream[0]].some(id=>upstream.every(set=>set.has(id))))return false;
+ if(centers){
+  const xs=unique.map(id=>centers.get(id)?.x);
+  if(xs.some(x=>!Number.isFinite(x)))return false;
+  const ordered=xs as number[];
+  const physical=unique.map(id=>({x:centers.get(id)!.x,position:row.indexOf(id)}))
+   .sort((a,b)=>a.position-b.position);
+  // Adjacent cards can share a lane; long horizontal joins must stay separate.
+  if(physical.some((item,i)=>i>0&&Math.abs(item.x-physical[i-1].x)>cardWidth*1.65))return false;
+  if(Math.max(...ordered)-Math.min(...ordered)>cardWidth*3.4)return false;
+ }
+ return true;
+}
+
 /** Decompose only the actual saved relationships. This procedure never
  * synthesizes the Cartesian product of two groups unless every pair exists. */
 export function groupSanadConnections(
- rows:readonly (readonly string[])[],edges:readonly SanadDiagramEdge[]
+ rows:readonly (readonly string[])[],edges:readonly SanadDiagramEdge[],
+ centers?:ReadonlyMap<string,{x:number}>,cardWidth=192,
 ):SanadVisualGroup[]{
  const rankOf=new Map(rows.flatMap((row,rank)=>row.map(id=>[id,rank] as const)));
  const used=new Set<number>();
@@ -52,19 +93,16 @@ export function groupSanadConnections(
   groups.push({kind,from,to,indices,fromRank,toRank});
   indices.forEach(i=>used.add(i));
  };
- // A narrator with an incoming shortcut across ranks must have exactly one
- // final arrow, even when other teachers sit in the immediately preceding row.
- // Reserve *all* real incoming relationships before forming any local buses.
- for(let rank=1;rank<rows.length;rank++)for(const target of rows[rank]){
-  const incoming=edges.flatMap((edge,i)=>edge.to===target&&rankOf.get(edge.from)!<rank?[i]:[]);
-  if(incoming.length<2||!incoming.some(i=>rankOf.get(edges[i].from)!<rank-1))continue;
-  append('fan-in',incoming);
- }
+ // Cross-rank incoming teachers are deliberately NOT merged: one teacher
+ // may be an ancestor or belong to a completely separate branch. Each
+ // transmission retains its own arrow unless all parents pass the strict
+ // same-rank, adjacent and common-upstream policy below.
  const shared=sharedSanadBuses(rows,edges);
  for(const bus of shared){
   const indices=bus.edgeIndices.filter(i=>!used.has(i));
   if(indices.length!==bus.edgeIndices.length)continue;
   if(bus.from.some(from=>bus.to.some(to=>!indices.some(i=>edges[i].from===from&&edges[i].to===to))))continue;
+  if(bus.from.length>1&&!canShareSanadFanIn(bus.from,rows,edges,centers,cardWidth))continue;
   // A partially overlapping biclique would leave another connection entering
   // the same child as a second arrow. Only bundle an entire rank-gap component.
   const completeIncoming=bus.to.every(to=>edges.every(e=>
@@ -86,7 +124,8 @@ export function groupSanadConnections(
    const completelyLinked=indices.every(i=>i>=0)
     &&available.every(to=>edges.every(e=>rankOf.get(e.from)!==rank||e.to!==to||[source,other].includes(e.from)))
     &&[source,other].every(from=>edges.every(e=>rankOf.get(e.to)!==rank+1||e.from!==from||available.includes(e.to)));
-   if(completelyLinked)append('complete',indices);
+   if(completelyLinked&&canShareSanadFanIn([source,other],rows,edges,centers,cardWidth))
+    append('complete',indices);
   }
  }
  for(let rank=0;rank<rows.length-1;rank++){
@@ -98,7 +137,9 @@ export function groupSanadConnections(
    // when its children do not have competing incoming transmissions.
    for(const id of rows[rank+1]){
     const indices=remaining.filter(i=>edges[i].to===id);
-    if(indices.length>=2&&(!best||indices.length>best.indices.length))best={kind:'fan-in',indices};
+    if(indices.length>=2
+      &&canShareSanadFanIn(indices.map(i=>edges[i].from),rows,edges,centers,cardWidth)
+      &&(!best||indices.length>best.indices.length))best={kind:'fan-in',indices};
    }
    if(!best)for(const id of rows[rank]){
     const indices=remaining.filter(i=>edges[i].from===id);
@@ -132,7 +173,7 @@ export function planCoordinatedSanad(
  const rankOf=new Map(rows.flatMap((row,rank)=>row.map(id=>[id,rank] as const)));
  const xOf=(id:string)=>centers.get(id)?.x??width/2;
  const heightOf=(id:string)=>cardHeights.get(id)??cardHeight;
- const localGroups=groupSanadConnections(rows,edges);
+ const localGroups=groupSanadConnections(rows,edges,centers,cardWidth);
  const groups=localGroups.map(g=>({...g}));
  const sourceOwners=new Map<string,number[]>(),targetOwners=new Map<string,number[]>();
  for(const [i,group] of groups.entries()){
