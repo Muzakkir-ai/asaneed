@@ -334,7 +334,11 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     const page=printArea.current,body=bodyArea.current,footer=footerArea.current,header=headerArea.current;
     if(!page||!footer)return false;
     const p=page.getBoundingClientRect(),f=footer.getBoundingClientRect(),b=body?.getBoundingClientRect(),h=header?.getBoundingClientRect();
-    const unsafe=certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
+    const ending=body?.querySelector<HTMLElement>('[data-matn-section="conclusion"], .certificate-conclusion');
+    const before=ending?.previousElementSibling as HTMLElement|null|undefined;
+    const movedUp=(matnDocument?(resolvedHeading.conclusionOffsetMm??0):(typography.conclusion.offsetMm??0))<0;
+    const endingOverlaps=!!(movedUp&&ending&&before&&ending.getBoundingClientRect().top<before.getBoundingClientRect().bottom+p.width*2/297);
+    const unsafe=endingOverlaps||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
     setOverflow(unsafe);setLayoutChecked(true);return unsafe;
   };
   const [textTopMm,setTextTopMm]=useState(52.8);
