@@ -54,7 +54,10 @@ export default function NarratorDirectoryPage(){
  return <div className="space-y-5" dir="rtl">
    <div className="flex flex-wrap items-center justify-between gap-2">
      <div><h2 className="flex items-center gap-2 text-xl font-bold"><Network className="h-5 w-5 text-primary"/> رجال الأسانيد</h2><p className="mt-1 text-sm text-muted-foreground">المشايخ والتلاميذ كما وردوا في أسانيد القراءات العشر وسند الشيخ ذكاء الله</p></div>
-     {data&&<span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{people.length} اسمًا</span>}
+     <div className="flex flex-wrap items-center gap-2">
+      <a href="/studio/qurra-diagrams" className="inline-flex rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/15">مخططات أسانيد القراء</a>
+      {data&&<span className="rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">{people.length} اسمًا</span>}
+     </div>
    </div>
    {error&&<Card><CardContent className="space-y-3 p-5"><p>تعذر تحميل فهرس الأسانيد.</p><Button variant="outline" onClick={load}><RotateCcw className="ml-2 h-4 w-4"/>إعادة المحاولة</Button></CardContent></Card>}
    {!data&&!error&&<div className="grid gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]"><Skeleton className="h-[360px]"/><Skeleton className="h-[360px]"/></div>}
