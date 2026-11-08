@@ -52,7 +52,7 @@ const library={
  chains:[bookParent,parentThree,sevenRoute,sharedSeven,otherSeven,threeRoute],
  suggestions:[],continuations:{},canManage:true,
  continuationSections:[
-  {id:'rawi',title:'CHAIN:nafi:قالون',body:'عن أبي محمد عبد الرحمن، عن قالون عيسى بن مينا، عن الإمام نافع المدني.'},
+  {id:'rawi',title:'CHAIN:nafi:قالون',body:'عن أبي محمد عبد الرحمن، عن أبي موسى عيسى بن مينا بن وردان المدني صاحب الرواية، عن الإمام نافع بن عبد الرحمن المدني صاحب القراءة.'},
   {id:'sahaba',title:'CHAIN:nafi:sahaba',body:'عن أبي جعفر يزيد بن القعقاع، وأبي داود عبد الرحمن بن هرمز، وأخذ هؤلاء عن أبي هريرة، وعبد الله بن عباس، وهما عن أبي بن كعب.'},
   {id:'prophet',title:'CHAIN:nafi:prophet',body:'وَقَرَأَ أُبَيُّ بْنُ كَعْبٍ عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.'},
  ],
@@ -152,7 +152,7 @@ const library={
    if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
    else assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),0);
    if(kind==='imam-sahaba'){
-    await page.getByText('مخطط من فهرس رجال الأسانيد',{exact:false}).waitFor();
+    await page.getByText('رسم من علاقات رجال الأسانيد',{exact:false}).waitFor();
     await page.locator('[data-combined-narrator="imam:nafi"]').waitFor();
     await page.locator('[data-combined-narrator="sahabi:ubayy"]').waitFor();
     const graph=page.locator('section[aria-label="السند المتصل"]');
@@ -165,6 +165,12 @@ const library={
     // This view is intentionally scrollable rather than being scaled down.
     assert.equal(await graph.locator('button',{hasText:'تكبير لقراءة الأسماء'}).count(),0);
    }else{
+    const expected=kind==='rawi-imam'
+     ?['rawi:qalun','imam:nafi']
+     :['sahabi:ubayy','prophet'];
+    for(const id of expected)await page.locator('[data-combined-narrator]').filter({has:page.locator('[data-trace-person="'+id+'"]')}).first().waitFor();
+    assert.ok(await page.locator('section[aria-label="السند المتصل"] svg path[data-from][data-to]').count()>0,
+     'Each source-backed historical stage draws real narrator connectors');
     await page.getByRole('button',{name:'عرض النص الأصلي'}).waitFor();
     await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
     await page.getByText('النص المحفوظ كما هو (دون تغيير)').waitFor();
