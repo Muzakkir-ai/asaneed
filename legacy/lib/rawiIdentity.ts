@@ -1,4 +1,4 @@
-import {builderNameKey} from './bookBuilder';
+import {builderNameKey,type BuilderPerson} from './bookBuilder';
 
 /** Canonical identities of the twenty riwayah slots (nineteen people:
  * al-Duri is the same person for Abu Amr and al-Kisa'i).
@@ -35,4 +35,35 @@ export function rawiIdentity(qariId:string,rawi:string):RawiIdentity|undefined{
 }
 export function fullRawiName(qariId:string,rawi:string):string{
  return rawiIdentity(qariId,rawi)?.fullName||rawi;
+}
+
+/** Resolve a historical rāwī against the *saved* narrator identities.
+ * Exact full names and full-name aliases are preferred; short display
+ * labels are considered only when they uniquely identify one person.
+ * Ambiguity intentionally returns undefined: similar spellings are not
+ * proof that two historical narrators are the same individual.
+ *
+ * Do not use an inferred identity to add a transmission edge automatically.
+ */
+export function savedRawiPerson(people:readonly BuilderPerson[],qariId:string,rawi:string):BuilderPerson|undefined{
+ const identity=rawiIdentity(qariId,rawi);
+ if(!identity)return undefined;
+ const active=people.filter(person=>!person.archived);
+ const full=builderNameKey(identity.fullName);
+ const aliases=(person:BuilderPerson)=>person.aliases||[];
+ const fullMatches=active.filter(person=>builderNameKey(person.name)===full
+  ||aliases(person).some(alias=>builderNameKey(alias.name||alias.key)===full));
+ if(fullMatches.length)return fullMatches.length===1?fullMatches[0]:undefined;
+ const shortNames=new Set([identity.shortName,identity.rawi,rawi].map(builderNameKey));
+ const shortMatches=active.filter(person=>
+  (!!person.display_name&&shortNames.has(builderNameKey(person.display_name)))
+  ||aliases(person).some(alias=>shortNames.has(builderNameKey(alias.name||alias.key))));
+ return shortMatches.length===1?shortMatches[0]:undefined;
+}
+
+/** Preserve the user's own spelling when that identity already exists.
+ * The catalog full name is a fallback, not a replacement for saved data.
+ */
+export function savedRawiName(people:readonly BuilderPerson[],qariId:string,rawi:string):string{
+ return savedRawiPerson(people,qariId,rawi)?.name||fullRawiName(qariId,rawi);
 }
