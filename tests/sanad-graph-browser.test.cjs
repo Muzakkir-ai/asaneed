@@ -259,6 +259,44 @@ const {chromium}=require('playwright');
   });
   assert.deepEqual(longCollisions,[],'outer bypass never passes behind unrelated cards');
 
+  // Cross-rank incoming edges used to bypass fan-in grouping entirely, giving
+  // al-Sa'igh-style narrator cards two independent arrows from their teachers.
+  for(const [fixture,target,expectedParents] of [
+   ['coordinated-mixed-rank','saigh',['jazari','left']],
+   ['coordinated-staggered-fanin','target',['root','a','b']],
+  ]){
+   const section=page.getByTestId(fixture);
+   const incoming=await section.locator('path[data-to="'+target+'"]').evaluateAll(nodes=>
+    nodes.map(node=>({from:node.dataset.from,index:Number(node.dataset.edgeIndex),d:node.getAttribute('d')})));
+   assert.deepEqual(incoming.map(edge=>edge.from).sort(),[...expectedParents].sort(),
+    fixture+' preserves every genuine incoming sanad relationship');
+   const drops=await section.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
+    nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+   assert.equal(drops.filter(ids=>incoming.every(edge=>ids.includes(edge.index))).length,1,
+    fixture+' merges all teachers before exactly one final arrow');
+   assert.equal(await section.locator('g[data-routing-part="single"]').count(),0,
+    fixture+' must keep all visible edges in coordinated shared groups');
+   const collisions=await section.evaluate(element=>{
+    const cards=[...element.querySelectorAll('[data-combined-narrator]')];
+    return [...element.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
+     const hits=[],length=edge.getTotalLength();
+     for(const card of cards){
+      if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))continue;
+      for(let distance=0;distance<=length;distance+=3){
+       const point=edge.getPointAtLength(distance);
+       if(point.x>card.offsetLeft+2&&point.x<card.offsetLeft+card.offsetWidth-2
+        &&point.y>card.offsetTop+2&&point.y<card.offsetTop+card.offsetHeight-2){
+        hits.push([edge.dataset.from,edge.dataset.to,card.dataset.combinedNarrator]);
+        break;
+       }
+      }
+     }
+     return hits;
+    });
+   });
+   assert.deepEqual(collisions,[],fixture+' never routes through unrelated narrator cards');
+  }
+
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();
   assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
