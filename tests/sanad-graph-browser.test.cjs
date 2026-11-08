@@ -243,7 +243,7 @@ const {chromium}=require('playwright');
    nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
   assert.equal(eligibleDrops.filter(ids=>eligibleEdges.every(index=>ids.includes(index))).length,1,
    'nearby same-level teachers with same teacher may share one final arrow');
-  assert.equal(await fanIn.locator('g[data-routing-part="single"]').count(),4,
+  assert.equal(await page.getByTestId('coordinated-fan-in').locator('g[data-routing-part="single"]').count(),4,
    'four rootless teachers retain four independent arrows');
 
   // An unrelated skipped-rank edge must not revert the entire diagram
