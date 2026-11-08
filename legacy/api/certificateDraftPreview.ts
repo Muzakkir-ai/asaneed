@@ -3,6 +3,7 @@ import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {getDraftSanadForCertificate,collectSnapshotFormatting} from '../lib/certificateSnapshot';
+import {context as requestContext} from '../compat/context';
 
 const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 const footerProfileSchema=z.object({
@@ -26,12 +27,19 @@ export default createEndpoint({
   if(!sanadId)throw new Error('اختر سندًا للشهادة');
   const current=await getDraftSanadForCertificate(sanadId,issuer,cert.id);
   const chain=current.chain;
-  const [formatting,profiles,users,extraSheikhs]=await Promise.all([
+  const [sourceFormatting,profiles,users,extraSheikhs,styleRecord]=await Promise.all([
    collectSnapshotFormatting(sanadId,issuer,chain,'matnDocument' in current?current.matnDocument:undefined),
    zite.shaykhPrintProfiles.findAll({filters:{ownerId:cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer},limit:50}),
    zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}),
    zite.additionalShaykhs.findAll({limit:2000}),
+   requestContext().client.from('certificates').select('draft').eq('id',cert.id).maybeSingle(),
   ]);
+  if(styleRecord.error)throw new Error(styleRecord.error.message);
+  const savedDraft=styleRecord.data?.draft?.certificatePrintStyle;
+  let formatting=sourceFormatting;
+  if(savedDraft?.version===1&&savedDraft.settings&&typeof savedDraft.settings==='object'){
+   try{formatting=JSON.stringify({...JSON.parse(sourceFormatting),settings:savedDraft.settings,draftPrintMode:savedDraft.printMode==='none'?'none':'number'});}catch{}
+  }
   // Bind the mujeez identity to the certificate's actual issuer, never the viewer.
   const profile=profiles.records.find(p=>p.ownerId===(cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer));
   const guest=extraSheikhs.records.find(g=>g.id===cert.additionalShaykh);
