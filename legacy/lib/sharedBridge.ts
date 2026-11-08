@@ -1,3 +1,4 @@
+import {renderSanadSequence} from './branchedSanad';
 import {contextualOnwardIds,type OnwardContext} from './verifiedOnwardSources';
 import {preparedSanadText,prepareSavedSanadPeople} from './preparedSanadPeople';
 import {preparedSanadGraph} from './preparedSanadGraph';
@@ -147,7 +148,11 @@ export type ReviewedSharedBridge=NonNullable<ReturnType<typeof reviewedSharedBri
 export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string){
  const selected=bridges.filter(bridge=>bridge.source.id===continuationId);
  const resolved=savedSharedBridgeDiagram(text,ids,selected,undefined,undefined,continuationId)?.diagram;
- if(!resolved||resolved.personalText!==text.trim().replace(/[.،؛]+$/u,''))throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+ if(!resolved)throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+ const prepared=resolved.preparation;
+ const linear=prepared.tokens.slice(1).every(token=>/^،\s*عن\s+$/u.test(token.before));
+ const personal=linear?prepared.tokens[0].before+renderSanadSequence(prepared.tokens.map(token=>token.name)).replace(/^عن /u,''):resolved.personalText;
+ if(prepared.suffix.replace(/^\s*،\s*/u,'').trim())return personal+prepared.suffix;
  const bridge=selected[0];
  const meeting=ids.at(-1)!;
  if(bridge.source.kind){
@@ -156,9 +161,8 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
    const index=route.findIndex(node=>node.id===meeting);
    if(index<0||index===route.length-1)continue;
    const tail=route.slice(index+1);
-   tails.set(JSON.stringify(tail.map(node=>node.id)),tail.map(node=>'عن '+node.name).join('، '));
+   tails.set(JSON.stringify(tail.map(node=>node.id)),renderSanadSequence(tail.map(node=>node.name)));
   }
-  const personal=text.trim().replace(/[.،؛]+$/u,'');
   return [...tails.values()].map(tail=>personal+'، '+tail).join('\n\n(ح)\n\n');
  }
  const keys=new Set(bridge.routes.flatMap(route=>{
@@ -170,7 +174,7 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
  for(const tail of tails){
   const paths=linkedBridgeTails(bridge,tail,meeting);
   if(paths&&new Set(paths.map(path=>JSON.stringify(path.map(node=>node.id)))).size===keys.size){
-   return text.trim().replace(/[.،؛]+$/u,'')+'، '+tail;
+   return personal+'، '+tail;
   }
  }
  throw Error('لا يوجد نص مشترك معتمد يطابق جميع مسارات نقطة الالتقاء');

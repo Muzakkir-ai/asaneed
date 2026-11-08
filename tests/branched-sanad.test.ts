@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {renderBranchedSanad,sanadSubjectName} from '../legacy/lib/branchedSanad';
+import {renderSanadSequence,renderBranchedSanad,sanadSubjectName} from '../legacy/lib/branchedSanad';
 const names:Record<string,string>={j:'ابن الجزري',a:'أبي محمد سبط الخياط',b:'أبي المعالي ثابت',c:'الواسطي',q:'القطيعي',d:'أبي الفضل الشريف',e:'الكارزيني',m:'المطوعي',i:'إدريس',k:'خلف'};
 const name=(id:string)=>names[id];const subject=(id:string)=>id==='a'?'سبط الخياط':sanadSubjectName(name(id));
 const first=['j','a','b','c','q'],second=['j','a','d','e','m'];
@@ -30,3 +30,5 @@ assert.ok(!repeatedText.includes('(ح)'));
 const mixed=renderBranchedSanad([['j','b','a','c','q'],['j','d','a','e','m']],name,subject,'','عن إدريس');
 assert.ok(mixed.includes('وهما قرآ على أبي محمد سبط الخياط'));
 assert.ok(mixed.includes('(ح). وقرأ سبط الخياط أيضًا على'));
+
+assert.equal(renderSanadSequence(['عن الشيخ مُحَمَّد،','عن عن إبراهيم العُبيدي.']),'عن الشيخ مُحَمَّد، عن إبراهيم العُبيدي');

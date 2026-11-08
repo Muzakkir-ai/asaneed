@@ -1,8 +1,12 @@
 import {sanadPathLayout} from './sanadPathLayout';
+/** Render the names of one explicitly ordered path. */
+export function renderSanadSequence(names:string[]){
+ return names.map(name=>'عن '+name.trim().replace(/^(?:عن\s+)+/u,'').replace(/[،.؛\s]+$/u,'')).join('، ');
+}
 /** Render explicit splits and joins, preserving free-text fallbacks. */
 export function renderBranchedSanad(paths:string[][],name:(id:string)=>string,subject:(id:string)=>string,prefix:string,continuation:string){
  const head=prefix.trim().replace(/[،.\s]+$/u,''),tail=continuation.trim();
- const chain=(ids:string[])=>ids.map(id=>'عن '+name(id)).join('، ');
+ const chain=(ids:string[])=>renderSanadSequence(ids.map(name));
  const join=(...parts:string[])=>parts.filter(Boolean).join('، ');
  const complete=()=>paths.map(ids=>join(head,chain(ids),tail)).join('\n\n(ح)\n\n');
  if(paths.length<2)return complete();

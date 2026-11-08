@@ -448,3 +448,7 @@
  .zite-app .sanad-graph-junction,.zite-app .connected-chain-lane .sanad-graph-stem{display:none}
 }
 .zite-app .connected-chain-split[data-many-lanes]>.connected-chain-lane .sanad-graph-stem{display:none}
+
+/* The web verification summary uses the studio palette. */
+.zite-app .verification-recipient-gradient{background:var(--workspace-fill-gradient);color:white;border-radius:0.75rem;padding:1rem}
+.zite-app .verification-recipient-gradient dt{color:rgba(255,255,255,.9)}

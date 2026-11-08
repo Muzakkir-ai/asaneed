@@ -24,7 +24,7 @@ export default function CertificateVerificationPage(){
    </div>}
    {c&&data?.verified&&<div className="space-y-4">
     <div className="flex items-center gap-3 text-[#146348]"><ShieldCheck size={32}/><h2 className="text-xl font-semibold">شهادة إجازة معتمدة</h2></div>
-    <dl className="verification-details">
+    <dl className="verification-details verification-recipient-gradient">
      <div ><dt className="text-muted-foreground">رقم الشهادة</dt><dd><RegistrationNumber value={c.registrationNumber||c.certificateNumber}/></dd></div>
      <div ><dt className="text-muted-foreground">اسم المُجاز</dt><dd><bdi>{c.studentName}</bdi></dd></div>
      <div ><dt className="text-muted-foreground">اسم المُجيز</dt><dd><bdi>{c.issuerName}</bdi></dd></div>
