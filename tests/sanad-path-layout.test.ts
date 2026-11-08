@@ -1,6 +1,7 @@
 import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import {sharedSanadBuses} from '../legacy/lib/sanadSharedBus';
+import {groupSanadConnections,planCoordinatedSanad} from '../legacy/lib/sanadCoordinatedRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
 import {allHistoricalSections,historicalSection,imamCompanionIndexedGraph,rawiImamIndexedGraph,companionsProphetIndexedGraph} from '../legacy/lib/qurraHistoricalSegments';
@@ -181,6 +182,93 @@ for(const [index,edge] of denseConnections.entries()){
 }
 assert.ok(crowdedHorizontalY.size>=5,'dense historical links use several distinct horizontal corridors');
 console.log('Dense source-backed historical diagram preserves every edge, with card clearance and separate lanes');
+
+
+// Coordinated rendering never changes the underlying relation graph. Every
+// test plan must contain exactly the original explicit source/target pairs.
+const makePlan=(rows:string[][],pairs:{from:string;to:string;routes?:number[];id?:string;originalIndex?:number}[],cardSize=192,heights=new Map<string,number>())=>{
+ const width=Math.max(...rows.map(row=>row.length))*250+60;
+ const centers=new Map(rows.flatMap(row=>row.map((id,i)=>[id,{x:width/2+(i-(row.length-1)/2)*250}] as const)));
+ const plan=planCoordinatedSanad(rows,centers,pairs,width,cardSize,80,heights);
+ assert.ok(plan.valid,'all routed connectors must avoid unrelated narrator cards: '+plan.collisions.join(' | '));
+ const originals=pairs.map((e,i)=>JSON.stringify([i,e.from,e.to])).sort();
+ const reconstructed=plan.edgePaths.map(e=>JSON.stringify([e.edgeIndex,e.from,e.to])).sort();
+ assert.deepEqual(reconstructed,originals,'no relationship dropped, duplicated or invented by geometry');
+ return {plan,centers};
+};
+const fanOut=makePlan([['source'],['a','b','c','d']],
+ ['a','b','c','d'].map(to=>({from:'source',to}))).plan;
+assert.deepEqual(fanOut.groups.map(g=>g.kind),['fan-out']);
+assert.equal(fanOut.parts.filter(p=>p.role==='bus').length,1,'one horizontal bus for one-to-four');
+assert.equal(fanOut.parts.filter(p=>p.arrow).length,4,'one drop and arrow per actual student');
+assert.equal(fanOut.parts.filter(p=>p.role==='feed').length,1,'one centered downward trunk');
+assert.equal(fanOut.parts.find(p=>p.role==='feed')!.d.startsWith('M530 '),true,
+ 'fan-out trunk leaves source card center');
+const fanIn=makePlan([['a','b','c','d'],['target']],
+ ['a','b','c','d'].map(from=>({from,to:'target'}))).plan;
+assert.deepEqual(fanIn.groups.map(g=>g.kind),['fan-in']);
+assert.equal(fanIn.parts.filter(p=>p.role==='bus').length,1,'one early fan-in bus');
+assert.equal(fanIn.parts.filter(p=>p.arrow).length,1,'only one arrow at the converged destination');
+assert.equal(fanIn.parts.filter(p=>p.role==='feed').length,4);
+assert.ok(fanIn.groups[0].busY!<fanIn.tops[1]/2+40,'merge bus is closer to sources');
+const manyToMany=[
+ ...['A','B','C','D','E'].flatMap(from=>['X','Y','Z'].map(to=>({from,to,routes:[1,2]}))),
+];
+const fullFan=makePlan([['A','B','C','D','E'],['X','Y','Z']],manyToMany,228).plan;
+assert.equal(fullFan.groups.length,1);
+assert.equal(fullFan.groups[0].kind,'complete');
+assert.equal(fullFan.parts.filter(p=>p.role==='bus').length,1);
+assert.equal(fullFan.parts.filter(p=>p.arrow).length,3);
+assert.equal(fullFan.edgePaths.length,15);
+assert.ok(fullFan.parts.filter(p=>p.role==='drop').every(p=>p.d.includes(' V')),
+ 'all descendants leave the one shared horizontal bus by vertical drops');
+const partial=makePlan([['A','B'],['X','Y']],
+ [{from:'A',to:'X'},{from:'B',to:'Y'}]).plan;
+assert.equal(partial.groups.filter(g=>g.kind!=='single').length,0,
+ 'two unrelated paths can cross but MUST NOT be joined');
+const partialThree=makePlan([['A','B'],['X','Y']],
+ [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'X'}]).plan;
+assert.ok(partialThree.groups.every(g=>g.kind!=='complete'),
+ 'three of four pairwise relationships never form a complete bus');
+const mixed=makePlan([['A','B'],['X','Y','Z'],['one']],
+ [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'Y'},
+ {from:'X',to:'one'},{from:'Y',to:'one'},{from:'Z',to:'one'}]).plan;
+assert.equal(mixed.edgePaths.length,6,'mixed fan-in and fan-out reuse same routing engine');
+assert.ok(mixed.groups.some(g=>g.kind==='fan-in'));
+const asym=makePlan([['root'],['one','two','three','four']],
+ ['one','two','three','four'].map(to=>({from:'root',to})),228,
+ new Map([['root',132],['one',70],['two',106],['three',160],['four',90]])).plan;
+assert.ok(asym.tops[1]>160,'rank gap accounts for the actual tallest Arabic card');
+const bypass=makePlan([['source'],['obstacle1','obstacle2','obstacle3'],['destination']],
+ [{from:'source',to:'destination'}],228).plan;
+assert.equal(bypass.edgePaths.length,1);
+assert.ok(bypass.edgePaths[0].d.includes(' H'),
+ 'long route uses a clear side corridor around intervening narrator cards');
+const filtered=makePlan([['A','B'],['X','Y']],[
+ {from:'A',to:'X',routes:[0]},{from:'B',to:'Y',routes:[1]},
+]).plan;
+assert.deepEqual(filtered.edgePaths.map(e=>e.routes),[[0],[1]],
+ 'route memberships stay attached to original real edges');
+assert.deepEqual(groupSanadConnections([['A','B'],['X','Y']],[
+ {from:'A',to:'X'},{from:'B',to:'Y'}
+]).flatMap(group=>group.edgeIndices).sort((a,b)=>a-b),[0,1]);
+const crossingPair=makePlan([['left','right'],['lowerLeft','lowerRight']],[
+ {from:'left',to:'lowerRight',id:'saved-cross-1',routes:[0]},
+ {from:'right',to:'lowerLeft',id:'saved-cross-2',routes:[1]},
+]).plan;
+assert.deepEqual(crossingPair.groups.map(g=>g.kind),['single','single'],
+ 'independent crossing relationships must not be merged into a false junction');
+assert.deepEqual(crossingPair.edgePaths.map(p=>p.id),['saved-cross-1','saved-cross-2'],
+ 'original stored relationship IDs must remain attached to rendered edges');
+const explicitOriginal=planCoordinatedSanad([['root'],['leaf']],
+ new Map([['root',{x:210}],['leaf',{x:210}]]),
+ [{from:'root',to:'leaf',id:'database-edge-42',routes:[9],originalIndex:42}],
+ 420,192,80,new Map());
+assert.equal(explicitOriginal.valid,true);
+assert.equal(explicitOriginal.edgePaths[0].edgeIndex,42,'filtered paths retain original graph edge indexes');
+assert.equal(explicitOriginal.edgePaths[0].id,'database-edge-42');
+assert.deepEqual(explicitOriginal.edgePaths[0].routes,[9]);
+console.log('Coordinated orthogonal bus geometry: fan-in/out, dense, partial, obstacles, memberships PASS');
 
 
 // A standalone Qurra diagram joins only identities from explicit book-parent

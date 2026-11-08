@@ -174,6 +174,71 @@ const {chromium}=require('playwright');
     await regression.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+width+'.png'});
    }
   }
+
+  // The coordinated production SVG must preserve every real edge while its
+  // three separate buses replace the web of overlapping 5×3 arrows.
+  for(const width of [1440,390]){
+   await page.setViewportSize({width,height:960});
+   const fanOut=page.getByTestId('coordinated-fan-out');
+   const fanIn=page.getByTestId('coordinated-fan-in');
+   const dense=page.getByTestId('coordinated-dense');
+   for(const [view,sourceCount,destinationCount] of [
+    [fanOut,1,4],[fanIn,4,1],
+   ]){
+    assert.equal(await view.locator('g[data-routing-part="bus"]').count(),1,
+     'one shared bus per real connection group at '+width);
+    assert.equal(await view.locator('g[data-routing-part="feed"]').count(),sourceCount);
+    assert.equal(await view.locator('g[data-routing-part="drop"]').count(),destinationCount);
+    assert.equal(await view.locator('path[data-from][data-to]').count(),4,
+     'actual edge identities are retained beneath the shared visual bus');
+   }
+   assert.equal(await dense.locator('g[data-routing-part="bus"]').count(),3,
+    'imam fan-out, complete intermediary bus and Companion fan-in remain separate at '+width);
+   assert.equal(await dense.locator('path[data-from][data-to]').count(),23,
+    'all 5 + 15 + 3 real historical sanad edges remain selectable');
+   const denseCollisions=await dense.evaluate(section=>{
+    const cards=[...section.querySelectorAll('[data-combined-narrator]')];
+    return [...section.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
+     const length=edge.getTotalLength(),hits=[];
+     for(const card of cards){
+      if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))continue;
+      for(let n=0;n<=length;n+=5){
+       const p=edge.getPointAtLength(n);
+       if(p.x>card.offsetLeft+1&&p.x<card.offsetLeft+card.offsetWidth-1
+        &&p.y>card.offsetTop+1&&p.y<card.offsetTop+card.offsetHeight-1){
+        hits.push([edge.dataset.from,edge.dataset.to,card.dataset.combinedNarrator]);break;
+       }
+      }
+     }
+     return hits;
+    });
+   });
+   assert.deepEqual(denseCollisions,[],'no edge passes behind an unrelated card at '+width);
+  }
+  const dense=page.getByTestId('coordinated-dense');
+  await dense.locator('[data-trace-person="teacher1"]').click();
+  assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
+   'one teacher trace highlights exactly one incoming and three outgoing real edges');
+  await dense.getByRole('button',{name:'إلغاء التحديد'}).click();
+  const originalEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
+   paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
+  await dense.locator('summary').first().click();
+  await dense.getByLabel('عرض سند واحد بعينه').selectOption('0');
+  const filteredEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
+   paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
+  assert.ok(filteredEdges.length<originalEdges.length,
+   'selecting one sanad removes unrelated paths from the new geometry');
+  assert.ok(filteredEdges.every(pair=>originalEdges.includes(pair)),
+   'filtering cannot synthesize an edge missing from the selected sanad');
+  await dense.getByLabel('عرض سند واحد بعينه').selectOption('');
+  await dense.locator('[data-sanad-routing-switch]').click();
+  assert.equal(await dense.locator('g[data-routing-part]').count(),0,
+   'per-view rollback immediately restores the old connector system');
+  await dense.locator('[data-sanad-routing-switch]').click();
+  assert.equal(await dense.locator('g[data-routing-part="bus"]').count(),3,
+   're-enabling coordinated routing restores the verified shared buses');
+  console.log('PASS coordinated buses, exact graph identities, mobile, filtered paths and rollback');
+
   // SVG markers must use fixed coordinates: thicker highlighted lines must
   // never enlarge the arrowhead at a narrator junction.
   const marker=regression.locator('marker').first();
