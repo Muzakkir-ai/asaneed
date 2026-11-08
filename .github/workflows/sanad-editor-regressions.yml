@@ -1,0 +1,34 @@
+name: Sanad editor regressions
+
+on:
+  pull_request:
+    paths:
+      - 'legacy/components/AdditionalShaykhsPage.tsx'
+      - 'legacy/components/PersonalSanadInput.tsx'
+      - 'legacy/components/NarratorPicker.tsx'
+      - 'legacy/components/ChainNarratorRow.tsx'
+      - 'legacy/components/ReusableReadingSanad.tsx'
+      - 'legacy/lib/narratorSelection.ts'
+      - 'tests/narrator-picker-ux.test.cjs'
+      - 'tests/reusable-reading-sanad.test.cjs'
+      - 'package.json'
+      - '.github/workflows/sanad-editor-regressions.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sanad-editor:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/build-studio.cjs
+      - run: npm run typecheck
+      - run: npm run test:personal-sanads
