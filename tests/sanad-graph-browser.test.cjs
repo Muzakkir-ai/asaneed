@@ -103,6 +103,20 @@ const {chromium}=require('playwright');
   assert.match(await straightCases.getAttribute('data-long-blocked'),/H-?[\d.]+/,
    'an intervening narrator card must keep a real bypass');
 
+  // A natural side departure is allowed when the narrator cards are
+  // separated horizontally; arrowheads still enter the next narrator safely.
+  const sideCases=page.getByTestId('side-edge-regression');
+  for(const [attribute,expectedX,description] of [
+   ['data-right',216,'right side of the source narrator'],
+   ['data-left',344,'left side of the source narrator'],
+  ]){
+   const path=await sideCases.getAttribute(attribute);
+   const match=path?.match(/^M(-?[\d.]+) (-?[\d.]+)/);
+   assert.ok(match,'valid connector path for '+description);
+   assert.ok(Math.abs(Number(match[1])-expectedX)<.1,description+' rather than a bottom exit: '+path);
+   assert.match(path,/ H-?[\d.]+ V-?[\d.]+$/,description+' uses a clean one-bend path');
+  }
+
   // Always check the reported branch shapes, even without a private Hafs fixture.
   const regression=page.getByTestId('combined-regression');
   const regressionPaths=[
@@ -215,10 +229,13 @@ const {chromium}=require('playwright');
   await page.setViewportSize({width:1100,height:900});
   const draft=page.getByTestId('draft');
   await draft.getByRole('button',{name:'تعديل السند',exact:true}).click();
-  await draft.getByRole('button',{name:'إضافة شيخ موازٍ'}).first().click();
-  await draft.getByLabel('التقاء الفرعين').selectOption('saved-2');
-  assert.equal(await draft.locator('.sanad-graph-split .sanad-graph-arrow:visible').count(),2);
-  assert.equal(await draft.locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),2);
+  // The current editor explicitly creates a branch first; it renders split
+  // and merge arrows only after the alternate narrator has been selected.
+  await draft.locator('[aria-label="إضافة فروع السند"]').getByRole('button',{name:'إضافة فرع',exact:true}).click();
+  const branchMeeting=draft.getByLabel('نقطة التقاء الفرع ١');
+  await branchMeeting.selectOption('saved-2');
+  assert.equal(await branchMeeting.inputValue(),'saved-2','new branch retains its reviewed meeting point');
+  assert.equal(await draft.getByRole('region',{name:'تحرير الفرع ١'}).count(),1,'branch editor opens');
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
    const reading=page.getByTestId('private-hafs');
    await reading.getByRole('tab',{name:'السند الشخصي',exact:true}).waitFor();

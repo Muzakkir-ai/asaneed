@@ -96,11 +96,16 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      collisions+=obstacles.filter(card=>b.right>=card.left-4&&b.left<=card.right+4&&b.bottom>card.top&&b.top<card.bottom).length;
      for(const other of others)touches+=interaction(b,other);
     }
-    const sidePorts=(Math.abs((route[0]?.a.y??start)-start)>1?1:0)+(Math.abs((route.at(-1)?.b.y??end)-end)>1?1:0);
-    const portMovement=Math.abs((route[0]?.a.x??edge.x1)-edge.x1)+Math.abs((route.at(-1)?.b.x??edge.x2)-edge.x2);
-    // A tiny lateral jog is visually worse than one clean vertical connection.
+    const sourceSide=Math.abs((route[0]?.a.y??start)-start)>1;
+    const destinationSide=Math.abs((route.at(-1)?.b.y??end)-end)>1;
+    const sourceMove=Math.abs((route[0]?.a.x??edge.x1)-edge.x1);
+    const destinationMove=Math.abs((route.at(-1)?.b.x??edge.x2)-edge.x2);
+    // Side attachments earn their keep only if they shorten an otherwise
+    // awkward jog or avoid a collision; true straight verticals still win.
+    const attachmentCost=(sourceSide?14+sourceMove*.14:sourceMove*.5)
+     +(destinationSide?14+destinationMove*.14:destinationMove*.5);
     const smallJogs=route.filter(segment=>segment.a.y===segment.b.y&&length(segment)<24).length;
-    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+sidePorts*120+portMovement*.5+smallJogs*18;
+    return collisions*1e9+touches*1e5+route.reduce((sum,s)=>sum+length(s),0)+route.length*12+attachmentCost+smallJogs*18;
    };
    let best=routed[i],bestScore=score(best);
    const candidate=(points:Point[])=>{
@@ -139,29 +144,61 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
      candidate([{x:x1,y:start},{x:x1,y:exit},{x,y:exit},{x,y:entry},{x:x2,y:entry},{x:x2,y:end}]);
     }
    }
-   // Long bypasses can attach to either side of a card instead of its bottom/top.
-   // Only outward-facing channels are permitted, so the line cannot cross its own card.
-   if(to>from+1){
-    type SideOption={x:number;y:number;direction:-1|0|1};
-    const sides=(id:string,rank:number):SideOption[]=>{
-     const center=centers.get(id)!.x,y=base.tops[rank]+heightOf(id)/2;
-     return [{x:center-cardWidth/2,y,direction:-1},{x:center+cardWidth/2,y,direction:1}];
-    };
-    const sources:SideOption[]=[{x:edge.x1,y:start,direction:0},...sides(edge.from,from)];
-    const destinations:SideOption[]=[{x:edge.x2,y:end,direction:0},...sides(edge.to,to)];
-    const intermediate=obstacles.filter(card=>card.top>base.tops[from]&&card.top<base.tops[to]);
-    const clear=(x:number)=>intermediate.every(card=>x<=card.left-8||x>=card.right+8);
-    const outward=(port:SideOption,x:number)=>port.direction===0||port.direction<0&&x<=port.x-8||port.direction>0&&x>=port.x+8;
-    for(const source of sources)for(const destination of destinations){
-     if(source.direction===0&&destination.direction===0)continue;
-     const channels=[...new Set([source.x,destination.x,(source.x+destination.x)/2,base.connectors[i].bypass!,...intermediate.flatMap(card=>[card.left-8,card.right+8]),8,width-8])]
-      .filter(x=>x>=8&&x<=width-8&&clear(x)&&outward(source,x)&&outward(destination,x))
-      .sort((a,b)=>Math.abs(a-source.x)+Math.abs(a-destination.x)-Math.abs(b-source.x)-Math.abs(b-destination.x));
-     const exits=source.direction===0?gaps(from).slice(0,2):[source.y];
-     const entries=destination.direction===0?gaps(to-1).slice(0,2):[destination.y];
-     for(const x of channels.slice(0,6))for(const exit of exits)for(const entry of entries){
-      candidate([{x:source.x,y:source.y},{x:source.x,y:exit},{x,y:exit},{x,y:entry},{x:destination.x,y:entry},{x:destination.x,y:destination.y}]);
+   // A right/left card edge can be a more natural departure than dropping
+   // below the card first. Use side ports for adjacent ranks too: previously
+   // these were only considered for long, skipped-rank connections.
+   type SidePort={x:number;y:number;direction:-1|1};
+   const sides=(id:string,rank:number,fraction:number):SidePort[]=>{
+    const center=centers.get(id)!.x,y=base.tops[rank]+heightOf(id)*fraction;
+    return [{x:center-cardWidth/2,y,direction:-1},{x:center+cardWidth/2,y,direction:1}];
+   };
+   const sourceSides=sides(edge.from,from,.72),destinationSides=sides(edge.to,to,.3);
+   const outside=(side:SidePort,x:number)=>side.direction===1?x>=side.x+8:x<=side.x-8;
+   const intermediate=obstacles.filter(card=>card.top>base.tops[from]&&card.top<base.tops[to]);
+   const clear=(x:number)=>intermediate.every(card=>x<=card.left-8||x>=card.right+8);
+   const sideChannels=(side:SidePort,otherX:number)=>[...new Set([
+    side.x+side.direction*12,side.x+side.direction*24,otherX,
+    (side.x+otherX)/2,base.connectors[i].bypass,
+    ...intermediate.flatMap(card=>[card.left-8,card.right+8]),8,width-8,
+   ])].filter((x):x is number=>typeof x==='number'&&x>=8&&x<=width-8&&clear(x)&&outside(side,x));
+   for(const source of sourceSides){
+    // One elbow: leave on the side and descend directly into the next
+    // narrator's top edge, provided the entire horizontal run is outward.
+    for(const x2 of destinationPorts){
+     if(outside(source,x2))candidate([{x:source.x,y:source.y},{x:x2,y:source.y},{x:x2,y:end}]);
+    }
+    // If the target is behind the source, move outside the cards and return
+    // through a clear rank gap rather than cutting through either card.
+    for(const x2 of destinationPorts){
+     for(const channel of sideChannels(source,x2).slice(0,8)){
+      for(const entry of gaps(to-1)){
+       candidate([{x:source.x,y:source.y},{x:channel,y:source.y},
+        {x:channel,y:entry},{x:x2,y:entry},{x:x2,y:end}]);
+      }
      }
+    }
+    // Both endpoints may connect at the same outer edge when this avoids
+    // a misleading U-shaped detour from the bottom of the source card.
+    for(const destination of destinationSides.filter(side=>side.direction===source.direction)){
+     const channel=source.direction===1
+      ?Math.max(source.x,destination.x)+12
+      :Math.min(source.x,destination.x)-12;
+     if(channel>=8&&channel<=width-8&&clear(channel)){
+      candidate([{x:source.x,y:source.y},{x:channel,y:source.y},
+       {x:channel,y:destination.y},{x:destination.x,y:destination.y}]);
+     }
+    }
+   }
+   // Existing top-to-side entrances are still candidates for a long bypass.
+   // Stop the vertical channel outside both narrator cards before entering
+   // the destination side horizontally.
+   if(to>from+1)for(const destination of destinationSides){
+    const fromTop=options(edge.from,edge.x1);
+    const yExit=gaps(from)[0];
+    for(const x1 of fromTop)for(const channel of sideChannels(destination,x1).slice(0,8)){
+     candidate([{x:x1,y:start},{x:x1,y:yExit},
+      {x:channel,y:yExit},{x:channel,y:destination.y},
+      {x:destination.x,y:destination.y}]);
     }
    }
    routed[i]=best;
