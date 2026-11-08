@@ -1,6 +1,7 @@
 import {QURRA} from './qurra';
 import {sanadKey,type ContinuationSection} from './unifiedSanad';
-import {fullRawiName} from './rawiIdentity';
+import {fullRawiName,savedRawiPerson} from './rawiIdentity';
+import type {BuilderPerson} from './bookBuilder';
 import {buildNarratorDirectory} from './narratorDirectory';
 
 export type HistoricalSegmentKind='rawi-imam'|'imam-sahaba'|'sahaba-prophet';
@@ -145,6 +146,7 @@ export function companionsProphetIndexedGraph(
 export function historicalSection(
  sections:readonly ContinuationSection[],
  qariId:string,rawi:string,kind:HistoricalSegmentKind,
+ people:readonly BuilderPerson[]=[],
 ):HistoricalSectionView|null{
  const catalog=QURRA.find(q=>q.id===qariId);
  if(!catalog)return null;
@@ -158,6 +160,12 @@ export function historicalSection(
   :companionsProphetIndexedGraph(section,qariId);
  const names:Record<string,string>=index?.names||{};
  const paths:string[][]=index?.paths||[];
+ if(kind==='rawi-imam'&&paths.length){
+  // Prefer the database's audited full name for the same selected rawi;
+  // this changes a label, never the historical source edge or person ID.
+  const saved=savedRawiPerson(people,qariId,rawi);
+  if(saved)names[paths[0][0]]=saved.name;
+ }
  // The only auto-drawn historical edges are an explicitly written,
  // unbranched sequence AFTER «صاحب الرواية» and «عن», ending in
  // «صاحب القراءة». Branches and plural pronouns need human review.
@@ -184,11 +192,11 @@ export function historicalSection(
  };
 }
 
-export function allHistoricalSections(sections:readonly ContinuationSection[],kind:HistoricalSegmentKind){
+export function allHistoricalSections(sections:readonly ContinuationSection[],kind:HistoricalSegmentKind,people:readonly BuilderPerson[]=[]){
  return QURRA.flatMap(q=>{
   const labels=kind==='rawi-imam'?q.rawis:[''];
   return labels.flatMap(rawi=>{
-   const match=historicalSection(sections,q.id,rawi,kind);
+   const match=historicalSection(sections,q.id,rawi,kind,people);
    return match?[match]:[];
   });
  });
