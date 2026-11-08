@@ -303,6 +303,23 @@ const {chromium}=require('playwright');
    assert.deepEqual(collisions,[],fixture+' never routes through unrelated narrator cards');
   }
 
+  // Keep real browser screenshots of the cross-row regression; assertions
+  // alone cannot detect awkward shared-bus visual geometry.
+  if(process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS){
+   for(const viewportWidth of [1200,390]){
+    await page.setViewportSize({width:viewportWidth,height:900});
+    for(const [name,testId] of [
+     ['mixed-rank','coordinated-mixed-rank'],
+     ['staggered-fanin','coordinated-staggered-fanin'],
+     ['long-bypass','coordinated-long-bypass'],
+    ]){
+     await page.getByTestId(testId).screenshot({
+      style:'nextjs-portal { display: none !important; }',
+      path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+name+'-'+viewportWidth+'.png'
+     });
+    }
+   }
+  }
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();
   assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
