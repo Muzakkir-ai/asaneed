@@ -1,0 +1,51 @@
+name: Certificate PDF layout regression
+
+on:
+  pull_request:
+    paths:
+      - 'legacy/components/CertificatePrint.tsx'
+      - 'legacy/components/MatnFormatting.tsx'
+      - 'legacy/components/MatnHeadingControls.tsx'
+      - 'legacy/lib/certificateFooterLift.ts'
+      - 'legacy/lib/matnPresentation.ts'
+      - 'legacy/api/certificateDraftFormatting.ts'
+      - 'legacy/api/certificateDraftPreview.ts'
+      - 'legacy/api/finalizeCertificate.ts'
+      - 'legacy/index.css'
+      - 'tests/certificate-footer-lift.test.ts'
+      - 'tests/certificate-layout-browser.test.cjs'
+      - 'tests/fixtures/certificate-layout-review.tsx'
+      - '.github/workflows/certificate-layout-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  certificate-layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Typecheck certificate editor and API
+        run: npm run typecheck
+      - name: Test spacing, footer lift and schema constraints
+        run: npm run test:certificate-layout
+      - run: npx playwright install --with-deps chromium
+      - name: Browser test PDF formatting controls and draft save/reset
+        run: node tests/certificate-layout-browser.test.cjs
+        env:
+          CI: 'true'
+          ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS: /tmp
+      - name: Upload certificate desktop/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: certificate-pdf-layout-screenshots
+          path: /tmp/certificate-*.png
+          if-no-files-found: ignore
