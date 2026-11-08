@@ -159,7 +159,7 @@ export function groupSanadConnections(
 }
 
 /** Generate a fully routed graph from explicit edges and measured card sizes.
- * Each fan-in merges near the source row and has one arrow before its target.
+ * Eligible sibling fan-ins may merge; unrelated teachers keep separate arrows.
  * Each fan-out starts with a centered trunk and one level horizontal bus.
  * Unrelated groups never share a bus or a relationship ID. */
 export function planCoordinatedSanad(
