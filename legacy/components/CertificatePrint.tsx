@@ -8,6 +8,7 @@ import {MatnPreview} from './MatnFormatting';
 import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import CertificateViewport from './CertificateViewport';
 import {certificateBalance} from '../lib/certificateBalance';
+import {certificateBodyBalance} from '../lib/certificateBodyBalance';
 import {certificateOverflows} from '../lib/printOverflow';
 import type {Artwork} from '../lib/artworkCatalog';
 import RegistrationNumber from './RegistrationNumber';
@@ -321,6 +322,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [activeArea,setActiveArea]=useState<Area>('sanad');
   const [savingFormat,setSavingFormat]=useState(false);
   const sanadElement=useRef<HTMLDivElement>(null);
+  const bodyArea=useRef<HTMLDivElement>(null);
   const [styledPhrases,setStyledPhrases]=useState<StyledPhrase[]>([]);
   const [sharedPhrases,setSharedPhrases]=useState<StyledPhrase[]>([]);
   const printArea=useRef<HTMLDivElement>(null);
@@ -329,7 +331,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [centerFits,setCenterFits]=useState(true);
   const [overflow,setOverflow]=useState(false),[layoutChecked,setLayoutChecked]=useState(false);
   const measureOverflow=()=>{
-    const page=printArea.current,body=sanadElement.current,footer=footerArea.current,header=headerArea.current;
+    const page=printArea.current,body=bodyArea.current,footer=footerArea.current,header=headerArea.current;
     if(!page||!footer)return false;
     const p=page.getBoundingClientRect(),f=footer.getBoundingClientRect(),b=body?.getBoundingClientRect(),h=header?.getBoundingClientRect();
     const unsafe=certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
@@ -389,12 +391,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   useEffect(()=>{
     setCenterFits(true);
     const page=printArea.current;
-    if(page)page.style.setProperty('--certificate-center-shift','0px');
+    if(page){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-body-shift','0px');}
   },[cert.id,activeSanad?.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(!centerFits)return;
-    const page=printArea.current,header=headerArea.current,footer=footerArea.current;
-    if(!page||!header||!footer)return;
+    const page=printArea.current,header=headerArea.current,footer=footerArea.current,body=bodyArea.current;
+    if(!page||!header||!footer||!body)return;
     let frame=0;
     const center=()=>{
       const p=page.getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
@@ -402,24 +404,33 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old,anchorHeader:fixedHeader,pinnedFooter:true});
       if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');setCenterFits(false);return;}
       if(Math.abs(balanced.shift-old)>0.25)page.style.setProperty('--certificate-center-shift',balanced.shift.toFixed(2)+'px');
+      const previousBodyShift=parseFloat(page.style.getPropertyValue('--certificate-body-shift'))||0;
+      const shift=certificateBodyBalance({pageWidth:p.width,layoutWidth:page.offsetWidth,
+       bodyBottom:body.getBoundingClientRect().bottom,footerTop:b.top,previousShift:previousBodyShift});
+      if(Math.abs(shift-previousBodyShift)>.25){
+       page.style.setProperty('--certificate-body-shift',shift.toFixed(2)+'px');
+       // Transform updates do not trigger ResizeObserver; recheck actual print
+       // bounds after moving the text so we never conceal an overflow.
+       measureOverflow();
+      }
     };
     const request=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(center);};
     request();
     const observer=new ResizeObserver(request);
-    observer.observe(header);observer.observe(footer);
+    observer.observe(header);observer.observe(footer);observer.observe(body);
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
+  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
     const check=()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(measureOverflow);};
     const observer=new ResizeObserver(check);
-    for(const node of [printArea.current,sanadElement.current,footerArea.current,headerArea.current])if(node)observer.observe(node);
+    for(const node of [printArea.current,bodyArea.current,sanadElement.current,footerArea.current,headerArea.current])if(node)observer.observe(node);
     check();document.fonts.ready.then(check).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,cert.id,sanadBody,typography,headingOverride,styledPhrases,textTopMm,centerFits,footerName]);
+  },[printPermission,cert.id,sanadBody,cert.notes,typography,headingOverride,styledPhrases,textTopMm,centerFits,footerName]);
   const printCertificate=()=>{if(preparingIssuerArtwork){toast.error('انتظر تجهيز رسم المجيز للطباعة');return;}if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
   const captureSelection=()=>{
     const selection=window.getSelection();
@@ -503,7 +514,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           <CertificateBorder number={sharedHeading?resolvedHeading.borderNumber:undefined} color={borderColor} artwork={activeArtwork} base={activeArtworkBase||undefined}/>
           <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnArtworkNumber={matnDocument?.headingArtworkNumber} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
-
+            <div ref={bodyArea} className="certificate-body-content w-full">
             {sanadBody?.trim() ? (
               <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} headingSettings={sharedHeading?resolvedHeading:undefined} legacyAlignment={!isDraft&&!matnDocument.editorVersion} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
             ) : (
@@ -513,6 +524,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
               </>
             )}
             {cert.notes && <p className="mt-2">{cert.notes}</p>}
+            </div>
             <div ref={footerArea} className={`certificate-footer mt-auto ${matnDocument&&linkedFooter?'certificate-footer-linked':''}`} dir="rtl" style={matnDocument&&linkedFooter?{width:`${resolvedHeading.bodyWidthMm??265}mm`,maxWidth:'100%',marginInline:'auto','--footer-date-inset':`${8*(resolvedHeading.bodyWidthMm??265)/265}mm`} as React.CSSProperties:undefined}>
               <table className="certificate-footer-table" role="presentation"><colgroup><col style={{width:'33.333333%'}}/><col style={{width:'33.333334%'}}/><col style={{width:'33.333333%'}}/></colgroup>
                 <tbody>
