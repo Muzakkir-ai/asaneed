@@ -47,6 +47,17 @@ const adjacentRoute=routeExample([['above'],['below']],{above:120,below:130});
 const longClearRoute=routeExample([['above'],['other'],['below']],{above:120,other:390,below:130});
 const longBlockedRoute=routeExample([['above'],['other'],['below']],{above:120,other:125,below:130});
 
+// Two neighbouring narrator cards with a clear horizontal gap should leave
+// from the facing side edge, not go down first and then turn sideways.
+const sideExitExample=(sourceX:number,destinationX:number)=>{
+ const coordinates=new Map([['above',{x:sourceX}],['below',{x:destinationX}]]);
+ return optimizeSanadPorts([['above'],['below']],coordinates,
+  [{from:'above',to:'below',x1:sourceX,x2:destinationX}],
+  760,192,80,new Map([['above',80],['below',80]])).connectors[0].d;
+};
+const rightSideExitRoute=sideExitExample(120,440);
+const leftSideExitRoute=sideExitExample(440,120);
+
 
 export default function Review(){
  return <main className="zite-app min-w-0 space-y-4" dir="rtl">
@@ -58,6 +69,7 @@ export default function Review(){
   <div data-testid="repeated"><SanadPathView paths={[[author,first],[author,second,author]]} renderPerson={name=><span>{name}</span>}/></div>
   <div data-testid="personal"><PersonalSanadInput value={source} personIds={personIds} complete readOnly onApply={()=>{}}/></div>
   <div data-testid="straight-port-regression" data-adjacent={adjacentRoute} data-long-clear={longClearRoute} data-long-blocked={longBlockedRoute}/>
+  <div data-testid="side-edge-regression" data-right={rightSideExitRoute} data-left={leftSideExitRoute}/>
   <div data-testid="combined-regression"><CombinedSanadView paths={regressionPaths} routeLabels={['العقبي','النويري','العُميوطي']} renderPerson={graphCard}/></div>
   <div data-testid="combined-no-labels"><CombinedSanadView paths={regressionPaths} renderPerson={graphCard}/></div>
   <div data-testid="combined-invalid"><CombinedSanadView paths={[[ 'jazari','uqabi' ],[ 'uqabi','jazari' ]]} renderPerson={graphCard}/></div>
