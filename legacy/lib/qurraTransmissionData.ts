@@ -19,6 +19,22 @@ export type QurraTransmissionData={
  skipped:number;
 };
 
+/** Stage one is a shared historical segment, not a selection of readings.
+ * Several saved riwāyāt may cite the same EXACT chain of narrator IDs:
+ * show that graph only once, while retaining the underlying source records.
+ * Never infer new connections or merge merely similar sequences.
+ */
+export function sharedJazariDaniPaths(witnesses:readonly QurraWitness[]):QurraWitness[]{
+ const seen=new Set<string>();
+ return witnesses.filter(w=>{
+  if(w.stage!=='jazari-dani')return false;
+  const identity=JSON.stringify(w.ids);
+  if(seen.has(identity))return false;
+  seen.add(identity);
+  return true;
+ });
+}
+
 const noRepeats=(ids:readonly string[])=>new Set(ids).size===ids.length;
 const isDani=(name:string)=>/(?:^|\s)الداني$/u.test(builderNameKey(name));
 const isJazari=(name:string)=>/الجزري$/u.test(builderNameKey(name))&&builderNameKey(name).includes('محمد');
