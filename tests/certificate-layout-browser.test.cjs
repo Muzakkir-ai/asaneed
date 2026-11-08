@@ -129,7 +129,12 @@ const {chromium}=require('playwright');
   try{
    await qPage.route('**/api/workspace/certificateDraftPreview',request=>
     request.fulfill({json:qMock}));
+   const qiraatDraftReady=qPage.waitForResponse(response=>
+    response.url().includes('/api/workspace/certificateDraftPreview')&&response.status()===200);
    await qPage.goto(qiraatUrl);
+   await qiraatDraftReady;
+   await qPage.evaluate(()=>document.fonts.ready);
+   await qPage.waitForTimeout(200); // settle ResizeObserver-driven print geometry
    const artwork=qPage.locator('.certificate-header-art');
    await artwork.locator('.certificate-ijazah-svg').waitFor();
    await artwork.locator('.certificate-basmalah-svg').waitFor();
@@ -161,12 +166,24 @@ const {chromium}=require('playwright');
     (document.querySelector('.certificate-footer')?.getBoundingClientRect().y||0)<y-3,fAfterTitle.y);
    const f1=await qPage.locator('.certificate-footer').boundingBox();
    assert.ok(f1&&fAfterTitle.y-f1.y>3,'qiraat mujeez stamp/date/signature lift independently');
-   assert.equal(await qPage.locator('[role="alert"]').count(),0,
-    'reasonable title/footer offsets remain inside the ornamental safety zone');
+   const layout=await qPage.evaluate(()=>{
+    const rect=selector=>{
+     const r=document.querySelector(selector)?.getBoundingClientRect();
+     return r?{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width}:null;
+    };
+    const paper=document.querySelector('.print-area');
+    return {paper:rect('.print-area'),header:rect('.certificate-header-art'),
+     body:rect('.certificate-body-content'),footer:rect('.certificate-footer'),
+     scrollHeight:paper?.scrollHeight,clientHeight:paper?.clientHeight,
+     alerts:[...document.querySelectorAll('[role="alert"]')].map(n=>n.textContent)};
+   });
+   console.log('QIRAAT_FINAL_LAYOUT',JSON.stringify(layout));
    if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
     await qPage.locator('.print-area').screenshot({
      path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-heading-footer.png'
     });
+   assert.equal(await qPage.locator('[role="alert"]').count(),0,
+    'reasonable title/footer offsets remain inside the ornamental safety zone');
   }finally{await qPage.close();}
   console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{
