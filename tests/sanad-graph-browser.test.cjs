@@ -234,10 +234,16 @@ const {chromium}=require('playwright');
   // An unrelated skipped-rank edge must not revert the entire diagram
   // to its independent legacy connectors.
   const longBypass=page.getByTestId('coordinated-long-bypass');
-  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),2,
-   'long continuation must not disable safe fan-in/fan-out buses');
+  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),3,
+   'long continuation now joins the end fan-in, without disabling either earlier bus');
   assert.equal(await longBypass.locator('path[data-from][data-to]').count(),9,
    'preserve exact original edges of mixed-length diagram');
+  const endIncoming=await longBypass.locator('path[data-to="end"]').evaluateAll(nodes=>
+   nodes.map(node=>Number(node.dataset.edgeIndex)));
+  const endDrops=await longBypass.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
+   nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+  assert.equal(endDrops.filter(indices=>endIncoming.every(index=>indices.includes(index))).length,1,
+   'meeting and through2 must share exactly one final arrow into end');
   assert.match(await longBypass.locator('path[data-from="meeting"][data-to="end"]').getAttribute('d'),
    /H[-0-9.]+/,'skipped-rank continuation uses an orthogonal bypass');
   const longCollisions=await longBypass.evaluate(section=>{
