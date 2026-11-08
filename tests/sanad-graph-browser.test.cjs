@@ -103,6 +103,27 @@ const {chromium}=require('playwright');
    const actualEdges=await regression.locator('path[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedRegressionEdges,'saved links at '+width);
    assert.equal(await regression.locator('[data-combined-narrator]').count(),new Set(regressionPaths.flat()).size);
+   const tracePlacements=await regression.locator('[data-combined-narrator]').evaluateAll(cards=>cards.map(card=>{
+    const circle=card.querySelector('[data-narrator-level]');
+    const control=card.querySelector('[data-trace-person]');
+    const article=card.querySelector('.narrator-person-card');
+    const badgeRow=card.querySelector('[aria-label="درجات الراوي الأخرى"]');
+    if(!circle||!control||!article)throw Error('Missing trace control or main number');
+    const c=circle.getBoundingClientRect(),b=control.getBoundingClientRect(),a=article.getBoundingClientRect();
+    return {
+     horizontalOffset:Math.abs((c.left+c.right)/2-(b.left+b.right)/2),
+     gapBelowNumber:b.top-c.bottom,
+     iconSmaller:b.width<c.width&&b.height<c.height,
+     insideCard:b.bottom<=a.bottom+1,
+     beforeSecondary:!badgeRow||b.bottom<=badgeRow.getBoundingClientRect().top+1,
+    };
+   }));
+   for(const position of tracePlacements){
+    assert.ok(position.horizontalOffset<=2,'trace icon centered beneath number at '+width);
+    assert.ok(position.gapBelowNumber>=-0.5,'trace icon stays below number at '+width);
+    assert.ok(position.iconSmaller,'trace icon smaller than main number');
+    assert.ok(position.insideCard&&position.beforeSecondary,'trace icon must not overlap route badges at '+width);
+   }
    const collisions=await regression.evaluate(section=>{
     const graph=section.querySelector('[data-sanad-viewport]');
     const cards=[...graph.querySelectorAll('[data-combined-narrator]')];
