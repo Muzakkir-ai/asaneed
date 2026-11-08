@@ -31,6 +31,6 @@ export function assemblePersonalSanadBranches(main:NamedNode[],branches:Personal
  const text=parts.join(' ');
  const parsed=prepareSavedSanadPeople(text,true,'end');
  const graph=parsed?.tokens.length===ids.length?preparedSanadGraph(parsed,parsed.tokens.map((token,i)=>({name:token.name,personId:ids[i]}))):null;
- if(!graph||graph.paths.length!==branches.length+1)throw Error('راجع ترتيب الفروع ونقطة الالتقاء قبل الاعتماد');
+ if(!graph||graph.paths.length<branches.length+1)throw Error('راجع ترتيب الفروع ونقطة الالتقاء قبل الاعتماد');
  return {text,ids,paths:graph.paths};
 }
