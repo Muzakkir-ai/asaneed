@@ -89,6 +89,73 @@ assert.equal(routedPorts[1].x2,350);
 assert.ok(routedPorts[0].x1<350&&routedPorts[2].x1>350);
 
 
+// Dense imam -> five intermediaries -> three Companions -> Ubayy diagrams
+// use exactly the same card-edge router as the mashaykh routes. A drawing
+// cannot erase genuine connections merely to eliminate difficult crossings.
+const denseRows=[
+ ['imam'],
+ ['teacher1','teacher2','teacher3','teacher4','teacher5'],
+ ['sahabi1','sahabi2','sahabi3'],
+ ['ubayy'],
+];
+const densePoints=new Map([
+ ['imam',{x:750}],['teacher1',{x:200}],['teacher2',{x:475}],
+ ['teacher3',{x:750}],['teacher4',{x:1025}],['teacher5',{x:1300}],
+ ['sahabi1',{x:475}],['sahabi2',{x:750}],['sahabi3',{x:1025}],
+ ['ubayy',{x:750}],
+]);
+const denseConnections=[
+ ...denseRows[1].map(to=>({from:'imam',to})),
+ ...denseRows[1].flatMap(from=>denseRows[2].map(to=>({from,to}))),
+ ...denseRows[2].map(from=>({from,to:'ubayy'})),
+];
+const densePorts=denseConnections.map(edge=>({
+ ...edge,x1:densePoints.get(edge.from)!.x,x2:densePoints.get(edge.to)!.x,
+}));
+const denseRouting=optimizeSanadPorts(denseRows,densePoints,densePorts,1500,228,80,new Map());
+assert.equal(denseRouting.connectors.length,23,'no real isnad connection is dropped');
+assert.ok(denseRouting.height>denseRouting.tops[3]+80,'the bottom card fits on the canvas');
+const denseRank=new Map(denseRows.flatMap((row,i)=>row.map(id=>[id,i] as const)));
+const tracePoints=(d:string)=>{
+ const coords=d.match(/-?\d+(?:\.\d+)?/g)?.map(Number)??[];
+ const start={x:coords[0],y:coords[1]},out=[start];
+ let next=2;
+ for(const step of d.matchAll(/([HV])-?\d+(?:\.\d+)?/g)){
+  const previous=out[out.length-1],n=coords[next++];
+  out.push(step[1]==='H'?{x:n,y:previous.y}:{x:previous.x,y:n});
+ }
+ return out;
+};
+const innerCollision=(a:{x:number;y:number},b:{x:number;y:number},box:{left:number;right:number;top:number;bottom:number})=>{
+ const inset=1;
+ if(a.x===b.x)return a.x>box.left+inset&&a.x<box.right-inset
+  &&Math.max(a.y,b.y)>box.top+inset&&Math.min(a.y,b.y)<box.bottom-inset;
+ if(a.y===b.y)return a.y>box.top+inset&&a.y<box.bottom-inset
+  &&Math.max(a.x,b.x)>box.left+inset&&Math.min(a.x,b.x)<box.right-inset;
+ return true;
+};
+const crowdedHorizontalY=new Set<number>();
+for(const [index,edge] of denseConnections.entries()){
+ const points=tracePoints(denseRouting.connectors[index].d);
+ assert.ok(points.length>=2,'every sanad connection has a complete route');
+ for(let i=1;i<points.length;i++){
+  const a=points[i-1],b=points[i];
+  assert.ok(a.x===b.x||a.y===b.y,'connector segments remain orthogonal');
+  for(const [id,at] of densePoints){
+   if(id===edge.from||id===edge.to)continue;
+   const rank=denseRank.get(id)!;
+   const box={left:at.x-114,right:at.x+114,top:denseRouting.tops[rank],bottom:denseRouting.tops[rank]+80};
+   assert.ok(!innerCollision(a,b,box),'the '+edge.from+' -> '+edge.to+' line must not cross '+id+' card');
+  }
+  if(denseRank.get(edge.from)===1&&denseRank.get(edge.to)===2&&a.y===b.y&&a.x!==b.x){
+   crowdedHorizontalY.add(a.y);
+  }
+ }
+}
+assert.ok(crowdedHorizontalY.size>=5,'dense historical links use several distinct horizontal corridors');
+console.log('Dense source-backed historical diagram preserves every edge, with card clearance and separate lanes');
+
+
 // A standalone Qurra diagram joins only identities from explicit book-parent
 // and riwayah branch records. Unreviewed book segments are flagged; no
 // implied imam, rawi or sahabi is inserted at the end of a saved route.

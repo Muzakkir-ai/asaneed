@@ -129,18 +129,39 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
     const center=centers.get(id)!.x,offset=Math.round(cardWidth*.33);
     return [original,center,center-offset,center+offset];
    };
-   const gaps=(rank:number)=>[...new Set([bottoms[rank]+10,bottoms[rank]+24,base.tops[rank+1]-10])].sort((a,b)=>a-b);
+   // Share the same card-edge routing rules between mashaykh and Qurra graphs.
+ // Reserve enough separate horizontal channels for a crowded pair of ranks.
+ // The former three-lane choice put many unrelated chains on top of each other.
+ const gaps=(rank:number)=>{
+  const start=bottoms[rank]+10,end=base.tops[rank+1]-10;
+  if(end<=start)return [start];
+  const count=ports.filter(port=>ranks.get(port.from)!<=rank&&ranks.get(port.to)!>rank).length;
+  if(count<=4)return [...new Set([start,Math.min(start+14,end),end])].sort((a,b)=>a-b);
+  const lanes=Math.max(3,Math.min(18,Math.floor((end-start)/spacing)+1));
+  return Array.from({length:lanes},(_,lane)=>Math.round(start+(end-start)*lane/(lanes-1)));
+ };
+ const gapChoices=(rank:number,a:number,b:number,limit=8)=>{
+  const left=Math.min(a,b),right=Math.max(a,b);
+  const middle=(bottoms[rank]+base.tops[rank+1])/2;
+  return gaps(rank).sort((y1,y2)=>{
+   const cost=(y:number)=>others.reduce((total,segment)=>{
+    const overlaps=segment.left<right+spacing&&segment.right>left-spacing;
+    return total+(overlaps&&segment.bottom===segment.top&&Math.abs(segment.top-y)<spacing-2?1:0);
+   },0)*1e4+Math.abs(y-middle)*.01;
+   return cost(y1)-cost(y2);
+  }).slice(0,limit);
+ };
    const sourcePorts=options(edge.from,edge.x1),destinationPorts=options(edge.to,edge.x2);
    for(const x1 of sourcePorts)for(const x2 of destinationPorts){
     if(from+1===to){
-     for(const y of gaps(from))candidate([{x:x1,y:start},{x:x1,y},{x:x2,y},{x:x2,y:end}]);
+     for(const y of gapChoices(from,x1,x2,12))candidate([{x:x1,y:start},{x:x1,y},{x:x2,y},{x:x2,y:end}]);
      continue;
     }
     const intermediate=obstacles.filter(card=>card.top>base.tops[from]&&card.top<base.tops[to]);
     const clear=(x:number)=>intermediate.every(card=>x<=card.left-8||x>=card.right+8);
     const channels=[...new Set([x1,x2,(x1+x2)/2,base.connectors[i].bypass!,...intermediate.flatMap(card=>[card.left-8,card.right+8]),8,width-8])]
      .filter(x=>x>=8&&x<=width-8&&clear(x)).sort((a,b)=>Math.abs(a-x1)+Math.abs(a-x2)-Math.abs(b-x1)-Math.abs(b-x2));
-    for(const x of channels.slice(0,8))for(const exit of gaps(from))for(const entry of gaps(to-1)){
+    for(const x of channels.slice(0,8))for(const exit of gapChoices(from,x1,x,5))for(const entry of gapChoices(to-1,x,x2,5)){
      candidate([{x:x1,y:start},{x:x1,y:exit},{x,y:exit},{x,y:entry},{x:x2,y:entry},{x:x2,y:end}]);
     }
    }
@@ -171,7 +192,7 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
     // through a clear rank gap rather than cutting through either card.
     for(const x2 of destinationPorts){
      for(const channel of sideChannels(source,x2).slice(0,8)){
-      for(const entry of gaps(to-1)){
+      for(const entry of gapChoices(to-1,channel,x2,8)){
        candidate([{x:source.x,y:source.y},{x:channel,y:source.y},
         {x:channel,y:entry},{x:x2,y:entry},{x:x2,y:end}]);
       }
@@ -194,7 +215,7 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
    // the destination side horizontally.
    if(to>from+1)for(const destination of destinationSides){
     const fromTop=options(edge.from,edge.x1);
-    const yExit=gaps(from)[0];
+    const yExit=gapChoices(from,fromTop[0],destination.x,1)[0];
     for(const x1 of fromTop)for(const channel of sideChannels(destination,x1).slice(0,8)){
      candidate([{x:x1,y:start},{x:x1,y:yExit},
       {x:channel,y:yExit},{x:channel,y:destination.y},
