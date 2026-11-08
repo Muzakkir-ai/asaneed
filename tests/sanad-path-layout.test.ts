@@ -2,7 +2,7 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData} from '../legacy/lib/qurraTransmissionData';
-import {RAWI_IDENTITIES,fullRawiName,rawiIdentity} from '../legacy/lib/rawiIdentity';
+import {RAWI_IDENTITIES,fullRawiName,rawiIdentity,savedRawiName,savedRawiPerson} from '../legacy/lib/rawiIdentity';
 import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
@@ -165,3 +165,32 @@ assert.equal(rawiIdentity('abiamr','حفص الدوري')?.key,rawiIdentity('kis
 assert.equal(fullRawiName('hamza','خلف'),'أبي محمد خلف بن هشام البزار البغدادي');
 assert.equal(fullRawiName('khalaf','إدريس'),'أبي الحسن إدريس بن عبد الكريم الحداد');
 console.log('Full historical names for all twenty riwayat and shared narrator identities passed');
+
+const originalQalun={
+ id:'saved-qalun',name:'قالون عيسى بن مينا',display_name:'قالون',archived:false,
+ aliases:[{name:fullRawiName('nafi','قالون'),key:'ابي موسي عيسي بن مينا بن وردان المدني المعروف بقالون'}],
+};
+assert.equal(savedRawiPerson([originalQalun],'nafi','قالون')?.id,originalQalun.id,
+ 'A user-preferred preexisting name must be reused from its full-name alias');
+assert.equal(savedRawiName([originalQalun],'nafi','قالون'),originalQalun.name,
+ 'Show a saved preferred spelling, not an imposed catalog rewrite');
+assert.equal(savedRawiPerson([originalQalun],'abujafar','ابن وردان'),undefined,
+ 'Qalun and Ibn Wardan are separate even though both are Isa and mention Wardan');
+const dizwayh={
+ id:'existing-dizwayh',name:'أبي عمر عبد الله بن أحمد الدمشقي',display_name:'',archived:false,
+ aliases:[{name:'أبي عمر عبد الله بن أحمد بن ديزويه الدمشقي',key:'ابي عمر عبد الله بن احمد بن ديزويه الدمشقي'}],
+};
+const ibnDhakwan={
+ id:'saved-ibn-dhakwan',name:fullRawiName('ibnamir','ابن ذكوان'),display_name:'ابن ذكوان',archived:false,
+ aliases:[],
+};
+assert.equal(savedRawiPerson([dizwayh],'ibnamir','ابن ذكوان'),undefined,
+ 'Ibn Dizwayh is not Ibn Dhakwan even though both are Abu Umar Abdullah bin Ahmad al-Dimashqi');
+assert.equal(savedRawiPerson([dizwayh,ibnDhakwan],'ibnamir','ابن ذكوان')?.id,ibnDhakwan.id,
+ 'Select Ibn Dhakwan by historical identity and preserve Ibn Dizwayh unchanged');
+assert.equal(savedRawiPerson([originalQalun,{...originalQalun,id:'another-qalun'}],'nafi','قالون'),undefined,
+ 'Two possible full-identity records require reviewed deduplication instead of an automatic choice');
+const duri={id:'saved-duri',name:fullRawiName('abiamr','حفص الدوري'),display_name:'الدوري',archived:false,aliases:[{name:'حفص الدوري',key:'حفص الدوري'}]};
+assert.equal(savedRawiPerson([duri],'abiamr','حفص الدوري')?.id,duri.id);
+assert.equal(savedRawiPerson([duri],'kisai','حفص الدوري')?.id,duri.id);
+console.log('Full-name aliases, preferred saved spellings and historical lookalike safeguards passed');
