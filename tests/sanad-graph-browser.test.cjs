@@ -322,6 +322,25 @@ const {chromium}=require('playwright');
    assert.deepEqual(collisions,[],fixture+' never routes through unrelated narrator cards');
   }
 
+  // Visual QA of the exact new policy, not only generic old examples:
+  // one permitted sibling merge and three prohibited fan-in arrangements.
+  if(process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS){
+   for(const width of [1100,390]){
+    await page.setViewportSize({width,height:900});
+    for(const [label,id] of [
+     ['eligible-fanin','coordinated-eligible-fanin'],
+     ['different-parents','coordinated-different-parents'],
+     ['separated-parents','coordinated-separated-parents'],
+     ['mixed-rank','coordinated-mixed-rank'],
+    ]){
+     await page.getByTestId(id).screenshot({
+      style:'nextjs-portal { display: none !important; }',
+      path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+label+'-'+width+'.png',
+     });
+    }
+   }
+  }
+
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();
   assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
