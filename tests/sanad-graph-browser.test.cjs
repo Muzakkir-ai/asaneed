@@ -90,6 +90,19 @@ const {chromium}=require('playwright');
    assert.equal(await graph('book').locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),width===1100?2:0);
    assert.ok(await page.locator('main.zite-app').evaluate(e=>e.scrollWidth<=e.clientWidth));
   }
+  // Straight connections are preferable whenever card interiors share an
+  // unobstructed vertical corridor. An intervening card still forces a bypass.
+  const straightCases=page.getByTestId('straight-port-regression');
+  for(const [attribute,description] of [
+   ['data-adjacent','near-aligned adjacent narrators'],
+   ['data-long-clear','unobstructed long continuation'],
+  ]){
+   const path=await straightCases.getAttribute(attribute);
+   assert.match(path,/^M-?[\\d.]+ -?[\\d.]+ V-?[\\d.]+$/,description+' must be one vertical segment');
+  }
+  assert.match(await straightCases.getAttribute('data-long-blocked'),/H-?[\\d.]+/,
+   'an intervening narrator card must keep a real bypass');
+
   // Always check the reported branch shapes, even without a private Hafs fixture.
   const regression=page.getByTestId('combined-regression');
   const regressionPaths=[
