@@ -27,9 +27,14 @@ narrator insertion/editing controls during this rollout.
 5. Selecting a grouped display route or **one exact sanad** computes
    geometry only for real edges belonging to that selection. Selection
    does not rewrite, persist, or infer relationships.
-6. Each fan-in uses a source-side horizontal lane and a single final
-   arrow. Each fan-out uses a centered source trunk, one bus level and
-   one arrow per target. All segments are orthogonal.
+6. Only **eligible sibling teachers** may share an incoming bus: they must
+   be on the same rank, adjacent/physically nearby, and have a genuine
+   common *immediate* upstream teacher in the saved graph. If any condition
+   fails (different ranks, separated/distant placement, or different/unknown
+   upstream teachers), draw each teacher's transmission as a **separate
+   incoming line and arrow**. This takes priority over prior blanket fan-in
+   merging. A fan-out retains a centered source trunk and one bus level.
+   All segments are orthogonal.
 7. Measured narrator heights, solid rectangles with clearance, separate
    horizontal lanes and bypass corridors are included in collision checks.
    If the planner cannot produce a safe layout, its view falls back to the
@@ -51,9 +56,11 @@ narrator insertion/editing controls during this rollout.
   obstacles, variable card heights, crossing non-junctions, and preserved
   edge identifiers / route memberships.
 - `npm run test:sanad:graph` opens the real React components at
-  desktop and mobile widths, verifies 1-to-4, 4-to-1 and 5-to-3 buses,
-  individual path selection, arrow endpoints, live rollback, and card
-  clearance.
+  desktop and mobile widths; verifies legitimate sibling fan-in, independent
+  rootless teachers, different shuyukh, non-neighbouring teachers, cross-rank
+  connections, unchanged original edge IDs, individual path selection, arrow
+  endpoints, live rollback, and card clearance. It saves screenshots for
+  both eligible and forbidden merges.
 - The **Asaneed Visual Preview** workflow renders the source-backed
   imam-to-Companions example and exports screenshots using synthetic
   records. It does not validate authenticated production data.
