@@ -11,6 +11,7 @@ const {chromium}=require('playwright');
 
 const output=process.env.ASANEED_VISUAL_PREVIEW_DIR||'artifacts/visual-preview';
 const previewRows=[
+ {slug:'00-all-ten',label:'ابن الجزري ← القراء العشرة'},
  {slug:'01-jazari-dani',label:'ابن الجزري ← الداني'},
  {slug:'02-dani-seven',label:'الداني ← القراء السبعة'},
  {slug:'03-jazari-three',label:'ابن الجزري ← القراء الثلاثة'},
@@ -50,6 +51,11 @@ const library={
   {id:'three',title:'الدرة',author_id:'jazari',archived:false}],
  chains:[bookParent,parentThree,sevenRoute,sharedSeven,otherSeven,threeRoute],
  suggestions:[],continuations:{},canManage:true,
+ continuationSections:[
+  {id:'rawi',title:'CHAIN:nafi:قالون',body:'عن أبي محمد عبد الرحمن، عن قالون عيسى بن مينا، عن الإمام نافع المدني.'},
+  {id:'sahaba',title:'CHAIN:nafi:sahaba',body:'عن أبي جعفر يزيد بن القعقاع، وأبي داود عبد الرحمن بن هرمز، وأخذ هؤلاء عن أبي هريرة، وعبد الله بن عباس، وهما عن أبي بن كعب.'},
+  {id:'prophet',title:'CHAIN:nafi:prophet',body:'وَقَرَأَ أُبَيُّ بْنُ كَعْبٍ عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.'},
+ ],
 };
 
 (async()=>{
@@ -100,15 +106,19 @@ const library={
    const nav=page.locator('nav[aria-label="مراحل مخططات القراء"]');
    for(let i=0;i<previewRows.length;i++){
     const stage=previewRows[i];
-    if(i<3)await nav.locator('button').nth(i).click();
+    if(i<4)await nav.locator('button').nth(i).click();
     if(i===0){
+     await page.getByRole('heading',{name:'ابن الجزري ← القراء العشرة · الطرق المحفوظة'}).waitFor();
+     assert.equal(await page.getByLabel('القارئ').count(),0,'Ten-reader overview has no riwayah filters');
+    }
+    else if(i===1){
      assert.equal(await page.getByLabel('القارئ').count(),0,
       'Shared Jazari-to-Dani view must NOT show reader filters');
      assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
       'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
      await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).waitFor({timeout:15000});
      await page.getByText('مسارات محفوظة: ١ · شواهد: ٢',{exact:false}).waitFor();
-    }else if(i===1||i===2){
+    }else if(i===2||i===3){
      assert.equal(await page.getByLabel('القارئ').count(),1,
       'Reader filters belong only to the reading-specific stages');
      assert.equal(await page.getByLabel('الرواية والطريق').count(),1);
@@ -119,18 +129,41 @@ const library={
     }
     await page.locator('[data-combined-narrator]').first().waitFor();
     await page.evaluate(()=>document.fonts.ready);
-    assert.equal(await nav.locator('button[aria-pressed="true"]').count(),i<3?1:0);
+    assert.equal(await nav.locator('button[aria-pressed="true"]').count(),i<4?1:0);
     const target=path.join(output,stage.slug+'-'+label+'.png');
     await page.screenshot({path:target,fullPage:true,animations:'disabled'});
     assert.ok(fs.statSync(target).size>2000,'Screenshot is not empty: '+target);
     console.log('Saved '+target);
    }
   }
+  // Test all three lower historical text views, including sources and
+  // branch prose, independently of the saved book-chain graph.
+  await page.goto(url,{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
+  await page.locator('[data-combined-narrator]').first().waitFor();
+  for(const [kind,label,filename] of [
+   ['rawi-imam','الرواة ← الأئمة','06-rawi-imam.png'],
+   ['imam-sahaba','الأئمة ← الصحابة','07-imam-sahaba.png'],
+   ['sahaba-prophet','الصحابة ← النبي ﷺ','08-sahaba-prophet.png'],
+  ]){
+   await page.locator('nav[aria-label="تتمات أسانيد القراء"]').getByRole('button',{name:label}).click();
+   await page.getByText('نص السند المحفوظ',{exact:false}).first().waitFor();
+   assert.equal(await page.getByLabel('القارئ في تتمة السند').count(),1);
+   if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
+   else assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),0);
+   await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
+   await page.getByText('النص المحفوظ كما هو (دون تغيير)').waitFor();
+   const screenshot=path.join(output,filename);
+   await page.screenshot({path:screenshot,fullPage:true,animations:'disabled'});
+   assert.ok(fs.statSync(screenshot).size>2000);
+  }
   // The selected saved route opens a short ordered-list editor. This tests
   // real narrator identity autocomplete with a synthetic library only.
   await page.setViewportSize({width:1440,height:960});
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
+  await page.locator('[data-combined-narrator]').first().waitFor();
+  await page.locator('nav[aria-label="مراحل مخططات القراء"]').getByRole('button',{name:'الداني ← القراء السبعة'}).click();
   await page.getByRole('button',{name:'تعديل هذا السند'}).click();
   await page.getByRole('heading',{name:'تعديل السند',exact:true}).waitFor();
   let names=page.getByRole('combobox',{name:'اسم الراوي بصيغة الجر'});
@@ -169,8 +202,9 @@ const library={
    '**Important:** All displayed narrator records and route connections are',
    'synthetic test fixtures, NOT a screenshot of the private live database.',
    '',
-   'Stages: Ibn al-Jazari to al-Dani; al-Dani toward seven readers;',
-   'Ibn al-Jazari toward three additional readers; other saved seven-reader segments.',
+   'Stages: all ten, Ibn al-Jazari to al-Dani, al-Dani to seven readers,',
+   'Ibn al-Jazari to three readers, and historical source sections from',
+   'the rawi to imam, imam to companions, and companions to Prophet ﷺ.',
    '',
    'Desktop: 1440px. Mobile: 390px. These are view-only screenshots.',
    'The extra desktop screenshot shows the simplified add-next-narrator workflow with identity selection.',
@@ -182,7 +216,7 @@ const library={
    '',
   ].join('\n');
   fs.writeFileSync(path.join(output,'README.md'),summary);
-  console.log('PASS local screenshots of all four Qurra stages at two widths');
+  console.log('PASS ten-reader overview and seven historical/reading-stage screenshots');
  }finally{
   await browser?.close();
   if(server&&server.exitCode===null&&server.signalCode===null){

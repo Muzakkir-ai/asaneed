@@ -29,8 +29,14 @@ assert.match(workspace,/<SimpleRouteEditor key=\{editingChain.id\} library=\{lib
  'Manual route editing starts on the exact saved sanad rather than opening the full book editor');
 assert.match(workspace,/const \[showAll,setShowAll\]=useState\(false\)/u,
  'Show one readable sanad by default and only expand the merged graph on request');
-assert.match(workspace,/const \[stage,setStage\]=useState<QurraStage>\('dani-seven'\)/u,
- 'The ordinary reader-to-imam segment is the initial diagram view');
+assert.match(workspace,/const \[stage,setStage\]=useState<QurraPageStage>\('all-ten'\)/u,
+ 'All ten readers have one combined overview by default');
+assert.match(workspace,/id:'rawi-imam',name:'الرواة ← الأئمة'/u,
+ 'Reader to imam stage is directly accessible');
+assert.match(workspace,/id:'imam-sahaba',name:'الأئمة ← الصحابة'/u,
+ 'Imam to companions stage is directly accessible');
+assert.match(workspace,/id:'sahaba-prophet',name:'الصحابة ← النبي ﷺ'/u,
+ 'Companions to Prophet stage is directly accessible');
 assert.doesNotMatch(workspace,/BookTariqBuilder/u,
  'The giant book management form is not embedded in the Qurra diagram workspace');
 assert.doesNotMatch(workspace,/<main dir="rtl" className="mx-auto/,

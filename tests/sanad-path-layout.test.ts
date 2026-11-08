@@ -2,6 +2,7 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
+import {allHistoricalSections,historicalSection} from '../legacy/lib/qurraHistoricalSegments';
 import {RAWI_IDENTITIES,fullRawiName,rawiIdentity,savedRawiName,savedRawiPerson} from '../legacy/lib/rawiIdentity';
 import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
@@ -125,7 +126,15 @@ const fixtureLibrary:BuilderLibrary={
 const qurraEvidence=buildQurraTransmissionData(fixtureLibrary);
 assert.equal(qurraEvidence.jazariId,'jazari');
 assert.equal(qurraEvidence.daniId,'dani');
-assert.equal(qurraEvidence.witnesses.length,4);
+assert.equal(qurraEvidence.witnesses.length,7);
+const tenReaderRoutes=qurraEvidence.witnesses.filter(w=>w.stage==='all-ten');
+assert.equal(tenReaderRoutes.length,3,'combined ten-reader view includes every saved full-path route');
+assert.deepEqual(tenReaderRoutes.find(w=>w.routeId==='qalun')?.ids,
+ ['jazari','bookTeacher','shatibi','beforeDani','dani','afterDani']);
+assert.deepEqual(tenReaderRoutes.find(w=>w.routeId==='three-route')?.ids,
+ ['jazari','threeTeacher']);
+assert.ok(tenReaderRoutes.every(w=>!w.completeToRawi),
+ 'ten-reader overview must never fake an unrecorded imam connection');
 const sharedWitnesses=qurraEvidence.witnesses.filter(w=>w.stage==='jazari-dani');
 assert.equal(sharedWitnesses.length,1);
 const sharedDuplicate={...sharedWitnesses[0],id:'same-shared-chain-different-riwayah',routeId:'other-route',rawi:'ورش'};
@@ -206,3 +215,25 @@ const duri={id:'saved-duri',name:fullRawiName('abiamr','حفص الدوري'),di
 assert.equal(savedRawiPerson([duri],'abiamr','حفص الدوري')?.id,duri.id);
 assert.equal(savedRawiPerson([duri],'kisai','حفص الدوري')?.id,duri.id);
 console.log('Full-name aliases, preferred saved spellings and historical lookalike safeguards passed');
+
+const sourceTexts=[
+ {id:'n1',title:'CHAIN:nafi:قالون',body:'عن أبي الفتح فارس بن أحمد، عن قالون عيسى بن مينا، عن الإمام نافع المدني.'},
+ {id:'n2',title:'CHAIN:nafi:sahaba',body:'عن أبي جعفر يزيد بن القعقاع، وأبي داود عبد الرحمن بن هرمز، وأخذ هؤلاء عن أبي هريرة، وعبد الله بن عباس.'},
+ {id:'n3',title:'CHAIN:nafi:prophet',body:'وَقَرَأَ أُبَيُّ بْنُ كَعْبٍ عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.'},
+ {id:'h1',title:'CHAIN:hamza:sahaba',body:'وقرأ حمزة على جعفر بن محمد، عن أبيه محمد بن علي. وقرأ حمزة أيضًا على سليمان بن مهران، عن زر بن حبيش.'},
+ {id:'x1',title:'CHAIN:nafi:ورش',body:'عن إسماعيل بن عبد الله، عن ورش عثمان بن سعيد، عن نافع المدني.'},
+];
+assert.equal(allHistoricalSections(sourceTexts,'rawi-imam').length,2);
+assert.equal(allHistoricalSections(sourceTexts,'imam-sahaba').length,2);
+assert.equal(allHistoricalSections(sourceTexts,'sahaba-prophet').length,1);
+assert.equal(historicalSection(sourceTexts,'nafi','قالون','rawi-imam')?.id,'n1');
+assert.equal(historicalSection(sourceTexts,'nafi','ورش','rawi-imam')?.id,'x1');
+assert.equal(historicalSection(sourceTexts,'nafi','قالون','imam-sahaba')?.body,sourceTexts[1].body);
+assert.equal(historicalSection(sourceTexts,'hamza','خلف','imam-sahaba')?.branches.length,2);
+assert.equal(historicalSection(sourceTexts,'nafi','قالون','sahaba-prophet')?.id,'n3');
+assert.equal(historicalSection(sourceTexts,'nafi','ورش','sahaba-prophet')?.id,'n3',
+ 'The imam-level Prophet source must be shared by both riwayat without duplication');
+assert.equal(historicalSection(sourceTexts,'abujafar','ابن وردان','rawi-imam'),null,
+ 'Never invent a missing historical source');
+assert.ok(allHistoricalSections(sourceTexts,'imam-sahaba').every(s=>s.status==='source-text-review'));
+console.log('Historical sanad sources, variants and review-only graph extraction passed');

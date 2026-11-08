@@ -5,7 +5,7 @@ import {builderNameKey,type BuilderLibrary,type BuilderChain} from './bookBuilde
  * and the book -> parent-chain -> route-chain references. None of the
  * displayed segments proves an onward link past its final saved narrator.
  */
-export type QurraStage='jazari-dani'|'dani-seven'|'jazari-three'|'other-seven';
+export type QurraStage='jazari-dani'|'dani-seven'|'jazari-three'|'other-seven'|'all-ten';
 export type QurraWitness={
  id:string;stage:QurraStage;qariId:string;rawi:string;
  bookId:string;routeId:string;title:string;book:string;
@@ -92,6 +92,9 @@ export function buildQurraTransmissionData(lib:BuilderLibrary):QurraTransmission
     const full=[...prefix,...branch.slice(1)];
     const index=prefixIndex*branches.length+branchIndex;
     if(!noRepeats(full)){skipped++;return;}
+    // Single ten-reader overview: the REAL saved book-to-route concatenation.
+    // It may end before the historical rāwī/imam, so never label it complete.
+    push('all-ten',full,index);
     if(q.family==='seven'&&daniId){
      const cut=full.indexOf(daniId);
      if(cut>0)push('jazari-dani',full.slice(0,cut+1),index);
