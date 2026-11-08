@@ -1,6 +1,6 @@
 import {arabicDigits} from '../lib/arabicDigits';
 import {useState} from 'react';
-import {BookOpen,GraduationCap,Award,Network,Library,Users,UserRound,PanelRightClose,PanelRightOpen,Menu,Settings,LogOut,Shield,Moon,Sun,Languages} from 'lucide-react';
+import {BookOpen,GraduationCap,Award,Network,Library,Users,UserRound,PanelRightClose,PanelRightOpen,Menu,Settings,LogOut,Shield,Moon,Sun,Languages,GitBranch} from 'lucide-react';
 import {Button} from '@project/components/ui/button';
 import {Dialog,DialogContent,DialogTitle} from '@project/components/ui/dialog';
 import {toast} from 'sonner';
@@ -15,6 +15,7 @@ export function WorkspaceSidebar({active,onSelect,admin,staff,collapsed,onCollap
   {id:'available-mutoon',label:'المتون المتاحة',en:'Available mutun',Icon:Library,show:staff,group:'مساحتي'},
   {id:'appearance',label:'مظهر الشهادات',en:'Certificate appearance',Icon:Settings,show:staff,group:'مساحتي'},
   {id:'narrators',label:'رجال الأسانيد',en:'Narrator directory',Icon:Network,show:staff,group:'مساحتي'},
+  {id:'qurra-diagrams',label:'مخططات أسانيد القراء',en:'Qurra diagrams',Icon:GitBranch,show:staff,group:'مساحتي'},
   {id:'shared-sanads',label:'الكتب والطرق',en:'Sanad management',Icon:Library,show:admin,group:'إدارة الأسانيد'},
   {id:'shared-mutoon',label:'المتون العلمية',en:'Shared mutun',Icon:Library,show:admin,group:'إدارة الأسانيد'},
   {id:'shared-texts',label:'النصوص المشتركة',en:'Shared texts',Icon:BookOpen,show:admin,group:'إدارة الأسانيد'},

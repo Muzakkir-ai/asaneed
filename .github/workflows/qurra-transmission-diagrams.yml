@@ -6,6 +6,9 @@ on:
       - 'legacy/lib/qurraTransmissionData.ts'
       - 'app/studio/qurra-diagrams/**'
       - 'legacy/components/NarratorDirectoryPage.tsx'
+      - 'legacy/components/WorkspaceNavigation.tsx'
+      - 'legacy/App.tsx'
+      - 'tests/qurra-studio-integration.test.cjs'
       - 'tests/sanad-path-layout.test.ts'
       - '.github/workflows/qurra-transmission-diagrams.yml'
   workflow_dispatch:
@@ -26,3 +29,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:sanad
+      - run: node tests/qurra-studio-integration.test.cjs
