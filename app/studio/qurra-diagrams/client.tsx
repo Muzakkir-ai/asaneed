@@ -171,9 +171,10 @@ export default function QurraTransmissionWorkspace(){
        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Pencil size={15}/> تعديل هذا السند</button>}
      </div>}
     </div>}
+    {overviewStage&&paths.length>0&&!editingChain&&<p className="text-xs text-muted-foreground">المخطط الكامل قابل للتمرير أفقيًّا لقراءة أسماء الرجال كاملة، دون تصغير البطاقات.</p>}
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
-     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths}
+     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage}
       routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
