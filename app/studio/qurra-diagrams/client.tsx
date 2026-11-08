@@ -7,6 +7,7 @@ import {QURRA,shortQariName} from '../../../legacy/lib/qurra';
 import {buildQurraTransmissionData,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
+import {matchesArabic} from '../../../legacy/lib/arabicSearch';
 import {workspaceHeaders} from '../../../legacy/lib/workspaceSelection';
 import type {BuilderLibrary} from '../../../legacy/lib/bookBuilder';
 
@@ -24,6 +25,7 @@ export default function QurraTransmissionWorkspace(){
  const [stage,setStage]=useState<QurraStage>('jazari-dani');
  const [qari,setQari]=useState('all');
  const [route,setRoute]=useState('all');
+ const [narratorSearch,setNarratorSearch]=useState('');
  const [sourcesVisible,setSourcesVisible]=useState(false);
  const [editorVisible,setEditorVisible]=useState(false);
  useEffect(()=>{
@@ -45,7 +47,8 @@ export default function QurraTransmissionWorkspace(){
  };
  const data=useMemo(()=>library?buildQurraTransmissionData(library):null,[library]);
  const candidates=(data?.witnesses||[]).filter(w=>w.stage===stage);
- const chosen=candidates.filter(w=>(qari==='all'||w.qariId===qari)&&(route==='all'||w.routeId===route));
+ const chosen=candidates.filter(w=>(qari==='all'||w.qariId===qari)&&(route==='all'||w.routeId===route)
+  &&(!narratorSearch.trim()||w.ids.some(id=>matchesArabic(data?.names[id]||'',narratorSearch))));
  const qariOptions=[...new Set(candidates.map(w=>w.qariId))];
  const routeOptions=[...new Map(candidates.filter(w=>qari==='all'||w.qariId===qari).map(w=>[w.routeId,w.title])).entries()];
  const paths=chosen.map(w=>w.ids),groups=groupSimilarSanadRoutes(paths);
@@ -87,6 +90,11 @@ export default function QurraTransmissionWorkspace(){
       </select>
      </label>
     </div>
+    <label className="block text-sm">ابحث عن راوٍ من جميع الأسماء المحفوظة
+     <input type="search" aria-label="البحث عن راوٍ في الرسم" value={narratorSearch} onChange={event=>setNarratorSearch(event.target.value)}
+      placeholder="اكتب جزءًا من الاسم لتصفية المسارات التي تذكره" className="mt-1 block w-full rounded-md border bg-background p-2"/>
+    </label>
+    {narratorSearch.trim()&&<p className="text-xs text-muted-foreground">الأسماء المحفوظة المطابقة: {arabicDigits(library?.people.filter(p=>!p.archived&&matchesArabic(p.name,narratorSearch)).length||0)}. البحث يعرض المسارات التي وردت فيها هوية الراوي بالفعل، ولا ينشئ وصلة جديدة.</p>}
     {chosen.length>0?<CombinedSanadView key={stage+':'+qari+':'+route} paths={paths}
      routeLabels={chosen.map(w=>shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
      source="وصلات الرواة المعروضة مأخوذة من هويات ومسارات محفوظة، لا من تشابه الأسماء."
