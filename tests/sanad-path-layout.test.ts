@@ -307,6 +307,13 @@ assert.deepEqual(companionsProphetIndexedGraph({...companionList,body:'رسول 
  'Mention of the Prophet without an explicit recitation relation is not an arrow');
 assert.deepEqual(companionsProphetIndexedGraph(companionList,'nafi').paths,[],
  'Never leak the Companions from another qiraah source');
+const abuMusaNominative={
+ id:'p-abiamr',title:'CHAIN:abiamr:prophet',
+ body:'وَهَؤُلَاءِ السِّتَّةُ: أَبُو مُوسَى الأَشْعَرِيُّ قَرَأُوا عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.',
+};
+assert.ok(companionsProphetIndexedGraph(abuMusaNominative,'abiamr').paths
+ .some(path=>path[0]==='sahabi:abumusa'&&path[1]==='prophet'),
+ 'Nominative أبو موسى must match indexed genitive أبي موسى without merging identities');
 
 const preferredName='أبي موسى عيسى بن مينا بن وردان المدني المعروف بقالون';
 const preferredQalun=historicalSection([labelledQalun],'nafi','قالون','rawi-imam',
