@@ -134,7 +134,7 @@
   html, body, #root { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; overflow: hidden !important; }
   .certificate-print-screen { width: 297mm !important; height: 210mm !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; background: white !important; overflow: hidden !important; }
   .certificate-print-viewport { width: 297mm !important; height: 210mm !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
-  .print-area { position: relative !important; width: 297mm !important; height: 210mm !important; min-height: 0 !important; max-height: 210mm !important; box-sizing: border-box !important; box-shadow: none !important; margin: 0 auto !important; padding: var(--sanad-text-top, 52.8mm) 16mm 8mm !important; overflow: hidden !important; break-inside: avoid !important; page-break-inside: avoid !important; break-after: avoid !important; }
+  .print-area { position: relative !important; width: 297mm !important; height: 210mm !important; min-height: 0 !important; max-height: 210mm !important; box-sizing: border-box !important; box-shadow: none !important; margin: 0 auto !important; padding: var(--sanad-text-top, 52.8mm) 16mm 16mm !important; overflow: hidden !important; break-inside: avoid !important; page-break-inside: avoid !important; break-after: avoid !important; }
   .certificate-ornament { inset: auto !important; top: 50% !important; left: 50% !important; width: 292.2mm !important; height: auto !important; aspect-ratio: 292.17 / 206.99 !important; transform: translate(-50%, -50%) !important; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }

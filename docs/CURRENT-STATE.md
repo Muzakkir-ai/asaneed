@@ -1,3 +1,9 @@
+## Certificate footer clearance correction — 8 November 2026
+
+The first bottom-anchored footer release placed the date/registration baseline too close to the certificate's inner ornamental border (user screenshot). Corrected the bottom content inset from **8 mm to 16 mm** in both live preview and native print/PDF rules. This lifts the entire 30 mm mujeez/signing block by 8 mm while retaining its bottom anchor, 6 mm content separation, existing QR layout and limited historical balancing. Never let footer text or issuer artwork touch the ornamental border; keep overflow protection active. No certificate or sanad data changed.
+
+Validation: pending Vercel preview/production build; full authenticated certificate print inspection remains necessary.
+
 ## Certificate issuer footer anchored to bottom safe area — 8 November 2026
 
 The landscape A4 certificate reserves a 30 mm bottom signing area for the mujeez, signature/date, and registration information, with a separate 6 mm gap before the actual footer contents. The footer rests approximately 8 mm above the paper bottom (about 6 mm inward from the ornamental border); older QR-mode certificates reserve 36 mm for the QR. Short ijazah texts no longer pull the footer upward through auto-centering. For historical unfixed headers, restrained composition balancing may raise the footer at most 4 mm and never lower it. Preview and native print use the same bottom padding. Certificate data, typography settings, and snapshot content remain unchanged.
