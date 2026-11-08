@@ -1,5 +1,6 @@
 import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
+import {sharedSanadBuses} from '../legacy/lib/sanadSharedBus';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
 import {allHistoricalSections,historicalSection,imamCompanionIndexedGraph,rawiImamIndexedGraph,companionsProphetIndexedGraph} from '../legacy/lib/qurraHistoricalSegments';
@@ -109,6 +110,32 @@ const denseConnections=[
  ...denseRows[1].flatMap(from=>denseRows[2].map(to=>({from,to}))),
  ...denseRows[2].map(from=>({from,to:'ubayy'})),
 ];
+// The five intermediaries explicitly link to all three Companions. A shared
+// visual bus replaces fifteen tangled SVG edges with five inputs and three
+// outputs, but only because all fifteen original pairs really exist.
+const provenBuses=sharedSanadBuses(denseRows,denseConnections);
+assert.equal(provenBuses.length,1,'a complete 5×3 historical narrator graph has one justified bus');
+assert.equal(provenBuses[0].rank,1);
+assert.deepEqual(provenBuses[0].from,denseRows[1]);
+assert.deepEqual(provenBuses[0].to,denseRows[2]);
+assert.equal(provenBuses[0].edgeIndices.length,15);
+for(const from of provenBuses[0].from)for(const to of provenBuses[0].to){
+ assert.ok(denseConnections.some(edge=>edge.from===from&&edge.to===to),
+  'a shared bus must never imply a missing sanad edge');
+}
+const sparseConnections=denseConnections.filter(edge=>!((edge.from==='teacher1'||edge.from==='teacher2')&&edge.to==='sahabi2'));
+const safeBuses=sharedSanadBuses(denseRows,sparseConnections);
+assert.ok(safeBuses.every(bus=>bus.from.every(from=>bus.to.every(to=>
+ sparseConnections.some(edge=>edge.from===from&&edge.to===to)))),
+ 'an incomplete group may only bundle its fully connected subset');
+const missingSquare=sharedSanadBuses([['a','b'],['c','d']],[
+ {from:'a',to:'c'},{from:'a',to:'d'},{from:'b',to:'c'},
+]);
+assert.deepEqual(missingSquare,[],'incomplete 2×2 relationships must not be joined');
+assert.deepEqual(sharedSanadBuses([['a','b'],['c','d']],[
+ {from:'a',to:'c'},{from:'a',to:'d'},{from:'b',to:'c'},{from:'b',to:'d'},
+]),[],'small simple connections retain ordinary card-edge routing');
+console.log('Shared historical sanad buses require complete evidenced many-to-many links');
 const densePorts=denseConnections.map(edge=>({
  ...edge,x1:densePoints.get(edge.from)!.x,x2:densePoints.get(edge.to)!.x,
 }));
