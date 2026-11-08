@@ -18,7 +18,7 @@ const stages:{id:QurraStage;name:string;description:string}[]=[
  {id:'other-seven',name:'مسارات السبعة الأخرى',description:'الطرق المحفوظة التي لا تمر بالداني في بيانات الرواية الحالية'},
 ];
 
-export default function QurraTransmissionWorkspace(){
+export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={}){
  const [library,setLibrary]=useState<BuilderLibrary|null>(null);
  const [error,setError]=useState('');
  const [loading,setLoading]=useState(true);
@@ -55,9 +55,9 @@ export default function QurraTransmissionWorkspace(){
  const unreviewed=chosen.some(w=>(w.stage==='jazari-dani'||w.stage==='jazari-three')&&!w.parentConfirmed);
  const coverage=stage==='jazari-three'?QURRA.filter(q=>q.family==='three'):QURRA.filter(q=>q.family==='seven');
  const covered=new Set(candidates.map(w=>w.qariId));
- return <main dir="rtl" className="mx-auto w-full max-w-[1500px] space-y-5 p-3 sm:p-6">
+ return <div dir="rtl" className="mx-auto w-full max-w-[1500px] space-y-5 p-3 sm:p-6">
   <header className="space-y-3 rounded-xl border bg-background p-4">
-   <a href="/studio?page=asaneed" className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى الكتب والطرق</a>
+   {onBack?<button type="button" onClick={onBack} className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى رجال الأسانيد</button>:<a href="/studio?page=narrators" className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى رجال الأسانيد</a>}
    <h1 className="text-2xl font-bold">مخططات أسانيد القراء</h1>
    <p className="text-sm text-muted-foreground">مساحة مستقلة لتجميع الأسانيد المحفوظة وفق هويات الرواة وروابطهم الفعلية؛ لا تضيف وصلات غير مسجلة، ولا تغيّر أسانيد المشايخ.</p>
   </header>
@@ -136,5 +136,5 @@ export default function QurraTransmissionWorkspace(){
     <p className="text-muted-foreground">ستضاف فقط عند ربط هويات الرواة وأسانيدهم الموثقة، ولا تُنشأ تلقائيًا من أسماء القراء أو نصوص متشابهة. لإضافة الرواة والطرق الآن استخدم قسم الكتب والطرق المحفوظ.</p>
    </aside>
   </div>}
- </main>;
+ </div>;
 }
