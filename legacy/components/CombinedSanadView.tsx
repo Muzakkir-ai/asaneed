@@ -168,7 +168,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
        data-edge-index={edge.edgeIndex} data-edge-id={edge.id||undefined}
        d={edge.d} fill="none" stroke="none" pointerEvents="none"/>)}
       {focused!==null&&coordinatedPlan.edgePaths.filter(edge=>edge.from===focused||edge.to===focused)
-       .map(edge=><path key={'focused-'+edge.edgeIndex} d={edge.d} fill="none"
+       .map(edge=><path key={'focused-'+edge.edgeIndex} data-focused-edge={edge.edgeIndex} d={edge.d} fill="none"
         stroke="currentColor" strokeWidth="2" opacity=".95" pointerEvents="none"
         markerEnd={`url(#${arrow})`}/>)}
      </>}
