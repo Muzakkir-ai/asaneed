@@ -96,7 +96,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
    <div className="relative mx-auto overflow-hidden" style={{width:width*scale,height:height*scale}}>
    <div ref={canvas} className="absolute left-0 top-0 origin-top-left" style={{width,height,transform:`scale(${scale})`}}>
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
-     <defs><marker id={arrow} markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
+     <defs><marker id={arrow} markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
       const active=route===null||routes.includes(route);
       if(!active)return null;
