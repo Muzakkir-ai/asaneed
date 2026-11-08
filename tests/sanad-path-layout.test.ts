@@ -252,6 +252,22 @@ assert.deepEqual(filtered.edgePaths.map(e=>e.routes),[[0],[1]],
 assert.deepEqual(groupSanadConnections([['A','B'],['X','Y']],[
  {from:'A',to:'X'},{from:'B',to:'Y'}
 ]).flatMap(group=>group.edgeIndices).sort((a,b)=>a-b),[0,1]);
+const crossingPair=makePlan([['left','right'],['lowerLeft','lowerRight']],[
+ {from:'left',to:'lowerRight',id:'saved-cross-1',routes:[0]},
+ {from:'right',to:'lowerLeft',id:'saved-cross-2',routes:[1]},
+]).plan;
+assert.deepEqual(crossingPair.groups.map(g=>g.kind),['single','single'],
+ 'independent crossing relationships must not be merged into a false junction');
+assert.deepEqual(crossingPair.edgePaths.map(p=>p.id),['saved-cross-1','saved-cross-2'],
+ 'original stored relationship IDs must remain attached to rendered edges');
+const explicitOriginal=planCoordinatedSanad([['root'],['leaf']],
+ new Map([['root',{x:210}],['leaf',{x:210}]]),
+ [{from:'root',to:'leaf',id:'database-edge-42',routes:[9],originalIndex:42}],
+ 420,192,80,new Map());
+assert.equal(explicitOriginal.valid,true);
+assert.equal(explicitOriginal.edgePaths[0].edgeIndex,42,'filtered paths retain original graph edge indexes');
+assert.equal(explicitOriginal.edgePaths[0].id,'database-edge-42');
+assert.deepEqual(explicitOriginal.edgePaths[0].routes,[9]);
 console.log('Coordinated orthogonal bus geometry: fan-in/out, dense, partial, obstacles, memberships PASS');
 
 
