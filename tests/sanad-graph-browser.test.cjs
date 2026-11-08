@@ -114,6 +114,7 @@ const {chromium}=require('playwright');
      horizontalOffset:Math.abs((c.left+c.right)/2-(b.left+b.right)/2),
      gapBelowNumber:b.top-c.bottom,
      iconSmaller:b.width<c.width&&b.height<c.height,
+     numberSize:[c.width,c.height],iconSize:[b.width,b.height],
      insideCard:b.bottom<=a.bottom+1,
      beforeSecondary:!badgeRow||b.bottom<=badgeRow.getBoundingClientRect().top+1,
     };
@@ -121,7 +122,7 @@ const {chromium}=require('playwright');
    for(const position of tracePlacements){
     assert.ok(position.horizontalOffset<=2,'trace icon centered beneath number at '+width);
     assert.ok(position.gapBelowNumber>=-0.5,'trace icon stays below number at '+width);
-    assert.ok(position.iconSmaller,'trace icon smaller than main number');
+    assert.ok(position.iconSmaller,'trace icon smaller than main number: '+JSON.stringify(position));
     assert.ok(position.insideCard&&position.beforeSecondary,'trace icon must not overlap route badges at '+width);
    }
    const collisions=await regression.evaluate(section=>{
