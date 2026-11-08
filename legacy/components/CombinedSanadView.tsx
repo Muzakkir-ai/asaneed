@@ -1,3 +1,4 @@
+import {Waypoints} from 'lucide-react';
 import {placeSanad} from '../lib/sanadPlacement';
 import {optimizeSanadPorts} from '../lib/sanadConnectorRouting';
 import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} from 'react';
@@ -108,7 +109,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
      })}
     </svg>
     {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={route!==null&&!paths[route]?.includes(id)?'absolute opacity-40':'absolute'} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
-     <button type="button" data-trace-person={id} aria-label="تتبّع اتصالات الراوي" aria-pressed={focused===id} title="تتبّع اتصالات الراوي" onClick={()=>setFocused(current=>current===id?null:id)} className="absolute top-1 left-1 z-10 rounded border bg-background px-1 text-[10px] text-primary shadow-sm">تتبّع</button>
+     <button type="button" data-trace-person={id} aria-label="تتبّع اتصالات الراوي" aria-pressed={focused===id} title="تتبّع اتصالات الراوي" onClick={()=>setFocused(current=>current===id?null:id)} className={"absolute top-1 left-1 z-10 inline-flex h-7 w-7 items-center justify-center rounded-md border bg-background/95 text-primary shadow-sm transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 "+(focused===id?"border-primary bg-primary/10":"border-primary/20")}><Waypoints size={15} strokeWidth={2} aria-hidden="true"/></button>
      <div className={"[&>article>div>div:last-child]:hidden"+(focused!==null&&focused!==id&&!graph.edges.some(edge=>edge.from===focused&&edge.to===id||edge.to===focused&&edge.from===id)?' opacity-50':'')}>{renderPerson(id,sanadPositions(route===null?paths:[paths[route]],id))}</div>
     </div>)}
    </div>
