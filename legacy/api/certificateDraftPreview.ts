@@ -37,8 +37,15 @@ export default createEndpoint({
   if(styleRecord.error)throw new Error(styleRecord.error.message);
   const savedDraft=styleRecord.data?.draft?.certificatePrintStyle;
   let formatting=sourceFormatting;
-  if(savedDraft?.version===1&&savedDraft.settings&&typeof savedDraft.settings==='object'){
-   try{formatting=JSON.stringify({...JSON.parse(sourceFormatting),settings:savedDraft.settings,draftPrintMode:savedDraft.printMode==='none'?'none':'number'});}catch{}
+  if(savedDraft?.version===1){
+   try{
+    const systemSource=JSON.parse(sourceFormatting);
+    formatting=savedDraft.systemDefault===true
+     ?JSON.stringify({...systemSource,settings:null,appearanceDefaults:false,draftPrintMode:'number'})
+     :savedDraft.settings&&typeof savedDraft.settings==='object'
+      ?JSON.stringify({...systemSource,settings:savedDraft.settings,draftPrintMode:savedDraft.printMode==='none'?'none':'number'})
+      :sourceFormatting;
+   }catch{}
   }
   // Bind the mujeez identity to the certificate's actual issuer, never the viewer.
   const profile=profiles.records.find(p=>p.ownerId===(cert.additionalShaykh?'guest:'+cert.additionalShaykh:issuer));
