@@ -1,0 +1,52 @@
+'use client';
+
+import {useState} from 'react';
+import {BookOpen,ChevronDown} from 'lucide-react';
+import CombinedSanadView from '../../../legacy/components/CombinedSanadView';
+import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
+import {arabicDigits} from '../../../legacy/lib/arabicDigits';
+import {displayRawi,shortQariName} from '../../../legacy/lib/qurra';
+import type {HistoricalSectionView} from '../../../legacy/lib/qurraHistoricalSegments';
+
+export default function QurraHistoricalPanel({section}:{
+ section:HistoricalSectionView|null;
+}){
+ const [showSource,setShowSource]=useState(false);
+ if(!section)return <div role="status" className="rounded-xl border border-dashed bg-card p-5 text-sm text-muted-foreground">
+  لم يُعثر على نص محفوظ لهذا الجزء. افتح النصوص المشتركة لإضافة المصدر ومراجعته.
+ </div>;
+ const name=(id:string)=>section.names[id]||'هوية غير معروفة';
+ return <section dir="rtl" className="space-y-3 rounded-xl border bg-card p-3 sm:p-4">
+  <div className="flex flex-wrap items-center justify-between gap-3">
+   <div>
+    <h2 className="text-base font-semibold">{shortQariName(section.qariId)}{section.kind==='rawi-imam'?' · '+displayRawi(section.qariId,section.rawi):''}</h2>
+    <p className="text-xs text-muted-foreground">نص السند المحفوظ · الروابط غير معتمدة حتى مراجعة المصدر</p>
+   </div>
+   <button type="button" onClick={()=>setShowSource(v=>!v)} aria-expanded={showSource}
+    className="inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted">
+    <BookOpen size={15}/> {showSource?'إخفاء النص الأصلي':'عرض النص الأصلي'} <ChevronDown size={14}/>
+   </button>
+  </div>
+  {section.paths.length?
+   <CombinedSanadView paths={section.paths} review
+    routeLabels={section.paths.map((_,index)=>'المسار '+arabicDigits(index+1))}
+    renderPerson={(id,positions)=><BranchPersonCard name={name(id)} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
+   :<p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+    الفروع محفوظة نصًّا. لم يمكن رسمها بأمان دون افتراض اتصالات إضافية؛ راجعها في بطاقات النص أدناه.
+   </p>}
+  {(showSource||!section.paths.length)&&<div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+   <p className="text-xs font-semibold text-muted-foreground">النص المحفوظ كما هو (دون تغيير)</p>
+   <p className="whitespace-pre-wrap break-words text-sm leading-8">{section.body}</p>
+  </div>}
+  {section.branches.length>1&&<details className="rounded-md border px-3 py-2 text-sm">
+   <summary className="cursor-pointer font-medium">تفاصيل الفروع النصية ({arabicDigits(section.branches.length)})</summary>
+   <div className="mt-3 grid gap-2 sm:grid-cols-2">
+    {section.branches.map((body,index)=><div key={index} className="rounded-md border bg-background p-3">
+     <p className="mb-2 text-xs font-semibold text-primary">الفرع {arabicDigits(index+1)}</p>
+     <p className="whitespace-pre-wrap break-words text-sm leading-7">{body}</p>
+    </div>)}
+   </div>
+  </details>}
+  <p className="text-xs text-muted-foreground">هذا عرض استدلالي لنص محفوظ، لا اعتمادٌ علميّ للوصلات. لن تُضاف أسماء أو صلات إلى قاعدة الرواة تلقائيًا.</p>
+ </section>;
+}
