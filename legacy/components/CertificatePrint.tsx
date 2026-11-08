@@ -531,7 +531,87 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           </>}
         </div>
       </div>
-      {isDraft&&<details className="certificate-settings-panel no-print container mx-auto px-4 mb-4" dir="rtl"><summary className="cursor-pointer font-semibold">تنسيق</summary><fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 flex flex-wrap items-end gap-3 rounded-lg border bg-background p-3"><label>الجزء <select aria-label="جزء الشهادة" className="rounded border bg-background p-2" value={activeArea} onChange={e=>setActiveArea(e.target.value as Area)}>{Object.entries(labels).filter(([key])=>key!=='shaykh').map(([key,label])=><option key={key} value={key}>{key==='reading'&&matnDocument?'عنوان المتن SVG':key==='conclusion'?(matnDocument?'الخاتمة المضافة للمتن':'الخاتمة — هذا، وأوصيه'):label}</option>)}</select></label>{activeArea==='reading'&&matnDocument&&<div className="w-full"><p className="text-xs text-muted-foreground">{headingOverride===null?'إعدادات المتن الافتراضية':headingOverride?'تخصيص لهذه الشهادة فقط':typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?'تخصيص محفوظ سابقًا لهذه الشهادة':'إعدادات المتن الافتراضية'}</p><Button type="button" size="sm" variant="outline" onClick={()=>setHeadingOverride(null)}>استخدام إعدادات المتن</Button><MatnHeadingControls name={matnDocument.bookName} artworkNumber={matnDocument.headingArtworkNumber} value={resolvedHeading} onChange={setHeadingOverride} onReset={()=>setHeadingOverride(null)} artwork={activeArtwork} base={activeArtworkBase} primary={borderColor} secondary={accentColor} showPreview={false}/></div>}{([{key:'scalePercent',label:'الحجم ٪',min:50,max:150,step:1,value:100},{key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},{key:'paragraphSpacing',label:'تباعد الفقرات (نقطة)',min:0,max:30,step:1,value:matnDocument?6:3},{key:'firstLineIndent',label:'إزاحة أول سطر من اليمين (مم)',min:0,max:25,step:1,value:0}] as const).filter(c=>activeArea!=='reading'||(!matnDocument&&c.key==='scalePercent')).map(c=><label key={c.key} className="text-sm">{c.label}<input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2" type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value} onChange={e=>{if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;const value=Math.max(c.min,Math.min(c.max,e.target.valueAsNumber));setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],[c.key]:value}}));}}/></label>)}{activeArea!=='reading'&&<label>ضبط الفقرة — آخر سطر <select aria-label="محاذاة آخر سطر" className="rounded border bg-background p-2" value={typography[activeArea].lastLineAlignment??(typography[activeArea].alignment==='center'||activeArea==='conclusion'?'center':'right')} onChange={e=>setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],alignment:'justify',lastLineAlignment:e.target.value==='center'?'center':'right'}}))}><option value="right">يمين</option><option value="center">وسط</option></select></label>}<Button disabled={savingFormat} onClick={()=>void saveFormat()}>{savingFormat?'جارٍ الحفظ…':'حفظ التنسيق'}</Button></fieldset></details>}
+      {isDraft&&<details className="certificate-settings-panel no-print container mx-auto px-4 mb-4" dir="rtl">
+        <summary className="cursor-pointer font-semibold">تنسيق الشهادة — النص والفقرات والرسوم</summary>
+        <fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 space-y-4 rounded-lg border bg-background p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium">الجزء
+              <select aria-label="جزء الشهادة" className="ms-2 rounded border bg-background p-2"
+                value={activeArea} onChange={e=>setActiveArea(e.target.value as Area)}>
+                {Object.entries(labels).filter(([key])=>key!=='shaykh').map(([key,label])=>
+                  <option key={key} value={key}>{key==='reading'&&matnDocument?'عنوان المتن SVG':key==='conclusion'?(matnDocument?'الخاتمة المضافة للمتن':'الخاتمة — هذا، وأوصيه'):label}</option>
+                )}
+              </select>
+            </label>
+            <span className="text-xs text-muted-foreground">تظهر التغييرات مباشرة في الشهادة أدناه، وتبقى بيانات الإجازة ونصها دون تغيير.</span>
+          </div>
+          {activeArea==='reading'&&matnDocument&&
+            <div className="w-full space-y-2">
+              <p className="text-sm font-semibold">تنسيق SVG، الفواصل بين أجزاء المتن، وموضع الخاتمة</p>
+              <p className="text-xs text-muted-foreground">{headingOverride===null?'التصميم الأصلي للمتن':headingOverride?'تخصيص هذه الشهادة فقط':'التصميم المعتمد من المتن، مع إمكانية تخصيصه للشهادة'}</p>
+              <MatnHeadingControls name={matnDocument.bookName} artworkNumber={matnDocument.headingArtworkNumber}
+                value={resolvedHeading} onChange={setHeadingOverride} onReset={()=>setHeadingOverride(null)}
+                artwork={activeArtwork} base={activeArtworkBase} primary={borderColor} secondary={accentColor} showPreview={false}/>
+            </div>
+          }
+          <div className="flex flex-wrap items-end gap-3">
+            {([{key:'scalePercent',label:'حجم الجزء ٪',min:50,max:150,step:1,value:100},
+              {key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},
+              {key:'paragraphSpacing',label:'المسافة بين الفقرات (pt)',min:0,max:30,step:1,value:matnDocument?6:3},
+              {key:'firstLineIndent',label:'إزاحة أول سطر (mm)',min:0,max:25,step:1,value:0}] as const)
+              .filter(c=>activeArea!=='reading'||(!matnDocument&&c.key==='scalePercent')).map(c=>
+                <label key={c.key} className="text-sm">{c.label}
+                  <input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2"
+                    type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value}
+                    onChange={e=>{
+                      if(!e.target.value||!Number.isFinite(e.target.valueAsNumber))return;
+                      const value=Math.max(c.min,Math.min(c.max,e.target.valueAsNumber));
+                      setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],[c.key]:value}}));
+                    }}/>
+                </label>
+              )}
+            {activeArea==='reading'&&!matnDocument&&
+              <label className="text-sm">المسافة بعد رسوم العنوان (mm)
+                <input aria-label="المسافة بعد رسوم العنوان" className="ms-2 w-20 rounded border bg-background p-2"
+                 type="number" min={0} max={20} step={0.5} value={typography.reading.headingGapMm??2}
+                 onChange={e=>{if(!Number.isFinite(e.target.valueAsNumber))return;setTypography(prev=>({...prev,reading:{...prev.reading,headingGapMm:Math.max(0,Math.min(20,e.target.valueAsNumber))}}));}}/>
+              </label>
+            }
+            {activeArea==='conclusion'&&
+              <label className="text-sm">رفع أو خفض الخاتمة (mm)
+                <input aria-label="رفع أو خفض الخاتمة" className="ms-2 w-20 rounded border bg-background p-2"
+                  type="number" min={-15} max={15} step={0.5}
+                  value={matnDocument?resolvedHeading.conclusionOffsetMm??0:typography.conclusion.offsetMm??0}
+                  onChange={e=>{
+                    if(!Number.isFinite(e.target.valueAsNumber))return;
+                    const n=Math.max(-15,Math.min(15,e.target.valueAsNumber));
+                    if(matnDocument)setHeadingOverride({...resolvedHeading,conclusionOffsetMm:n});
+                    else setTypography(prev=>({...prev,conclusion:{...prev.conclusion,offsetMm:n}}));
+                  }}/>
+                <span className="block text-xs text-muted-foreground">السالب للرفع، والموجب للخفض.</span>
+              </label>
+            }
+            {activeArea!=='reading'&&
+              <label className="text-sm">محاذاة آخر سطر
+                <select aria-label="محاذاة آخر سطر" className="ms-2 rounded border bg-background p-2"
+                  value={typography[activeArea].lastLineAlignment??(typography[activeArea].alignment==='center'||activeArea==='conclusion'?'center':'right')}
+                  onChange={e=>setTypography(prev=>({...prev,[activeArea]:{...prev[activeArea],alignment:'justify',lastLineAlignment:e.target.value==='center'?'center':'right'}}))}>
+                  <option value="right">يمين</option><option value="center">وسط</option>
+                </select>
+              </label>
+            }
+          </div>
+          <div className="flex flex-wrap items-center gap-3 border-t pt-3">
+            <Button type="button" disabled={savingFormat} onClick={()=>void saveFormat()}>
+              {savingFormat?'جارٍ الحفظ…':'حفظ تنسيق هذه الشهادة'}
+            </Button>
+            <Button type="button" variant="outline" disabled={savingFormat} onClick={()=>void restoreSystemFormat()}>
+              استعادة تنسيق النظام
+            </Button>
+            <p className="text-xs text-muted-foreground">الحفظ لهذه المسودة فقط ولا يُنشئ شهادة نهائية؛ لا يتغير تصميم المتن أو السند المشترك.</p>
+          </div>
+        </fieldset>
+      </details>}
       {overflow&&<div role="alert" className="certificate-settings-panel no-print container mx-auto px-4 mb-4"><div className="rounded-lg border border-destructive bg-background p-4 text-destructive" dir="rtl"><strong>تنبيه: محتوى الشهادة يتجاوز المساحة الآمنة للطباعة.</strong><p>السند طويل أو يتداخل مع العنوان أو التذييل. راجع حجم الخط والمسافات قبل الاعتماد أو الطباعة؛ لن يُصغّر النص تلقائيًا.</p></div></div>}
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''} ${printMode==='qr'?'certificate-qr-footer':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 16mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
@@ -540,7 +620,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
             <div ref={bodyArea} className="certificate-body-content w-full">
             {sanadBody?.trim() ? (
-              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={areaStyle('sanad')}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} headingSettings={sharedHeading?resolvedHeading:undefined} legacyAlignment={!isDraft&&!matnDocument.editorVersion} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
+              <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={{...areaStyle('sanad'),'--certificate-conclusion-offset':`${typography.conclusion.offsetMm??0}mm`} as React.CSSProperties}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} headingSettings={sharedHeading?resolvedHeading:undefined} legacyAlignment={!isDraft&&!matnDocument.editorVersion} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
             ) : (
               <>
                 <p className="mt-6">الحمد لله الذي أنزل القرآن، والصلاة والسلام على من أُرسل بالهدى والفرقان، أما بعد:</p>
