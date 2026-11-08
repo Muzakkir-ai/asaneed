@@ -103,6 +103,20 @@ const {chromium}=require('playwright');
   assert.match(await straightCases.getAttribute('data-long-blocked'),/H-?[\d.]+/,
    'an intervening narrator card must keep a real bypass');
 
+  // A natural side departure is allowed when the narrator cards are
+  // separated horizontally; arrowheads still enter the next narrator safely.
+  const sideCases=page.getByTestId('side-edge-regression');
+  for(const [attribute,expectedX,description] of [
+   ['data-right',216,'right side of the source narrator'],
+   ['data-left',344,'left side of the source narrator'],
+  ]){
+   const path=await sideCases.getAttribute(attribute);
+   const match=path?.match(/^M(-?[\d.]+) (-?[\d.]+)/);
+   assert.ok(match,'valid connector path for '+description);
+   assert.ok(Math.abs(Number(match[1])-expectedX)<.1,description+' rather than a bottom exit: '+path);
+   assert.match(path,/ H-?[\d.]+ V-?[\d.]+$/,description+' uses a clean one-bend path');
+  }
+
   // Always check the reported branch shapes, even without a private Hafs fixture.
   const regression=page.getByTestId('combined-regression');
   const regressionPaths=[
