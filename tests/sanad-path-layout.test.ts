@@ -134,6 +134,13 @@ assert.ok(qurraEvidence.witnesses.every(w=>!w.completeToRawi),
  'endpoints must not pretend to reach the imam or Sahaba');
 assert.equal(qurraEvidence.witnesses.find(w=>w.stage==='jazari-dani')?.parentConfirmed,false,
  'book-level sanad review must be visible even when the riwayah is confirmed');
+const changedToDraft={...fixtureLibrary,chains:fixtureLibrary.chains.map(c=>c.id==='qalun'?{...c,confirmed:false}:c)};
+const draftWitnesses=buildQurraTransmissionData(changedToDraft).witnesses.filter(w=>w.routeId==='qalun');
+assert.ok(draftWitnesses.length>0,'an edited route remains visible as a saved review draft');
+assert.ok(draftWitnesses.every(w=>!w.routeConfirmed),'edited route must not remain falsely approved');
+const archivedRoute={...fixtureLibrary,chains:fixtureLibrary.chains.map(c=>c.id==='qalun'?{...c,archived:true}:c)};
+assert.ok(!buildQurraTransmissionData(archivedRoute).witnesses.some(w=>w.routeId==='qalun'),
+ 'archived routes must not appear in the transmission diagram');
 const orphaned={...fixtureLibrary,chains:fixtureLibrary.chains.filter(c=>c.id!=='parent-seven')};
 assert.equal(buildQurraTransmissionData(orphaned).witnesses.filter(w=>w.stage==='dani-seven').length,0,
  'do not use a route detached from its declared saved book chain');

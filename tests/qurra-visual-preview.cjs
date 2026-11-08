@@ -95,6 +95,19 @@ const library={
     console.log('Saved '+target);
    }
   }
+  // Prove the selected route opens directly in the reusable persisted editor.
+  // The mock GET response supplies the same canonical IDs; nothing is saved.
+  await page.setViewportSize({width:1440,height:960});
+  await page.goto(url,{waitUntil:'domcontentloaded'});
+  await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
+  await page.getByLabel('اختر طريقًا محفوظًا لاستكماله').selectOption('route-qalun');
+  await page.getByRole('heading',{name:'طريق قالون',exact:true}).waitFor();
+  await page.getByText('آخر راوٍ محفوظ في كل فرع:',{exact:false}).first().waitFor();
+  await page.getByText('أبو الفتح فارس',{exact:false}).first().waitFor();
+  const editorShot=path.join(output,'05-manual-route-extension-desktop.png');
+  await page.screenshot({path:editorShot,fullPage:true,animations:'disabled'});
+  assert.ok(fs.statSync(editorShot).size>2000,'Manual edit screenshot generated');
+  console.log('PASS selected saved route opens directly with reviewed narrator IDs');
   const summary=[
    '# Asaneed GitHub Actions Visual Preview',
    '',
@@ -108,6 +121,7 @@ const library={
    'Ibn al-Jazari toward three additional readers; other saved seven-reader segments.',
    '',
    'Desktop: 1440px. Mobile: 390px. These are view-only screenshots.',
+   'The extra desktop screenshot shows opening an existing saved route for manual extension.',
    '',
    'Commit: '+(process.env.GITHUB_SHA||'local'),
    '',
