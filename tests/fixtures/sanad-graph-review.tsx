@@ -21,6 +21,20 @@ const branches=route.branches.map(branch=>branch.map(node=>({personId:node.perso
 const source=`كما أخذته عن ${author}، عن ${first}، عن ${meeting} (ح). وقرأ ${author} أيضًا على ${second}، عن ${third}، عن ${meeting}، عن ${rawi}`;
 const personIds=[0,1,4,2,3,4,5].map(i=>people[i].id);
 
+// Mandatory, sanitized regressions for the previously reported al-Jazari branches,
+// al-Umyuti vertical continuation, and Ibn Ghanim's long bypass.
+const regressionPaths=[
+ ['jazari','uqabi','ibnGhanim','ibnShuhadha','end'],
+ ['jazari','nuwayri','umyuti','samdasi','ibnShuhadha','end'],
+ ['jazari','umyuti','samdasi','ibnShuhadha','end'],
+];
+const regressionNames:Record<string,string>={
+ jazari:'الإمام ابن الجزري',uqabi:'أبو النعيم رضوان العُقبي',nuwayri:'النويري',
+ umyuti:'العُميوطي',samdasi:'السمديسي',ibnGhanim:'ابن غانم',
+ ibnShuhadha:'عبد الرحمن بن شحاذة',end:'ملتقى الأسانيد',
+};
+const graphCard=(id:string,positions:number[])=><BranchPersonCard name={regressionNames[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>;
+
 export default function Review(){
  return <main className="zite-app min-w-0 space-y-4" dir="rtl">
   <script type="application/json" id="fixture-library" dangerouslySetInnerHTML={{__html:JSON.stringify(library)}}/>
@@ -30,5 +44,8 @@ export default function Review(){
   <div data-testid="draft"><PersonalSanadInput value={'كما أخذته عن '+[author,first,meeting,rawi].join('، عن ')} personIds={[0,1,4,5].map(i=>people[i].id)} complete onApply={()=>{}}/></div>
   <div data-testid="repeated"><SanadPathView paths={[[author,first],[author,second,author]]} renderPerson={name=><span>{name}</span>}/></div>
   <div data-testid="personal"><PersonalSanadInput value={source} personIds={personIds} complete readOnly onApply={()=>{}}/></div>
+  <div data-testid="combined-regression"><CombinedSanadView paths={regressionPaths} routeLabels={['العقبي','النويري','العُميوطي']} renderPerson={graphCard}/></div>
+  <div data-testid="combined-no-labels"><CombinedSanadView paths={regressionPaths} renderPerson={graphCard}/></div>
+  <div data-testid="combined-invalid"><CombinedSanadView paths={[[ 'jazari','uqabi' ],[ 'uqabi','jazari' ]]} renderPerson={graphCard}/></div>
  </main>;
 }
