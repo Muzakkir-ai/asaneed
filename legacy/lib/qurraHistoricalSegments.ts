@@ -65,9 +65,10 @@ export function imamCompanionIndexedGraph(
  * still come exclusively from the source-scoped Rijal directory. */
 const sourceKey=(value:string)=>sanadKey(value)
  .replace(/[،؛.:()\-ـ]/gu,' ').replace(/\s+/gu,' ')
- // Kunyahs inflect: أبو / أبي / أبا are the same written name here.
- // This is only a textual witness check; no two IDs are merged.
- .replace(/(^|\s)(?:ابو|ابي|ابا)(?=\s)/gu,'$1ابو').trim();
+ // The kunya أبو / أبي / أبا inflects, but أُبيّ بن كعب is a
+ // distinct proper name. Only normalize before a non-«بن» next word.
+ // This is a text witness match, never an identity merge.
+ .replace(/(^|\s)(?:ابو|ابي|ابا)(?=\s+(?!بن(?:\s|$)))/gu,'$1ابو').trim();
 
 /** Follow only explicitly indexed teacher edges within one CHAIN source.
  * Fail closed on cycles, missing endpoints or pathological fan-out.
