@@ -9,6 +9,7 @@ on:
       - 'legacy/lib/sanadSharedBus.ts'
       - 'legacy/lib/sanadPlacement.ts'
       - 'tests/sanad-graph-browser.test.cjs'
+      - 'tests/sanad-fanin-policy.test.ts'
       - 'tests/fixtures/sanad-graph-review.tsx'
       - '.github/workflows/sanad-graph-regression.yml'
   workflow_dispatch:
@@ -28,6 +29,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Verify same-rank and measured-proximity policy
+        run: |
+          npx tsc --ignoreConfig tests/sanad-fanin-policy.test.ts legacy/lib/sanadCoordinatedRouting.ts --outDir .vercel/fanin-policy-tests --module commonjs --target es2022 --esModuleInterop --skipLibCheck --types node --noEmitOnError
+          node .vercel/fanin-policy-tests/tests/sanad-fanin-policy.test.js
       - name: Run RTL sanad graph regressions
         run: npm run test:sanad:graph
         env:
