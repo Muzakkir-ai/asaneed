@@ -27,7 +27,7 @@ import { sanadTitleRanges,scholarlyNameRanges,lightVocalizeTitle } from '../lib/
 import CertificateQR from './CertificateQR';
 import { prophetChainRanges } from '../lib/prophetChainRanges';
 import { ijazahWordingRanges } from '../lib/ijazahWordingRanges';
-import { shaykhPrintProfile, certificatePrintAuthorization, certificateDraftPreview, sanadPrintStyle, finalizeCertificate, type ShaykhPrintProfileOutputType } from '../lib/api';
+import { shaykhPrintProfile, certificatePrintAuthorization, certificateDraftPreview, certificateDraftFormatting, finalizeCertificate, type ShaykhPrintProfileOutputType } from '../lib/api';
 import { toast } from 'sonner';
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle} from '@project/components/ui/alert-dialog';
 type PrintProfile=ShaykhPrintProfileOutputType['profile'];
@@ -215,7 +215,7 @@ function renderSanadWithConclusion(text: string, primaryColor: string, secondary
 }
 type Area = 'reading' | 'sanad' | 'conclusion' | 'shaykh';
 type FontChoice = 'KSA Regular' | 'Sakkal Kitab' | 'Majalla' | 'Bahij Muna' | 'Amiri';
-type Typography = { font: FontChoice; size: number; color:ColorChoice;headingGapMm?:number;lastLineAlignment?:'right'|'center';scalePercent?:number;svgHeightPt?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;alignment?:'right'|'center'|'justify' };
+type Typography = { font: FontChoice; size: number; color:ColorChoice;headingGapMm?:number;lastLineAlignment?:'right'|'center';scalePercent?:number;svgHeightPt?:number;lineSpacing?:number;paragraphSpacing?:number;firstLineIndent?:number;offsetMm?:number;alignment?:'right'|'center'|'justify' };
 const labels: Record<Area,string> = {reading:'القراءة والرواية والطريق', sanad:'متن السند', conclusion:'الخاتمة', shaykh:'اسم المُجيز'};
 const choices: {value:FontChoice;label:string}[] = [
   {value:'KSA Regular',label:'KSA Regular'},
@@ -349,6 +349,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(!raw)return;
     try{
       const saved=JSON.parse(raw);
+      if(isDraft)setDraftPrintMode(saved.draftPrintMode==='none'?'none':'number');
       if(Array.isArray(saved.phrases))setSharedPhrases(saved.phrases);
       if(saved.settings){
         setHeadingOverride(saved.settings.matnHeading);
@@ -478,7 +479,27 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   };
   const areaStyle=(area:Area):React.CSSProperties=>{const t=typography[area],scale=(t.scalePercent??100)/100;return {fontFamily:`'${t.font}', serif`,fontWeight:t.font==='Sakkal Kitab'?700:undefined,fontSynthesis:t.font==='Sakkal Kitab'?'none':undefined,fontSize:`${(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`,lineHeight:t.lineSpacing??(area==='sanad'?`${16*scale}pt`:undefined),color:resolvedColor(t.color,borderColor,accentColor),textAlign:(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),textAlignLast:t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),textIndent:t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined,'--certificate-text-scale':scale,'--certificate-paragraph-gap':t.paragraphSpacing!==undefined?`${t.paragraphSpacing}pt`:undefined,'--certificate-alignment':(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),'--certificate-last-alignment':t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),'--certificate-line-height':t.lineSpacing?`${t.lineSpacing*(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`:undefined,'--certificate-first-indent':t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined} as React.CSSProperties;};
   const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,typography:next,phrases:styledPhrases,...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
-  const saveFormat=async()=>{if(!activeSanad?.id||!isDraft||readOnly||previewPalette)return;setSavingFormat(true);try{await sanadPrintStyle({action:'save',sanadId:activeSanad.id,settings:printSettings()});toast.success('حُفظ تنسيق الشهادة');}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ التنسيق');}finally{setSavingFormat(false);}};
+  const saveFormat=async()=>{
+    if(!isDraft||readOnly||previewPalette||savingFormat)return;
+    if(measureOverflow()){toast.error('أصلح تداخل النص أو التذييل قبل حفظ التنسيق');return;}
+    setSavingFormat(true);
+    try{
+      await certificateDraftFormatting({action:'save',certificateId:cert.id,settings:printSettings(),printMode:draftPrintMode});
+      toast.success('حُفظ تنسيق هذه الشهادة كمسودة — دون اعتماد نهائي');
+    }catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ تنسيق المسودة');}
+    finally{setSavingFormat(false);}
+  };
+  const restoreSystemFormat=async()=>{
+    if(!isDraft||readOnly||previewPalette||savingFormat)return;
+    setSavingFormat(true);
+    try{
+      await certificateDraftFormatting({action:'reset',certificateId:cert.id});
+      const fresh=await certificateDraftPreview({certificateId:cert.id});
+      setDraftData(fresh);
+      toast.success('استُعيد تنسيق النظام الأصلي لهذه الشهادة');
+    }catch(e){toast.error(e instanceof Error?e.message:'تعذر استعادة تنسيق النظام');}
+    finally{setSavingFormat(false);}
+  };
   const approveFinal=async()=>{
     if(readOnly||previewPalette||!isDraft||printPermission!=='allowed'||preparingIssuerArtwork)return;
     if(measureOverflow()){toast.error('لا يمكن اعتماد الشهادة قبل معالجة تجاوز مساحة الطباعة.');return;}
