@@ -77,8 +77,8 @@ const library={
   // synthetic records and does not reach production Supabase.
   let savedRecord=null;
   await page.route('**/api/book-builder',request=>{
-   if(request.method()==='POST'){
-    const input=JSON.parse(request.postData()||'{}');
+   if(request.request().method()==='POST'){
+    const input=JSON.parse(request.request().postData()||'{}');
     if(input.action!=='chain')return request.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:'Unexpected test action'})});
     savedRecord=input.record;
     const target=library.chains.find(c=>c.id===savedRecord.id);
