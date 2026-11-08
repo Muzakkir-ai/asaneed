@@ -3,6 +3,7 @@ import {verifiedOnwardSources,type OnwardContext} from '../lib/verifiedOnwardSou
 import CombinedSanadView from './CombinedSanadView';
 import {verifiedLegacySanad} from '../lib/verifiedLegacySanad';
 import {combinedSanad} from '../lib/combinedSanad';
+import {diagramSanadText} from '../lib/diagramSanadText';
 import BranchPersonCard from './BranchPersonCard';
 import {useEffect,useState} from 'react';
 import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/api';
@@ -168,7 +169,24 @@ export default function ShaykhSanadTree(){
 }
 
 function CompactShaykhPath({path}:{path:Path}){
- return <CombinedSanadView paths={path.routes} routeLabels={path.routeLabels} groupJazariStudents source={path.label} renderPerson={(id,positions)=><BranchPersonCard name={path.names[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>;
+ const [selectedRoute,setSelectedRoute]=useState(0);
+ const generated=diagramSanadText(path.routes[selectedRoute]??[],path.names);
+ return <div className="space-y-3">
+  <CombinedSanadView paths={path.routes} routeLabels={path.routeLabels} groupJazariStudents source={path.label} renderPerson={(id,positions)=><BranchPersonCard name={path.names[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
+  <details className="rounded-lg border p-3" data-testid="diagram-sanad-text-preview">
+   <summary className="cursor-pointer text-sm font-semibold">النص المولّد من الرسم — معاينة فقط</summary>
+   <div className="mt-3 space-y-3">
+    {path.routes.length>1&&<label className="block max-w-sm text-sm">اختر المسار
+     <select aria-label="مسار معاينة نص الرسم" value={selectedRoute} onChange={event=>setSelectedRoute(Number(event.target.value))} className="mt-1 block w-full rounded border bg-background p-2">
+      {path.routes.map((_,i)=><option key={i} value={i}>المسار {arabicDigits(i+1)}</option>)}
+     </select>
+    </label>}
+    {generated?<p dir="rtl" className="select-text whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm leading-loose">{generated}</p>
+     :<p role="status" className="text-sm text-muted-foreground">تعذر توليد النص: بعض هويات الرواة غير مكتملة، أو في المسار تكرار يحتاج مراجعة.</p>}
+    <p className="text-xs text-muted-foreground">هذا النص للقراءة والمقارنة فقط؛ لا يغيّر السند المحفوظ أو نص الشهادة، ولا يستنتج أي اتصال غير موجود في الرسم.</p>
+   </div>
+  </details>
+ </div>;
 }
 
 function SavedShaykhChain({text,reason,savedRoutes}:{reason:string;text:string;savedRoutes?:string[][]}){
