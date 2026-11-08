@@ -117,10 +117,10 @@ assert.equal(denseRouting.connectors.length,23,'no real isnad connection is drop
 assert.ok(denseRouting.height>denseRouting.tops[3]+80,'the bottom card fits on the canvas');
 const denseRank=new Map(denseRows.flatMap((row,i)=>row.map(id=>[id,i] as const)));
 const tracePoints=(d:string)=>{
- const coords=d.match(/-?\\d+(?:\\.\\d+)?/g)?.map(Number)??[];
+ const coords=d.match(/-?\d+(?:\.\d+)?/g)?.map(Number)??[];
  const start={x:coords[0],y:coords[1]},out=[start];
  let next=2;
- for(const step of d.matchAll(/([HV])-?\\d+(?:\\.\\d+)?/g)){
+ for(const step of d.matchAll(/([HV])-?\d+(?:\.\d+)?/g)){
   const previous=out[out.length-1],n=coords[next++];
   out.push(step[1]==='H'?{x:n,y:previous.y}:{x:previous.x,y:n});
  }
