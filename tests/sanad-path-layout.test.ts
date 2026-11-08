@@ -226,9 +226,9 @@ const partial=makePlan([['A','B'],['X','Y']],
  [{from:'A',to:'X'},{from:'B',to:'Y'}]).plan;
 assert.equal(partial.groups.filter(g=>g.kind!=='single').length,0,
  'two unrelated paths can cross but MUST NOT be joined');
-const incomplete=makePlan([['A','B'],['X','Y']],
+const partialThree=makePlan([['A','B'],['X','Y']],
  [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'X'}]).plan;
-assert.ok(incomplete.groups.every(g=>g.kind!=='complete'),
+assert.ok(partialThree.groups.every(g=>g.kind!=='complete'),
  'three of four pairwise relationships never form a complete bus');
 const mixed=makePlan([['A','B'],['X','Y','Z'],['one']],
  [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'Y'},
