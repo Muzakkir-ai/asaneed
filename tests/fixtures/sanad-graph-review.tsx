@@ -37,6 +37,19 @@ const densePaths=jointTeachers.flatMap(teacher=>
  jointCompanions.map(companion=>['imam',teacher,companion,'ubayy']));
 const fanOutPaths=['a','b','c','d'].map(to=>['root',to]);
 const fanInPaths=['a','b','c','d'].map(from=>[from,'meeting']);
+// Incomplete 2x2 plus one extra transmission: no visual partial-biclique
+// may create an extra arrow into x or y, or imply b transmits to z.
+const incompletePaths=[
+ ['root','a','x'],['root','a','y'],['root','a','z'],
+ ['root','b','x'],['root','b','y'],
+];
+// Mixed-length branches: the edge from meeting to end skips a graph rank.
+// Its bypass must not disable the unrelated root fan-out or meeting fan-in.
+const longBypassPaths=[
+ ['root','a','meeting','end'],
+ ['root','b','meeting','end'],
+ ['root','c','through1','through2','end'],
+];
 const syntheticName=(id:string)=>({
  imam:'الإمام القارئ',ubayy:'أُبيّ بن كعب',root:'الشيخ',meeting:'الملتقى',
  teacher1:'الشيخ الأول',teacher2:'الشيخ الثاني',teacher3:'الشيخ الثالث',
@@ -92,5 +105,7 @@ export default function Review(){
   <div data-testid="coordinated-fan-out"><CombinedSanadView paths={fanOutPaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-fan-in"><CombinedSanadView paths={fanInPaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-dense"><CombinedSanadView paths={densePaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-incomplete"><CombinedSanadView paths={incompletePaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-long-bypass"><CombinedSanadView paths={longBypassPaths} spacious renderPerson={drawSynthetic}/></div>
  </main>;
 }
