@@ -13,6 +13,8 @@ on:
       - 'legacy/api/finalizeCertificate.ts'
       - 'legacy/index.css'
       - 'tests/certificate-footer-lift.test.ts'
+      - 'tests/certificate-layout-browser.test.cjs'
+      - 'tests/fixtures/certificate-layout-review.tsx'
       - '.github/workflows/certificate-layout-regression.yml'
   workflow_dispatch:
 
