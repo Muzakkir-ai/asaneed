@@ -110,11 +110,13 @@ const {chromium}=require('playwright');
     const badgeRow=card.querySelector('[aria-label="درجات الراوي الأخرى"]');
     if(!circle||!control||!article)throw Error('Missing trace control or main number');
     const c=circle.getBoundingClientRect(),b=control.getBoundingClientRect(),a=article.getBoundingClientRect();
+    const style=getComputedStyle(control);
     return {
      horizontalOffset:Math.abs((c.left+c.right)/2-(b.left+b.right)/2),
      gapBelowNumber:b.top-c.bottom,
      iconSmaller:b.width<c.width&&b.height<c.height,
      numberSize:[c.width,c.height],iconSize:[b.width,b.height],
+     computed:{height:style.height,minHeight:style.minHeight,maxHeight:style.maxHeight,padding:style.padding,boxSizing:style.boxSizing,inlineHeight:control.style.height,offsetHeight:control.offsetHeight,classes:control.className},
      insideCard:b.bottom<=a.bottom+1,
      beforeSecondary:!badgeRow||b.bottom<=badgeRow.getBoundingClientRect().top+1,
     };
