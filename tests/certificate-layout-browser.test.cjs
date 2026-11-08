@@ -147,11 +147,20 @@ const {chromium}=require('playwright');
    const b1=await qPage.locator('.certificate-body-content').boundingBox();
    assert.ok(h1&&b1&&h1.y>h0.y+3&&b1.y>b0.y+3,
     'qiraat basmalah/title/riwayah move together; sanad body follows');
+   const fAfterTitle=await qPage.locator('.certificate-footer').boundingBox();
    await qFooter.fill('-3');await qFooter.blur();
+   const debug=await qPage.evaluate(()=>({
+    titleOffset:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-heading-offset'),
+    footerOffset:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-footer-offset'),
+    footerLift:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-footer-lift'),
+    footerTransform:getComputedStyle(document.querySelector('.certificate-footer')).transform,
+    footerTop:document.querySelector('.certificate-footer').getBoundingClientRect().top,
+   }));
+   console.log('QIRAAT_POSITION_DEBUG',JSON.stringify({f0:f0.y,fAfterTitle:fAfterTitle.y,debug}));
    await qPage.waitForFunction(y=>
-    (document.querySelector('.certificate-footer')?.getBoundingClientRect().y||0)<y-3,f0.y);
+    (document.querySelector('.certificate-footer')?.getBoundingClientRect().y||0)<y-3,fAfterTitle.y);
    const f1=await qPage.locator('.certificate-footer').boundingBox();
-   assert.ok(f1&&f0.y-f1.y>3,'qiraat mujeez stamp/date/signature lift independently');
+   assert.ok(f1&&fAfterTitle.y-f1.y>3,'qiraat mujeez stamp/date/signature lift independently');
    assert.equal(await qPage.locator('[role="alert"]').count(),0,
     'reasonable title/footer offsets remain inside the ornamental safety zone');
    if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
