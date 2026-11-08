@@ -346,10 +346,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [phraseFont,setPhraseFont]=useState<FontChoice>('Sakkal Kitab');
   const [phraseSize,setPhraseSize]=useState(12);
   const [phraseColor,setPhraseColor]=useState<ColorChoice>('primary');
-  useEffect(()=>{
+  // Reapply formatting explicitly on Restore even when the source JSON is
+  // identical to its previously loaded value (local unsaved edits may exist).
+  const loadFormatting=(raw:string|undefined)=>{
     setHeadingOverride(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
     setBorderColor('#926e35');setAccentColor('#075f69');
-    const raw=isDraft?draftData?.formatting:cert.snapshotFormatting;
+    if(isDraft)setDraftPrintMode('number');
     if(!raw)return;
     try{
       const saved=JSON.parse(raw);
@@ -373,6 +375,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         setAccentColor(saved.palette.secondaryColor||'#075f69');
       }
     }catch{toast.error('تعذر قراءة تنسيق الشهادة');}
+  };
+  useEffect(()=>{
+    loadFormatting(isDraft?draftData?.formatting:cert.snapshotFormatting);
   },[cert.id,isDraft,cert.snapshotFormatting,draftData?.formatting]);
   useEffect(()=>{if(isDraft&&previewPalette){setBorderColor(previewPalette.primaryColor);setAccentColor(previewPalette.secondaryColor);}},[isDraft,previewPalette?.primaryColor,previewPalette?.secondaryColor,draftData?.formatting]);
   useEffect(()=>{
@@ -500,6 +505,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       await certificateDraftFormatting({action:'reset',certificateId:cert.id});
       const fresh=await certificateDraftPreview({certificateId:cert.id});
       setDraftData(fresh);
+      loadFormatting(fresh.formatting);
       toast.success('استُعيد تنسيق النظام الأصلي لهذه الشهادة');
     }catch(e){toast.error(e instanceof Error?e.message:'تعذر استعادة تنسيق النظام');}
     finally{setSavingFormat(false);}
