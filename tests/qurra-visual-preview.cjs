@@ -147,6 +147,7 @@ const library={
    ['sahaba-prophet','الصحابة ← النبي ﷺ','08-sahaba-prophet.png'],
   ]){
    await page.locator('nav[aria-label="تتمات أسانيد القراء"]').getByRole('button',{name:label}).click();
+   console.log('TESTING HISTORICAL STAGE:',kind);
    await page.getByLabel('القارئ في تتمة السند').waitFor();
    assert.equal(await page.getByLabel('القارئ في تتمة السند').count(),1);
    if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
@@ -165,7 +166,8 @@ const library={
     // This view is intentionally scrollable rather than being scaled down.
     assert.equal(await graph.locator('button',{hasText:'تكبير لقراءة الأسماء'}).count(),0);
    }else{
-    await page.getByText('نص السند المحفوظ',{exact:false}).first().waitFor();
+    console.log('DEBUG RAWI/PROPHET STAGE:',kind,(await page.locator('body').innerText()).slice(0,1200));
+    await page.getByText('نص السند المحفوظ',{exact:false}).first().waitFor({timeout:8000});
     await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
     await page.getByText('النص المحفوظ كما هو (دون تغيير)').waitFor();
    }
