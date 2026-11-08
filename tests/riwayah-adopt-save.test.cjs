@@ -38,7 +38,7 @@ const {createRoot}=require('react-dom/client');
   if(id==='../lib/workspaceSelection')return {workspaceHeaders:()=>({})};
   if(id==='../lib/qurra')return {QURRA:[{id:'asim',reading:'عاصم',rawis:['حفص']}],displayRawi:(_,r)=>r,shortReadingLabel:(_,r)=>r,shortQariName:()=> 'عاصم'};
   if(id==='./ShaykhReadingsList')return {__esModule:true,default:({onEdit})=>React.createElement('button',{onClick:()=>onEdit?.({qariId:'asim',rawi:'حفص'})},'افتح سند حفص')};
-  if(id==='./PersonalSanadInput')return {__esModule:true,default:({adoptLabel,onApply})=>React.createElement('button',{onClick:()=>onApply(approvedText,approvedIds,'jazari',null)},adoptLabel)};
+  if(id==='./PersonalSanadInput')return {__esModule:true,default:({adoptLabel,onApply,onEditingChange})=>React.createElement('div',null,React.createElement('button',{onClick:()=>onEditingChange?.(true)},'تعديل السند'),React.createElement('button',{onClick:()=>onApply(approvedText,approvedIds,'jazari',null)},adoptLabel))};
   if(id==='sonner')return {toast:{error:s=>failures.push(s),success:s=>successes.push(s)}};
   if(id==='lucide-react')return new Proxy({},{get:()=>()=>null});
   if(id.endsWith('/button'))return {Button};
@@ -71,6 +71,7 @@ const {createRoot}=require('react-dom/client');
 
  failSave=true;
  await click('افتح سند حفص');
+ await click('تعديل السند');
  await click('اعتماد وحفظ السند');
  assert.equal(writes.length,2,'a second adoption attempts save');
  assert.ok(document.querySelector('[role=alert]')?.textContent.includes('راجع نقطة الالتقاء'),'server rejection remains visible beside the editor');
