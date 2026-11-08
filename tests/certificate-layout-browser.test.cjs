@@ -122,7 +122,7 @@ const {chromium}=require('playwright');
   // Exercise the ACTUAL qira'at title artwork (basmalah, ijazah.svg and
   // riwayah SVG glyphs). The earlier fixture covers only a matn heading.
   const qHtml=await (await fetch(qiraatUrl)).text();
-  const qData=qHtml.match(/<script[^>]*id="certificate-review-data"[^>]*>(.*?)<\\/script>/)?.[1];
+  const qData=qHtml.match(new RegExp('<script[^>]*id="certificate-review-data"[^>]*>(.*?)</script>'))?.[1];
   assert.ok(qData,'qiraat fixture provides source-bound draft preview');
   const qMock=JSON.parse(qData);
   const qPage=await browser.newPage({viewport:{width:1440,height:900}});
