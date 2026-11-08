@@ -85,29 +85,41 @@ const library={
    const nav=page.locator('nav[aria-label="مراحل مخططات القراء"]');
    for(let i=0;i<previewRows.length;i++){
     const stage=previewRows[i];
-    await nav.locator('button').nth(i).click();
+    if(i<3)await nav.locator('button').nth(i).click();
+    else{
+     await page.locator('details').first().locator('summary').click();
+     await page.getByRole('button',{name:'مسارات السبعة الأخرى'}).click();
+    }
     await page.locator('[data-combined-narrator]').first().waitFor();
     await page.evaluate(()=>document.fonts.ready);
-    assert.equal(await nav.locator('button[aria-pressed="true"]').count(),1);
+    assert.equal(await nav.locator('button[aria-pressed="true"]').count(),i<3?1:0);
     const target=path.join(output,stage.slug+'-'+label+'.png');
     await page.screenshot({path:target,fullPage:true,animations:'disabled'});
     assert.ok(fs.statSync(target).size>2000,'Screenshot is not empty: '+target);
     console.log('Saved '+target);
    }
   }
-  // Prove the selected route opens directly in the reusable persisted editor.
-  // The mock GET response supplies the same canonical IDs; nothing is saved.
+  // The selected saved route opens a short ordered-list editor. This tests
+  // real narrator identity autocomplete with a synthetic library only.
   await page.setViewportSize({width:1440,height:960});
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
-  await page.getByLabel('اختر طريقًا محفوظًا لاستكماله').selectOption('route-qalun');
-  await page.getByRole('heading',{name:'طريق قالون',exact:true}).waitFor();
-  await page.getByText('آخر راوٍ محفوظ في كل فرع:',{exact:false}).first().waitFor();
-  await page.getByText('أبو الفتح فارس',{exact:false}).first().waitFor();
-  const editorShot=path.join(output,'05-manual-route-extension-desktop.png');
+  await page.getByRole('button',{name:'تعديل هذا السند'}).click();
+  await page.getByRole('heading',{name:'تعديل السند',exact:true}).waitFor();
+  let names=page.getByRole('combobox',{name:'اسم الراوي بصيغة الجر'});
+  assert.equal(await names.count(),3,'Existing saved path opens with three narrators');
+  assert.equal(await names.last().inputValue(),'أبو الفتح فارس','The last saved narrator is retained');
+  await page.getByRole('button',{name:'إضافة الراوي التالي'}).click();
+  names=page.getByRole('combobox',{name:'اسم الراوي بصيغة الجر'});
+  assert.equal(await names.count(),4,'Add-next creates exactly one empty narrator row');
+  await names.last().fill('أبو الحسين');
+  await page.getByRole('option',{name:/أبو الحسين المكي/}).click();
+  assert.equal(await names.last().inputValue(),'أبو الحسين المكي','Existing identity was selected from suggestions');
+  await page.evaluate(()=>document.fonts.ready);
+  const editorShot=path.join(output,'05-easy-add-narrator-desktop.png');
   await page.screenshot({path:editorShot,fullPage:true,animations:'disabled'});
   assert.ok(fs.statSync(editorShot).size>2000,'Manual edit screenshot generated');
-  console.log('PASS selected saved route opens directly with reviewed narrator IDs');
+  console.log('PASS simplified editor, canonical narrator suggestions and add-next workflow');
   const summary=[
    '# Asaneed GitHub Actions Visual Preview',
    '',
@@ -121,7 +133,7 @@ const library={
    'Ibn al-Jazari toward three additional readers; other saved seven-reader segments.',
    '',
    'Desktop: 1440px. Mobile: 390px. These are view-only screenshots.',
-   'The extra desktop screenshot shows opening an existing saved route for manual extension.',
+   'The extra desktop screenshot shows the simplified add-next-narrator workflow with identity selection.',
    '',
    'Commit: '+(process.env.GITHUB_SHA||'local'),
    '',
