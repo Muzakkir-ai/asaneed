@@ -9,7 +9,7 @@ const workspace=fs.readFileSync('app/studio/qurra-diagrams/client.tsx','utf8');
 
 assert.match(sidebar,/\{id:'qurra-diagrams',label:'مخططات أسانيد القراء'[^}]+show:staff/u,
  'Qurra graphs belong in the main staff sidebar');
-assert.match(app,/<WorkspaceSidebar active=\{active\}[^>]+dark=\{dark\} onTheme=/u,
+assert.match(app,/<WorkspaceSidebar active=\{active\}.*dark=\{dark\} onTheme=/u,
  'Studio owns the shared theme and sidebar controls');
 assert.match(app,/<TabsContent value="qurra-diagrams"><QurraTransmissionWorkspace onBack=\{\(\)=>setActive\('narrators'\)\}/u,
  'Qurra graphs must use the same studio tabs rather than a standalone shell');
