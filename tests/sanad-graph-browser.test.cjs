@@ -215,6 +215,50 @@ const {chromium}=require('playwright');
    });
    assert.deepEqual(denseCollisions,[],'no edge passes behind an unrelated card at '+width);
   }
+  // A partial biclique must not add extra arrivals or invent transmissions.
+  const incomplete=page.getByTestId('coordinated-incomplete');
+  assert.equal(await incomplete.locator('g[data-routing-part="bus"]').count(),3,
+   'one root fan-out, and one complete fan-in bus for each shared child');
+  const incompleteEdges=await incomplete.locator('path[data-from][data-to]').evaluateAll(nodes=>
+   nodes.map(node=>[node.dataset.from,node.dataset.to,node.dataset.edgeIndex]));
+  assert.equal(incompleteEdges.length,7,'retain all real edges of incomplete graph');
+  assert.ok(!incompleteEdges.some(([from,to])=>from==='b'&&to==='z'),
+   'never imply the unsupported b to z transmission');
+  const incompleteBuses=await incomplete.locator('g[data-routing-part="bus"]').evaluateAll(nodes=>
+   nodes.map(node=>node.dataset.edgeIndices.split(',').map(Number)));
+  for(const target of ['x','y']){
+   const memberIndices=incompleteEdges.filter(([,to])=>to===target).map(([, ,index])=>Number(index));
+   assert.ok(incompleteBuses.some(bus=>memberIndices.length===bus.length&&memberIndices.every(index=>bus.includes(index))),
+    'all incoming transmissions to '+target+' must share one final arrow');
+  }
+  // An unrelated skipped-rank edge must not revert the entire diagram
+  // to its independent legacy connectors.
+  const longBypass=page.getByTestId('coordinated-long-bypass');
+  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),2,
+   'long continuation must not disable safe fan-in/fan-out buses');
+  assert.equal(await longBypass.locator('path[data-from][data-to]').count(),9,
+   'preserve exact original edges of mixed-length diagram');
+  assert.match(await longBypass.locator('path[data-from="meeting"][data-to="end"]').getAttribute('d'),
+   /H[-0-9.]+/,'skipped-rank continuation uses an orthogonal bypass');
+  const longCollisions=await longBypass.evaluate(section=>{
+   const cards=[...section.querySelectorAll('[data-combined-narrator]')];
+   return [...section.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
+    const hits=[],length=edge.getTotalLength();
+    for(const card of cards){
+     if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))continue;
+     for(let n=0;n<=length;n+=3){
+      const p=edge.getPointAtLength(n);
+      if(p.x>card.offsetLeft+2&&p.x<card.offsetLeft+card.offsetWidth-2
+       &&p.y>card.offsetTop+2&&p.y<card.offsetTop+card.offsetHeight-2){
+       hits.push([edge.dataset.from,edge.dataset.to,card.dataset.combinedNarrator]);break;
+      }
+     }
+    }
+    return hits;
+   });
+  });
+  assert.deepEqual(longCollisions,[],'outer bypass never passes behind unrelated cards');
+
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();
   assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
