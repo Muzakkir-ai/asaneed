@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {composePersonalSanadBranches} from '../legacy/lib/personalSanadBranches';
+import {appendPersonalSanadBranches,composePersonalSanadBranches} from '../legacy/lib/personalSanadBranches';
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import {prepareSavedSanadPeople,preparedSanadText} from '../legacy/lib/preparedSanadPeople';
 
@@ -25,6 +25,12 @@ const graph=preparedSanadGraph(prepared,prepared.tokens.map((token,index)=>({nam
 assert.ok(graph,'saved branches must remain a valid directed narrator graph');
 assert.equal(graph.paths.length,3);
 assert.deepEqual(graph.paths.sort((a,b)=>a.join().localeCompare(b.join())),[['a','b','c','d','e'],['a','b','y','d','e'],['a','x','d','e']].sort((a,b)=>a.join().localeCompare(b.join())));
+const extended=appendPersonalSanadBranches(assembled.text,assembled.ids,main,[{originId:'a',joinId:'d',narrators:[{id:'z',name:'الشيخ عثمان'}]}]);
+const extendedPrep=prepareSavedSanadPeople(extended.text,true,'end')!;
+const extendedGraph=preparedSanadGraph(extendedPrep,extendedPrep.tokens.map((t,i)=>({name:t.name,personId:extended.ids[i]})))!;
+assert.ok(extendedGraph);
+assert.equal(extendedGraph.paths.length,4,'existing branches survive and a new branch is connected');
+assert.equal(extended.text.split('(ح)').length-1,3,'the original two branch statements remain intact');
 const one=composePersonalSanadBranches(main,branches.slice(0,1));
 assert.equal(preparedSanadGraph(prepareSavedSanadPeople(one.text,true,'end')!,prepareSavedSanadPeople(one.text,true,'end')!.tokens.map((t,i)=>({name:t.name,personId:one.ids[i]})))?.paths.length,2);
 assert.throws(()=>composePersonalSanadBranches(main,[{originId:'a',joinId:'b',narrators:[{id:'x',name:'الشيخ صالح'}]}]),/نقطة|اختر/);
