@@ -189,7 +189,7 @@ function PrivateApp() {
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting} onImported={()=>void load()}/></TabsContent>
           <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
-          {isStaff&&<TabsContent value="qurra-diagrams"><QurraTransmissionWorkspace onBack={()=>setActive('narrators')}/></TabsContent>}
+          {isStaff&&<TabsContent value="qurra-diagrams"><QurraTransmissionWorkspace/></TabsContent>}
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
           {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage issuers={directory.issuers} onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
           {isAdmin&&!inspecting&&<TabsContent value="users"><SystemAdministration directory={directory} onUpdated={()=>{void refreshDirectory();void load();}} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/></TabsContent>}
