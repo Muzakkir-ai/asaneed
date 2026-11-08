@@ -1,7 +1,7 @@
 import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
-import {buildQurraTransmissionData} from '../legacy/lib/qurraTransmissionData';
+import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
 import {RAWI_IDENTITIES,fullRawiName,rawiIdentity,savedRawiName,savedRawiPerson} from '../legacy/lib/rawiIdentity';
 import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
@@ -126,6 +126,18 @@ const qurraEvidence=buildQurraTransmissionData(fixtureLibrary);
 assert.equal(qurraEvidence.jazariId,'jazari');
 assert.equal(qurraEvidence.daniId,'dani');
 assert.equal(qurraEvidence.witnesses.length,4);
+const sharedWitnesses=qurraEvidence.witnesses.filter(w=>w.stage==='jazari-dani');
+assert.equal(sharedWitnesses.length,1);
+const sharedDuplicate={...sharedWitnesses[0],id:'same-shared-chain-different-riwayah',routeId:'other-route',rawi:'ورش'};
+assert.equal(sharedJazariDaniPaths([...qurraEvidence.witnesses,sharedDuplicate]).length,1,
+ 'Jazari to Dani is shared, even when the same exact chain is cited for several riwayat');
+assert.deepEqual(sharedJazariDaniPaths([...qurraEvidence.witnesses,sharedDuplicate])[0].ids,
+ ['jazari','bookTeacher','shatibi','beforeDani','dani']);
+const sharedVariant={...sharedDuplicate,id:'real-distinct-branch',ids:['jazari','bookTeacher','shatibi','dani']};
+assert.equal(sharedJazariDaniPaths([...qurraEvidence.witnesses,sharedDuplicate,sharedVariant]).length,2,
+ 'Distinct saved historical edges remain separate and are not invented or discarded');
+assert.equal(sharedJazariDaniPaths(qurraEvidence.witnesses.filter(w=>w.stage==='dani-seven')).length,0,
+ 'A reader-specific segment cannot be displayed in the shared first stage');
 assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='jazari-dani')?.ids,
  ['jazari','bookTeacher','shatibi','beforeDani','dani']);
 assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='dani-seven')?.ids,['dani','afterDani']);
