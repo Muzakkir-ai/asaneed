@@ -25,10 +25,14 @@ assert.match(sidebar,/show:staff,group:'أسانيد القراء'/u,
  'The Qurra workspace has its own navigation group');
 assert.doesNotMatch(workspace,/العودة إلى رجال الأسانيد/u,
  'The independent workspace must not navigate back into narrator directory');
-assert.match(workspace,/initialRouteId=\{selectedRoute.routeId\}/u,
- 'Manual continuation starts in the exact selected saved route');
-assert.match(workspace,/selectedContinuation\?\.missing.length/u,
- 'Completion guidance distinguishes approved shared continuations from partial paths');
+assert.match(workspace,/<SimpleRouteEditor key=\{editingChain.id\} library=\{library\} route=\{editingChain\}/u,
+ 'Manual route editing starts on the exact saved sanad rather than opening the full book editor');
+assert.match(workspace,/const \[showAll,setShowAll\]=useState\(false\)/u,
+ 'Show one readable sanad by default and only expand the merged graph on request');
+assert.match(workspace,/const \[stage,setStage\]=useState<QurraStage>\('dani-seven'\)/u,
+ 'The ordinary reader-to-imam segment is the initial diagram view');
+assert.doesNotMatch(workspace,/BookTariqBuilder/u,
+ 'The giant book management form is not embedded in the Qurra diagram workspace');
 assert.doesNotMatch(workspace,/<main dir="rtl" className="mx-auto/,
  'Avoid nesting a second main landmark inside the studio main');
 console.log('PASS Qurra diagrams reuse Asaneed sidebar, dark mode, language and studio navigation');
@@ -41,3 +45,12 @@ assert.match(routeEditor,/focusedRoute\.current===initialRouteId/u,
 assert.match(routeEditor,/setRouteDraft\(fromChain\(saved\)\)/u,
  'The manual editor reuses the saved narrator identities and branches');
 console.log('PASS independent Qurra navigation and saved route continuation editing');
+
+const simpleEditor=fs.readFileSync('app/studio/qurra-diagrams/SimpleRouteEditor.tsx','utf8');
+assert.match(simpleEditor,/import NarratorPicker from/u,'The editor reuses the shared canonical narrator picker');
+assert.match(simpleEditor,/revision:route.revision/u,'Saving uses the saved record revision');
+assert.match(simpleEditor,/confirmed:false/u,'Editing invalidates approval pending review');
+assert.match(simpleEditor,/branches:nodes/u,'Saving retains all branches, not only the visible one');
+assert.match(simpleEditor,/if\(!persisted\|\|!equal\(persisted.branches,nodes\)\|\|persisted.confirmed\)/u,
+ 'A save verifies actual persistence before reporting success');
+console.log('PASS focused Qurra route editor preserves canonical identities and all branch data');
