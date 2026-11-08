@@ -234,10 +234,16 @@ const {chromium}=require('playwright');
   // An unrelated skipped-rank edge must not revert the entire diagram
   // to its independent legacy connectors.
   const longBypass=page.getByTestId('coordinated-long-bypass');
-  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),2,
-   'long continuation must not disable safe fan-in/fan-out buses');
+  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),3,
+   'long continuation now joins the end fan-in, without disabling either earlier bus');
   assert.equal(await longBypass.locator('path[data-from][data-to]').count(),9,
    'preserve exact original edges of mixed-length diagram');
+  const endIncoming=await longBypass.locator('path[data-to="end"]').evaluateAll(nodes=>
+   nodes.map(node=>Number(node.dataset.edgeIndex)));
+  const endDrops=await longBypass.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
+   nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+  assert.equal(endDrops.filter(indices=>endIncoming.every(index=>indices.includes(index))).length,1,
+   'meeting and through2 must share exactly one final arrow into end');
   assert.match(await longBypass.locator('path[data-from="meeting"][data-to="end"]').getAttribute('d'),
    /H[-0-9.]+/,'skipped-rank continuation uses an orthogonal bypass');
   const longCollisions=await longBypass.evaluate(section=>{
@@ -258,6 +264,44 @@ const {chromium}=require('playwright');
    });
   });
   assert.deepEqual(longCollisions,[],'outer bypass never passes behind unrelated cards');
+
+  // Cross-rank incoming edges used to bypass fan-in grouping entirely, giving
+  // al-Sa'igh-style narrator cards two independent arrows from their teachers.
+  for(const [fixture,target,expectedParents] of [
+   ['coordinated-mixed-rank','saigh',['jazari','left']],
+   ['coordinated-staggered-fanin','target',['root','a','b']],
+  ]){
+   const section=page.getByTestId(fixture);
+   const incoming=await section.locator('path[data-to="'+target+'"]').evaluateAll(nodes=>
+    nodes.map(node=>({from:node.dataset.from,index:Number(node.dataset.edgeIndex),d:node.getAttribute('d')})));
+   assert.deepEqual(incoming.map(edge=>edge.from).sort(),[...expectedParents].sort(),
+    fixture+' preserves every genuine incoming sanad relationship');
+   const drops=await section.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
+    nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+   assert.equal(drops.filter(ids=>incoming.every(edge=>ids.includes(edge.index))).length,1,
+    fixture+' merges all teachers before exactly one final arrow');
+   assert.ok(await section.locator('g[data-routing-part="bus"]').count()>0,
+    fixture+' must use the coordinated bus renderer, not fallback to old lines');
+   const collisions=await section.evaluate(element=>{
+    const cards=[...element.querySelectorAll('[data-combined-narrator]')];
+    return [...element.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
+     const hits=[],length=edge.getTotalLength();
+     for(const card of cards){
+      if([edge.dataset.from,edge.dataset.to].includes(card.dataset.combinedNarrator))continue;
+      for(let distance=0;distance<=length;distance+=3){
+       const point=edge.getPointAtLength(distance);
+       if(point.x>card.offsetLeft+2&&point.x<card.offsetLeft+card.offsetWidth-2
+        &&point.y>card.offsetTop+2&&point.y<card.offsetTop+card.offsetHeight-2){
+        hits.push([edge.dataset.from,edge.dataset.to,card.dataset.combinedNarrator]);
+        break;
+       }
+      }
+     }
+     return hits;
+    });
+   });
+   assert.deepEqual(collisions,[],fixture+' never routes through unrelated narrator cards');
+  }
 
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();

@@ -48,10 +48,18 @@ export function groupSanadConnections(
  const groups:LocalGroup[]=[];
  const append=(kind:Kind,indices:number[])=>{
   const from=[...new Set(indices.map(i=>edges[i].from))],to=[...new Set(indices.map(i=>edges[i].to))];
-  const fromRank=rankOf.get(from[0])!,toRank=rankOf.get(to[0])!;
+  const fromRank=Math.min(...from.map(id=>rankOf.get(id)!)),toRank=rankOf.get(to[0])!;
   groups.push({kind,from,to,indices,fromRank,toRank});
   indices.forEach(i=>used.add(i));
  };
+ // A narrator with an incoming shortcut across ranks must have exactly one
+ // final arrow, even when other teachers sit in the immediately preceding row.
+ // Reserve *all* real incoming relationships before forming any local buses.
+ for(let rank=1;rank<rows.length;rank++)for(const target of rows[rank]){
+  const incoming=edges.flatMap((edge,i)=>edge.to===target&&rankOf.get(edge.from)!<rank?[i]:[]);
+  if(incoming.length<2||!incoming.some(i=>rankOf.get(edges[i].from)!<rank-1))continue;
+  append('fan-in',incoming);
+ }
  const shared=sharedSanadBuses(rows,edges);
  for(const bus of shared){
   const indices=bus.edgeIndices.filter(i=>!used.has(i));
@@ -146,7 +154,7 @@ export function planCoordinatedSanad(
  // Skipped-rank edges use a clear vertical channel around every intervening
  // card, including long narrations that would otherwise run behind a card.
  for(const [gi,g] of groups.entries()){
-  if(g.toRank<=g.fromRank+1)continue;
+  if(g.kind!=='single'||g.toRank<=g.fromRank+1)continue;
   const sx=spans.get(String(gi))!.sources.get(g.from[0])!;
   const tx=spans.get(String(gi))!.targets.get(g.to[0])!;
   const blocked=rows.slice(g.fromRank+1,g.toRank).flat().map(id=>xOf(id));
@@ -166,6 +174,32 @@ export function planCoordinatedSanad(
   })[0];
   corridors.set(gi,chosen);
  }
+ // Mixed-rank fan-in feeders use an obstacle-free corridor around every
+ // intervening narrator row and enter one common bus above their child.
+ const mixedFeedCorridors=new Map<string,number>();
+ const mixedBusRank=(g:SanadVisualGroup)=>g.kind==='fan-in'&&g.toRank>g.fromRank+1
+  ?g.toRank-1:g.fromRank;
+ for(const [gi,g] of groups.entries()){
+  if(g.kind!=='fan-in'||g.toRank<=g.fromRank+1)continue;
+  const ports=spans.get(String(gi))!;
+  const tx=ports.targets.get(g.to[0])!;
+  for(const id of g.from){
+   const rank=rankOf.get(id)!;
+   if(rank>=g.toRank-1)continue;
+   const sx=ports.sources.get(id)!;
+   const blocked=rows.slice(rank+1,g.toRank).flat().map(other=>xOf(other));
+   const half=cardWidth/2+margin;
+   const candidates=[sx,tx,(sx+tx)/2,8,width-8,
+    ...blocked.flatMap(cx=>[cx-half,cx+half])];
+   const safe=[...new Set(candidates.map(x=>Math.round(x*100)/100))]
+    .filter(x=>x>=8&&x<=width-8&&blocked.every(cx=>Math.abs(cx-x)>=half-.01));
+   const selected=(safe.length?safe:[8,width-8]).sort((a,b)=>
+    Math.abs(a-sx)+Math.abs(a-tx)-Math.abs(b-sx)-Math.abs(b-tx))[0];
+   mixedFeedCorridors.set(gi+':'+id,selected);
+  }
+ }
+ const busEntryX=(gi:number,id:string)=>mixedFeedCorridors.get(gi+':'+id)
+  ??spans.get(String(gi))!.sources.get(id)!;
  const tasks:Task[]=[];
  const gapTask=(key:string,rank:number,a:number,b:number,priority:number)=>{
   if(rank<0||rank>=rows.length-1)return;
@@ -175,7 +209,16 @@ export function planCoordinatedSanad(
   const ports=spans.get(String(i))!;
   const xs=[...ports.sources.values(),...ports.targets.values()];
   if(g.kind!=='single'){
-   gapTask(i+':bus',g.fromRank,Math.min(...xs),Math.max(...xs),g.kind==='fan-in'?0:1);
+   const busXs=[...g.from.map(id=>busEntryX(i,id)),...ports.targets.values()];
+   gapTask(i+':bus',mixedBusRank(g),Math.min(...busXs),Math.max(...busXs),g.kind==='fan-in'?0:1);
+   for(const id of g.from){
+    const rank=rankOf.get(id)!;
+    if(rank<g.toRank-1){
+     const sx=ports.sources.get(id)!,corridor=busEntryX(i,id);
+     if(Math.abs(sx-corridor)>0.5)
+      gapTask(i+':feed-exit:'+id,rank,sx,corridor,3);
+    }
+   }
    continue;
   }
   const sx=xs[0],tx=xs[1];
@@ -218,12 +261,19 @@ export function planCoordinatedSanad(
  for(const [i,g] of groups.entries()){
   const ports=spans.get(String(i))!,all=g.edgeIndices;
   if(g.kind!=='single'){
-   const y=yFor(i+':bus',g.fromRank);
+   const y=yFor(i+':bus',mixedBusRank(g));
    g.busY=y;
-   const xs=[...ports.sources.values(),...ports.targets.values()];
+   const xs=[...g.from.map(id=>busEntryX(i,id)),...ports.targets.values()];
+   const feedPoints=(id:string)=>{
+    const px=ports.sources.get(id)!,corridor=busEntryX(i,id);
+    const rank=rankOf.get(id)!;
+    return rank<g.toRank-1
+     ?[{x:px,y:bottom(id)},{x:px,y:yFor(i+':feed-exit:'+id,rank)},
+       {x:corridor,y:yFor(i+':feed-exit:'+id,rank)},{x:corridor,y}]
+     :[{x:px,y:bottom(id)},{x:px,y}];
+   };
    for(const id of g.from){
-    const px=ports.sources.get(id)!;
-    parts.push({key:i+':feed:'+id,d:pathFrom([{x:px,y:bottom(id)},{x:px,y}]),
+    parts.push({key:i+':feed:'+id,d:pathFrom(feedPoints(id)),
      role:'feed',arrow:false,from:id,edgeIndices:sourceEdges(g,id)});
    }
    parts.push({key:i+':bus',d:pathFrom([{x:Math.min(...xs),y},{x:Math.max(...xs),y}]),
@@ -235,8 +285,8 @@ export function planCoordinatedSanad(
    }
    for(const index of all){
     const edge=edges.find((candidate,j)=>(candidate.originalIndex??j)===index)!;
-    const sx=ports.sources.get(edge.from)!,tx=ports.targets.get(edge.to)!;
-    const d=pathFrom([{x:sx,y:bottom(edge.from)},{x:sx,y},{x:tx,y},{x:tx,y:arrival(edge.to)}]);
+    const tx=ports.targets.get(edge.to)!;
+    const d=pathFrom([...feedPoints(edge.from),{x:tx,y},{x:tx,y:arrival(edge.to)}]);
     edgePaths.push({edgeIndex:index,from:edge.from,to:edge.to,d,routes:edge.routes??[],id:edge.id});
    }
   }else{

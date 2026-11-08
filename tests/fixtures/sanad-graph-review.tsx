@@ -50,6 +50,22 @@ const longBypassPaths=[
  ['root','b','meeting','end'],
  ['root','c','through1','through2','end'],
 ];
+// Reproduces the reported al-Sa'igh layout: a narrator has two actual
+// teachers, one directly above and one skipping the intermediate rank.
+// The same final arrow must be shared by both genuine paths.
+const mixedRankFanInPaths=[
+ ['jazari','left','saigh','end'],
+ ['jazari','saigh','end'],
+ ['jazari','right','other','end'],
+];
+// Three separate row heights feeding a common target, with arbitrary
+// source-side splits elsewhere. All incoming transmissions still need
+// exactly one arrow at the target.
+const staggeredFanInPaths=[
+ ['root','a','b','target'],
+ ['root','a','target'],
+ ['root','target'],
+];
 const syntheticName=(id:string)=>({
  imam:'الإمام القارئ',ubayy:'أُبيّ بن كعب',root:'الشيخ',meeting:'الملتقى',
  teacher1:'الشيخ الأول',teacher2:'الشيخ الثاني',teacher3:'الشيخ الثالث',
@@ -107,5 +123,7 @@ export default function Review(){
   <div data-testid="coordinated-dense"><CombinedSanadView paths={densePaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-incomplete"><CombinedSanadView paths={incompletePaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-long-bypass"><CombinedSanadView paths={longBypassPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-mixed-rank"><CombinedSanadView paths={mixedRankFanInPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-staggered-fanin"><CombinedSanadView paths={staggeredFanInPaths} spacious renderPerson={drawSynthetic}/></div>
  </main>;
 }

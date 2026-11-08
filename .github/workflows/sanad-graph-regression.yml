@@ -5,6 +5,8 @@ on:
     paths:
       - 'legacy/components/CombinedSanadView.tsx'
       - 'legacy/lib/sanadConnectorRouting.ts'
+      - 'legacy/lib/sanadCoordinatedRouting.ts'
+      - 'legacy/lib/sanadSharedBus.ts'
       - 'legacy/lib/sanadPlacement.ts'
       - 'tests/sanad-graph-browser.test.cjs'
       - 'tests/fixtures/sanad-graph-review.tsx'
