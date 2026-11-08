@@ -101,18 +101,34 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  };
  return <fieldset disabled={busy} className="space-y-3 min-w-0" aria-busy={busy}>
  {!readOnly&&<p className="text-xs text-muted-foreground">{preparation?'الرواة مُعدّون من النص السابق للمراجعة. تبقى ألفاظ الاتصال والفروع والتكرارات كما كُتبت، وتُحفظ الأسماء عند التأكيد.':'أضف شيوخ سندك بالترتيب، من شيخك المباشر حتى نهاية سندك الشخصي.'}</p>}
- {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=>renderRow(entry.indices[0],ordinal,entry.indices,labels,entry.turn)}/>:<SanadPathView paths={preparation?[]:parallelPath?[mainPath,parallelPath]:[mainPath]} unconnected={preparation?nodes.map(node=>node.key):undefined} renderPerson={(key,positions)=>{
+ {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=>renderRow(entry.indices[0],ordinal,entry.indices,labels,entry.turn)}/>:<SanadPathView paths={preparation?[]:[mainPath,...connectedBranchPaths]} unconnected={preparation?nodes.map(node=>node.key):undefined} renderPerson={(key,positions)=>{
   const i=nodes.findIndex(node=>node.key===key);
   if(i<0)return renderParallel(key,positions);
   return <>{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()}</p>}{renderRow(i,positions[0]??null,[i],positions.map(arabicDigits))}</>;
  }} afterPerson={!readOnly&&!preparation?key=>mainPath.includes(key)?addAfter(mainPath.indexOf(key)+1):null:undefined}/>}
- {!readOnly&&parallel&&<section className="space-y-3 rounded-lg border border-primary/30 p-3" aria-label="الفرع الموازي">
- <h4 className="font-semibold">الفرع الموازي من {nodes.find(n=>n.key===parallel.origin)?.name}</h4>
- {!parallelPath&&parallel.nodes.length>0&&<SanadPathView paths={[parallel.nodes.map(node=>node.key)]} renderPerson={renderParallel}/>}
- <Button type="button" size="sm" variant="outline" onClick={()=>changeParallel({...parallel,nodes:[...parallel.nodes,blankNarrator()]})}>إضافة راوٍ للفرع</Button>
- <label className="block text-sm">التقاء الفرعين<select className="block w-full rounded-lg border bg-background p-2" value={parallel.join} onChange={e=>changeParallel({...parallel,join:e.target.value})}><option value="">اختر الراوي المشترك</option>{nodes.slice(nodes.findIndex(n=>n.key===parallel.origin)+2).filter(n=>n.personId).map(n=><option key={n.key} value={n.key}>{n.name}</option>)}</select></label>
- <Button type="button" size="sm" variant="outline" onClick={()=>changeParallel(null)}>إلغاء الفرع</Button>
- </section>}
+ {!readOnly&&!preparation&&<div className="flex flex-wrap items-center gap-2">
+  <Button type="button" size="sm" variant="outline" className="gap-2" disabled={!nodes.some((n,i)=>i<nodes.length-1&&n.personId)} onClick={()=>{const origin=nodes.findIndex((n,i)=>i<nodes.length-1&&n.personId);if(origin>=0)createBranch(origin);}}><GitFork aria-hidden="true" className="h-4 w-4"/>إضافة فرع</Button>
+  <span className="text-xs text-muted-foreground">يمكنك إضافة فرع من أي راوٍ في الرسم، ثم تحديد نقطة الالتقاء.</span>
+ </div>}
+ {!readOnly&&branches.map((branch,bi)=>{
+  const origin=nodes.findIndex(n=>n.key===branch.origin),join=nodes.findIndex(n=>n.key===branch.join);
+  const connected=origin>=0&&join>origin;
+  return <section key={branch.id} className="space-y-3 rounded-lg border border-primary/30 p-3" aria-label={'الفرع '+arabicDigits(bi+1)}>
+   <div className="flex flex-wrap items-center justify-between gap-2">
+    <h4 className="font-semibold">الفرع {arabicDigits(bi+1)} من {nodes[origin]?.name||'راوٍ لم يُحدد بعد'}</h4>
+    <Button type="button" size="sm" variant="ghost" onClick={()=>changeBranches(branches.filter(b=>b.id!==branch.id))}>حذف الفرع</Button>
+   </div>
+   {!connected&&branch.nodes.length>0&&<SanadPathView paths={[branch.nodes.map(n=>n.key)]} renderPerson={renderParallel}/>}
+   <Button type="button" size="sm" variant="outline" onClick={()=>changeBranches(branches.map(b=>b.id===branch.id?{...b,nodes:[...b.nodes,blankNarrator()]}:b))}>إضافة راوٍ للفرع</Button>
+   <label className="block space-y-1 text-sm">نقطة التقاء الفرع بالسند الرئيسي
+    <select aria-label={'نقطة التقاء الفرع '+arabicDigits(bi+1)} className="block w-full rounded-lg border bg-background p-2" value={branch.join} onChange={e=>changeBranches(branches.map(b=>b.id===branch.id?{...b,join:e.target.value}:b))}>
+     <option value="">اختر الراوي المشترك</option>
+     {nodes.slice(origin+1).filter(n=>n.personId).map(n=><option key={n.key} value={n.key}>{n.name}</option>)}
+    </select>
+   </label>
+   {!connected&&<p className="text-xs text-muted-foreground">اختر راويًا لاحقًا من السند الرئيسي لتوصيل الفرع.</p>}
+  </section>;
+ })}
  {!readOnly&&<>{onwardIds&&nodes.at(-1)?.personId&&<p role="status" className="text-xs text-muted-foreground">
   {onwardIds.has(nodes.at(-1)!.personId!)
    ?'له اتصال إسنادي محفوظ. يمكنك إنهاء السند هنا.'
