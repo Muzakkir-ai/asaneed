@@ -5,6 +5,8 @@ import {ArrowDown,ArrowUp,Check,Plus,Save,Trash2,X} from 'lucide-react';
 import NarratorPicker from '../../../legacy/components/NarratorPicker';
 import {workspaceHeaders} from '../../../legacy/lib/workspaceSelection';
 import {displayRawi,shortQariName} from '../../../legacy/lib/qurra';
+import {fullRawiName,rawiIdentity} from '../../../legacy/lib/rawiIdentity';
+import {builderNameKey} from '../../../legacy/lib/bookBuilder';
 import type {BuilderChain,BuilderLibrary,BuilderNode,BuilderPerson} from '../../../legacy/lib/bookBuilder';
 
 type EditNode={key:string;name:string;personId?:string;source:boolean;sourceLevel:'upper'|'branch'|null};
@@ -46,6 +48,9 @@ export default function SimpleRouteEditor({library,route,onSaved,onClose}:{
  const book=library.books.find(b=>b.id===route.book_id);
  const author=people.find(p=>p.id===book?.author_id)?.name||'صاحب الكتاب';
  const active=branches[branchIndex]||[];
+ const target=rawiIdentity(route.qari_id,route.rawi);
+ const targetPerson=target&&people.find(p=>!p.archived&&builderNameKey(p.name)===builderNameKey(target.fullName));
+ const targetLinked=!!targetPerson&&active.some(node=>node.personId===targetPerson.id);
  const modify=(change:(branch:EditNode[])=>EditNode[])=>{
   setBranches(previous=>previous.map((branch,index)=>index===branchIndex?change(branch):branch));
   setChanged(true);setError('');
@@ -129,9 +134,14 @@ export default function SimpleRouteEditor({library,route,onSaved,onClose}:{
    </div>)}
    {!active.length&&<p className="rounded border border-dashed p-4 text-sm text-muted-foreground">لا يوجد راوٍ في هذا الفرع بعد. ابدأ بإضافة أول راوٍ من القائمة المحفوظة.</p>}
    <button type="button" disabled={busy} onClick={()=>modify(row=>[...row,newNode()])} className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm font-semibold text-primary hover:bg-primary/10"><Plus size={16}/> إضافة الراوي التالي</button>
-   <div className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
-    <strong>الرواية المختارة: {displayRawi(route.qari_id,route.rawi)}</strong>
-    <p className="mt-1 text-xs">هذا اسم الرواية، وليس رابطًا مُثبتًا من آخر راوٍ. أضف الأشخاص الموثّقين قبل اعتماد اكتمال السند.</p>
+   <div className="space-y-2 rounded-lg border border-dashed p-3 text-sm">
+    <p className="text-xs text-muted-foreground">الراوي صاحب الرواية</p>
+    <strong className="block text-base leading-8">{fullRawiName(route.qari_id,route.rawi)}</strong>
+    {targetLinked?<p className="text-xs text-muted-foreground">هذا الراوي موجود داخل الفرع بالفعل.</p>:targetPerson?
+     <button type="button" disabled={busy} onClick={()=>modify(row=>[...row,{...newNode(),name:targetPerson.name,personId:targetPerson.id}])}
+      className="inline-flex items-center gap-1 rounded-md border px-3 py-2 text-sm text-primary hover:bg-primary/10"><Plus size={14}/> إضافة هذا الراوي إلى السند</button>:
+     <p className="text-xs text-muted-foreground">لم تُطابق هوية هذا الراوي في المكتبة. استخدم خانة «إضافة الراوي التالي» وابحث عن اسمه.</p>}
+    <p className="text-xs text-muted-foreground">أضفه بعد مراجعة المصدر، ثم أضف الإمام من الأسماء المحفوظة.</p>
    </div>
   </div>
   {changed&&<p role="status" className="text-xs text-muted-foreground">لديك تغييرات غير محفوظة. سيُحفظ الطريق بوصفه «قيد المراجعة» حتى تُراجع التتمة المعتمدة بصورة مستقلة.</p>}

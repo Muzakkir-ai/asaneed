@@ -6,6 +6,7 @@ import CombinedSanadView from '../../../legacy/components/CombinedSanadView';
 import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
 import SimpleRouteEditor from './SimpleRouteEditor';
 import {QURRA,displayRawi,shortQariName} from '../../../legacy/lib/qurra';
+import {fullRawiName} from '../../../legacy/lib/rawiIdentity';
 import {buildQurraTransmissionData,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
@@ -129,7 +130,11 @@ export default function QurraTransmissionWorkspace(){
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
       :<p className="p-4 text-sm text-muted-foreground">لا توجد وصلة محفوظة.</p>}
-    {!editingChain&&<p className="text-xs text-muted-foreground">المخطط يعرض الرواة والروابط المحفوظة فقط؛ لا يعني آخر اسم أن السند اكتمل إلى الراوي أو الإمام.</p>}
+    {!editingChain&&current&&<div className="space-y-1 rounded-md border border-dashed px-3 py-2 text-sm">
+     <span className="text-xs text-muted-foreground">الراوي صاحب الرواية</span>
+     <p className="font-semibold leading-8">{fullRawiName(current.qariId,current.rawi)}</p>
+     <p className="text-xs text-muted-foreground">لإضافة هذا الراوي إلى السند، اضغط «تعديل هذا السند».</p>
+    </div>}
    </div>}
 
    <details className="rounded-lg border bg-background p-3 text-sm" aria-label="المعلومات والمصادر المتقدمة">

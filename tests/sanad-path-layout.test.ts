@@ -2,6 +2,8 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData} from '../legacy/lib/qurraTransmissionData';
+import {RAWI_IDENTITIES,fullRawiName,rawiIdentity} from '../legacy/lib/rawiIdentity';
+import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
 import {groupSimilarSanadRoutes} from '../legacy/lib/sanadRouteGrouping';
@@ -150,3 +152,16 @@ assert.equal(buildQurraTransmissionData(incomplete).witnesses.some(w=>w.stage===
 assert.deepEqual(savedPeople.map(p=>p.name),fixtureLibrary.people.map(p=>p.name),
  'source names remain untouched by diagram construction');
 console.log('Qurra staged identity-backed diagrams and incomplete-link safeguards passed');
+
+assert.equal(RAWI_IDENTITIES.length,20,'all twenty riwayah slots must have full narrator names');
+assert.equal(new Set(RAWI_IDENTITIES.map(p=>p.key)).size,19,'same historical al-Duri serves two riwayat');
+for(const q of QURRA)for(const rawi of q.rawis){
+ const identity=rawiIdentity(q.id,rawi);
+ assert.ok(identity, 'missing canonical identity for '+q.id+'/'+rawi);
+ assert.ok(identity!.fullName.length>identity!.shortName.length+10,'a full real name, not a nickname, should be displayed');
+}
+assert.equal(fullRawiName('nafi','قالون'),'أبي موسى عيسى بن مينا بن وردان المدني المعروف بقالون');
+assert.equal(rawiIdentity('abiamr','حفص الدوري')?.key,rawiIdentity('kisai','حفص الدوري')?.key);
+assert.equal(fullRawiName('hamza','خلف'),'أبي محمد خلف بن هشام البزار البغدادي');
+assert.equal(fullRawiName('khalaf','إدريس'),'أبي الحسن إدريس بن عبد الكريم الحداد');
+console.log('Full historical names for all twenty riwayat and shared narrator identities passed');
