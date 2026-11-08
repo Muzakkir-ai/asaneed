@@ -97,6 +97,11 @@ const {chromium}=require('playwright');
    'saved stamp/footer shift survives a browser refresh');
   await page.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
   assert.equal(changes.at(-1)?.action,'reset','restore uses separate non-final action');
+  await page.waitForFunction(()=>
+   document.querySelector('input[aria-label="رفع أو خفض عنوان الإجازة"]')?.value==='0'
+   && document.querySelector('input[aria-label="رفع أو خفض الختم ومعلومات المجيز"]')?.value==='0',
+   {timeout:10000});
+
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true}).inputValue()),0,
    'restoring system design resets title height to default');
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true}).inputValue()),0,
