@@ -104,8 +104,8 @@ const library={
      assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
       'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
      assert.equal(await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).count(),1);
-     assert.ok((await page.getByText('١ أسانيد مستقلة من ٢ شواهد محفوظة').count())===0
-      ||await page.getByText('١ أسانيد مستقلة من ٢ شواهد محفوظة',{exact:false}).count()>=1);
+     assert.equal(await page.getByText('مسارات محفوظة: ١ · شواهد: ٢',{exact:false}).count(),1,
+      'Duplicate evidence for Qalun and Warsh shows one shared path, not two copies');
     }else if(i===1||i===2){
      assert.equal(await page.getByLabel('القارئ').count(),1,
       'Reader filters belong only to the reading-specific stages');
