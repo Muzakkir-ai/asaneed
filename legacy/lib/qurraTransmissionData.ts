@@ -9,7 +9,7 @@ export type QurraStage='jazari-dani'|'dani-seven'|'jazari-three'|'other-seven';
 export type QurraWitness={
  id:string;stage:QurraStage;qariId:string;rawi:string;
  bookId:string;routeId:string;title:string;book:string;
- ids:string[];parentConfirmed:boolean;completeToRawi:false;
+ ids:string[];parentConfirmed:boolean;routeConfirmed:boolean;completeToRawi:false;
 };
 export type QurraTransmissionData={
  witnesses:QurraWitness[];
@@ -43,7 +43,10 @@ export function buildQurraTransmissionData(lib:BuilderLibrary):QurraTransmission
    return path;
   }).filter(ids=>!!jazariId&&ids[0]===jazariId&&ids.every(id=>!!names[id])&&noRepeats(ids));
  };
- for(const route of lib.chains.filter(c=>c.kind==='route'&&c.confirmed&&!c.archived)){
+ // Display saved drafts too, explicitly flagged for review. Editing an
+ // approved path invalidates its approval; hiding drafts would make the
+ // path disappear immediately after a user saves a new narrator.
+ for(const route of lib.chains.filter(c=>c.kind==='route'&&!c.archived)){
   const q=QURRA.find(q=>q.id===route.qari_id);
   if(!q)continue;
   const book=lib.books.find(b=>b.id===route.book_id&&!b.archived);
@@ -58,7 +61,7 @@ export function buildQurraTransmissionData(lib:BuilderLibrary):QurraTransmission
    witnesses.push({
     id:route.id+':'+stage+':'+index,stage,qariId:route.qari_id,rawi:route.rawi,
     bookId:book.id,routeId:route.id,title:route.title,book:book.title,
-    ids,parentConfirmed:parent.confirmed,completeToRawi:false,
+    ids,parentConfirmed:parent.confirmed,routeConfirmed:route.confirmed,completeToRawi:false,
    });
   };
   branches.forEach((branch,branchIndex)=>{
