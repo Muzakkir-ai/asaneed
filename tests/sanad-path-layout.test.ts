@@ -2,7 +2,7 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
-import {allHistoricalSections,historicalSection} from '../legacy/lib/qurraHistoricalSegments';
+import {allHistoricalSections,historicalSection,imamCompanionIndexedGraph} from '../legacy/lib/qurraHistoricalSegments';
 import {RAWI_IDENTITIES,fullRawiName,rawiIdentity,savedRawiName,savedRawiPerson} from '../legacy/lib/rawiIdentity';
 import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
@@ -237,3 +237,25 @@ assert.equal(historicalSection(sourceTexts,'abujafar','ابن وردان','rawi-
  'Never invent a missing historical source');
 assert.ok(allHistoricalSections(sourceTexts,'imam-sahaba').every(s=>s.status==='source-text-review'));
 console.log('Historical sanad sources, variants and review-only graph extraction passed');
+
+const nafiCompanions=historicalSection(sourceTexts,'nafi','','imam-sahaba')!;
+assert.ok(nafiCompanions.paths.length>1,
+ 'Rijal index has the teacher and Companion branches missing from the historical diagram');
+assert.ok(nafiCompanions.paths.every(path=>path[0]==='imam:nafi'),
+ 'Only the selected imam can be the source of the displayed graph');
+assert.ok(nafiCompanions.paths.some(path=>path.includes('sahabi:abuhurayra')&&path.includes('sahabi:ubayy')),
+ 'Nafi → Tabiun → Abu Hurayrah → Ubayy branch is present');
+assert.ok(nafiCompanions.paths.every(path=>new Set(path).size===path.length),
+ 'Rijal-derived paths must be acyclic');
+assert.ok(nafiCompanions.paths.every(path=>!path.includes('prophet')),
+ 'Imam → Companions section must not add unseen edges to the Prophet');
+assert.ok(Object.keys(nafiCompanions.names).some(id=>id==='imam:nafi'));
+assert.ok(Object.keys(nafiCompanions.names).some(id=>id==='sahabi:ubayy'));
+const hamzaCompanions=historicalSection(sourceTexts,'hamza','','imam-sahaba')!;
+assert.ok(hamzaCompanions.paths.some(p=>p.includes('person:zirr')),
+ 'Hamza must retain the alternative Aʿmash → Zirr branch');
+assert.deepEqual(imamCompanionIndexedGraph({id:'bad',title:'CHAIN:asim:sahaba',body:'عن عثمان بن عفان'},'nafi').paths,[],
+ 'Never display a chain from another imam as the selected imam');
+assert.deepEqual(imamCompanionIndexedGraph({id:'bad',title:'CHAIN:nafi:sahaba',body:''},'nafi').paths,[],
+ 'Never display a graph when the source is absent');
+console.log('Rijal-index Imam-to-Companions graph, branching, source isolation and cycle safeguards passed');
