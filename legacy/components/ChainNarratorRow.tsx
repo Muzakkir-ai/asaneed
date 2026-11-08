@@ -16,7 +16,7 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  return <BranchPersonCard editorKey={node.editorKey} name={node.name} number={ordinal} badgeLabels={badgeLabels} label={node.source?'صاحب الطريق':sourceMarker} connected={person?connected:undefined}
  controls={!readOnly&&<Button type="button" variant={editing?'secondary':'ghost'} size="sm" className="w-7 shrink-0 p-0" aria-label={`${editing?'إغلاق تعديل':'تعديل'} الراوي ${ordinal??index+1}`} aria-expanded={editing} aria-controls={panel} onClick={()=>setEditing(v=>!v)}>{editing?<ChevronUp aria-hidden="true" className="h-4 w-4"/>:<Pencil aria-hidden="true" className="h-4 w-4"/>}</Button>}>
  {!readOnly&&editing&&<div id={panel} className="space-y-3 border-t p-3">
- <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>onChange({...node,...value})}/>
+ <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>{onChange({...node,...value});if(value.personId)setEditing(false);}}/>
  {person&&<NarratorShortName key={person.id+':'+person.display_name} person={person} onSave={onShortName}/>}
  {person&&lib.canManage===true&&onPersonUpdated&&<details className="rounded-lg border p-3">
  <summary className="cursor-pointer text-sm font-medium">تعديل اسم الراوي أو دمجه</summary>
@@ -30,7 +30,7 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  {!lockedLayout&&<><Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأعلى" disabled={index===0} onClick={()=>onMove(-1)}><ArrowUp aria-hidden="true" className="h-4 w-4"/></Button>
  <Button type="button" size="sm" variant="ghost" aria-label="نقل الراوي لأسفل" disabled={index===count-1} onClick={()=>onMove(1)}><ArrowDown aria-hidden="true" className="h-4 w-4"/></Button>
  <Button type="button" size="sm" variant="ghost" aria-label="حذف الراوي" onClick={onRemove}><Trash2 aria-hidden="true" className="h-4 w-4"/></Button>
- </>}{onParallel&&<Button type="button" size="sm" variant="outline" onClick={onParallel}>إضافة شيخ موازٍ</Button>}<Button type="button" size="sm" variant="outline" onClick={()=>setEditing(false)}>تم</Button>
+ </>}{onParallel&&<Button type="button" size="sm" variant="outline" onClick={onParallel}>إضافة شيخ موازٍ</Button>}
  </div></div>}
  </BranchPersonCard>;
 }
