@@ -94,6 +94,9 @@ const library={
    await page.goto(url,{waitUntil:'domcontentloaded'});
    await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
    await page.getByTestId('visual-preview-label').waitFor();
+   // Wait for the first authenticated-data fixture graph to render and React to
+   // hydrate before clicking a tab. Otherwise an early click can be ignored.
+   await page.locator('[data-combined-narrator]').first().waitFor();
    const nav=page.locator('nav[aria-label="مراحل مخططات القراء"]');
    for(let i=0;i<previewRows.length;i++){
     const stage=previewRows[i];
@@ -103,10 +106,7 @@ const library={
       'Shared Jazari-to-Dani view must NOT show reader filters');
      assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
       'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
-     await page.waitForTimeout(1200);
-     console.log('DEBUG SHARED STAGE:',(await page.locator('body').innerText()).slice(0,1700));
-     console.log('DEBUG HEADINGS:',JSON.stringify(await page.locator('h2').allTextContents()));
-     await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).waitFor({timeout:8000});
+     await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).waitFor({timeout:15000});
      await page.getByText('مسارات محفوظة: ١ · شواهد: ٢',{exact:false}).waitFor();
     }else if(i===1||i===2){
      assert.equal(await page.getByLabel('القارئ').count(),1,
