@@ -10,7 +10,7 @@ import {sanadKey} from '../lib/unifiedSanad';
 import {preparedSanadText,type PreparedSanadPeople} from '../lib/preparedSanadPeople';
 import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import ChainNarratorRow from './ChainNarratorRow';
-import {composePersonalSanadBranches} from '../lib/personalSanadBranches';
+import {appendPersonalSanadBranches,composePersonalSanadBranches} from '../lib/personalSanadBranches';
 type Node={name:string;personId?:string;key:string};
 export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,onwardIds,readOnly=false}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;onwardIds?:ReadonlySet<string>;readOnly?:boolean}){
  const matches=(name:string)=>library.people.filter(p=>!p.archived&&[p.name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(value=>sanadKey(value)===sanadKey(name)));
@@ -80,7 +80,9 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
      if(alternate.some(person=>!person))throw Error('الفرع '+(index+1)+': اختر كل راوٍ من الأسماء المحفوظة');
      return {originId:next.find(node=>node.key===branch.origin)?.personId||'',joinId:next.find(node=>node.key===branch.join)?.personId||'',narrators:alternate.map(person=>({id:person!.id,name:person!.name}))};
     });
-    const assembled=composePersonalSanadBranches(saved.map(person=>({id:person!.id,name:person!.name})),branches);
+    const assembled=preparation&&graph
+     ?appendPersonalSanadBranches(text,next.map(n=>n.personId!),routeNodes.map(node=>({id:node.personId!,name:node.name})),branches)
+     :composePersonalSanadBranches(saved.map(person=>({id:person!.id,name:person!.name})),branches);
     onApply(assembled.text,assembled.ids);
     return;
    }
@@ -89,23 +91,28 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  };
  const graph=preparation?preparedSanadGraph(preparation,nodes):null;
  const renderRow=(i:number,ordinal:number|null=i+1,indices=[i],labels?:string[],turn=false)=>{const node=nodes[i];return <ChainNarratorRow node={{...node,editorKey:node.key,source:false}} number={ordinal} badgeLabels={labels} sourceMarker={turn?'(ح)':undefined} index={i} count={nodes.length} lib={library} roles={false} readOnly={readOnly} lockedLayout={!!preparation} initialEditing={preparation?false:undefined} previous={preparation?undefined:nodes[i-1]?.personId} next={preparation?undefined:nodes[i+1]?.personId} onCreate={create} onPersonUpdated={(sourceId,person)=>{const source=library.people.find(p=>p.id===sourceId);if(source&&sourceId!==person.id)onPersonCreated({...source,archived:true});onPersonCreated(person);update(v=>v.map(n=>n.personId===sourceId?{...n,personId:person.id,name:person.name}:n));}} onChange={value=>{if(value.personId)keepRowInPlace(node.key);update(v=>v.map((n,j)=>indices.includes(j)?{...n,...value}:n));}} onRemove={()=>update(v=>v.filter((_,j)=>j!==i))} onMove={direction=>update(v=>{const next=[...v];[next[i],next[i+direction]]=[next[i+direction],next[i]];return next;})}/>;};
+ const routeNodes=graph?.paths[0].map(id=>nodes.find(node=>node.personId===id)!).filter(Boolean)??nodes;
  const addAfter=(index:number)=>{
-  const origin=nodes[index-1];
-  const canBranch=index<nodes.length-1&&!!origin?.personId;
+  const origin=routeNodes[index-1];
+  const canBranch=index<routeNodes.length-1&&!!origin?.personId;
   return <div className="flex flex-wrap items-center justify-end gap-2 py-1">
    {canBranch&&<Button type="button" size="sm" variant="outline" className="h-8 gap-1.5" aria-label={'إضافة فرع من '+origin.name} title={'إضافة فرع من '+origin.name} onClick={()=>addParallel(origin.key)}><GitFork aria-hidden="true" className="h-4 w-4"/>إضافة فرع</Button>}
-   <Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full p-0" title="إضافة راوٍ بعده" disabled={nodes.length>=100} onClick={()=>insert(index)}><Plus aria-hidden="true" className="h-4 w-4"/><span className="sr-only">إضافة راوٍ بعده</span></Button>
+   {!preparation&&<Button type="button" size="icon" variant="outline" className="h-8 w-8 rounded-full p-0" title="إضافة راوٍ بعده" disabled={nodes.length>=100} onClick={()=>insert(index)}><Plus aria-hidden="true" className="h-4 w-4"/><span className="sr-only">إضافة راوٍ بعده</span></Button>}
   </div>;
  };
  const mainPath=nodes.map(node=>node.key);
  const completeParallels=parallels.filter(branch=>{
-  const origin=nodes.findIndex(node=>node.key===branch.origin),join=nodes.findIndex(node=>node.key===branch.join);
+  const origin=routeNodes.findIndex(node=>node.key===branch.origin),join=routeNodes.findIndex(node=>node.key===branch.join);
   return origin>=0&&join>origin+1&&branch.nodes.length>0&&branch.nodes.every(node=>node.personId);
  });
  const displayPaths=[mainPath,...completeParallels.map(branch=>{
-  const origin=nodes.findIndex(node=>node.key===branch.origin),join=nodes.findIndex(node=>node.key===branch.join);
+  const origin=routeNodes.findIndex(node=>node.key===branch.origin),join=routeNodes.findIndex(node=>node.key===branch.join);
   return [...mainPath.slice(0,origin+1),...branch.nodes.map(node=>node.key),...mainPath.slice(join)];
  })];
+ const extraPreparedPaths=graph?completeParallels.map(branch=>{
+  const origin=routeNodes.findIndex(node=>node.key===branch.origin),join=routeNodes.findIndex(node=>node.key===branch.join);
+  return [...graph.paths[0].slice(0,origin+1),...branch.nodes.map(node=>node.key),...graph.paths[0].slice(join)];
+ }):[];
  const renderParallel=(key:string,positions:number[])=>{
   const branch=parallels.find(item=>item.nodes.some(node=>node.key===key));
   if(!branch)return null;
@@ -114,13 +121,13 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
  };
  return <fieldset disabled={busy} className="space-y-3 min-w-0" aria-busy={busy}>
  {!readOnly&&<p className="text-xs text-muted-foreground">{preparation?'الرواة مُعدّون من النص السابق للمراجعة. تبقى ألفاظ الاتصال والفروع والتكرارات كما كُتبت، وتُحفظ الأسماء عند التأكيد.':'أضف شيوخ سندك بالترتيب، من شيخك المباشر حتى نهاية سندك الشخصي.'}</p>}
- {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=>renderRow(entry.indices[0],ordinal,entry.indices,labels,entry.turn)}/>:<SanadPathView paths={preparation?[]:displayPaths} unconnected={preparation?nodes.map(node=>node.key):undefined} renderPerson={(key,positions)=>{
+ {graph?<PreparedSanadGraph graph={graph} renderNode={(entry,ordinal,labels)=>renderRow(entry.indices[0],ordinal,entry.indices,labels,entry.turn)} extraPaths={extraPreparedPaths} renderExtraNode={renderParallel} afterNode={!readOnly?entry=>{const i=graph.paths[0].indexOf(entry.id);return i>=0?addAfter(i+1):null;}:undefined}/>:<SanadPathView paths={preparation?[]:displayPaths} unconnected={preparation?nodes.map(node=>node.key):undefined} renderPerson={(key,positions)=>{
   const i=nodes.findIndex(node=>node.key===key);
   if(i<0)return renderParallel(key,positions);
   return <>{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()}</p>}{renderRow(i,positions[0]??null,[i],positions.map(arabicDigits))}</>;
  }} afterPerson={!readOnly&&!preparation?key=>mainPath.includes(key)?addAfter(mainPath.indexOf(key)+1):null:undefined}/>}
- {!readOnly&&!preparation&&parallels.map((branch,index)=>{
-  const origin=nodes.find(node=>node.key===branch.origin);
+ {!readOnly&&(!preparation||graph)&&parallels.map((branch,index)=>{
+  const origin=routeNodes.find(node=>node.key===branch.origin);
   const isVisible=completeParallels.some(item=>item.id===branch.id);
   const change=(update:(item:Parallel)=>Parallel)=>changeParallels(current=>current.map(item=>item.id===branch.id?update(item):item));
   return <section key={branch.id} className="space-y-3 rounded-xl border border-primary/30 bg-primary/5 p-3" aria-label={'تحرير الفرع '+arabicDigits(index+1)}>
@@ -128,7 +135,7 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
    <p className="text-xs text-muted-foreground">١. أضف الرواة الذين يختلف بهم هذا الفرع. ٢. اختر الراوي الذي يلتقي عنده مع السند الأساسي. لا تكرر الراوي المشترك داخل الفرع.</p>
    {!isVisible&&branch.nodes.length>0&&<SanadPathView paths={[branch.nodes.map(node=>node.key)]} renderPerson={renderParallel}/>}
    <Button type="button" size="sm" variant="outline" onClick={()=>change(item=>({...item,nodes:[...item.nodes,blankNarrator()]}))}><Plus aria-hidden="true" className="me-1 h-4 w-4"/>إضافة راوٍ داخل الفرع</Button>
-   <label className="block space-y-1 text-sm"><span className="font-medium">نقطة التقاء الفرع بالسند الأساسي</span><select aria-label={'نقطة التقاء الفرع '+arabicDigits(index+1)} className="block w-full rounded-lg border bg-background p-2" value={branch.join} onChange={event=>change(item=>({...item,join:event.target.value}))}><option value="">اختر راوياً مشتركاً موجوداً في السند الأساسي</option>{nodes.slice(nodes.findIndex(node=>node.key===branch.origin)+2).filter(node=>node.personId).map(node=><option key={node.key} value={node.key}>{node.name}</option>)}</select></label>
+   <label className="block space-y-1 text-sm"><span className="font-medium">نقطة التقاء الفرع بالسند الأساسي</span><select aria-label={'نقطة التقاء الفرع '+arabicDigits(index+1)} className="block w-full rounded-lg border bg-background p-2" value={branch.join} onChange={event=>change(item=>({...item,join:event.target.value}))}><option value="">اختر راوياً مشتركاً موجوداً في السند الأساسي</option>{routeNodes.slice(routeNodes.findIndex(node=>node.key===branch.origin)+2).filter(node=>node.personId).map(node=><option key={node.key} value={node.key}>{node.name}</option>)}</select></label>
    <p className="text-xs text-muted-foreground">{isVisible?'الفرع متصل ويظهر في معاينة السند أعلاه. يمكنك إضافة فرع آخر قبل الاعتماد.':'أكمل رواة الفرع وحدد نقطة الالتقاء لتظهر وصلاته في المعاينة.'}</p>
   </section>;
  })}
