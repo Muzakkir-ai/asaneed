@@ -1,5 +1,6 @@
 'use client';
 import CombinedSanadView from '../../legacy/components/CombinedSanadView';
+import {optimizeSanadPorts} from '../../legacy/lib/sanadConnectorRouting';
 import BranchPersonCard from '../../legacy/components/BranchPersonCard';
 import SanadPathView from '../../legacy/components/SanadPathView';
 import ConnectedChainEditor from '../../legacy/components/ConnectedChainEditor';
@@ -35,6 +36,18 @@ const regressionNames:Record<string,string>={
 };
 const graphCard=(id:string,positions:number[])=><BranchPersonCard name={regressionNames[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>;
 
+// Minimal, deterministic route cases: the card positions are intentionally only
+// slightly offset, exactly where the old algorithm inserted unnecessary jogs.
+const routeExample=(rows:string[][],positions:Record<string,number>)=>{
+ const coordinates=new Map(Object.entries(positions).map(([id,x])=>[id,{x}]));
+ return optimizeSanadPorts(rows,coordinates,[{from:'above',to:'below',x1:112,x2:138}],
+  650,192,80,new Map(rows.flat().map(id=>[id,80]))).connectors[0].d;
+};
+const adjacentRoute=routeExample([['above'],['below']],{above:120,below:130});
+const longClearRoute=routeExample([['above'],['other'],['below']],{above:120,other:390,below:130});
+const longBlockedRoute=routeExample([['above'],['other'],['below']],{above:120,other:125,below:130});
+
+
 export default function Review(){
  return <main className="zite-app min-w-0 space-y-4" dir="rtl">
   <script type="application/json" id="fixture-library" dangerouslySetInnerHTML={{__html:JSON.stringify(library)}}/>
@@ -44,6 +57,7 @@ export default function Review(){
   <div data-testid="draft"><PersonalSanadInput value={'كما أخذته عن '+[author,first,meeting,rawi].join('، عن ')} personIds={[0,1,4,5].map(i=>people[i].id)} complete onApply={()=>{}}/></div>
   <div data-testid="repeated"><SanadPathView paths={[[author,first],[author,second,author]]} renderPerson={name=><span>{name}</span>}/></div>
   <div data-testid="personal"><PersonalSanadInput value={source} personIds={personIds} complete readOnly onApply={()=>{}}/></div>
+  <div data-testid="straight-port-regression" data-adjacent={adjacentRoute} data-long-clear={longClearRoute} data-long-blocked={longBlockedRoute}/>
   <div data-testid="combined-regression"><CombinedSanadView paths={regressionPaths} routeLabels={['العقبي','النويري','العُميوطي']} renderPerson={graphCard}/></div>
   <div data-testid="combined-no-labels"><CombinedSanadView paths={regressionPaths} renderPerson={graphCard}/></div>
   <div data-testid="combined-invalid"><CombinedSanadView paths={[[ 'jazari','uqabi' ],[ 'uqabi','jazari' ]]} renderPerson={graphCard}/></div>
