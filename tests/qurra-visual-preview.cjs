@@ -160,6 +160,11 @@ const library={
      'Imam-to-Companions should use the proper branching diagram, not plain text cards');
     assert.ok(await graph.locator('svg path[data-from][data-to]').count()>4,
      'Multiple teacher and Companion links must be drawn');
+    assert.ok(await graph.locator('g[data-routing-part="bus"]').count()>0,
+     'The historical five-to-three connections should use a real shared horizontal bus');
+    assert.equal(await graph.locator('button[data-sanad-routing-switch]').count(),1,
+     'The old line planner remains available as a local rollback');
+
     assert.equal(await graph.getByText('صحابي',{exact:true}).count()>0,true,
      'Companions are identified in cards');
     // This view is intentionally scrollable rather than being scaled down.
