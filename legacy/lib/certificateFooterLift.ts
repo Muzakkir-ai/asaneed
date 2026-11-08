@@ -24,7 +24,7 @@ export function certificateFooterLift({
  // automatic lift on every render, which makes the control unpredictable.
  const naturalFooterTop=footerTop+previousLift*scale-manualOffsetMm*pxPerMm;
  const naturalGapMm=(naturalFooterTop-bodyBottom)/pxPerMm;
- if(!Number.isFinite(naturalGapMm)||!Number.isFinite(manualOffsetMm))return 0;
+ if(!Number.isFinite(naturalGapMm)||!Number.isFinite(manualOffsetMm)||naturalGapMm<=12.001)return 0;
  // Preserve the original gentle 0–10mm automatic balancing baseline, but
  // never let that automatic portion consume the user's manual 12mm clearance.
  const desired=Math.max(0,Math.min(10,(naturalGapMm-12)*0.75,naturalGapMm-12));
