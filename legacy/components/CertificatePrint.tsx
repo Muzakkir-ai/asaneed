@@ -8,7 +8,7 @@ import {MatnPreview} from './MatnFormatting';
 import {sakkalPrintNodes} from '../lib/sakkalPrintNodes';
 import CertificateViewport from './CertificateViewport';
 import {certificateBalance} from '../lib/certificateBalance';
-import {certificateBodyBalance} from '../lib/certificateBodyBalance';
+import {certificateFooterLift} from '../lib/certificateFooterLift';
 import {certificateOverflows} from '../lib/printOverflow';
 import type {Artwork} from '../lib/artworkCatalog';
 import RegistrationNumber from './RegistrationNumber';
@@ -391,7 +391,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   useEffect(()=>{
     setCenterFits(true);
     const page=printArea.current;
-    if(page){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-body-shift','0px');}
+    if(page){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-footer-lift','0px');}
   },[cert.id,activeSanad?.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
   useEffect(()=>{
     if(!centerFits)return;
@@ -402,15 +402,18 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       const p=page.getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
       const old=parseFloat(page.style.getPropertyValue('--certificate-center-shift'))||0;
       const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old,anchorHeader:fixedHeader,pinnedFooter:true});
-      if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');setCenterFits(false);return;}
+      if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-footer-lift','0px');setCenterFits(false);return;}
       if(Math.abs(balanced.shift-old)>0.25)page.style.setProperty('--certificate-center-shift',balanced.shift.toFixed(2)+'px');
-      const previousBodyShift=parseFloat(page.style.getPropertyValue('--certificate-body-shift'))||0;
-      const shift=certificateBodyBalance({pageWidth:p.width,layoutWidth:page.offsetWidth,
-       bodyBottom:body.getBoundingClientRect().bottom,footerTop:b.top,previousShift:previousBodyShift});
-      if(Math.abs(shift-previousBodyShift)>.25){
-       page.style.setProperty('--certificate-body-shift',shift.toFixed(2)+'px');
-       // Transform updates do not trigger ResizeObserver; recheck actual print
-       // bounds after moving the text so we never conceal an overflow.
+      const oldLift=parseFloat(page.style.getPropertyValue('--certificate-footer-lift'))||0;
+      const lift=certificateFooterLift({
+       pageWidth:p.width,layoutWidth:page.offsetWidth,
+       bodyBottom:body.getBoundingClientRect().bottom,
+       footerTop:b.top,previousLift:oldLift,
+      });
+      if(Math.abs(lift-oldLift)>0.25){
+       page.style.setProperty('--certificate-footer-lift',lift.toFixed(2)+'px');
+       // Positioning the footer with a transform does not resize it, so
+       // recheck actual print bounds after shifting the full signing block.
        measureOverflow();
       }
     };
