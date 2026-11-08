@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - 'legacy/lib/diagramSanadText.ts'
+      - 'legacy/lib/sharedBridge.ts'
+      - 'lib/sanad-library.ts'
+      - 'tests/shared-bridge.test.ts'
       - 'legacy/components/ShaykhSanadTree.tsx'
       - 'tests/sanad-punctuation.test.ts'
       - '.github/workflows/sanad-diagram-preview.yml'
@@ -25,3 +28,4 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run test:sanad
+      - run: npm run test:shared-bridge
