@@ -12,7 +12,7 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import ChainNarratorRow from './ChainNarratorRow';
 import {appendPersonalSanadBranches,composePersonalSanadBranches} from '../lib/personalSanadBranches';
 type Node={name:string;personId?:string;key:string};
-export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,onwardIds,readOnly=false}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;onwardIds?:ReadonlySet<string>;readOnly?:boolean}){
+export default function PersonalSanadPeople({library,onPersonCreated,onApply,initialPersonIds=[],onPendingChange,beforeApply,preparation,onwardIds,readOnly=false,adoptLabel}:{library:BuilderLibrary;onPersonCreated:(person:BuilderPerson)=>void;onApply:(text:string,ids:string[])=>void;initialPersonIds?:string[];onPendingChange?:(pending:boolean)=>void;beforeApply?:ReactNode|((move:(name:string,changing:boolean)=>boolean)=>ReactNode);preparation?:PreparedSanadPeople|null;onwardIds?:ReadonlySet<string>;readOnly?:boolean;adoptLabel?:string}){
  const matches=(name:string)=>library.people.filter(p=>!p.archived&&[p.name,...(Array.isArray(p.aliases)?p.aliases:[]).flatMap(a=>a&&typeof a.name==='string'?[a.name]:[])].some(value=>sanadKey(value)===sanadKey(name)));
  const [nodes,setNodes]=useState<Node[]>(()=>preparation?preparation.tokens.map((t,i)=>{const found=matches(t.name);return {key:`prepared-${i}`,name:t.name,personId:initialPersonIds.length===preparation.tokens.length?initialPersonIds[i]:found.length===1?found[0].id:undefined};}):initialPersonIds.length?initialPersonIds.map((id,i)=>({key:`saved-${i}`,personId:id,name:library.people.find(p=>p.id===id)?.name||'راوٍ غير متاح'})):[{name:'',key:'first'}]),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  type Parallel={id:string;origin:string;join:string;nodes:Node[]};
@@ -147,7 +147,7 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
   {onwardIds.has(nodes.at(-1)!.personId!)
    ?'له اتصال إسنادي محفوظ. يمكنك إنهاء السند هنا.'
    :'يمكنك حفظ السند حتى هذا الراوي. لا تتوفر له تتمة معتمدة بعد.'}
- </p>}{typeof beforeApply==='function'?beforeApply(moveMeetingPoint):beforeApply}<Button type="button" onClick={()=>void adopt()}>{busy?'جارٍ حفظ الأسماء…':preparation?'تأكيد الرواة من النص السابق':'اعتماد ترتيب الرواة'}</Button>
+ </p>}{typeof beforeApply==='function'?beforeApply(moveMeetingPoint):beforeApply}<Button type="button" onClick={()=>void adopt()}>{busy?'جارٍ اعتماد الرواة…':adoptLabel||(preparation?'تأكيد الرواة من النص السابق':'اعتماد ترتيب الرواة')}</Button>
  <p className="text-xs text-muted-foreground">راجع السند المركب ثم احفظ الإجازة.</p></>}{!readOnly&&error&&<p role="alert" className="text-sm text-destructive">{error}</p>}
  </fieldset>;
 }
