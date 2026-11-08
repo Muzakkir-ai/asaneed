@@ -4,6 +4,7 @@ import CombinedSanadView from './CombinedSanadView';
 import {verifiedLegacySanad} from '../lib/verifiedLegacySanad';
 import {combinedSanad} from '../lib/combinedSanad';
 import {diagramSanadText} from '../lib/diagramSanadText';
+import {groupSimilarSanadRoutes} from '../lib/sanadRouteGrouping';
 import BranchPersonCard from './BranchPersonCard';
 import {useEffect,useState} from 'react';
 import {additionalShaykhs,additionalReadingSanads,sanadSections} from '../lib/api';
@@ -169,21 +170,32 @@ export default function ShaykhSanadTree(){
 }
 
 function CompactShaykhPath({path}:{path:Path}){
- const [selectedRoute,setSelectedRoute]=useState(0);
+ const [selectedGroup,setSelectedGroup]=useState(0);
+ const [selectedBranch,setSelectedBranch]=useState(0);
+ const routeGroups=groupSimilarSanadRoutes(path.routes);
+ const members=routeGroups[selectedGroup]??[];
+ // Displayed groups are not fabricated transmission chains: each text preview
+ // must continue to use ONE exact saved sequence of narrator IDs.
+ const selectedRoute=members[selectedBranch]??members[0]??0;
  const generated=diagramSanadText(path.routes[selectedRoute]??[],path.names);
  return <div className="space-y-3">
   <CombinedSanadView paths={path.routes} routeLabels={path.routeLabels} groupJazariStudents source={path.label} renderPerson={(id,positions)=><BranchPersonCard name={path.names[id]??id} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
   <details className="rounded-lg border p-3" data-testid="diagram-sanad-text-preview">
    <summary className="cursor-pointer text-sm font-semibold">النص المولّد من الرسم — معاينة فقط</summary>
    <div className="mt-3 space-y-3">
-    {path.routes.length>1&&<label className="block max-w-sm text-sm">اختر المسار
-     <select aria-label="مسار معاينة نص الرسم" value={selectedRoute} onChange={event=>setSelectedRoute(Number(event.target.value))} className="mt-1 block w-full rounded border bg-background p-2">
-      {path.routes.map((_,i)=><option key={i} value={i}>المسار {arabicDigits(i+1)}</option>)}
+    {routeGroups.length>1&&<label className="block max-w-sm text-sm">اختر المسار
+     <select aria-label="مسار معاينة نص الرسم" value={selectedGroup} onChange={event=>{setSelectedGroup(Number(event.target.value));setSelectedBranch(0);}} className="mt-1 block w-full rounded border bg-background p-2">
+      {routeGroups.map((_,i)=><option key={i} value={i}>المسار {arabicDigits(i+1)}</option>)}
+     </select>
+    </label>}
+    {members.length>1&&<label className="block max-w-sm text-sm">الفرع المحفوظ داخل هذا المسار
+     <select aria-label="فرع معاينة نص الرسم" value={selectedBranch} onChange={event=>setSelectedBranch(Number(event.target.value))} className="mt-1 block w-full rounded border bg-background p-2">
+      {members.map((routeIndex,i)=><option key={routeIndex} value={i}>الفرع {arabicDigits(i+1)}</option>)}
      </select>
     </label>}
     {generated?<p dir="rtl" className="select-text whitespace-pre-wrap rounded-lg bg-muted/40 p-3 text-sm leading-loose">{generated}</p>
      :<p role="status" className="text-sm text-muted-foreground">تعذر توليد النص: بعض هويات الرواة غير مكتملة، أو في المسار تكرار يحتاج مراجعة.</p>}
-    <p className="text-xs text-muted-foreground">هذا النص للقراءة والمقارنة فقط؛ لا يغيّر السند المحفوظ أو نص الشهادة، ولا يستنتج أي اتصال غير موجود في الرسم.</p>
+    <p className="text-xs text-muted-foreground">هذه معاينة لفرع محفوظ بعينه. الأفرع المتقاربة لا تُدمج في سند نصي جديد، ولا يتغير النص المحفوظ أو نص الشهادة.</p>
    </div>
   </details>
  </div>;
