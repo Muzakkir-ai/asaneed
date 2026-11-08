@@ -123,8 +123,18 @@ const {chromium}=require('playwright');
     await regression.screenshot({style:'nextjs-portal { display: none !important; }',path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+width+'.png'});
    }
   }
+  // SVG markers must use fixed coordinates: thicker highlighted lines must
+  // never enlarge the arrowhead at a narrator junction.
+  const marker=regression.locator('marker').first();
+  assert.equal(await marker.getAttribute('markerUnits'),'userSpaceOnUse','highlighting cannot scale arrowheads');
+  assert.equal(await marker.getAttribute('markerWidth'),'7');
+  assert.equal(await marker.getAttribute('markerHeight'),'7');
+  const routeEdge=regression.locator('path[data-from="jazari"][data-to="uqabi"]');
+  assert.equal(await routeEdge.getAttribute('stroke-width'),'1','ordinary connector weight');
   await regression.getByText('تفاصيل فروع السند',{exact:true}).click();
   await regression.getByLabel('عرض المسارات').selectOption('0');
+  assert.equal(await routeEdge.getAttribute('stroke-width'),'2','route highlighting only bolds the line');
+  assert.equal(await marker.getAttribute('markerWidth'),'7','route highlighting preserves arrowhead dimensions');
   assert.equal(await regression.locator('path[data-from]').count(),4,'selection hides links not in the saved route');
   await regression.getByLabel('عرض المسارات').selectOption('');
   const traceIcon=regression.locator('[data-trace-person="umyuti"]');
@@ -132,6 +142,8 @@ const {chromium}=require('playwright');
   assert.equal(await traceIcon.getAttribute('aria-label'),'تتبّع اتصالات الراوي','the trace control keeps an accessible name');
   assert.equal(await traceIcon.locator('svg').count(),1,'the icon is rendered');
   await traceIcon.click();
+  assert.equal(await regression.locator('path[data-from="umyuti"][data-to="samdasi"]').getAttribute('stroke-width'),'2','trace highlighting only bolds the line');
+  assert.equal(await marker.getAttribute('markerHeight'),'7','trace highlighting keeps arrowheads the same height');
   assert.equal(await regression.locator('path[data-from][opacity="1"]').count(),3,'trace shows the selected narrator’s direct connections');
   await regression.getByRole('button',{name:'إلغاء التحديد'}).click();
   const unlabelled=page.getByTestId('combined-no-labels');
