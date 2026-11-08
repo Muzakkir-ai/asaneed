@@ -1,6 +1,8 @@
 import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
+import {buildQurraTransmissionData} from '../legacy/lib/qurraTransmissionData';
+import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
 import {groupSimilarSanadRoutes} from '../legacy/lib/sanadRouteGrouping';
 const paths=[['j','a','s','q','i'],['j','b','s','m','i']];
@@ -82,3 +84,62 @@ assert.equal(new Set(routedPorts.map(x=>x.x1)).size,3);
 assert.equal(routedPorts[1].x1,350);
 assert.equal(routedPorts[1].x2,350);
 assert.ok(routedPorts[0].x1<350&&routedPorts[2].x1>350);
+
+
+// A standalone Qurra diagram joins only identities from explicit book-parent
+// and riwayah branch records. Unreviewed book segments are flagged; no
+// implied imam, rawi or sahabi is inserted at the end of a saved route.
+const person=(id:string,name:string)=>({id,name,display_name:'',archived:false});
+const savedPeople=[
+ person('jazari','الإمام محمد بن محمد الجزري'),
+ person('dani','الحافظ أبو عمرو عثمان بن سعيد الداني'),
+ person('shatibi','الإمام القاسم بن فيره الشاطبي'),
+ person('bookTeacher','أبو محمد عبد الرحمن'),
+ person('beforeDani','أبو داود سليمان'),
+ person('afterDani','أبو الفتح فارس'),
+ person('branchOther','أبو الحسين المكي'),
+ person('threeTeacher','أبو إسحاق البغدادي'),
+];
+const bookParent:BuilderChain={id:'parent-seven',book_id:'seven',book_chain_id:null,
+ kind:'book',title:'سند الكتاب',route_code:'',qari_id:'',rawi:'',
+ continuation:'',confirmed:false,archived:false,revision:1,
+ branches:[[{person_id:'bookTeacher',route_source:false}]]};
+const threeParent:BuilderChain={...bookParent,id:'parent-three',book_id:'three',branches:[[]]};
+const sevenRoute:BuilderChain={...bookParent,id:'qalun',kind:'route',book_chain_id:bookParent.id,
+ qari_id:'nafi',rawi:'قالون',confirmed:true,
+ branches:[['beforeDani','dani','afterDani'].map(person_id=>({person_id,route_source:false}))]};
+const otherSeven:BuilderChain={...sevenRoute,id:'warsh',rawi:'ورش',
+ branches:[['beforeDani','branchOther'].map(person_id=>({person_id,route_source:false}))]};
+const threeRoute:BuilderChain={...sevenRoute,id:'three-route',book_id:'three',book_chain_id:threeParent.id,
+ qari_id:'abujafar',rawi:'ابن وردان',
+ branches:[[{person_id:'threeTeacher',route_source:false}]]};
+const fixtureLibrary:BuilderLibrary={
+ people:savedPeople,
+ books:[{id:'seven',title:'الشاطبية',author_id:'shatibi',archived:false},
+ {id:'three',title:'الدرة',author_id:'jazari',archived:false}],
+ chains:[bookParent,threeParent,sevenRoute,otherSeven,threeRoute],
+ suggestions:[],continuations:{},
+};
+const qurraEvidence=buildQurraTransmissionData(fixtureLibrary);
+assert.equal(qurraEvidence.jazariId,'jazari');
+assert.equal(qurraEvidence.daniId,'dani');
+assert.equal(qurraEvidence.witnesses.length,4);
+assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='jazari-dani')?.ids,
+ ['jazari','bookTeacher','shatibi','beforeDani','dani']);
+assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='dani-seven')?.ids,['dani','afterDani']);
+assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='jazari-three')?.ids,['jazari','threeTeacher']);
+assert.deepEqual(qurraEvidence.witnesses.find(w=>w.stage==='other-seven')?.ids,
+ ['shatibi','beforeDani','branchOther']);
+assert.ok(qurraEvidence.witnesses.every(w=>!w.completeToRawi),
+ 'endpoints must not pretend to reach the imam or Sahaba');
+assert.equal(qurraEvidence.witnesses.find(w=>w.stage==='jazari-dani')?.parentConfirmed,false,
+ 'book-level sanad review must be visible even when the riwayah is confirmed');
+const orphaned={...fixtureLibrary,chains:fixtureLibrary.chains.filter(c=>c.id!=='parent-seven')};
+assert.equal(buildQurraTransmissionData(orphaned).witnesses.filter(w=>w.stage==='dani-seven').length,0,
+ 'do not use a route detached from its declared saved book chain');
+const incomplete={...fixtureLibrary,people:fixtureLibrary.people.filter(p=>p.id!=='dani')};
+assert.equal(buildQurraTransmissionData(incomplete).witnesses.some(w=>w.stage==='jazari-dani'),false,
+ 'missing named narrator identity must not be substituted');
+assert.deepEqual(savedPeople.map(p=>p.name),fixtureLibrary.people.map(p=>p.name),
+ 'source names remain untouched by diagram construction');
+console.log('Qurra staged identity-backed diagrams and incomplete-link safeguards passed');
