@@ -6,9 +6,13 @@ const {chromium}=require('playwright');
 (async()=>{
  const temp=fs.mkdtempSync('app/certificate-layout-review-');
  const slug=temp.slice(4),url='http://127.0.0.1:3112/'+slug;
+ const qiraatDir=temp+'-qiraat';
+ const qiraatUrl=url+'-qiraat';
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/certificate-layout-review.tsx',temp+'/page.tsx');
+  fs.mkdirSync(qiraatDir,{recursive:true});
+  fs.copyFileSync('tests/fixtures/certificate-qiraat-layout-review.tsx',qiraatDir+'/page.tsx');
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--webpack','--hostname','127.0.0.1','--port','3112'],
    {detached:process.platform!=='win32',stdio:'inherit'});
@@ -42,6 +46,22 @@ const {chromium}=require('playwright');
   await page.evaluate(()=>document.fonts.ready);
   const panel=page.locator('.certificate-settings-panel').first();
   await panel.locator('summary').click();
+  const title=page.locator('.certificate-header-art');
+  const footer=page.locator('.print-area .certificate-footer');
+  const titleBefore=await title.boundingBox();
+  const footerBefore=await footer.boundingBox();
+  const titleOffset=page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
+  const footerOffset=page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
+  await titleOffset.fill('3');
+  await titleOffset.blur();
+  const titleAfter=await title.boundingBox();
+  assert.ok(titleBefore&&titleAfter&&titleAfter.y>titleBefore.y+3,
+   'title, basmalah and reading SVG move downward as one group');
+  await footerOffset.fill('-4');
+  await footerOffset.blur();
+  const footerAfter=await footer.boundingBox();
+  assert.ok(footerBefore&&footerAfter&&footerBefore.y-footerAfter.y>3,
+   'issuer footer, stamp, signature, date and registration move upward together');
   await page.getByLabel('جزء الشهادة').selectOption('reading');
   const headingControl=page.getByRole('spinbutton',{name:'المسافة بعد السند',exact:true});
   await headingControl.fill('6');
@@ -61,6 +81,10 @@ const {chromium}=require('playwright');
    'new section gap persists in certificate-specific settings');
   assert.equal(changes.at(-1)?.settings?.matnHeading?.conclusionOffsetMm,5,
    'khatima offset persists in certificate-specific settings');
+  assert.equal(changes.at(-1)?.settings?.headingOffsetMm,3,
+   'qiraat and matn heading vertical position is saved on this certificate');
+  assert.equal(changes.at(-1)?.settings?.footerOffsetMm,-4,
+   'mujaaz issuer/footer vertical position is saved on this certificate');
   assert.ok(!changes.some(change=>change.action==='finalize'),'saving never triggers final approval');
 
   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS){
@@ -69,8 +93,23 @@ const {chromium}=require('playwright');
    await panel.screenshot({path:out+'/certificate-tanseeq-controls.png'});
   }
 
+  await page.reload();
+  await page.locator('.certificate-settings-panel').first().locator('summary').click();
+  assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true}).inputValue()),3,
+   'saved title shift survives a browser refresh');
+  assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true}).inputValue()),-4,
+   'saved stamp/footer shift survives a browser refresh');
   await page.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
   assert.equal(changes.at(-1)?.action,'reset','restore uses separate non-final action');
+  await page.waitForFunction(()=>
+   document.querySelector('input[aria-label="رفع أو خفض عنوان الإجازة"]')?.value==='0'
+   && document.querySelector('input[aria-label="رفع أو خفض الختم ومعلومات المجيز"]')?.value==='0',
+   {timeout:10000});
+
+  assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true}).inputValue()),0,
+   'restoring system design resets title height to default');
+  assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true}).inputValue()),0,
+   'restoring system design resets mujeez position to automatic baseline');
   await page.getByLabel('جزء الشهادة').selectOption('conclusion');
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الخاتمة',exact:true}).inputValue()),0,
    'system restore clears this certificate-specific khatima adjustment');
@@ -80,10 +119,93 @@ const {chromium}=require('playwright');
     path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-print-mobile.png'
    });
   }
-  console.log('PASS PDF viewer matn spacing, khatima movement, per-certificate draft save/reset and responsive print');
+  // Exercise the ACTUAL qira'at title artwork (basmalah, ijazah.svg and
+  // riwayah SVG glyphs). The earlier fixture covers only a matn heading.
+  const qHtml=await (await fetch(qiraatUrl)).text();
+  const qData=qHtml.match(new RegExp('<script[^>]*id="certificate-review-data"[^>]*>(.*?)</script>'))?.[1];
+  assert.ok(qData,'qiraat fixture provides source-bound draft preview');
+  const qMock=JSON.parse(qData);
+  const qPage=await browser.newPage({viewport:{width:1440,height:900}});
+  try{
+   await qPage.route('**/api/workspace/certificateDraftPreview',request=>
+    request.fulfill({json:qMock}));
+   const qiraatDraftReady=qPage.waitForResponse(response=>
+    response.url().includes('/api/workspace/certificateDraftPreview')&&response.status()===200);
+   await qPage.goto(qiraatUrl);
+   await qiraatDraftReady;
+   await qPage.evaluate(()=>document.fonts.ready);
+   await qPage.waitForTimeout(200); // settle ResizeObserver-driven print geometry
+   const artwork=qPage.locator('.certificate-header-art');
+   await artwork.locator('.certificate-ijazah-svg').waitFor();
+   await artwork.locator('.certificate-basmalah-svg').waitFor();
+   await artwork.locator('.certificate-reading-svg-line').waitFor();
+   // Always measure positions RELATIVE TO THE PAPER. Clicking a control
+   // scrolls the viewport, invalidating raw boundingBox().y comparisons.
+   const relativeY=selector=>qPage.evaluate(selector=>{
+    const paper=document.querySelector('.print-area')?.getBoundingClientRect();
+    const target=document.querySelector(selector)?.getBoundingClientRect();
+    return paper&&target?target.top-paper.top:null;
+   },selector);
+   const h0=await relativeY('.certificate-header-art');
+   const b0=await relativeY('.certificate-body-content');
+   const f0=await relativeY('.certificate-footer');
+   assert.ok([h0,b0,f0].every(Number.isFinite),'all qiraat page rectangles exist');
+   await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
+   const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
+   await qHeading.fill('3');await qHeading.blur();
+   await qPage.waitForFunction(y=>{
+    const p=document.querySelector('.print-area')?.getBoundingClientRect();
+    const r=document.querySelector('.certificate-header-art')?.getBoundingClientRect();
+    return p&&r&&r.top-p.top>y+3;
+   },h0);
+   const h1=await relativeY('.certificate-header-art');
+   const b1=await relativeY('.certificate-body-content');
+   assert.ok(h1>h0+3&&b1>b0+3,
+    'qiraat basmalah/title/riwayah move together; sanad body follows');
+   const fAfterTitle=await relativeY('.certificate-footer');
+   assert.ok(Math.abs(fAfterTitle-f0)<2,
+    'moving the title does not pull the pinned mujeez footer with it');
+   await qFooter.fill('-3');await qFooter.blur();
+   const debug=await qPage.evaluate(()=>({
+    titleOffset:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-heading-offset'),
+    footerOffset:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-footer-offset'),
+    footerLift:getComputedStyle(document.querySelector('.print-area')).getPropertyValue('--certificate-footer-lift'),
+    footerTransform:getComputedStyle(document.querySelector('.certificate-footer')).transform,
+    footerTop:document.querySelector('.certificate-footer').getBoundingClientRect().top,
+   }));
+   console.log('QIRAAT_POSITION_DEBUG',JSON.stringify({f0,fAfterTitle,debug}));
+   await qPage.waitForFunction(y=>{
+    const p=document.querySelector('.print-area')?.getBoundingClientRect();
+    const r=document.querySelector('.certificate-footer')?.getBoundingClientRect();
+    return p&&r&&r.top-p.top<y-3;
+   },fAfterTitle);
+   const f1=await relativeY('.certificate-footer');
+   assert.ok(fAfterTitle-f1>3,'qiraat mujeez stamp/date/signature lift independently');
+   const layout=await qPage.evaluate(()=>{
+    const rect=selector=>{
+     const r=document.querySelector(selector)?.getBoundingClientRect();
+     return r?{top:r.top,bottom:r.bottom,left:r.left,right:r.right,width:r.width}:null;
+    };
+    const paper=document.querySelector('.print-area');
+    return {paper:rect('.print-area'),header:rect('.certificate-header-art'),
+     body:rect('.certificate-body-content'),footer:rect('.certificate-footer'),
+     scrollHeight:paper?.scrollHeight,clientHeight:paper?.clientHeight,
+     alerts:[...document.querySelectorAll('[role="alert"]')].map(n=>n.textContent)};
+   });
+   console.log('QIRAAT_FINAL_LAYOUT',JSON.stringify(layout));
+   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+    await qPage.locator('.print-area').screenshot({
+     path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-heading-footer.png'
+    });
+   assert.equal(await qPage.locator('.certificate-settings-panel[role="alert"]').count(),0,
+    'reasonable title/footer offsets remain inside the ornamental safety zone');
+  }finally{await qPage.close();}
+  console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{
   if(browser)await browser.close().catch(()=>{});
   if(server?.pid)try{if(process.platform==='win32')server.kill();else process.kill(-server.pid,'SIGTERM');}catch{}
   fs.rmSync(temp,{recursive:true,force:true});
+  fs.rmSync(qiraatDir,{recursive:true,force:true});
  }
 })().catch(err=>{console.error(err);process.exitCode=1;});

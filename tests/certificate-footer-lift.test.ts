@@ -23,6 +23,27 @@ const reduced=certificateFooterLift({
 });
 assert.ok(Math.abs(reduced-lift)<.0001,'PDF layout unaffected by zoomed/mobile preview');
 assert.equal(certificateFooterLift({...args,pageWidth:0}),0,'invalid paper geometry fails safely');
+const manuallyRaised=certificateFooterLift({...args,
+ footerTop:args.footerTop-4*pxPerMm,manualOffsetMm:-4,
+});
+assert.ok(Math.abs(manuallyRaised-lift)<.0001,
+ 'raising the footer manually does not cancel its original automatic lift');
+const stableManual=certificateFooterLift({...args,
+ footerTop:args.footerTop-4*pxPerMm-manuallyRaised,
+ manualOffsetMm:-4,previousLift:manuallyRaised,
+});
+assert.ok(Math.abs(stableManual-manuallyRaised)<.0001,
+ 'manual movement and automatic lift do not drift after remeasurement');
+const constrained=certificateFooterLift({
+ ...args,footerTop:args.bodyBottom+15*pxPerMm-6*pxPerMm,manualOffsetMm:-6,
+});
+assert.equal(constrained,0,'manual lift reserves at least 12mm for long sanad text');
+const downward=certificateFooterLift({...args,
+ footerTop:args.footerTop+3*pxPerMm,manualOffsetMm:3,
+});
+assert.ok(Math.abs(downward-lift)<.0001,
+ 'lowering the footer is not neutralized by the automatic lift');
+
 
 const updated=matnHeadingSchema.parse({
  version:1,mainHeightPt:42,secondaryHeightPt:24,lineGapMm:2,afterGapMm:4,
