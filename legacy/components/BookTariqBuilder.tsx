@@ -8,7 +8,7 @@ import BuilderPrefixInput from './BuilderPrefixInput';
 import {resolveBuilderPrefix} from '../lib/builderPrefix';
 import NarratorAutocomplete from './NarratorAutocomplete';
 import {arabicDigits} from '../lib/arabicDigits';
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Button} from '@project/components/ui/button';
 import {Input} from '@project/components/ui/input';
 import {Textarea} from '@project/components/ui/textarea';
@@ -37,13 +37,14 @@ function ChainEditor(props:Parameters<typeof ConnectedChainEditor>[0]){
  return <div className="space-y-2"><Button type="button" variant="outline" size="sm" onClick={()=>setSeparate(v=>!v)}>{separate?'عرض السند المتصل':'عرض الفروع المنفصلة'}</Button>{separate?<SeparateChainEditor {...props}/>:<ConnectedChainEditor {...props}/>}</div>;
 }
 function BuilderFrame({inline,open,onOpenChange,trigger,title,children}:{inline:boolean;open:boolean;onOpenChange:(open:boolean)=>void;trigger:ReactNode;title:string;children:ReactNode}){return inline?<section dir="rtl" className="space-y-3">{children}</section>:open?<EditorPage title={title} context="مكتبة الكتب والطرق" backLabel="العودة إلى الصفحة السابقة" onBack={()=>onOpenChange(false)}>{children}</EditorPage>:<>{trigger}</>;}
-export default function BookTariqBuilder({inline=false,shaykhId='',shaykhName='',initialPrefix='',onSaved,triggerLabel='الكتب والطرق',onLibraryChange}:{inline?:boolean;shaykhId?:string;shaykhName?:string;initialPrefix?:string;onSaved?:()=>void;triggerLabel?:string;onLibraryChange?:()=>void}){
+export default function BookTariqBuilder({inline=false,shaykhId='',shaykhName='',initialPrefix='',initialRouteId='',onSaved,triggerLabel='الكتب والطرق',onLibraryChange}:{inline?:boolean;shaykhId?:string;shaykhName?:string;initialPrefix?:string;initialRouteId?:string;onSaved?:()=>void;triggerLabel?:string;onLibraryChange?:()=>void}){
  const [open,setOpen]=useState(inline),[lib,setLib]=useState<BuilderLibrary|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const [editor,setEditor]=useState<'book'|'route'|null>(null),[prefixPending,setPrefixPending]=useState(false),[prefixContinuationId,setPrefixContinuationId]=useState(''),[prefixPersonIds,setPrefixPersonIds]=useState<string[]>([]),[personalShortName,setPersonalShortName]=useState('');
  const [stage,setStage]=useState<1|2>(1),[bookId,setBookId]=useState(''),[title,setTitle]=useState(''),[author,setAuthor]=useState(''),[editingBook,setEditingBook]=useState(false),[query,setQuery]=useState('');
  const [bookDraft,setBookDraft]=useState<Draft>(blank),[routeDraft,setRouteDraft]=useState<Draft>(blank),[parentId,setParentId]=useState('');
  const [prefix,setPrefix]=useState(initialPrefix),[reviewed,setReviewed]=useState(false),[using,setUsing]=useState<BuilderChain|null>(null);
  const [managePeople,setManagePeople]=useState(false);
+ const focusedRoute=useRef('');
  const load=async()=>{setError('');try{const value=await api();setLib(value);onLibraryChange?.();return value as BuilderLibrary;}catch(e){setError(e instanceof Error?e.message:'تعذر التحميل');return null;}};
  useEffect(()=>{if(open)void load();},[open]);
  const run=async(fn:()=>Promise<void>)=>{setBusy(true);try{await fn();}catch(e){toast.error(e instanceof Error?e.message:'تعذر الحفظ');}finally{setBusy(false);}};
@@ -59,9 +60,23 @@ export default function BookTariqBuilder({inline=false,shaykhId='',shaykhName=''
  const saveShortName=async(id:string,value:string)=>{try{const p=await api({action:'personShortName',id,shortName:value});setLib(v=>v?{...v,people:v.people.map(x=>x.id===p.id?p:x)}:v);toast.success('حُفظ الاسم المختصر');}catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ الاسم المختصر');}};
  const resolveBranches=async(branches:DraftNode[][])=>branches.map(branch=>branch.map(n=>{const person=lib?.people.find(p=>!p.archived&&p.id===n.personId);if(!person)throw Error(n.name.trim()?'لم يُحدد الراوي «'+n.name+'». اختره من قائمة الأسماء، أو اضغط «مراجعة وإنشاء شخص جديد» ثم «إنشاء شخص جديد».':'توجد خانة راوٍ فارغة. اختر اسمًا لها أو احذف الخانة قبل الحفظ.');return {person_id:person.id,route_source:n.source,source_level:n.source?n.sourceLevel||null:null};}));
  const fromChain=(c:BuilderChain):Draft=>({id:c.id,revision:c.revision,title:c.title,qari:c.qari_id||'nafi',rawi:c.rawi||'قالون',continuation:c.continuation,continuationIds:c.continuation_ids||undefined,override:!!c.continuation_override,confirmed:c.confirmed&&(c.kind==='book'||!!c.continuation_ids?.length||!!c.continuation_override),upper:c.upper_route_name||'',branch:c.branch_route_name||'',scope:c.reading_scope||'unspecified',branches:c.branches.map(b=>b.map(n=>({editorKey:crypto.randomUUID(),name:person(n.person_id),source:n.route_source,personId:n.person_id,sourceLevel:n.source_level})))});
+ // Open the EXACT saved route selected from the Qurra diagram. The same
+ // existing review/save permissions and person identity picker still apply.
+ // Only apply initial selection once: reloading the library while editing a
+ // narrator must never silently discard unsaved edits.
+ useEffect(()=>{
+  if(!open||!initialRouteId||!lib||focusedRoute.current===initialRouteId)return;
+  const saved=lib.chains.find(c=>c.kind==='route'&&c.id===initialRouteId&&!c.archived);
+  const selectedBook=saved&&lib.books.find(b=>b.id===saved.book_id&&!b.archived);
+  if(!saved||!selectedBook){setError('الطريق المختار غير متاح في المكتبة الحالية.');return;}
+  focusedRoute.current=initialRouteId;
+  setBookId(selectedBook.id);setTitle(selectedBook.title);setAuthor(person(selectedBook.author_id));
+  setParentId(saved.book_chain_id||'');setStage(2);setManagePeople(false);
+  setRouteDraft(fromChain(saved));setEditor('route');setUsing(null);
+ },[open,initialRouteId,lib]);
  const saveBook=()=>run(async()=>{const p=await resolvePerson(author);const b=await api({action:'book',...(editingBook&&bookId?{id:bookId}:{}),title,author_id:p.id});setBookId(b.id);setEditingBook(false);setEditor('book');await load();toast.success('حُفظ الكتاب وصاحبه');});
  const continuationFor=(d:Draft)=>resolveSanadContinuation(lib?.continuationSections||[],d.qari,d.rawi,d.continuationIds);
- const saveChain=async(kind:'book'|'route',another=false)=>{if(!bookId)throw Error('احفظ الكتاب أولاً');const d=kind==='book'?bookDraft:routeDraft;const branches=await resolveBranches(d.branches);const r=await api({action:'chain',record:{id:d.id,revision:d.revision,book_id:bookId,book_chain_id:kind==='route'?parentId:null,kind,title:d.title,qari_id:kind==='route'?d.qari:'',rawi:kind==='route'?d.rawi:'',continuation:d.override?d.continuation:continuationFor(d).text,continuation_ids:d.override?null:continuationFor(d).missing.length?null:continuationFor(d).sectionIds,continuation_override:d.override,confirmed:d.confirmed,upper_route_name:d.upper||[...new Set(d.branches.flat().filter(n=>n.source&&n.sourceLevel==='upper').map(n=>n.name))].join('، '),branch_route_name:d.branch||[...new Set(d.branches.flat().filter(n=>n.source&&n.sourceLevel==='branch').map(n=>n.name))].join('، '),reading_scope:d.scope,branches}});const fresh=await load();const saved=fresh?.chains.find(c=>c.id===r.id);if(kind==='book'){setParentId(r.id);if(saved)setBookDraft({...d,id:saved.id,revision:saved.revision});setStage(2);setEditor(null);}else {if(!another)setEditor(null);if(another)setRouteDraft({...blank(),qari:d.qari,rawi:d.rawi,continuation:d.continuation,upper:d.upper,scope:d.scope});else if(saved)setRouteDraft({...d,id:saved.id,revision:saved.revision});}toast.success('حُفظ الإسناد');};
+ const saveChain=async(kind:'book'|'route',another=false)=>{if(!bookId)throw Error('احفظ الكتاب أولاً');const d=kind==='book'?bookDraft:routeDraft;const branches=await resolveBranches(d.branches);const r=await api({action:'chain',record:{id:d.id,revision:d.revision,book_id:bookId,book_chain_id:kind==='route'?parentId:null,kind,title:d.title,qari_id:kind==='route'?d.qari:'',rawi:kind==='route'?d.rawi:'',continuation:d.override?d.continuation:continuationFor(d).text,continuation_ids:d.override?null:continuationFor(d).missing.length?null:continuationFor(d).sectionIds,continuation_override:d.override,confirmed:d.confirmed,upper_route_name:d.upper||[...new Set(d.branches.flat().filter(n=>n.source&&n.sourceLevel==='upper').map(n=>n.name))].join('، '),branch_route_name:d.branch||[...new Set(d.branches.flat().filter(n=>n.source&&n.sourceLevel==='branch').map(n=>n.name))].join('، '),reading_scope:d.scope,branches}});const fresh=await load();const saved=fresh?.chains.find(c=>c.id===r.id);if(kind==='book'){setParentId(r.id);if(saved)setBookDraft({...d,id:saved.id,revision:saved.revision});setStage(2);setEditor(null);}else {if(!another)setEditor(null);if(another)setRouteDraft({...blank(),qari:d.qari,rawi:d.rawi,continuation:d.continuation,upper:d.upper,scope:d.scope});else if(saved)setRouteDraft({...d,id:saved.id,revision:saved.revision});}toast.success('حُفظ الإسناد');onSaved?.();};
  const archive=(table:string,id:string)=>{if(!window.confirm('أرشفة هذا السجل؟ تبقى النسخ المحفوظة في الإجازات السابقة كما هي.'))return;void run(async()=>{await api({action:'archive',table,id});await load();onSaved?.();});};
  const selectRoute=(c:BuilderChain)=>{setUsing(c);setReviewed(false);setEditor(null);};
  let usePreview='',useError='';
