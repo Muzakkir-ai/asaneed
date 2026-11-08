@@ -1,6 +1,7 @@
 import {QURRA} from './qurra';
 import {sanadKey,type ContinuationSection} from './unifiedSanad';
 import {fullRawiName} from './rawiIdentity';
+import {buildNarratorDirectory} from './narratorDirectory';
 
 export type HistoricalSegmentKind='rawi-imam'|'imam-sahaba'|'sahaba-prophet';
 export type HistoricalSectionView={
@@ -18,6 +19,45 @@ const parts=(body:string)=>{
  return pieces.length?pieces:[body];
 };
 
+/** Rijāl al-Asānīd already indexes the explicit imam/teacher/Companion
+ * relationships for each CHAIN:*:sahaba source. Reuse exactly that ONE
+ * section's directed edges, not links from the global directory or other
+ * readings. These are source-based previews, never approved certificates.
+ *
+ * A child node points to its teachers. Enumerating root-to-leaf paths lets
+ * the same CombinedSanadView layout connect split and meeting narrators
+ * without inventing an edge between unrelated source segments.
+ */
+export function imamCompanionIndexedGraph(
+ section:{id:string;title:string;body:string},qariId:string,
+):{paths:string[][];names:Record<string,string>}{
+ if(section.title!=='CHAIN:'+qariId+':sahaba'||!section.body.trim())return {paths:[],names:{}};
+ const directory=buildNarratorDirectory([section]);
+ const byId=new Map(directory.people.map(p=>[p.id,p]));
+ const imam='imam:'+qariId;
+ if(!byId.has(imam))return {paths:[],names:{}};
+ const names=Object.fromEntries(directory.people.map(p=>[p.id,p.name]));
+ const paths:string[][]=[],unique=new Set<string>();
+ let unsafe=false;
+ const visit=(id:string,path:string[])=>{
+  if(unsafe)return;
+  if(path.includes(id)||path.length>=24){unsafe=true;return;}
+  const next=[...new Set(byId.get(id)?.teachers||[])].filter(k=>byId.has(k));
+  const extended=[...path,id];
+  if(!next.length){
+   if(extended.length>1){
+    const key=JSON.stringify(extended);
+    if(!unique.has(key)){unique.add(key);paths.push(extended);}
+    if(paths.length>120)unsafe=true;
+   }
+   return;
+  }
+  for(const nextId of next)visit(nextId,extended);
+ };
+ visit(imam,[]);
+ return {paths:unsafe?[]:paths,names};
+}
+
 /** Use saved CHAIN sections without rewriting them.
  * Diagrams are read-only interpretations of links represented by
  * the existing narrator directory extractor; full source is always retained.
@@ -34,8 +74,9 @@ export function historicalSection(
  const title=['CHAIN',qariId,suffix].join(':');
  const section=sections.find(s=>sanadKey(s.title)===sanadKey(title)&&s.body?.trim());
  if(!section)return null;
- const names:Record<string,string>={};
- const paths:string[][]=[];
+ const index=kind==='imam-sahaba'?imamCompanionIndexedGraph(section,qariId):null;
+ const names:Record<string,string>=index?.names||{};
+ const paths:string[][]=index?.paths||[];
  // The only auto-drawn historical edges are an explicitly written,
  // unbranched sequence AFTER «صاحب الرواية» and «عن», ending in
  // «صاحب القراءة». Branches and plural pronouns need human review.

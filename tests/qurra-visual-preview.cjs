@@ -147,12 +147,28 @@ const library={
    ['sahaba-prophet','الصحابة ← النبي ﷺ','08-sahaba-prophet.png'],
   ]){
    await page.locator('nav[aria-label="تتمات أسانيد القراء"]').getByRole('button',{name:label}).click();
-   await page.getByText('نص السند المحفوظ',{exact:false}).first().waitFor();
+   await page.getByLabel('القارئ في تتمة السند').waitFor();
    assert.equal(await page.getByLabel('القارئ في تتمة السند').count(),1);
    if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
    else assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),0);
-   await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
-   await page.getByText('النص المحفوظ كما هو (دون تغيير)').waitFor();
+   if(kind==='imam-sahaba'){
+    await page.getByText('مخطط من فهرس رجال الأسانيد',{exact:false}).waitFor();
+    await page.locator('[data-combined-narrator="imam:nafi"]').waitFor();
+    await page.locator('[data-combined-narrator="sahabi:ubayy"]').waitFor();
+    const graph=page.locator('section[aria-label="السند المتصل"]');
+    assert.equal(await graph.locator('[data-sanad-viewport]').count(),1,
+     'Imam-to-Companions should use the proper branching diagram, not plain text cards');
+    assert.ok(await graph.locator('svg path[data-from][data-to]').count()>4,
+     'Multiple teacher and Companion links must be drawn');
+    assert.equal(await graph.getByText('صحابي',{exact:true}).count()>0,true,
+     'Companions are identified in cards');
+    // This view is intentionally scrollable rather than being scaled down.
+    assert.equal(await graph.locator('button',{hasText:'تكبير لقراءة الأسماء'}).count(),0);
+   }else{
+    await page.getByRole('button',{name:'عرض النص الأصلي'}).waitFor();
+    await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
+    await page.getByText('النص المحفوظ كما هو (دون تغيير)').waitFor();
+   }
    const screenshot=path.join(output,filename);
    await page.screenshot({path:screenshot,fullPage:true,animations:'disabled'});
    assert.ok(fs.statSync(screenshot).size>2000);
