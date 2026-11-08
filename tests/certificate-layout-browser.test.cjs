@@ -6,9 +6,13 @@ const {chromium}=require('playwright');
 (async()=>{
  const temp=fs.mkdtempSync('app/certificate-layout-review-');
  const slug=temp.slice(4),url='http://127.0.0.1:3112/'+slug;
+ const qiraatDir=temp+'-qiraat';
+ const qiraatUrl=url+'-qiraat';
  let server,browser;
  try{
   fs.copyFileSync('tests/fixtures/certificate-layout-review.tsx',temp+'/page.tsx');
+  fs.mkdirSync(qiraatDir,{recursive:true});
+  fs.copyFileSync('tests/fixtures/certificate-qiraat-layout-review.tsx',qiraatDir+'/page.tsx');
   execFileSync(process.execPath,['scripts/build-studio.cjs']);
   server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--webpack','--hostname','127.0.0.1','--port','3112'],
    {detached:process.platform!=='win32',stdio:'inherit'});
@@ -115,10 +119,51 @@ const {chromium}=require('playwright');
     path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-print-mobile.png'
    });
   }
-  console.log('PASS PDF viewer matn spacing, khatima movement, per-certificate draft save/reset and responsive print');
+  // Exercise the ACTUAL qira'at title artwork (basmalah, ijazah.svg and
+  // riwayah SVG glyphs). The earlier fixture covers only a matn heading.
+  const qHtml=await (await fetch(qiraatUrl)).text();
+  const qData=qHtml.match(/<script[^>]*id="certificate-review-data"[^>]*>(.*?)<\\/script>/)?.[1];
+  assert.ok(qData,'qiraat fixture provides source-bound draft preview');
+  const qMock=JSON.parse(qData);
+  const qPage=await browser.newPage({viewport:{width:1440,height:900}});
+  try{
+   await qPage.route('**/api/workspace/certificateDraftPreview',request=>
+    request.fulfill({json:qMock}));
+   await qPage.goto(qiraatUrl);
+   const artwork=qPage.locator('.certificate-header-art');
+   await artwork.locator('.certificate-ijazah-svg').waitFor();
+   await artwork.locator('.certificate-basmalah-svg').waitFor();
+   await artwork.locator('.certificate-reading-svg-line').waitFor();
+   const h0=await artwork.boundingBox();
+   const b0=await qPage.locator('.certificate-body-content').boundingBox();
+   const f0=await qPage.locator('.certificate-footer').boundingBox();
+   await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
+   const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
+   await qHeading.fill('3');await qHeading.blur();
+   await qPage.waitForFunction(y=>
+    (document.querySelector('.certificate-header-art')?.getBoundingClientRect().y||0)>y+3,h0.y);
+   const h1=await artwork.boundingBox();
+   const b1=await qPage.locator('.certificate-body-content').boundingBox();
+   assert.ok(h1&&b1&&h1.y>h0.y+3&&b1.y>b0.y+3,
+    'qiraat basmalah/title/riwayah move together; sanad body follows');
+   await qFooter.fill('-3');await qFooter.blur();
+   await qPage.waitForFunction(y=>
+    (document.querySelector('.certificate-footer')?.getBoundingClientRect().y||0)<y-3,f0.y);
+   const f1=await qPage.locator('.certificate-footer').boundingBox();
+   assert.ok(f1&&f0.y-f1.y>3,'qiraat mujeez stamp/date/signature lift independently');
+   assert.equal(await qPage.locator('[role="alert"]').count(),0,
+    'reasonable title/footer offsets remain inside the ornamental safety zone');
+   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+    await qPage.locator('.print-area').screenshot({
+     path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-heading-footer.png'
+    });
+  }finally{await qPage.close();}
+  console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{
   if(browser)await browser.close().catch(()=>{});
   if(server?.pid)try{if(process.platform==='win32')server.kill();else process.kill(-server.pid,'SIGTERM');}catch{}
   fs.rmSync(temp,{recursive:true,force:true});
+  fs.rmSync(qiraatDir,{recursive:true,force:true});
  }
 })().catch(err=>{console.error(err);process.exitCode=1;});
