@@ -162,7 +162,7 @@ export default function QurraTransmissionWorkspace(){
     {!editingChain&&<div className="flex flex-wrap items-center justify-between gap-3">
      <div className="min-w-0">
       <h2 className="font-semibold">{overviewStage?'ابن الجزري ← القراء العشرة · الطرق المحفوظة':sharedStage?'السند المشترك: ابن الجزري ← الداني':showAll?'جميع الأسانيد المحفوظة':current?displayRawi(current.qariId,current.rawi)+' عن '+shortQariName(current.qariId):'السند المحفوظ'}</h2>
-      <p className="mt-1 text-xs text-muted-foreground">{overviewStage?'طرق ظاهرة: '+arabicDigits(paths.length)+' · روايات محفوظة: '+arabicDigits(new Set(candidates.map(w=>w.routeId)).size):sharedStage?'مسارات محفوظة: '+arabicDigits(paths.length)+' · شواهد: '+arabicDigits(candidates.length):showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} مسار</p>
+      <p className="mt-1 text-xs text-muted-foreground">{overviewStage?'طرق ظاهرة: '+arabicDigits(paths.length)+' · روايات محفوظة: '+arabicDigits(new Set(candidates.map(w=>w.routeId)).size):sharedStage?'أسانيد محفوظة: '+arabicDigits(paths.length)+' · شواهد مصدرية: '+arabicDigits(candidates.length):showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} {sharedStage?'سند مميّز':'مسار'}</p>
      </div>
      {!groupedStage&&<div className="flex flex-wrap gap-2">
       <button type="button" aria-pressed={showAll} onClick={()=>setShowAll(v=>!v)}
@@ -174,7 +174,7 @@ export default function QurraTransmissionWorkspace(){
     {overviewStage&&paths.length>0&&!editingChain&&<p className="text-xs text-muted-foreground">المخطط الكامل قابل للتمرير أفقيًّا لقراءة أسماء الرجال كاملة، دون تصغير البطاقات.</p>}
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
-     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage}
+     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage||sharedStage} sharedSanads={sharedStage} personNames={data.names}
       routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
