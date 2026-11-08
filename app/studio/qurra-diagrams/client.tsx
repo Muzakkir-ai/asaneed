@@ -2,6 +2,7 @@
 import {useEffect,useMemo,useState} from 'react';
 import CombinedSanadView from '../../../legacy/components/CombinedSanadView';
 import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
+import BookTariqBuilder from '../../../legacy/components/BookTariqBuilder';
 import {QURRA,shortQariName} from '../../../legacy/lib/qurra';
 import {buildQurraTransmissionData,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
@@ -24,6 +25,7 @@ export default function QurraTransmissionWorkspace(){
  const [qari,setQari]=useState('all');
  const [route,setRoute]=useState('all');
  const [sourcesVisible,setSourcesVisible]=useState(false);
+ const [editorVisible,setEditorVisible]=useState(false);
  useEffect(()=>{
   let live=true;
   fetch('/api/book-builder',{headers:workspaceHeaders(),cache:'no-store'})
@@ -36,6 +38,11 @@ export default function QurraTransmissionWorkspace(){
    .finally(()=>{if(live)setLoading(false);});
   return ()=>{live=false;};
  },[]);
+ const refreshLibrary=()=>{
+  fetch('/api/book-builder',{headers:workspaceHeaders(),cache:'no-store'})
+   .then(async response=>{const result=await response.json();if(!response.ok)throw Error(result?.error||'تعذر تحديث المكتبة');return result as BuilderLibrary;})
+   .then(setLibrary).catch(e=>setError(e instanceof Error?e.message:'تعذر تحديث المكتبة'));
+ };
  const data=useMemo(()=>library?buildQurraTransmissionData(library):null,[library]);
  const candidates=(data?.witnesses||[]).filter(w=>w.stage===stage);
  const chosen=candidates.filter(w=>(qari==='all'||w.qariId===qari)&&(route==='all'||w.routeId===route));
@@ -109,6 +116,13 @@ export default function QurraTransmissionWorkspace(){
      </div>)}
     </div>}
    </section>
+   {library?.canManage&&<section className="space-y-3 rounded-xl border bg-background p-3 sm:p-4">
+    <button type="button" aria-expanded={editorVisible} onClick={()=>setEditorVisible(v=>!v)} className="w-full rounded-md border px-3 py-2 text-right font-semibold hover:bg-muted">
+     {editorVisible?'إغلاق محرّر الكتب والطرق':'إضافة رواة وتوثيق الصلات في الكتب والطرق'}
+    </button>
+    <p className="text-xs text-muted-foreground">يستخدم هذا القسم محرّر الأسانيد الأصلي: يمكن البحث في الأسماء المحفوظة، إضافة الفروع، ومراجعة وحفظ السند. الحفظ يحدّث مكتبة أسانيد Asaneed المشتركة، ثم يُعاد تحميل الرسم هنا.</p>
+    {editorVisible&&<BookTariqBuilder inline onLibraryChange={refreshLibrary} onSaved={refreshLibrary}/>}
+   </section>}
    <aside className="space-y-1 rounded-xl border border-dashed p-4 text-sm">
     <h2 className="font-semibold">المرحلة اللاحقة: من القراء إلى الصحابة ثم النبي ﷺ</h2>
     <p className="text-muted-foreground">ستضاف فقط عند ربط هويات الرواة وأسانيدهم الموثقة، ولا تُنشأ تلقائيًا من أسماء القراء أو نصوص متشابهة. لإضافة الرواة والطرق الآن استخدم قسم الكتب والطرق المحفوظ.</p>
