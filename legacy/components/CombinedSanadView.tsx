@@ -2,7 +2,7 @@ import {Waypoints} from 'lucide-react';
 import {placeSanad} from '../lib/sanadPlacement';
 import {optimizeSanadPorts} from '../lib/sanadConnectorRouting';
 import {sharedSanadBuses} from '../lib/sanadSharedBus';
-import {planCoordinatedSanad} from '../lib/sanadCoordinatedRouting';
+import {canShareSanadFanIn,planCoordinatedSanad} from '../lib/sanadCoordinatedRouting';
 import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} from 'react';
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
@@ -109,7 +109,11 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const connectors=fallback?.connectors??[];
  // Consolidate complete many-to-many adjacencies only while showing ALL
  // saved paths. A filtered sanad always uses its individual actual edges.
- const buses=!coordinatedPlan&&route===null&&exactRoute===null?sharedSanadBuses(graph.rows,graph.edges):[];
+ const buses=!coordinatedPlan&&route===null&&exactRoute===null
+  ?sharedSanadBuses(graph.rows,graph.edges).filter(bus=>
+    canShareSanadFanIn(bus.from,graph.rows,graph.edges,
+     new Map([...centers].map(([id,x])=>[id,{x}])),cardWidth))
+  :[];
  const bundledEdges=new Set(buses.flatMap(bus=>bus.edgeIndices));
  const busesAtRank=(rank:number)=>buses.filter(bus=>bus.rank===rank);
  const busY=(rank:number,index:number)=>{

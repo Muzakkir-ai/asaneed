@@ -176,14 +176,14 @@ const {chromium}=require('playwright');
   }
 
   // The coordinated production SVG must preserve every real edge while its
-  // three separate buses replace the web of overlapping 5×3 arrows.
+  // distant teacher groups must not be forced into a shared incoming bus.
   for(const width of [1440,390]){
    await page.setViewportSize({width,height:960});
    const fanOut=page.getByTestId('coordinated-fan-out');
    const fanIn=page.getByTestId('coordinated-fan-in');
    const dense=page.getByTestId('coordinated-dense');
    for(const [view,sourceCount,destinationCount] of [
-    [fanOut,1,4],[fanIn,4,1],
+    [fanOut,1,4],
    ]){
     assert.equal(await view.locator('g[data-routing-part="bus"]').count(),1,
      'one shared bus per real connection group at '+width);
@@ -192,8 +192,10 @@ const {chromium}=require('playwright');
     assert.equal(await view.locator('path[data-from][data-to]').count(),4,
      'actual edge identities are retained beneath the shared visual bus');
    }
-   assert.equal(await dense.locator('g[data-routing-part="bus"]').count(),3,
-    'imam fan-out, complete intermediary bus and Companion fan-in remain separate at '+width);
+   assert.ok(await dense.locator('g[data-routing-part="bus"]').count()>=1,
+    'dense routes keep legitimate source fan-outs without merging distant teachers at '+width);
+   assert.equal(await fanIn.locator('g[data-routing-part="bus"]').count(),0,
+    'rootless independent teachers have no proven common upstream teacher');
    assert.equal(await dense.locator('path[data-from][data-to]').count(),23,
     'all 5 + 15 + 3 real historical sanad edges remain selectable');
    const denseCollisions=await dense.evaluate(section=>{
@@ -231,19 +233,32 @@ const {chromium}=require('playwright');
    assert.ok(incompleteBuses.some(bus=>memberIndices.length===bus.length&&memberIndices.every(index=>bus.includes(index))),
     'all incoming transmissions to '+target+' must share one final arrow');
   }
+  // Positive control: two nearby teachers with ONE direct predecessor
+  // genuinely form one shared incoming arrow into their common student.
+  const eligible=page.getByTestId('coordinated-eligible-fanin');
+  const eligibleEdges=await eligible.locator('path[data-to="target"]').evaluateAll(nodes=>
+   nodes.map(node=>Number(node.dataset.edgeIndex)));
+  assert.equal(eligibleEdges.length,2);
+  const eligibleDrops=await eligible.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
+   nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+  assert.equal(eligibleDrops.filter(ids=>eligibleEdges.every(index=>ids.includes(index))).length,1,
+   'nearby same-level teachers with same teacher may share one final arrow');
+  assert.equal(await page.getByTestId('coordinated-fan-in').locator('g[data-routing-part="single"]').count(),4,
+   'four rootless teachers retain four independent arrows');
+
   // An unrelated skipped-rank edge must not revert the entire diagram
   // to its independent legacy connectors.
   const longBypass=page.getByTestId('coordinated-long-bypass');
-  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),3,
-   'long continuation now joins the end fan-in, without disabling either earlier bus');
+  assert.equal(await longBypass.locator('g[data-routing-part="bus"]').count(),2,
+   'the root fan-out and related local teachers retain buses; cross-rank arrivals remain separate');
   assert.equal(await longBypass.locator('path[data-from][data-to]').count(),9,
    'preserve exact original edges of mixed-length diagram');
   const endIncoming=await longBypass.locator('path[data-to="end"]').evaluateAll(nodes=>
    nodes.map(node=>Number(node.dataset.edgeIndex)));
   const endDrops=await longBypass.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
    nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
-  assert.equal(endDrops.filter(indices=>endIncoming.every(index=>indices.includes(index))).length,1,
-   'meeting and through2 must share exactly one final arrow into end');
+  assert.equal(endDrops.filter(indices=>endIncoming.every(index=>indices.includes(index))).length,0,
+   'meeting and through2 are on different levels and need separate incoming arrows');
   assert.match(await longBypass.locator('path[data-from="meeting"][data-to="end"]').getAttribute('d'),
    /H[-0-9.]+/,'skipped-rank continuation uses an orthogonal bypass');
   const longCollisions=await longBypass.evaluate(section=>{
@@ -270,6 +285,8 @@ const {chromium}=require('playwright');
   for(const [fixture,target,expectedParents] of [
    ['coordinated-mixed-rank','saigh',['jazari','left']],
    ['coordinated-staggered-fanin','target',['root','a','b']],
+   ['coordinated-different-parents','target',['a','b']],
+   ['coordinated-separated-parents','target',['a','b']],
   ]){
    const section=page.getByTestId(fixture);
    const incoming=await section.locator('path[data-to="'+target+'"]').evaluateAll(nodes=>
@@ -278,10 +295,12 @@ const {chromium}=require('playwright');
     fixture+' preserves every genuine incoming sanad relationship');
    const drops=await section.locator('g[data-routing-part="drop"]').evaluateAll(nodes=>
     nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
-   assert.equal(drops.filter(ids=>incoming.every(edge=>ids.includes(edge.index))).length,1,
-    fixture+' merges all teachers before exactly one final arrow');
-   assert.ok(await section.locator('g[data-routing-part="bus"]').count()>0,
-    fixture+' must use the coordinated bus renderer, not fallback to old lines');
+   assert.equal(drops.filter(ids=>incoming.length>1&&incoming.every(edge=>ids.includes(edge.index))).length,0,
+    fixture+' must not merge independent, far or cross-rank teachers');
+   const arrowGroups=await section.locator('g[data-routing-part="drop"],g[data-routing-part="single"]').evaluateAll(nodes=>
+    nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
+   assert.ok(incoming.every(edge=>arrowGroups.some(ids=>ids.includes(edge.index))),
+    fixture+' keeps a final arrow for every saved narrator relationship');
    const collisions=await section.evaluate(element=>{
     const cards=[...element.querySelectorAll('[data-combined-narrator]')];
     return [...element.querySelectorAll('path[data-from][data-to]')].flatMap(edge=>{
@@ -301,6 +320,25 @@ const {chromium}=require('playwright');
     });
    });
    assert.deepEqual(collisions,[],fixture+' never routes through unrelated narrator cards');
+  }
+
+  // Visual QA of the exact new policy, not only generic old examples:
+  // one permitted sibling merge and three prohibited fan-in arrangements.
+  if(process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS){
+   for(const width of [1100,390]){
+    await page.setViewportSize({width,height:900});
+    for(const [label,id] of [
+     ['eligible-fanin','coordinated-eligible-fanin'],
+     ['different-parents','coordinated-different-parents'],
+     ['separated-parents','coordinated-separated-parents'],
+     ['mixed-rank','coordinated-mixed-rank'],
+    ]){
+     await page.getByTestId(id).screenshot({
+      style:'nextjs-portal { display: none !important; }',
+      path:process.env.ASANEED_SANAD_REVIEW_SCREENSHOTS+'/sanad-regression-'+label+'-'+width+'.png',
+     });
+    }
+   }
   }
 
   const dense=page.getByTestId('coordinated-dense');
@@ -323,8 +361,8 @@ const {chromium}=require('playwright');
   assert.equal(await dense.locator('g[data-routing-part]').count(),0,
    'per-view rollback immediately restores the old connector system');
   await dense.locator('[data-sanad-routing-switch]').click();
-  assert.equal(await dense.locator('g[data-routing-part="bus"]').count(),3,
-   're-enabling coordinated routing restores the verified shared buses');
+  assert.ok(await dense.locator('g[data-routing-part="bus"]').count()>=1,
+   're-enabling coordinated routing retains legitimate source buses');
   console.log('PASS coordinated buses, exact graph identities, mobile, filtered paths and rollback');
 
   // SVG markers must use fixed coordinates: thicker highlighted lines must
