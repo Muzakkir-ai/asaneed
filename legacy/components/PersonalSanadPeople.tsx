@@ -126,6 +126,10 @@ export default function PersonalSanadPeople({library,onPersonCreated,onApply,ini
   if(i<0)return renderParallel(key,positions);
   return <>{preparation&&i>0&&<p className="text-xs text-muted-foreground">{preparation.tokens[i].before.trim()}</p>}{renderRow(i,positions[0]??null,[i],positions.map(arabicDigits))}</>;
  }} afterPerson={!readOnly&&!preparation?key=>mainPath.includes(key)?addAfter(mainPath.indexOf(key)+1):null:undefined}/>}
+ {!readOnly&&(!preparation||graph)&&<div className="flex flex-wrap items-center gap-3 rounded-lg border border-dashed p-3" aria-label="إضافة فروع السند">
+  <Button type="button" variant="outline" size="sm" className="gap-2" disabled={!routeNodes.length||parallels.length>=10} onClick={()=>{if(routeNodes[0])addParallel(routeNodes[0].key);}}><GitFork aria-hidden="true" className="h-4 w-4"/>إضافة فرع</Button>
+  <p className="text-xs text-muted-foreground">يمكنك بدء فرع الآن. أكمل رواة السند الأساسي، ثم اختر نقطة التقاء الفرع. ولإنشاء فرع من راوٍ آخر، استخدم «إضافة فرع» الظاهر بين بطاقات الرواة.</p>
+ </div>}
  {!readOnly&&(!preparation||graph)&&parallels.map((branch,index)=>{
   const origin=routeNodes.find(node=>node.key===branch.origin);
   const isVisible=completeParallels.some(item=>item.id===branch.id);
