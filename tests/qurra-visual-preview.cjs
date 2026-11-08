@@ -117,7 +117,7 @@ const library={
      assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
       'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
      await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).waitFor({timeout:15000});
-     await page.getByText('مسارات محفوظة: ١ · شواهد: ٢',{exact:false}).waitFor();
+     await page.getByText('أسانيد محفوظة: ١ · شواهد مصدرية: ٢',{exact:false}).waitFor();
     }else if(i===2||i===3){
      assert.equal(await page.getByLabel('القارئ').count(),1,
       'Reader filters belong only to the reading-specific stages');
