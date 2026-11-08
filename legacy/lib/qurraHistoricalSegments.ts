@@ -1,6 +1,6 @@
 import {QURRA} from './qurra';
 import {sanadKey,type ContinuationSection} from './unifiedSanad';
-import {buildNarratorDirectory} from './narratorDirectory';
+import {fullRawiName} from './rawiIdentity';
 
 export type HistoricalSegmentKind='rawi-imam'|'imam-sahaba'|'sahaba-prophet';
 export type HistoricalSectionView={
@@ -34,27 +34,31 @@ export function historicalSection(
  const title=['CHAIN',qariId,suffix].join(':');
  const section=sections.find(s=>sanadKey(s.title)===sanadKey(title)&&s.body?.trim());
  if(!section)return null;
- const {people}=buildNarratorDirectory([{id:section.id,title:section.title,body:section.body}]);
- const names=Object.fromEntries(people.map(person=>[person.id,person.name]));
- const byId=new Map(people.map(p=>[p.id,p]));
- const incoming=new Set(people.flatMap(p=>p.teachers));
- const roots=people.filter(p=>!incoming.has(p.id));
+ const names:Record<string,string>={};
  const paths:string[][]=[];
- let unsafe=false;
- function walk(id:string,current:string[]){
-  if(current.includes(id)||current.length>35||paths.length>64){unsafe=true;return;}
-  const path=[...current,id],next=byId.get(id)?.teachers.filter(t=>byId.has(t))||[];
-  if(!next.length){if(path.length>1)paths.push(path);return;}
-  for(const teacher of next)walk(teacher,path);
+ // The only auto-drawn historical edges are an explicitly written,
+ // unbranched sequence AFTER «صاحب الرواية» and «عن», ending in
+ // «صاحب القراءة». Branches and plural pronouns need human review.
+ if(kind==='rawi-imam'){
+  const body=section.body.trim();
+  const pivot=body.search(/صَ?ا?حِ?ب[ِ ]+\s*(?:الرِّ?وَايَةِ?|الرواية)/u);
+  const suffix=pivot>=0?body.slice(pivot).replace(/^.*?(?:الرِّ?وَايَةِ?|الرواية)\s*[،.]?\s*/u,''):'';
+  const parts=suffix.split(/(?:^|[،.؛])\s*عن\s+/u).map(x=>x.trim()).filter(Boolean);
+  const hasBranches=/\b(?:وهما|وهم|قرأوا|قرؤوا|وقرأ|وقرؤوا)\b/u.test(suffix)
+   ||/[\(\)]/u.test(suffix);
+  if(parts.length>0&&parts.length<=7&&!hasBranches&&/صَ?ا?حِ?ب[ِ ]+\s*(?:القراءة|القِرَاءَةِ?)/u.test(parts.at(-1)||'')){
+   const texts=[fullRawiName(qariId,rawi),...parts.map(x=>x.replace(/\s*(?:صَ?ا?حِ?ب[ِ ]+\s*(?:القراءة|القِرَاءَةِ?)).*$/u,'').replace(/[،.؛\s]+$/u,'').trim())];
+   if(texts.every(t=>t.length>=4&&t.length<=180)&&new Set(texts.map(sanadKey)).size===texts.length){
+    const ids=texts.map((_,i)=>'source:'+section.id+':'+i);
+    ids.forEach((id,i)=>names[id]=texts[i]);
+    paths.push(ids);
+   }
+  }
  }
- for(const person of roots)walk(person.id,[]);
- // Don't guess around source prose that cannot be represented as an
- // unambiguous acyclic graph. Exact clauses remain as branch cards.
- const accepted=!unsafe&&paths.length<=64?paths:[];
  return {
   id:section.id,title:section.title,body:section.body,
   kind,qariId,rawi,branches:parts(section.body),
-  paths:accepted,names,status:'source-text-review',
+  paths,names,status:'source-text-review',
  };
 }
 
