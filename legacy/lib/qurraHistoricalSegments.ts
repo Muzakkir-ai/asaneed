@@ -64,7 +64,10 @@ export function imamCompanionIndexedGraph(
  * source clause. This is not an identity-merge heuristic: graph identities
  * still come exclusively from the source-scoped Rijal directory. */
 const sourceKey=(value:string)=>sanadKey(value)
- .replace(/[،؛.:()\-ـ]/gu,' ').replace(/\s+/gu,' ').trim();
+ .replace(/[،؛.:()\-ـ]/gu,' ').replace(/\s+/gu,' ')
+ // Kunyahs inflect: أبو / أبي / أبا are the same written name here.
+ // This is only a textual witness check; no two IDs are merged.
+ .replace(/(^|\s)(?:ابو|ابي|ابا)(?=\s)/gu,'$1ابو').trim();
 
 /** Follow only explicitly indexed teacher edges within one CHAIN source.
  * Fail closed on cycles, missing endpoints or pathological fan-out.
