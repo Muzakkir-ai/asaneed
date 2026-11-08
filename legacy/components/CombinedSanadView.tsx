@@ -14,6 +14,7 @@ const initialCardHeight=80;
 export default function CombinedSanadView({paths,routeLabels,renderPerson,source,review,spacious=false,sharedSanads=false,personNames}:{paths:string[][];routeLabels?:string[];renderPerson:(id:string,positions:number[])=>ReactNode;groupJazariStudents?:boolean;source?:string;review?:boolean;spacious?:boolean;sharedSanads?:boolean;personNames?:Record<string,string>}){
  const cell=spacious?276:224,cardWidth=spacious?228:192;
  const [route,setRoute]=useState<number|null>(null);
+ const [exactRoute,setExactRoute]=useState<number|null>(null);
  const [focused,setFocused]=useState<string|null>(null);
  // Reversible client-side switch, plus an emergency deployment kill-switch.
  // NEXT_PUBLIC_SHARED_BUS_ROUTING=false forces the tested legacy diagram.
@@ -29,7 +30,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
   const names=labels.map(id=>personNames?.[id]||id).join('، ');
   return 'السند '+arabicDigits(index+1)+(names?' · '+names:'');
  };
- const currentIndices=route===null?paths.map((_,i)=>i):routeGroups[route]??[];
+ const currentIndices=exactRoute!==null?[exactRoute]:route===null?paths.map((_,i)=>i):routeGroups[route]??[];
  const shownPaths=currentIndices.map(i=>paths[i]);
  const viewport=useRef<HTMLDivElement>(null);
  const canvas=useRef<HTMLDivElement>(null);
@@ -52,15 +53,15 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const centers=useMemo(()=>graph?.rows.length?placeSanad(graph.rows,graph.edges,width,cell):new Map<string,number>(),[graph,width]);
  const coordinatedPlan=useMemo(()=>{
   if(!graph?.rows.length||!coordinated||!routingAllowed)return null;
-  const indices=route===null?paths.map((_,i)=>i):routeGroups[route]??[];
+  const indices=exactRoute!==null?[exactRoute]:route===null?paths.map((_,i)=>i):routeGroups[route]??[];
   const visible=graph.edges.flatMap((edge,i)=>
-   route===null||edge.routes.some(index=>indices.includes(index))
+   exactRoute===null&&route===null||edge.routes.some(index=>indices.includes(index))
     ?[{...edge,originalIndex:i}]:[]);
   const plan=planCoordinatedSanad(graph.rows,
    new Map([...centers].map(([id,x])=>[id,{x}])),
    visible,width,cardWidth,initialCardHeight,cardHeights);
   return plan.valid?plan:null;
- },[graph,coordinated,routingAllowed,route,routeGroups,paths,centers,width,cardWidth,cardHeights]);
+ },[graph,coordinated,routingAllowed,route,exactRoute,routeGroups,paths,centers,width,cardWidth,cardHeights]);
  const compact=available>0&&available<width;
  // Large historical branching diagrams must keep full-size Arabic names.
  // Allow horizontal scrolling instead of shrinking every narrator card.
@@ -108,7 +109,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const connectors=fallback?.connectors??[];
  // Consolidate complete many-to-many adjacencies only while showing ALL
  // saved paths. A filtered sanad always uses its individual actual edges.
- const buses=!coordinatedPlan&&route===null?sharedSanadBuses(graph.rows,graph.edges):[];
+ const buses=!coordinatedPlan&&route===null&&exactRoute===null?sharedSanadBuses(graph.rows,graph.edges):[];
  const bundledEdges=new Set(buses.flatMap(bus=>bus.edgeIndices));
  const busesAtRank=(rank:number)=>buses.filter(bus=>bus.rank===rank);
  const busY=(rank:number,index:number)=>{
@@ -121,14 +122,21 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
   {paths.length>1&&<details className="rounded-lg border p-2">
    <summary className="cursor-pointer text-sm">{sharedSanads?'تفاصيل أسانيد ابن الجزري إلى الداني':'تفاصيل فروع السند'}</summary>
   <div className="flex flex-wrap items-center gap-3">
-   <select aria-label={sharedSanads?'اختيار السند المشترك':'عرض المسارات'} value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
+   <select aria-label={sharedSanads?'اختيار السند المشترك':'عرض المسارات'} value={route??''} onChange={event=>{setRoute(event.target.value===''?null:Number(event.target.value));setExactRoute(null);}} className="max-w-full rounded border bg-background p-1 text-sm">
     <option value="">{sharedSanads?'عرض جميع الأسانيد':'عرض الكل'}</option>
     {routeGroups.map((indices,i)=><option value={i} key={i}>{sharedSanads?sharedGroupLabel(indices,i):'المسار '+arabicDigits(i+1)+' · '+(indices.length>1?arabicDigits(indices.length)+' فروع متقاربة':arabicDigits(paths[indices[0]].length)+' رواة')}</option>)}
+   </select>
+   <select aria-label="عرض سند واحد بعينه" value={exactRoute??''}
+    onChange={event=>{setExactRoute(event.target.value===''?null:Number(event.target.value));setRoute(null);}}
+    className="max-w-full rounded border bg-background p-1 text-sm">
+    <option value="">اختيار سند منفرد (اختياري)</option>
+    {paths.map((_,i)=><option value={i} key={'exact-'+i}>{sharedSanads?sharedGroupLabel([i],i):routeLabels?.[i]||'السند '+arabicDigits(i+1)}</option>)}
    </select>
   </div>
   {routeGroups.length<paths.length&&<p className="text-xs text-muted-foreground">{sharedSanads?'أسانيد مميّزة: '+arabicDigits(routeGroups.length)+'، مع بقاء '+arabicDigits(paths.length)+' وجه محفوظ مستقلًّا.':'مسارات معروضة: '+arabicDigits(routeGroups.length)+'، تضم '+arabicDigits(paths.length)+' أوجه محفوظة.'} يُجمع اختلاف راوٍ أو راويين بين الشيخ والتلميذ في مسار واحد دون تغيير أي سند.</p>}
   {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">{sharedSanads?'اختر سندًا بحسب رجال إسناده، لا بحسب الرواية أو الطريق.':'اختر مسارًا لتتبّع اتصالاته.'} اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
 
+   {exactRoute!==null&&<p className="text-xs text-muted-foreground">السند المحدد: {routeLabels?.[exactRoute]||'السند '+arabicDigits(exactRoute+1)}</p>}
    {route!==null&&routeLabels&&<p className="text-xs text-muted-foreground">{[...new Set((routeGroups[route]??[]).map(i=>routeLabels[i]).filter(Boolean))].join(' / ')}</p>}
   </details>}
   {focused!==null&&<p role="status" className="flex flex-wrap items-center gap-2 text-xs text-primary">اتصالات الراوي المحدد · {routeGroups.flatMap((indices,i)=>indices.some(index=>paths[index].includes(focused))?['المسار '+arabicDigits(i+1)]:[]).join('، ')} <button type="button" className="rounded border px-2 py-1" onClick={()=>setFocused(null)}>إلغاء التحديد</button></p>}
@@ -166,7 +174,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
       {coordinatedPlan.edgePaths.map(edge=><path key={'edge-'+edge.edgeIndex}
        data-from={edge.from} data-to={edge.to} data-routes={edge.routes.join(',')}
        data-edge-index={edge.edgeIndex} data-edge-id={edge.id||undefined}
-       d={edge.d} fill="none" stroke="none" strokeWidth={route!==null||focused!==null&&(edge.from===focused||edge.to===focused)?2:1}
+       d={edge.d} fill="none" stroke="none" strokeWidth={route!==null||exactRoute!==null||focused!==null&&(edge.from===focused||edge.to===focused)?2:1}
        opacity={focused===null||edge.from===focused||edge.to===focused?1:.15} pointerEvents="none"/>)}
       {focused!==null&&coordinatedPlan.edgePaths.filter(edge=>edge.from===focused||edge.to===focused)
        .map(edge=><path key={'focused-'+edge.edgeIndex} data-focused-edge={edge.edgeIndex} d={edge.d} fill="none"
@@ -175,13 +183,13 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
      </>}
      {!coordinatedPlan&&graph.edges.map(({from,to,routes},index)=>{
       if(bundledEdges.has(index))return null;
-      const active=route===null||routes.some(index=>currentIndices.includes(index));
+      const active=route===null&&exactRoute===null||routes.some(index=>currentIndices.includes(index));
       if(!active)return null;
       const {x1,x2,d:connector}=connectors[index];
       const traced=focused===null||from===focused||to===focused;
       return <g key={JSON.stringify([from,to])} opacity={traced?1:.15}>
        <path d={connector} fill="none" stroke="hsl(var(--background))" strokeWidth="5"/>
-       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={route!==null&&active||focused!==null&&traced?2:1} opacity={traced?1:.15} markerEnd={`url(#${arrow})`}/>
+       <path data-from={from} data-to={to} data-routes={routes.join(',')} data-start={x1} data-end={x2} d={connector} fill="none" stroke="currentColor" strokeWidth={(route!==null||exactRoute!==null)&&active||focused!==null&&traced?2:1} opacity={traced?1:.15} markerEnd={`url(#${arrow})`}/>
       </g>;
      })}
      {buses.map((bus,index)=>{
@@ -201,7 +209,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
       </g>;
      })}
     </svg>
-    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={(route!==null&&!shownPaths.some(path=>path.includes(id))?'absolute opacity-40':'absolute')+(spacious?' [&_.narrator-person-card]:shadow-sm [&_.narrator-person-card_p]:text-[15px] [&_.narrator-person-card_p]:leading-7':'')} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
+    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={((route!==null||exactRoute!==null)&&!shownPaths.some(path=>path.includes(id))?'absolute opacity-40':'absolute')+(spacious?' [&_.narrator-person-card]:shadow-sm [&_.narrator-person-card_p]:text-[15px] [&_.narrator-person-card_p]:leading-7':'')} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
      <button type="button" data-trace-person={id} aria-label="تتبّع اتصالات الراوي" aria-pressed={focused===id} title="تتبّع اتصالات الراوي" onClick={()=>setFocused(current=>current===id?null:id)} style={{right:19,top:48,width:20,height:20,minWidth:20,maxWidth:20,minHeight:20,maxHeight:20,padding:0}} className={"absolute z-10 inline-flex items-center justify-center rounded-md border bg-background/95 text-primary shadow-sm transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 "+(focused===id?"border-primary bg-primary/10":"border-primary/20")}><Waypoints size={12} strokeWidth={2} aria-hidden="true"/></button>
      <div className={"[&>article>div:first-child]:min-h-20 [&>article>div>div:last-child]:hidden"+(focused!==null&&focused!==id&&!graph.edges.some(edge=>edge.from===focused&&edge.to===id||edge.to===focused&&edge.from===id)?' opacity-50':'')}>{renderPerson(id,sanadPositions(shownPaths,id))}</div>
     </div>)}
