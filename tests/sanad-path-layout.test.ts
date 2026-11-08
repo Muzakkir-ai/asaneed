@@ -2,6 +2,7 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {sanadPathLayout,sanadPositions} from '../legacy/lib/sanadPathLayout';
+import {groupSimilarSanadRoutes} from '../legacy/lib/sanadRouteGrouping';
 const paths=[['j','a','s','q','i'],['j','b','s','m','i']];
 const before=JSON.stringify(paths),blocks=sanadPathLayout(paths)!;
 assert.deepEqual(blocks.map(b=>b.kind),['person','split','person','split','person']);
@@ -19,6 +20,37 @@ const unequal=[['j','a','i'],['j','b','c','i']];
 assert.ok(sanadPathLayout(unequal,true));
 assert.deepEqual(sanadPositions(unequal,'i'),[3,4]);
 assert.deepEqual(sanadPositions([unequal[1]],'i'),[4]);
+
+
+// Similar alternate narrators between the same teacher and student count as
+// one DISPLAYED masar, even when the actual saved branches are distinct.
+const jazariStudentVariants=[
+ ['jazari','uqabi','samdasi','shaykh','end'],
+ ['jazari','nuwayri','samdasi','shaykh','end'],
+ ['jazari','umyuti','samdasi','shaykh','end'],
+];
+assert.deepEqual(groupSimilarSanadRoutes(jazariStudentVariants),[[0,1,2]],
+ 'different Jazari students sharing a successor are displayed as one group');
+assert.deepEqual(groupSimilarSanadRoutes([
+ ['jazari','nuwayri','umyuti','samdasi','end'],
+ ['jazari','umyuti','samdasi','end'],
+]),[[0,1]],'an additional narrator within a short parallel segment is also grouped');
+assert.deepEqual(groupSimilarSanadRoutes([
+ ['j','a','b','m','end'],['j','x','b','m','end'],
+ ['j','x','y','z','end'],
+]),[[0,1],[2]],'pairwise grouping must not transitively hide a larger change');
+assert.deepEqual(groupSimilarSanadRoutes([
+ ['jazari','student1','teacher','end'],
+ ['jazari','student2','differentTeacher','differentEnd'],
+]),[[0],[1]],'different terminal identities remain separate');
+assert.deepEqual(groupSimilarSanadRoutes([
+ ['jazari','a','b','c','end'],
+ ['jazari','x','b','y','end'],
+]),[[0],[1]],'two disjoint changes are not treated as one local narrator alternative');
+assert.deepEqual(groupSimilarSanadRoutes([['j','a','end'],['j','a','end']]),[[0,1]],
+ 'identical saved paths share a display group but remain distinct source paths');
+assert.deepEqual(groupSimilarSanadRoutes([]),[],'empty sanads have no display groups');
+console.log('Near-identical sanad grouping preserves every original route identity');
 
 const reconvergingPaths=[
  ['root','shared','tail'],
