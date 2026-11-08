@@ -6,6 +6,7 @@ import BookTariqBuilder from '../../../legacy/components/BookTariqBuilder';
 import {QURRA,shortQariName} from '../../../legacy/lib/qurra';
 import {buildQurraTransmissionData,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
+import {resolveSanadContinuation} from '../../../legacy/lib/unifiedSanad';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
 import {matchesArabic} from '../../../legacy/lib/arabicSearch';
 import {workspaceHeaders} from '../../../legacy/lib/workspaceSelection';
@@ -18,7 +19,7 @@ const stages:{id:QurraStage;name:string;description:string}[]=[
  {id:'other-seven',name:'مسارات السبعة الأخرى',description:'الطرق المحفوظة التي لا تمر بالداني في بيانات الرواية الحالية'},
 ];
 
-export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={}){
+export default function QurraTransmissionWorkspace(){
  const [library,setLibrary]=useState<BuilderLibrary|null>(null);
  const [error,setError]=useState('');
  const [loading,setLoading]=useState(true);
@@ -27,7 +28,7 @@ export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={
  const [route,setRoute]=useState('all');
  const [narratorSearch,setNarratorSearch]=useState('');
  const [sourcesVisible,setSourcesVisible]=useState(false);
- const [editorVisible,setEditorVisible]=useState(false);
+ const [editingRouteId,setEditingRouteId]=useState('');
  useEffect(()=>{
   let live=true;
   fetch('/api/book-builder',{headers:workspaceHeaders(),cache:'no-store'})
@@ -52,17 +53,24 @@ export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={
  const qariOptions=[...new Set(candidates.map(w=>w.qariId))];
  const routeOptions=[...new Map(candidates.filter(w=>qari==='all'||w.qariId===qari).map(w=>[w.routeId,w.title])).entries()];
  const paths=chosen.map(w=>w.ids),groups=groupSimilarSanadRoutes(paths);
+ // One editable saved record per displayed route: a multi-branch record must
+ // not become multiple independent copies when opened for manual editing.
+ const editableRoutes=[...new Map(chosen.map(w=>[w.routeId,w])).values()];
+ const selectedRoute=editableRoutes.find(w=>w.routeId===editingRouteId);
+ const selectedChain=selectedRoute&&library?.chains.find(c=>c.id===selectedRoute.routeId&&!c.archived);
+ const lastSavedPeople=selectedChain?.branches.map(branch=>branch.at(-1)?.person_id).filter((id):id is string=>!!id)||[];
+ const selectedContinuation=selectedRoute?resolveSanadContinuation(library?.continuationSections||[],selectedRoute.qariId,selectedRoute.rawi,selectedChain?.continuation_ids||undefined):null;
  const unreviewed=chosen.some(w=>(w.stage==='jazari-dani'||w.stage==='jazari-three')&&!w.parentConfirmed);
  const coverage=stage==='jazari-three'?QURRA.filter(q=>q.family==='three'):QURRA.filter(q=>q.family==='seven');
  const covered=new Set(candidates.map(w=>w.qariId));
  return <div dir="rtl" className="mx-auto w-full max-w-[1500px] space-y-5 p-3 sm:p-6">
   <header className="space-y-3 rounded-xl border bg-background p-4">
-   {onBack?<button type="button" onClick={onBack} className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى رجال الأسانيد</button>:<a href="/studio?page=narrators" className="inline-flex rounded-md border px-3 py-1.5 text-sm hover:bg-muted">العودة إلى رجال الأسانيد</a>}
+
    <h1 className="text-2xl font-bold">مخططات أسانيد القراء</h1>
    <p className="text-sm text-muted-foreground">مساحة مستقلة لتجميع الأسانيد المحفوظة وفق هويات الرواة وروابطهم الفعلية؛ لا تضيف وصلات غير مسجلة، ولا تغيّر أسانيد المشايخ.</p>
   </header>
   <nav aria-label="مراحل مخططات القراء" className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-   {stages.map(item=><button key={item.id} type="button" aria-pressed={stage===item.id} onClick={()=>{setStage(item.id);setQari('all');setRoute('all');}} className={'rounded-xl border p-3 text-right transition-colors '+(stage===item.id?'border-primary bg-primary/10':'bg-background hover:bg-muted')}>
+   {stages.map(item=><button key={item.id} type="button" aria-pressed={stage===item.id} onClick={()=>{setStage(item.id);setQari('all');setRoute('all');setEditingRouteId('');}} className={'rounded-xl border p-3 text-right transition-colors '+(stage===item.id?'border-primary bg-primary/10':'bg-background hover:bg-muted')}>
     <strong className="block text-sm">{item.name}</strong>
     <span className="mt-1 block text-xs text-muted-foreground">{item.description}</span>
    </button>)}
@@ -78,13 +86,13 @@ export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={
    <section className="space-y-3 rounded-xl border bg-background p-3 sm:p-4">
     <div className="flex flex-wrap gap-3">
      <label className="min-w-[180px] flex-1 text-sm">القارئ
-      <select aria-label="تصفية القارئ" value={qari} onChange={event=>{setQari(event.target.value);setRoute('all');}} className="mt-1 block w-full rounded-md border bg-background p-2">
+      <select aria-label="تصفية القارئ" value={qari} onChange={event=>{setQari(event.target.value);setRoute('all');setEditingRouteId('');}} className="mt-1 block w-full rounded-md border bg-background p-2">
        <option value="all">جميع القراء المتاحين</option>
        {qariOptions.map(id=><option value={id} key={id}>{shortQariName(id)}</option>)}
       </select>
      </label>
      <label className="min-w-[180px] flex-1 text-sm">الطريق المحفوظ
-      <select aria-label="تصفية الطريق المحفوظ" value={route} onChange={event=>setRoute(event.target.value)} className="mt-1 block w-full rounded-md border bg-background p-2">
+      <select aria-label="تصفية الطريق المحفوظ" value={route} onChange={event=>{setRoute(event.target.value);setEditingRouteId('');}} className="mt-1 block w-full rounded-md border bg-background p-2">
        <option value="all">جميع الطرق</option>
        {routeOptions.map(([id,title])=><option key={id} value={id}>{title}</option>)}
       </select>
@@ -101,7 +109,7 @@ export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={
      review={unreviewed}
      renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
      :<p role="status" className="rounded-lg bg-muted/40 p-5 text-sm">لا يوجد في المكتبة الحالية اتصال محفوظ لهذه المرحلة مع التصفية المختارة. لا تُرسم وصلة غير موجودة.</p>}
-    <p className="text-xs text-muted-foreground">مهم: ظهور آخر راوٍ لا يعني أن السلسلة اكتملت إلى الراوي أو الإمام. بعض أسانيد الكتب لازالت تحتاج مراجعة؛ الربط النهائي يتطلب التثبت من المصدر.</p>
+    <p className="text-xs text-muted-foreground">هذه الأسانيد مقاطع موثّقة بالهويات المحفوظة. لا يدل انتهاء الرسم عند آخر اسم على اكتمال الطريق إلى الراوي أو الإمام؛ استخدم قسم «استكمال طريق محفوظ» أدناه لإضافة السلسلة المراجَعة.</p>
    </section>
    <section className="rounded-xl border bg-background p-3 sm:p-4">
     <h2 className="text-base font-bold">تغطية القراء</h2>
@@ -124,12 +132,25 @@ export default function QurraTransmissionWorkspace({onBack}:{onBack?:()=>void}={
      </div>)}
     </div>}
    </section>
-   {library?.canManage&&<section className="space-y-3 rounded-xl border bg-background p-3 sm:p-4">
-    <button type="button" aria-expanded={editorVisible} onClick={()=>setEditorVisible(v=>!v)} className="w-full rounded-md border px-3 py-2 text-right font-semibold hover:bg-muted">
-     {editorVisible?'إغلاق محرّر الكتب والطرق':'إضافة رواة وتوثيق الصلات في الكتب والطرق'}
-    </button>
-    <p className="text-xs text-muted-foreground">يستخدم هذا القسم محرّر الأسانيد الأصلي: يمكن البحث في الأسماء المحفوظة، إضافة الفروع، ومراجعة وحفظ السند. الحفظ يحدّث مكتبة أسانيد Asaneed المشتركة، ثم يُعاد تحميل الرسم هنا.</p>
-    {editorVisible&&<BookTariqBuilder inline onLibraryChange={refreshLibrary} onSaved={refreshLibrary}/>}
+   {library?.canManage&&<section className="space-y-3 rounded-xl border bg-background p-3 sm:p-4" aria-label="استكمال طريق محفوظ">
+    <h2 className="text-base font-semibold">استكمال طريق محفوظ حتى الراوي أو الإمام</h2>
+    <p className="text-sm text-muted-foreground">اختر رواية وطريقًا محفوظًا. سيفتح محرر هذا الطريق مباشرةً بالأسماء المتصلة الموجودة، ويمكنك إضافة الراوي التالي من قائمة الأسماء المحفوظة أو إنشاء شخص جديد بعد المراجعة. احفظ التعديل بعد التثبت من المصدر. لا يكتمل الطريق بمجرد ظهور اسم الإمام في الرسم.</p>
+    <label className="block text-sm">الطريق الذي تريد إكماله
+     <select aria-label="اختر طريقًا محفوظًا لاستكماله" className="mt-1 block w-full rounded-md border bg-background p-2" value={selectedRoute?.routeId||''} onChange={event=>setEditingRouteId(event.target.value)}>
+      <option value="">اختر الطريق الذي تريد تعديل رواة سنده</option>
+      {editableRoutes.map(w=><option key={w.routeId} value={w.routeId}>{shortQariName(w.qariId)} — {w.rawi} — {w.book} — {w.title}</option>)}
+     </select>
+    </label>
+    {selectedRoute&&selectedChain&&<div className="space-y-3 rounded-lg border p-3">
+     <div className="space-y-1 text-sm">
+      <p><strong>آخر راوٍ محفوظ في كل فرع:</strong> {lastSavedPeople.map(id=>data.names[id]||'هوية غير متاحة').join(' / ')||'لم يضف أي راوٍ بعد'}</p>
+      <p className="text-xs text-muted-foreground">أضف الرواة التاليين بترتيب الأخذ، ولا تكتفِ بتسمية الرواية في الأعلى؛ فاسم الراوي الظاهر بوصفه نهاية للرسم ليس عقدة محفوظة تلقائيًا.</p>
+      {selectedContinuation?.missing.length?<p role="status" className="text-xs text-muted-foreground">التتمة المعتمدة من الراوي إلى الإمام ثم الصحابة غير مكتملة في النصوص المشتركة. يمكن حفظ سلسلة الرواة المراجعة أولًا، لكن اعتماد السند الكامل يحتاج إلى ربط التتمات ومراجعتها.</p>:<p className="text-xs text-muted-foreground">توجد تتمات مشتركة معتمدة لهذا الطريق. راجع تطابقها مع آخر راوٍ في الرسم قبل الاعتماد.</p>}
+     </div>
+     <BookTariqBuilder key={selectedRoute.routeId} inline initialRouteId={selectedRoute.routeId} onLibraryChange={refreshLibrary} onSaved={refreshLibrary}/>
+    </div>}
+    {!editableRoutes.length&&<p className="text-xs text-muted-foreground">لا يوجد طريق محفوظ في هذه المرحلة. غيّر التصفية أو افتح «الكتب والطرق» لإضافة طريق جديد.</p>}
+    <p className="text-xs text-muted-foreground">إضافة الرواة تتم في محرر الطرق؛ أما التتمة المشتركة من الراوي إلى الإمام ثم الصحابة والنبي ﷺ فتبقى مراجعة مستقلة في إدارة النصوص المشتركة. لن تُضاف وصلات إلى الرسم تلقائيًا من النص غير المعتمد.</p>
    </section>}
    <aside className="space-y-1 rounded-xl border border-dashed p-4 text-sm">
     <h2 className="font-semibold">المرحلة اللاحقة: من القراء إلى الصحابة ثم النبي ﷺ</h2>
