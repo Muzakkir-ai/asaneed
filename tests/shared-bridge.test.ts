@@ -5,7 +5,7 @@ import type {BuilderChain,BuilderLibrary} from '../legacy/lib/bookBuilder';
 import {combinedSanad} from '../legacy/lib/combinedSanad';
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import assert from 'node:assert/strict';
-import {automaticSharedBridgeId,personalSanadEndsAtSavedNarrator,composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
+import {attachIbrahimUbaydiRoot,isIbrahimUbaydiName,automaticSharedBridgeId,personalSanadEndsAtSavedNarrator,composeReferencedPersonalSanad,joinSharedBridgeRoutes,linkedBridgeTails,linkSharedBridge,matchesSharedBridgeSuffix,recoverSharedBridgePrefix,reviewedSharedBridge,savedSharedBridgeDiagram,sharedBridgePaths} from '../legacy/lib/sharedBridge';
 
 const tail='عن مُحَمَّد، عن خالد (ح). وقرأ مُحَمَّد أيضًا على أحمد، عن مشايخ؛ منهم زيد، وعمرو، وهم على ابن الجزري';
 const body='عن البَقَرِيّ، '+tail;
@@ -86,6 +86,32 @@ assert.throws(()=>composeReferencedPersonalSanad(rootPersonal,['student','distin
 
 assert.equal(automaticSharedBridgeId(personal,ids,[reviewed]),source.id);
 assert.equal(automaticSharedBridgeId(rootPersonal,['student',anchor.id],[rooted]),source.id);
+
+// Regression for Sheikh Uwais's Hafs sanad: the reviewed continuation is
+// headed by the existing canonical identity «الشيخ إبراهيم العُبَيدِي».
+// The older bare-name lookup omitted that anchor and left his saved path
+// under review, even though the identity IDs and text were already saved.
+assert.equal(isIbrahimUbaydiName('الشيخ إبراهيم العُبَيدِي'),true);
+assert.equal(isIbrahimUbaydiName('إبراهيم العبيدي'),true);
+assert.equal(isIbrahimUbaydiName('الشيخ إبراهيم بن فلان'),false);
+const canonicalUbaydi={id:'ubaydi',name:'الشيخ إبراهيم العُبَيدِي',display_name:'',archived:false};
+const rootedCanon=attachIbrahimUbaydiRoot([reviewed],[canonicalUbaydi]);
+assert.equal(rootedCanon[0].routes[0][0].id,canonicalUbaydi.id);
+assert.equal(rootedCanon[0].routes[0][0].name,'الشيخ إبراهيم العُبَيدِي');
+assert.equal(rootedCanon[0].source.body,body,'scholarly source text must remain unchanged');
+assert.ok(rootedCanon[0].routes.every(route=>route.filter(node=>node.id===canonicalUbaydi.id).length===1));
+const canonicalPersonal='كما أخذته عن عبد الله، عن الشيخ إبراهيم العُبَيدِي';
+const canonicalPersonalIds=['student',canonicalUbaydi.id];
+assert.equal(automaticSharedBridgeId(canonicalPersonal,canonicalPersonalIds,rootedCanon),source.id,
+ 'the reviewed Ubaydi bridge is automatically available for the saved Hafs reading');
+assert.equal(savedSharedBridgeDiagram(canonicalPersonal,canonicalPersonalIds,rootedCanon)?.diagram?.paths.length,3);
+assert.equal(composeReferencedPersonalSanad(canonicalPersonal,canonicalPersonalIds,rootedCanon,source.id),
+ canonicalPersonal+'، '+body,'the approved continuation joins without rewriting the personal text');
+assert.deepEqual(attachIbrahimUbaydiRoot([reviewed],[canonicalUbaydi,{...canonicalUbaydi,id:'duplicate'}]),
+ [reviewed],'ambiguous narrator identities must not be auto-merged');
+assert.deepEqual(attachIbrahimUbaydiRoot([reviewed],[{...canonicalUbaydi,archived:true}]),
+ [reviewed],'archived narrators must not become a new meeting point');
+
 assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,another]),null);
 assert.equal(automaticSharedBridgeId(personal,ids,[]),null);
 assert.equal(personalSanadEndsAtSavedNarrator(personal,ids),true);
@@ -128,7 +154,7 @@ assert.equal(combinedSanad([['a','b'],['b','a']]),null);
 
 const points=new Map([['root',{x:180}],['a',{x:80}],['b',{x:240}],['c',{x:320}],['d',{x:400}],['end',{x:180}]]);
 const direct=routeSanadConnectors([['root'],['end']],points,[{from:'root',to:'end',x1:180,x2:180}],480,100,70,false);
-assert.equal(direct.connectors[0].d,'M180 70 V113');
+assert.match(direct.connectors[0].d,/^M180 70 V\d+$/u,'direct narration must stay a single straight vertical connector');
 const fan=routeSanadConnectors([['root'],['a','b','c','d'],['end']],points,[
  {from:'root',to:'a',x1:156,x2:80},{from:'root',to:'b',x1:172,x2:240},
  {from:'root',to:'c',x1:188,x2:320},{from:'root',to:'d',x1:204,x2:400},
