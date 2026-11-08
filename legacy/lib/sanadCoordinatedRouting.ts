@@ -57,6 +57,13 @@ export function groupSanadConnections(
   const indices=bus.edgeIndices.filter(i=>!used.has(i));
   if(indices.length!==bus.edgeIndices.length)continue;
   if(bus.from.some(from=>bus.to.some(to=>!indices.some(i=>edges[i].from===from&&edges[i].to===to))))continue;
+  // A partially overlapping biclique would leave another connection entering
+  // the same child as a second arrow. Only bundle an entire rank-gap component.
+  const completeIncoming=bus.to.every(to=>edges.every(e=>
+   rankOf.get(e.from)!==bus.rank||e.to!==to||bus.from.includes(e.from)));
+  const completeOutgoing=bus.from.every(from=>edges.every(e=>
+   rankOf.get(e.to)!==bus.rank+1||e.from!==from||bus.to.includes(e.to)));
+  if(!completeIncoming||!completeOutgoing)continue;
   append('complete',indices);
  }
  // A complete 2x2 relationship set is also safe, even though the legacy bus
@@ -68,20 +75,26 @@ export function groupSanadConnections(
    if(available.length<2)continue;
    const indices=[source,other].flatMap(from=>available.map(target=>
     edges.findIndex((e,i)=>!used.has(i)&&e.from===from&&e.to===target)));
-   if(indices.every(i=>i>=0))append('complete',indices);
+   const completelyLinked=indices.every(i=>i>=0)
+    &&available.every(to=>edges.every(e=>rankOf.get(e.from)!==rank||e.to!==to||[source,other].includes(e.from)))
+    &&[source,other].every(from=>edges.every(e=>rankOf.get(e.to)!==rank+1||e.from!==from||available.includes(e.to)));
+   if(completelyLinked)append('complete',indices);
   }
  }
  for(let rank=0;rank<rows.length-1;rank++){
   while(true){
    const remaining=edges.flatMap((e,i)=>!used.has(i)&&rankOf.get(e.from)===rank&&rankOf.get(e.to)===rank+1?[i]:[]);
    let best:{kind:'fan-in'|'fan-out';indices:number[]}|null=null;
-   for(const id of rows[rank]){
-    const indices=remaining.filter(i=>edges[i].from===id);
-    if(indices.length>=2&&(!best||indices.length>best.indices.length))best={kind:'fan-out',indices};
-   }
+   // In a non-complete many-to-many graph, give all of a target's real
+   // incoming edges one final arrow. A source fan-out still gets one bus
+   // when its children do not have competing incoming transmissions.
    for(const id of rows[rank+1]){
     const indices=remaining.filter(i=>edges[i].to===id);
-    if(indices.length>=2&&(!best||indices.length>=best.indices.length))best={kind:'fan-in',indices};
+    if(indices.length>=2&&(!best||indices.length>best.indices.length))best={kind:'fan-in',indices};
+   }
+   if(!best)for(const id of rows[rank]){
+    const indices=remaining.filter(i=>edges[i].from===id);
+    if(indices.length>=2&&(!best||indices.length>best.indices.length))best={kind:'fan-out',indices};
    }
    if(!best)break;
    append(best.kind,best.indices);
@@ -263,6 +276,47 @@ export function planCoordinatedSanad(
   }
   return out;
  };
+ // A skipped-rank edge may require an outer bypass. Repair that single
+ // edge locally instead of invalidating every safe shared bus in the graph.
+ // Both outer corridors are outside the 10px padded narrator rectangles.
+ const hitsUnrelatedCard=(edge:SanadVisualEdgePath,d=edge.d)=>{
+  const vertices=matches(d);
+  for(let j=1;j<vertices.length;j++){
+   const a=vertices[j-1],b=vertices[j];
+   for(const card of cards){
+    if(card.id===edge.from||card.id===edge.to)continue;
+    if(a.x===b.x&&a.x>card.left-margin&&a.x<card.right+margin
+     &&Math.max(a.y,b.y)>card.top-margin&&Math.min(a.y,b.y)<card.bottom+margin)return true;
+    if(a.y===b.y&&a.y>card.top-margin&&a.y<card.bottom+margin
+     &&Math.max(a.x,b.x)>card.left-margin&&Math.min(a.x,b.x)<card.right+margin)return true;
+   }
+  }
+  return false;
+ };
+ for(const edge of edgePaths){
+  if(!hitsUnrelatedCard(edge))continue;
+  const gi=groups.findIndex(group=>group.kind==='single'&&group.edgeIndices.includes(edge.edgeIndex));
+  if(gi<0)continue;
+  const g=groups[gi];
+  if(g.toRank<=g.fromRank+1)continue;
+  const ports=spans.get(String(gi))!;
+  const sx=ports.sources.get(edge.from)!,tx=ports.targets.get(edge.to)!;
+  const fromY=bottom(edge.from),toY=arrival(edge.to);
+  const exit=yFor(gi+':exit',g.fromRank),entry=yFor(gi+':entry',g.toRank-1);
+  // A rerouted line never passes behind an intervening card, even when
+  // two independent lines must cross in open space.
+  const alternatives=[8,width-8].sort((a,b)=>
+   Math.abs(sx-a)+Math.abs(tx-a)-Math.abs(sx-b)-Math.abs(tx-b));
+  for(const corridor of alternatives){
+   const d=pathFrom([{x:sx,y:fromY},{x:sx,y:exit},{x:corridor,y:exit},
+    {x:corridor,y:entry},{x:tx,y:entry},{x:tx,y:toY}]);
+   if(hitsUnrelatedCard(edge,d))continue;
+   edge.d=d;
+   const part=parts.find(part=>part.key===gi+':single');
+   if(part)part.d=d;
+   break;
+  }
+ }
  for(const edge of edgePaths){
   const vertices=matches(edge.d);
   for(let j=1;j<vertices.length;j++){

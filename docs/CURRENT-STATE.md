@@ -1,3 +1,9 @@
+## Coordinated sanad routing: preserve safe shared buses — 8 November 2026
+
+In certain dense historical narrator diagrams, one skipped-rank edge colliding with a card made the complete coordinated plan invalid, silently switching the whole graph back to the older independently routed lines. The planner now tries a card-clear outer bypass for the *single* problematic long edge without dismantling otherwise safe shared fan-in and fan-out buses. Shared complete bipartite buses are permitted only when they cover all adjacent-rank incoming and outgoing relationships of their member narrators; incomplete graphs prioritize complete incoming merges into each child to avoid multiple confusing arrows. All original edge IDs, route membership and sanad text remain unchanged. The emergency routing switch is retained.
+
+Validation: GitHub Sanad graph regression workflow `42522533103` passed, including new Chromium fixtures for partial bicliques and skipped-rank detours at desktop and mobile widths; Vercel preview `dpl_BMDt9axXQYwGQEfQZt1TNienYtgi` is READY. Actual production authenticated sanad paths from the reported screenshots were not inspected using browser credentials; user visual review is still required. No database migration.
+
 ## Certificate footer clearance correction — 8 November 2026
 
 The first bottom-anchored footer release placed the date/registration baseline too close to the certificate's inner ornamental border (user screenshot). Corrected the bottom content inset from **8 mm to 16 mm** in both live preview and native print/PDF rules. This lifts the entire 30 mm mujeez/signing block by 8 mm while retaining its bottom anchor, 6 mm content separation, existing QR layout and limited historical balancing. Never let footer text or issuer artwork touch the ornamental border; keep overflow protection active. No certificate or sanad data changed.
