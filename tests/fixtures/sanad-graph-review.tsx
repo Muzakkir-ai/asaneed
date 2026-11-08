@@ -37,6 +37,19 @@ const densePaths=jointTeachers.flatMap(teacher=>
  jointCompanions.map(companion=>['imam',teacher,companion,'ubayy']));
 const fanOutPaths=['a','b','c','d'].map(to=>['root',to]);
 const fanInPaths=['a','b','c','d'].map(from=>[from,'meeting']);
+// Positive: neighbouring teachers on the same level have one directly
+// shared teacher. Only this shape permits a common final incoming arrow.
+const eligibleFanInPaths=[
+ ['root','a','target'],['root','b','target'],
+];
+// Negative: neighbouring teachers have *different* teachers themselves.
+const differentParentFanInPaths=[
+ ['rootA','a','target'],['rootB','b','target'],
+];
+// Negative: a third narrator separates two teachers on the same row.
+const separatedFanInPaths=[
+ ['root','a','target'],['root','middle','other'],['root','b','target'],
+];
 // Incomplete 2x2 plus one extra transmission: no visual partial-biclique
 // may create an extra arrow into x or y, or imply b transmits to z.
 const incompletePaths=[
@@ -120,6 +133,9 @@ export default function Review(){
   <div data-testid="combined-invalid"><CombinedSanadView paths={[[ 'jazari','uqabi' ],[ 'uqabi','jazari' ]]} renderPerson={graphCard}/></div>
   <div data-testid="coordinated-fan-out"><CombinedSanadView paths={fanOutPaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-fan-in"><CombinedSanadView paths={fanInPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-eligible-fanin"><CombinedSanadView paths={eligibleFanInPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-different-parents"><CombinedSanadView paths={differentParentFanInPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-separated-parents"><CombinedSanadView paths={separatedFanInPaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-dense"><CombinedSanadView paths={densePaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-incomplete"><CombinedSanadView paths={incompletePaths} spacious renderPerson={drawSynthetic}/></div>
   <div data-testid="coordinated-long-bypass"><CombinedSanadView paths={longBypassPaths} spacious renderPerson={drawSynthetic}/></div>
