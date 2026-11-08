@@ -56,12 +56,12 @@ export default function QurraTransmissionWorkspace(){
  const isHistorical=stage==='rawi-imam'||stage==='imam-sahaba'||stage==='sahaba-prophet';
  const historicalKind:HistoricalSegmentKind=isHistorical?stage as HistoricalSegmentKind:'rawi-imam';
  const sections=library?.continuationSections||[];
- const historicalOptions=isHistorical?allHistoricalSections(sections,historicalKind):[];
+ const historicalOptions=isHistorical?allHistoricalSections(sections,historicalKind,library?.people||[]):[];
  const historicalReaders=QURRA.filter(q=>historicalOptions.some(section=>section.qariId===q.id));
  const activeHistoricalQari=historicalReaders.some(q=>q.id===qari)?qari:historicalReaders[0]?.id||'';
  const historicalRawis=historicalKind==='rawi-imam'?(QURRA.find(q=>q.id===activeHistoricalQari)?.rawis||[]):[];
  const activeHistoricalRawi=historicalRawis.some(r=>r===route)?route:historicalRawis[0]||'';
- const historicalView=isHistorical?historicalSection(sections,activeHistoricalQari,activeHistoricalRawi,historicalKind):null;
+ const historicalView=isHistorical?historicalSection(sections,activeHistoricalQari,activeHistoricalRawi,historicalKind,library?.people||[]):null;
  const candidates=(data?.witnesses||[]).filter(w=>w.stage===stage);
  const sharedStage=stage==='jazari-dani';
  const overviewStage=stage==='all-ten';
@@ -171,9 +171,10 @@ export default function QurraTransmissionWorkspace(){
        className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"><Pencil size={15}/> تعديل هذا السند</button>}
      </div>}
     </div>}
+    {overviewStage&&paths.length>0&&!editingChain&&<p className="text-xs text-muted-foreground">المخطط الكامل قابل للتمرير أفقيًّا لقراءة أسماء الرجال كاملة، دون تصغير البطاقات.</p>}
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
-     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths}
+     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage}
       routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>

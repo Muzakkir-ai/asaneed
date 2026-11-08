@@ -2,7 +2,7 @@ import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import assert from 'node:assert/strict';
 import {buildQurraTransmissionData,sharedJazariDaniPaths} from '../legacy/lib/qurraTransmissionData';
-import {allHistoricalSections,historicalSection,imamCompanionIndexedGraph} from '../legacy/lib/qurraHistoricalSegments';
+import {allHistoricalSections,historicalSection,imamCompanionIndexedGraph,rawiImamIndexedGraph,companionsProphetIndexedGraph} from '../legacy/lib/qurraHistoricalSegments';
 import {RAWI_IDENTITIES,fullRawiName,rawiIdentity,savedRawiName,savedRawiPerson} from '../legacy/lib/rawiIdentity';
 import {QURRA} from '../legacy/lib/qurra';
 import type {BuilderLibrary,BuilderChain} from '../legacy/lib/bookBuilder';
@@ -270,3 +270,55 @@ for(const imam of QURRA){
  assert.ok(graph.paths.length<=120,'Historical branch preview exceeds safety cap for '+imam.id);
 }
 console.log('All ten Imam-to-Companions source-indexed graph layouts passed');
+
+// The selected rawi must match the literal «صاحب الرواية» clause. The
+// actual arrows must come from this CHAIN's Rijal teacher index only.
+const labelledQalun={
+ id:'r-nafi-qalun',title:'CHAIN:nafi:قالون',
+ body:'عن أبي الفتح فارس بن أحمد، عن الإمام أبي موسى عيسى بن مينا بن وردان المدني صاحب الرواية، عن الإمام أبي عبد الرحمن نافع بن عبد الرحمن المدني صاحب القراءة',
+};
+const qalunIndexed=rawiImamIndexedGraph(labelledQalun,'nafi','قالون');
+assert.ok(qalunIndexed.paths.some(p=>p[0]==='rawi:qalun'&&p.at(-1)==='imam:nafi'),
+ 'Qalun → Nafi must use two indexed identities from the same source');
+assert.ok(qalunIndexed.names['rawi:qalun']?.includes('عيسى'));
+assert.deepEqual(rawiImamIndexedGraph(labelledQalun,'nafi','ورش').paths,[],
+ 'A different rawi cannot borrow this source or its edges');
+
+const baziBranched={
+ id:'r-ibnkathir-bazzi',title:'CHAIN:ibnkathir:البزّي',
+ body:'عن الإمام أبي الحسن أحمد بن محمد المكي المعروف بـ البزّي صاحب الرواية، وقرأ البزي على أبي الإخرِيط وهْب بن واضح المكّي، وأبي القاسم عكرمة بن سليمان بن كثير المكي، وعبد الله بن زياد المكي، وهم قرأوا على أبي داود شبل بن عباد المكي، وأبي إسحاق إسماعيل بن عبد الله القسط المكي، وأبي الوليد معروف بن مشكان المكي، وهم قرأوا على الإمام أبي معبد عبد الله بن كثير المكي صاحب القراءة',
+};
+const bazziIndexed=rawiImamIndexedGraph(baziBranched,'ibnkathir','البزّي');
+assert.ok(bazziIndexed.paths.length>=2,
+ 'The Bazzī parallel teacher branches must be drawn, not left as source-only text');
+assert.ok(bazziIndexed.paths.every(p=>p.at(-1)==='imam:ibnkathir'),
+ 'No Bazzī route may lead to a different reader');
+
+const companionList={
+ id:'p-ibnkathir',title:'CHAIN:ibnkathir:prophet',
+ body:'وَهَؤُلَاءِ الثَّلَاثَةُ: عُمَرُ بْنُ الْخَطَّابِ، وَأُبَيُّ بْنُ كَعْبٍ، وَزَيْدُ بْنُ ثَابِتٍ قَرَأُوا عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ، الآخِذِ عَنْ جِبْرِيلَ.',
+};
+const companionGraph=companionsProphetIndexedGraph(companionList,'ibnkathir');
+assert.equal(companionGraph.paths.length,3,
+ 'Show exactly the three named Companions and no additional endpoint');
+assert.deepEqual(new Set(companionGraph.paths.map(p=>p[0])),new Set(['sahabi:umar','sahabi:ubayy','sahabi:zayd']));
+assert.ok(companionGraph.paths.every(p=>p[1]==='prophet'&&p.length===2));
+assert.deepEqual(companionsProphetIndexedGraph({...companionList,body:'رسول الله محمد بن عبد الله ﷺ'},'ibnkathir').paths,[],
+ 'Mention of the Prophet without an explicit recitation relation is not an arrow');
+assert.deepEqual(companionsProphetIndexedGraph(companionList,'nafi').paths,[],
+ 'Never leak the Companions from another qiraah source');
+const abuMusaNominative={
+ id:'p-abiamr',title:'CHAIN:abiamr:prophet',
+ body:'وَهَؤُلَاءِ السِّتَّةُ: أَبُو مُوسَى الأَشْعَرِيُّ قَرَأُوا عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.',
+};
+assert.ok(companionsProphetIndexedGraph(abuMusaNominative,'abiamr').paths
+ .some(path=>path[0]==='sahabi:abumusa'&&path[1]==='prophet'),
+ 'Nominative أبو موسى must match indexed genitive أبي موسى without merging identities');
+
+const preferredName='أبي موسى عيسى بن مينا بن وردان المدني المعروف بقالون';
+const preferredQalun=historicalSection([labelledQalun],'nafi','قالون','rawi-imam',
+ [{...person('saved-qalun',preferredName),display_name:'قالون'}]);
+assert.equal(preferredQalun?.names['rawi:qalun'],preferredName,
+ 'Show an existing audited full person name without altering route identities');
+console.log('Source-only Rijal rawi/imam, branching, Companion/Prophet and preferred-name tests passed');
+
