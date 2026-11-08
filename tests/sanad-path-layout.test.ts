@@ -186,7 +186,7 @@ console.log('Dense source-backed historical diagram preserves every edge, with c
 
 // Coordinated rendering never changes the underlying relation graph. Every
 // test plan must contain exactly the original explicit source/target pairs.
-const makePlan=(rows:string[][],pairs:{from:string;to:string;routes?:number[]}[],cardSize=192,heights=new Map<string,number>())=>{
+const makePlan=(rows:string[][],pairs:{from:string;to:string;routes?:number[];id?:string;originalIndex?:number}[],cardSize=192,heights=new Map<string,number>())=>{
  const width=Math.max(...rows.map(row=>row.length))*250+60;
  const centers=new Map(rows.flatMap(row=>row.map((id,i)=>[id,{x:width/2+(i-(row.length-1)/2)*250}] as const)));
  const plan=planCoordinatedSanad(rows,centers,pairs,width,cardSize,80,heights);
