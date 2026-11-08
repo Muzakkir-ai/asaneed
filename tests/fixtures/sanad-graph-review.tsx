@@ -29,6 +29,22 @@ const regressionPaths=[
  ['jazari','nuwayri','umyuti','samdasi','ibnShuhadha','end'],
  ['jazari','umyuti','samdasi','ibnShuhadha','end'],
 ];
+// Connected-graph fixtures exercise the same production component with real
+// edge memberships but deliberately synthetic people and no backend writes.
+const jointTeachers=['teacher1','teacher2','teacher3','teacher4','teacher5'];
+const jointCompanions=['sahabi1','sahabi2','sahabi3'];
+const densePaths=jointTeachers.flatMap(teacher=>
+ jointCompanions.map(companion=>['imam',teacher,companion,'ubayy']));
+const fanOutPaths=['a','b','c','d'].map(to=>['root',to]);
+const fanInPaths=['a','b','c','d'].map(from=>[from,'meeting']);
+const syntheticName=(id:string)=>({
+ imam:'الإمام القارئ',ubayy:'أُبيّ بن كعب',root:'الشيخ',meeting:'الملتقى',
+ teacher1:'الشيخ الأول',teacher2:'الشيخ الثاني',teacher3:'الشيخ الثالث',
+ teacher4:'الشيخ الرابع',teacher5:'الشيخ الخامس',
+ sahabi1:'الصحابي الأول',sahabi2:'الصحابي الثاني',sahabi3:'الصحابي الثالث',
+}[id]||id);
+const drawSynthetic=(id:string,positions:number[])=>
+ <BranchPersonCard name={syntheticName(id)} number={positions[0]??null}/>;
 const regressionNames:Record<string,string>={
  jazari:'الإمام ابن الجزري',uqabi:'أبو النعيم رضوان العُقبي',nuwayri:'النويري',
  umyuti:'العُميوطي',samdasi:'السمديسي',ibnGhanim:'ابن غانم',
@@ -73,5 +89,8 @@ export default function Review(){
   <div data-testid="combined-regression"><CombinedSanadView paths={regressionPaths} routeLabels={['العقبي','النويري','العُميوطي']} renderPerson={graphCard}/></div>
   <div data-testid="combined-no-labels"><CombinedSanadView paths={regressionPaths} renderPerson={graphCard}/></div>
   <div data-testid="combined-invalid"><CombinedSanadView paths={[[ 'jazari','uqabi' ],[ 'uqabi','jazari' ]]} renderPerson={graphCard}/></div>
+  <div data-testid="coordinated-fan-out"><CombinedSanadView paths={fanOutPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-fan-in"><CombinedSanadView paths={fanInPaths} spacious renderPerson={drawSynthetic}/></div>
+  <div data-testid="coordinated-dense"><CombinedSanadView paths={densePaths} spacious renderPerson={drawSynthetic}/></div>
  </main>;
 }
