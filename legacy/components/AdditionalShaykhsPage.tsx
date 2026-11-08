@@ -88,7 +88,7 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
      action:'save',variantId:readingEditor.variantId,variantName:variantName.trim()||undefined,
      personalPersonIds:adopted?.ids??readingPeople,
      continuationId:adopted?adopted.continuationId:readingContinuation,
-     unifiedSanad:readingRef,bookAuthor:readingBookAuthor,routeSource:readingRouteSource,
+     unifiedSanad:adopted?null:readingRef,bookAuthor:readingBookAuthor,routeSource:readingRouteSource,
      tariqNumber:readingRoute,tariqName:readingRouteName,shaykhId:selected,
      qariId:readingEditor.qariId,rawi:readingEditor.rawi,
      sanadText:adopted?.text??readingText,junction:adopted?.junction??readingJunction
