@@ -140,6 +140,7 @@ const library={
   // branch prose, independently of the saved book-chain graph.
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
+  await page.locator('[data-combined-narrator]').first().waitFor();
   for(const [kind,label,filename] of [
    ['rawi-imam','الرواة ← الأئمة','06-rawi-imam.png'],
    ['imam-sahaba','الأئمة ← الصحابة','07-imam-sahaba.png'],
