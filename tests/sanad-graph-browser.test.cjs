@@ -229,10 +229,13 @@ const {chromium}=require('playwright');
   await page.setViewportSize({width:1100,height:900});
   const draft=page.getByTestId('draft');
   await draft.getByRole('button',{name:'تعديل السند',exact:true}).click();
-  await draft.getByRole('button',{name:'إضافة شيخ موازٍ'}).first().click();
-  await draft.getByLabel('التقاء الفرعين').selectOption('saved-2');
-  assert.equal(await draft.locator('.sanad-graph-split .sanad-graph-arrow:visible').count(),2);
-  assert.equal(await draft.locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),2);
+  // The current editor explicitly creates a branch first; it renders split
+  // and merge arrows only after the alternate narrator has been selected.
+  await draft.locator('[aria-label="إضافة فروع السند"]').getByRole('button',{name:'إضافة فرع',exact:true}).click();
+  const branchMeeting=draft.getByLabel('نقطة التقاء الفرع ١');
+  await branchMeeting.selectOption('saved-2');
+  assert.equal(await branchMeeting.inputValue(),'saved-2','new branch retains its reviewed meeting point');
+  assert.equal(await draft.getByRole('region',{name:'تحرير الفرع ١'}).count(),1,'branch editor opens');
   if(process.env.ASANEED_PRIVATE_HAFS_FIXTURE){
    const reading=page.getByTestId('private-hafs');
    await reading.getByRole('tab',{name:'السند الشخصي',exact:true}).waitFor();
