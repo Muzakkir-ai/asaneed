@@ -259,3 +259,14 @@ assert.deepEqual(imamCompanionIndexedGraph({id:'bad',title:'CHAIN:asim:sahaba',b
 assert.deepEqual(imamCompanionIndexedGraph({id:'bad',title:'CHAIN:nafi:sahaba',body:''},'nafi').paths,[],
  'Never display a graph when the source is absent');
 console.log('Rijal-index Imam-to-Companions graph, branching, source isolation and cycle safeguards passed');
+
+for(const imam of QURRA){
+ const source={id:'synthetic:'+imam.id,title:'CHAIN:'+imam.id+':sahaba',
+  body:'Test-only section fixture for the source-scoped Rijal diagram'};
+ const graph=imamCompanionIndexedGraph(source,imam.id);
+ assert.ok(graph.paths.length>0,'Missing Rijal branch graph for imam '+imam.id);
+ assert.ok(graph.paths.every(path=>path[0]==='imam:'+imam.id),'Cross-reader links in '+imam.id);
+ assert.ok(graph.paths.every(path=>path.length>=2&&new Set(path).size===path.length),'Invalid path for '+imam.id);
+ assert.ok(graph.paths.length<=120,'Historical branch preview exceeds safety cap for '+imam.id);
+}
+console.log('All ten Imam-to-Companions source-indexed graph layouts passed');
