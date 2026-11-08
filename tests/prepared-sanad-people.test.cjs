@@ -25,6 +25,13 @@ const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});Object.ass
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='المسار ١ · ٦ رواة').click());assert.equal(document.querySelectorAll('[data-sanad-node]').length,6,'view selection only hides unrelated branch cards');
  await act(async()=>[...document.querySelectorAll('button')].find(b=>b.textContent==='تأكيد الرواة من النص السابق').click());
  assert.equal(graphApplied[0],graphText.replaceAll('الشيخ الملتقى','الاسم المعدل'),'one shared-node edit updates its source occurrences while retaining all connectors');
+ const addBranch=[...document.querySelectorAll('button')].find(button=>button.getAttribute('aria-label')?.startsWith('إضافة فرع من '));
+ assert.ok(addBranch,'saved, already branched sanad exposes an explicit add-branch action');
+ await act(async()=>addBranch.click());
+ assert.ok(document.querySelector('section[aria-label="تحرير الفرع ١"]'),'new branch opens a guided panel without removing the saved branches');
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='حذف هذا الفرع').click());
+ assert.equal(document.querySelector('section[aria-label="تحرير الفرع ١"]'),null,'removing an unsaved branch leaves the saved graph intact');
+
  await act(async()=>graphRoot.unmount());
  const Input=require('../legacy/components/PersonalSanadInput.tsx').default;let pending=false;const originalSource=source;let confirmed;
  global.fetch=async()=>({ok:true,json:async()=>({people,books:[],chains:[],suggestions:[],prefixContinuations:[]})});
