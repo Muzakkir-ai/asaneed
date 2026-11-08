@@ -5,6 +5,7 @@ import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} 
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
 import {sanadPositions} from '../lib/sanadPathLayout';
+import {groupSimilarSanadRoutes} from '../lib/sanadRouteGrouping';
 
 const cell=224,cardWidth=192,initialCardHeight=80;
 
@@ -12,6 +13,9 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const [route,setRoute]=useState<number|null>(null);
  const [focused,setFocused]=useState<string|null>(null);
  const arrow=useId(),graph=useMemo(()=>combinedSanad(paths),[paths]);
+ const routeGroups=useMemo(()=>groupSimilarSanadRoutes(paths),[paths]);
+ const currentIndices=route===null?paths.map((_,i)=>i):routeGroups[route]??[];
+ const shownPaths=currentIndices.map(i=>paths[i]);
  const viewport=useRef<HTMLDivElement>(null);
  const canvas=useRef<HTMLDivElement>(null);
  const [cardHeights,setCardHeights]=useState<ReadonlyMap<string,number>>(new Map());
@@ -78,14 +82,15 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
   <div className="flex flex-wrap items-center gap-3">
    <select aria-label="عرض المسارات" value={route??''} onChange={event=>setRoute(event.target.value===''?null:Number(event.target.value))} className="max-w-full rounded border bg-background p-1 text-sm">
     <option value="">عرض الكل</option>
-    {paths.map((path,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {arabicDigits(path.length)} رواة</option>)}
+    {routeGroups.map((indices,i)=><option value={i} key={i}>المسار {arabicDigits(i+1)} · {indices.length>1?arabicDigits(indices.length)+' فروع متقاربة':arabicDigits(paths[indices[0]].length)+' رواة'}</option>)}
    </select>
   </div>
+  {routeGroups.length<paths.length&&<p className="text-xs text-muted-foreground">{arabicDigits(routeGroups.length)} مسارات معروضة، تضم {arabicDigits(paths.length)} أوجه محفوظة. يُجمع اختلاف راوٍ أو راويين بين الشيخ والتلميذ في مسار واحد، مع إبقاء الأسانيد الأصلية منفصلة.</p>}
   {routeLabels&&paths.length>1&&<p className="text-xs text-muted-foreground">اختر مسارًا لتتبّع اتصالاته. اجتماع الفروع في الرسم لا يعني ثبوت مسار جديد.</p>}
 
-   {route!==null&&routeLabels?.[route]&&<p className="text-xs text-muted-foreground">{routeLabels[route]}</p>}
+   {route!==null&&routeLabels&&<p className="text-xs text-muted-foreground">{[...new Set((routeGroups[route]??[]).map(i=>routeLabels[i]).filter(Boolean))].join(' / ')}</p>}
   </details>}
-  {focused!==null&&<p role="status" className="flex flex-wrap items-center gap-2 text-xs text-primary">اتصالات الراوي المحدد · {paths.flatMap((path,i)=>path.includes(focused)?['المسار '+arabicDigits(i+1)]:[]).join('، ')} <button type="button" className="rounded border px-2 py-1" onClick={()=>setFocused(null)}>إلغاء التحديد</button></p>}
+  {focused!==null&&<p role="status" className="flex flex-wrap items-center gap-2 text-xs text-primary">اتصالات الراوي المحدد · {routeGroups.flatMap((indices,i)=>indices.some(index=>paths[index].includes(focused))?['المسار '+arabicDigits(i+1)]:[]).join('، ')} <button type="button" className="rounded border px-2 py-1" onClick={()=>setFocused(null)}>إلغاء التحديد</button></p>}
   {review&&<p className="text-xs text-muted-foreground">عرض من النص المحفوظ · هويات الرواة أو مواضع الالتقاء تحتاج مراجعة.</p>}
   {source&&<p className="text-xs text-muted-foreground">{source}</p>}
   {compact&&<div className="flex flex-wrap items-center gap-2">
@@ -98,7 +103,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
     <svg aria-hidden="true" className="pointer-events-none absolute inset-0 text-muted-foreground" width={width} height={height}>
      <defs><marker id={arrow} markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7" fill="none" stroke="currentColor"/></marker></defs>
      {graph.edges.map(({from,to,routes},index)=>{
-      const active=route===null||routes.includes(route);
+      const active=route===null||routes.some(index=>currentIndices.includes(index));
       if(!active)return null;
       const {x1,x2,d:connector}=connectors[index];
       const traced=focused===null||from===focused||to===focused;
@@ -108,9 +113,9 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
       </g>;
      })}
     </svg>
-    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={route!==null&&!paths[route]?.includes(id)?'absolute opacity-40':'absolute'} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
+    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={route!==null&&!shownPaths.some(path=>path.includes(id))?'absolute opacity-40':'absolute'} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
      <button type="button" data-trace-person={id} aria-label="تتبّع اتصالات الراوي" aria-pressed={focused===id} title="تتبّع اتصالات الراوي" onClick={()=>setFocused(current=>current===id?null:id)} style={{right:19,top:48,width:20,height:20,minWidth:20,maxWidth:20,minHeight:20,maxHeight:20,padding:0}} className={"absolute z-10 inline-flex items-center justify-center rounded-md border bg-background/95 text-primary shadow-sm transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 "+(focused===id?"border-primary bg-primary/10":"border-primary/20")}><Waypoints size={12} strokeWidth={2} aria-hidden="true"/></button>
-     <div className={"[&>article>div:first-child]:min-h-20 [&>article>div>div:last-child]:hidden"+(focused!==null&&focused!==id&&!graph.edges.some(edge=>edge.from===focused&&edge.to===id||edge.to===focused&&edge.from===id)?' opacity-50':'')}>{renderPerson(id,sanadPositions(route===null?paths:[paths[route]],id))}</div>
+     <div className={"[&>article>div:first-child]:min-h-20 [&>article>div>div:last-child]:hidden"+(focused!==null&&focused!==id&&!graph.edges.some(edge=>edge.from===focused&&edge.to===id||edge.to===focused&&edge.from===id)?' opacity-50':'')}>{renderPerson(id,sanadPositions(shownPaths,id))}</div>
     </div>)}
    </div>
   </div>
