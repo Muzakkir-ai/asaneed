@@ -38,6 +38,7 @@ const parentThree={...bookParent,id:'parent-three',book_id:'three',branches:[[]]
 const sevenRoute={...bookParent,id:'route-qalun',kind:'route',book_chain_id:'parent-seven',
  qari_id:'nafi',rawi:'قالون',confirmed:true,title:'طريق قالون',
  branches:[['beforeDani','dani','afterDani'].map(node)]};
+const sharedSeven={...sevenRoute,id:'route-warsh-shared',rawi:'ورش',title:'طريق ورش - الإسناد المشترك'};
 const otherSeven={...sevenRoute,id:'route-warsh',rawi:'ورش',title:'طريق ورش',
  branches:[['beforeDani','other'].map(node)]};
 const threeRoute={...sevenRoute,id:'route-ibnwardan',book_id:'three',book_chain_id:'parent-three',
@@ -47,7 +48,7 @@ const library={
  people,
  books:[{id:'seven',title:'الشاطبية',author_id:'shatibi',archived:false},
   {id:'three',title:'الدرة',author_id:'jazari',archived:false}],
- chains:[bookParent,parentThree,sevenRoute,otherSeven,threeRoute],
+ chains:[bookParent,parentThree,sevenRoute,sharedSeven,otherSeven,threeRoute],
  suggestions:[],continuations:{},canManage:true,
 };
 
@@ -97,6 +98,19 @@ const library={
    for(let i=0;i<previewRows.length;i++){
     const stage=previewRows[i];
     if(i<3)await nav.locator('button').nth(i).click();
+    if(i===0){
+     assert.equal(await page.getByLabel('القارئ').count(),0,
+      'Shared Jazari-to-Dani view must NOT show reader filters');
+     assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
+      'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
+     assert.equal(await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).count(),1);
+     assert.ok((await page.getByText('١ أسانيد مستقلة من ٢ شواهد محفوظة').count())===0
+      ||await page.getByText('١ أسانيد مستقلة من ٢ شواهد محفوظة',{exact:false}).count()>=1);
+    }else if(i===1||i===2){
+     assert.equal(await page.getByLabel('القارئ').count(),1,
+      'Reader filters belong only to the reading-specific stages');
+     assert.equal(await page.getByLabel('الرواية والطريق').count(),1);
+    }
     else{
      await page.locator('details').first().locator('summary').click();
      await page.getByRole('button',{name:'مسارات السبعة الأخرى'}).click();
