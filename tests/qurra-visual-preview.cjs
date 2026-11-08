@@ -73,10 +73,21 @@ const library={
   assert.ok(started,'Next.js local screenshot fixture started');
   browser=await chromium.launch();
   const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
-  // This is the ONLY data supplied to the page. No real Supabase connections.
-  await page.route('**/api/book-builder',request=>request.fulfill({
-   status:200,contentType:'application/json',body:JSON.stringify(library),
-  }));
+  // Every request stays inside the runner; even the simulated save uses
+  // synthetic records and does not reach production Supabase.
+  let savedRecord=null;
+  await page.route('**/api/book-builder',request=>{
+   if(request.method()==='POST'){
+    const input=JSON.parse(request.postData()||'{}');
+    if(input.action!=='chain')return request.fulfill({status:400,contentType:'application/json',body:JSON.stringify({error:'Unexpected test action'})});
+    savedRecord=input.record;
+    const target=library.chains.find(c=>c.id===savedRecord.id);
+    if(!target)return request.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:'No saved route'})});
+    Object.assign(target,savedRecord,{revision:target.revision+1,archived:false});
+    return request.fulfill({status:200,contentType:'application/json',body:JSON.stringify({id:savedRecord.id})});
+   }
+   return request.fulfill({status:200,contentType:'application/json',body:JSON.stringify(library)});
+  });
   for(const [width,label] of [[1440,'desktop'],[390,'mobile']]){
    await page.setViewportSize({width,height:960});
    await page.goto(url,{waitUntil:'domcontentloaded'});
@@ -120,6 +131,19 @@ const library={
   await page.screenshot({path:editorShot,fullPage:true,animations:'disabled'});
   assert.ok(fs.statSync(editorShot).size>2000,'Manual edit screenshot generated');
   console.log('PASS simplified editor, canonical narrator suggestions and add-next workflow');
+  // Clicking Save posts the SAME stored route ID, leaves the existing
+  // parent/book/reading untouched, and refetches the persisted branches.
+  await page.getByRole('button',{name:'حفظ التغييرات'}).click();
+  await page.locator('[data-combined-narrator="other"]').waitFor({timeout:20000});
+  assert.ok(savedRecord,'The save button must submit a route update');
+  assert.equal(savedRecord.id,'route-qalun','Existing route ID reused');
+  assert.equal(savedRecord.book_chain_id,'parent-seven','Original book chain preserved');
+  assert.equal(savedRecord.rawi,'قالون','Original riwayah preserved');
+  assert.equal(savedRecord.confirmed,false,'Edited route requires review');
+  assert.deepEqual(savedRecord.branches[0].map(node=>node.person_id),
+   ['beforeDani','dani','afterDani','other'],'Narrator IDs stored in the reviewed order');
+  assert.equal(library.chains.find(c=>c.id==='route-warsh').branches[0].length,2,'Other sanad remains intact');
+  console.log('PASS saving changed route is verified by refetch; all other records remain unchanged');
   const summary=[
    '# Asaneed GitHub Actions Visual Preview',
    '',
