@@ -5,6 +5,9 @@ on:
     paths:
       - 'legacy/components/AdditionalShaykhsPage.tsx'
       - 'legacy/components/PersonalSanadInput.tsx'
+      - 'legacy/components/PersonalSanadPeople.tsx'
+      - 'legacy/lib/personalSanadBranches.ts'
+      - 'tests/personal-sanad-branches.test.ts'
       - 'legacy/components/NarratorPicker.tsx'
       - 'legacy/components/ChainNarratorRow.tsx'
       - 'legacy/components/ReusableReadingSanad.tsx'
