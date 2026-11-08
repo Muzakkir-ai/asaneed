@@ -134,7 +134,7 @@ export default function QurraTransmissionWorkspace(){
      <span className="text-xs text-muted-foreground">الراوي صاحب الرواية</span>
      <p className="font-semibold leading-8">{fullRawiName(current.qariId,current.rawi)}</p>
      <p className="text-xs text-muted-foreground">تظهر الهوية الكاملة هنا، لكن الاتصال من آخر راوٍ محفوظ لا يُضاف إلا بعد مراجعة المصدر وتعديل السند.</p>
-    </div>
+    </div>}
    </div>}
 
    <details className="rounded-lg border bg-background p-3 text-sm" aria-label="المعلومات والمصادر المتقدمة">
