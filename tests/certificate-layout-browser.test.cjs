@@ -65,6 +65,8 @@ const {chromium}=require('playwright');
   await page.getByLabel('جزء الشهادة').selectOption('reading');
   const advancedMatn=panel.locator('[data-testid="matn-heading-advanced"]');
   assert.equal(await advancedMatn.evaluate(node=>node.open),false,'matn complex options start collapsed');
+  if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+   await panel.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-matn-basic-controls.png'});
   await advancedMatn.locator('summary').click();
   const headingControl=page.getByRole('spinbutton',{name:'المسافة بعد السند',exact:true});
   await headingControl.fill('6');
@@ -182,6 +184,8 @@ const {chromium}=require('playwright');
    const heightAfter=(await readingGraphic.boundingBox()).height;
    assert.ok(widthAfter>widthBefore*1.04,'ijazah SVG enlarges without stretching the reading glyphs');
    assert.ok(heightAfter>heightBefore*1.02,'riwayah SVG line scales separately without changing ijazah sizing');
+   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+    await qSvg.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-svg-controls.png'});
    const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
    const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
    await qHeading.fill('3');await qHeading.blur();
