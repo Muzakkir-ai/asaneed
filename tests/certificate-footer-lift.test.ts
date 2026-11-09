@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {certificateFooterLift} from '../legacy/lib/certificateFooterLift';
 import {matnHeadingSchema} from '../legacy/lib/matnPresentation';
+import {qiraatHeadingSchema,DEFAULT_QIRAAT_HEADING} from '../legacy/lib/qiraatHeadingSettings';
 
 const width=1123;
 const layoutWidth=1123;
@@ -56,4 +57,12 @@ assert.equal(matnHeadingSchema.safeParse({...updated,conclusionOffsetMm:18}).suc
  'khatima offset is bounded to prevent dangerous overlap');
 assert.equal(matnHeadingSchema.safeParse({...updated,sectionGapAfterSanadMm:25}).success,false,
  'section spacing must stay within printable limits');
-console.log('PASS certificate footer balancing and section spacing validation');
+const qiraat=qiraatHeadingSchema.parse({ijazahWidthMm:106,riwayahHeightMm:9,riwayahGapMm:4,riwayahOffsetMm:1});
+assert.equal(qiraat.ijazahWidthMm,106);
+assert.equal(qiraat.riwayahHeightMm,9);
+assert.equal(DEFAULT_QIRAAT_HEADING.ijazahWidthMm,98.0244,'preserve unmodified historical SVG width');
+assert.equal(qiraatHeadingSchema.safeParse({ijazahWidthMm:170}).success,false,
+ 'do not allow an SVG size large enough to overrun the certificate');
+assert.equal(qiraatHeadingSchema.safeParse({riwayahOffsetMm:-11}).success,false,
+ 'individual SVG movement stays within a bounded adjustment');
+console.log('PASS certificate footer, section spacing and qiraat SVG controls');
