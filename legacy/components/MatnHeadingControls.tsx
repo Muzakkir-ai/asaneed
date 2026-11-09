@@ -21,24 +21,85 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
  const art=matnArtwork(name,artwork,artworkNumber);
  const lines=[{art:art.main,width:'mainWidthMm',height:'mainHeightPt',label:'العنوان الأول',min:5,max:150},{art:art.secondary,width:'secondaryWidthMm',height:'secondaryHeightPt',label:'السطر الثاني',min:1,max:120}] as const;
  const breaks=value.sectionBreaks??{afterIntro:true,afterWording:true,afterSanad:true};
- return <div className="matn-heading-controls space-y-4" dir="rtl">{showPreview&&<MatnHeadingPreview paper borderNumber={value.borderNumber} artwork={artwork} base={base} color={primary}><MatnHeading artworkNumber={artworkNumber} name={name} settings={value} artwork={artwork} base={base} primary={primary} secondary={secondary}/></MatnHeadingPreview>}{!art.main&&<p className="text-xs text-muted-foreground">لا يوجد رسم مطابق؛ يُستخدم العنوان النصي.</p>}
- <div className="matn-sizing-modes">{lines.filter(line=>line.art).map(line=><label key={line.width}><span>ضبط {line.label}</span><select aria-label={'ضبط '+line.label} value={value[line.width]===undefined?'height':'width'} onChange={e=>{const next={...value},a=line.art!;if(e.target.value==='width')next[line.width]=Math.round(Math.min(250,Math.max(5,value[line.height]*25.4/72*a.width/a.height))*2)/2;else{next[line.height]=Math.round(Math.min(line.max,Math.max(line.min,(value[line.width]??5)*72/25.4*a.height/a.width))*2)/2;delete next[line.width];}onChange(next);}}><option value="height">بالارتفاع (pt)</option><option value="width">بالعرض (mm)</option></select></label>)}</div>
- <div className="matn-dimension-fields"><Dimension label="إزاحة البسملة لأسفل" unit="mm" min={0} max={30} value={value.basmalahOffsetMm??0} onChange={n=>onChange({...value,basmalahOffsetMm:n})}/><Dimension label="عرض البسملة" unit="mm" min={15} max={80} value={value.basmalahWidthMm??34.18} onChange={n=>onChange({...value,basmalahWidthMm:n})}/>{lines.filter(line=>line.art).map(line=>{const width=value[line.width];return <Dimension key={line.width} label={(width===undefined?'ارتفاع ':'عرض ')+line.label} unit={width===undefined?'pt':'mm'} min={width===undefined?line.min:5} max={width===undefined?line.max:250} value={width??value[line.height]} onChange={n=>onChange({...value,[width===undefined?line.height:line.width]:n})}/>;})}<Dimension label="المسافة بين البسملة والعنوان" unit="mm" min={0} max={30} value={value.basmalahGapMm??2} onChange={n=>onChange({...value,basmalahGapMm:n})}/>{art.secondary&&<Dimension label="المسافة بين السطرين" unit="mm" min={0} max={15} value={value.lineGapMm} onChange={n=>onChange({...value,lineGapMm:n})}/>}<Dimension label="المسافة بعد العنوان" unit="mm" min={0} max={20} value={value.afterGapMm} onChange={n=>onChange({...value,afterGapMm:n})}/></div>
- {showTextLayout&&<details className="rounded-lg border p-3"><summary className="cursor-pointer font-semibold">مساحة النص وحجمه</summary><MatnTextLayoutControls value={value} onChange={onChange}/></details>}
- <fieldset className="matn-section-gaps rounded-lg border p-3 space-y-2">
- <legend className="text-sm font-semibold">المسافات بين أجزاء شهادة المتن</legend>
- <p className="text-xs text-muted-foreground">اضبط الفراغات من غير تغيير نص السند أو القالب المشترك. تؤثّر هذه القيم في الطباعة وPDF.</p>
- <div className="matn-dimension-fields">
- <Dimension label="المسافة بعد المقدمة" unit="mm" min={0} max={20} value={value.sectionGapAfterIntroMm??0} onChange={n=>onChange({...value,sectionGapAfterIntroMm:n})}/>
- <Dimension label="المسافة بعد كلمات الإجازة" unit="mm" min={0} max={20} value={value.sectionGapAfterWordingMm??0} onChange={n=>onChange({...value,sectionGapAfterWordingMm:n})}/>
- <Dimension label="المسافة بعد السند" unit="mm" min={0} max={20} value={value.sectionGapAfterSanadMm??0} onChange={n=>onChange({...value,sectionGapAfterSanadMm:n})}/>
- <Dimension label="رفع أو خفض الخاتمة" unit="mm" min={-15} max={15} value={value.conclusionOffsetMm??0} onChange={n=>onChange({...value,conclusionOffsetMm:n})}/>
- </div>
- <p className="text-xs text-muted-foreground">قيمة سالبة ترفع الخاتمة، وقيمة موجبة تخفضها. تبقى معلومات المجيز في موضعها المستقل.</p>
- </fieldset>
- <label className="matn-border-choice"><span>إطار الشهادة</span><select aria-label="إطار شهادة المتن" value={value.borderNumber??'default'} onChange={e=>onChange({...value,borderNumber:e.target.value})}><option value="default">الإطار الحالي</option><option value="none">بدون إطار</option>{artwork.filter(a=>a.kind==='borders'&&a.line==='frame').map(a=><option key={a.number} value={a.number}>{a.label||'إطار '+a.number}</option>)}</select></label>
- <fieldset className="matn-section-breaks rounded-lg border p-3 space-y-2"><legend className="text-sm font-semibold">الفواصل بين أجزاء المتن</legend>{([{key:'afterIntro',label:'بدء كلمات الإجازة في سطر جديد بعد المقدمة'},{key:'afterWording',label:'بدء السند في سطر جديد بعد كلمات الإجازة'},{key:'afterSanad',label:'بدء الخاتمة في سطر جديد بعد السند'}] as const).map(item=><label key={item.key} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={breaks[item.key]} onChange={e=>onChange({...value,sectionBreaks:{...breaks,[item.key]:e.target.checked}})}/>{item.label}</label>)}</fieldset>
- <button type="button" onClick={()=>onReset?onReset():onChange({...DEFAULT_MATN_HEADING})}>استعادة الافتراضي</button></div>;
+ const update=(key:keyof MatnHeadingSettings,n:number)=>onChange({...value,[key]:n});
+ return <div className="matn-heading-controls space-y-3" dir="rtl" data-testid="matn-svg-controls">
+  {showPreview&&<MatnHeadingPreview paper borderNumber={value.borderNumber} artwork={artwork} base={base} color={primary}>
+   <MatnHeading artworkNumber={artworkNumber} name={name} settings={value} artwork={artwork} base={base} primary={primary} secondary={secondary}/>
+  </MatnHeadingPreview>}
+  {!art.main&&<p className="text-xs text-muted-foreground">لا يوجد رسم مطابق؛ يُستخدم العنوان النصي.</p>}
+  <div className="rounded-lg border p-3 space-y-3">
+   <div><p className="font-semibold">حجم العنوان والمسافات</p>
+    <p className="text-xs text-muted-foreground">التحكم الأساسي: حجم كل SVG والمسافة بينهما. تبقى الخيارات التفصيلية في «إعدادات متقدمة».</p></div>
+   <div className="matn-dimension-fields">
+    {lines.filter(line=>line.art).map(line=>{
+     const width=value[line.width];
+     const active=width===undefined?line.height:line.width;
+     return <Dimension key={line.width} label={(width===undefined?'ارتفاع ':'عرض ')+line.label}
+      unit={width===undefined?'pt':'mm'} min={width===undefined?line.min:5} max={width===undefined?line.max:250}
+      value={width??value[line.height]} onChange={n=>update(active,n)}/>;
+    })}
+    {art.secondary&&<Dimension label="المسافة بين السطرين" unit="mm" min={0} max={15} value={value.lineGapMm} onChange={n=>update('lineGapMm',n)}/>}
+    <Dimension label="المسافة بعد العنوان" unit="mm" min={0} max={20} value={value.afterGapMm} onChange={n=>update('afterGapMm',n)}/>
+   </div>
+  </div>
+  <details className="rounded-lg border p-3" data-testid="matn-heading-advanced">
+   <summary className="cursor-pointer font-semibold">إعدادات متقدمة — البسملة، طريقة التحجيم، النص والفواصل</summary>
+   <div className="mt-3 space-y-4">
+    <fieldset className="space-y-2">
+     <legend className="font-medium">البسملة وبداية العنوان</legend>
+     <div className="matn-dimension-fields">
+      <Dimension label="إزاحة البسملة لأسفل" unit="mm" min={0} max={30} value={value.basmalahOffsetMm??0} onChange={n=>update('basmalahOffsetMm',n)}/>
+      <Dimension label="عرض البسملة" unit="mm" min={15} max={80} value={value.basmalahWidthMm??34.18} onChange={n=>update('basmalahWidthMm',n)}/>
+      <Dimension label="المسافة بين البسملة والعنوان" unit="mm" min={0} max={30} value={value.basmalahGapMm??2} onChange={n=>update('basmalahGapMm',n)}/>
+     </div>
+    </fieldset>
+    <fieldset className="space-y-2">
+     <legend className="font-medium">تحديد حجم SVG بالعرض بدلًا من الارتفاع</legend>
+     <div className="matn-sizing-modes">
+      {lines.filter(line=>line.art).map(line=><label key={line.width}><span>ضبط {line.label}</span>
+       <select aria-label={'ضبط '+line.label} value={value[line.width]===undefined?'height':'width'} onChange={e=>{
+        const next={...value},a=line.art!;
+        if(e.target.value==='width')next[line.width]=Math.round(Math.min(250,Math.max(5,value[line.height]*25.4/72*a.width/a.height))*2)/2;
+        else{
+         next[line.height]=Math.round(Math.min(line.max,Math.max(line.min,(value[line.width]??5)*72/25.4*a.height/a.width))*2)/2;
+         delete next[line.width];
+        }
+        onChange(next);
+       }}><option value="height">بالارتفاع (pt)</option><option value="width">بالعرض (mm)</option></select>
+      </label>)}
+     </div>
+    </fieldset>
+    {showTextLayout&&<MatnTextLayoutControls value={value} onChange={onChange}/>}
+    <fieldset className="rounded-lg border p-3 space-y-2">
+     <legend className="font-semibold">المسافات بين أجزاء شهادة المتن</legend>
+     <div className="matn-dimension-fields">
+      <Dimension label="المسافة بعد المقدمة" unit="mm" min={0} max={20} value={value.sectionGapAfterIntroMm??0} onChange={n=>update('sectionGapAfterIntroMm',n)}/>
+      <Dimension label="المسافة بعد كلمات الإجازة" unit="mm" min={0} max={20} value={value.sectionGapAfterWordingMm??0} onChange={n=>update('sectionGapAfterWordingMm',n)}/>
+      <Dimension label="المسافة بعد السند" unit="mm" min={0} max={20} value={value.sectionGapAfterSanadMm??0} onChange={n=>update('sectionGapAfterSanadMm',n)}/>
+      <Dimension label="رفع أو خفض الخاتمة" unit="mm" min={-15} max={15} value={value.conclusionOffsetMm??0} onChange={n=>update('conclusionOffsetMm',n)}/>
+     </div>
+     <p className="text-xs text-muted-foreground">الخاتمة النصية مستقلة عن ختم المجيز أسفل الشهادة. القيمة السالبة ترفع الخاتمة النصية.</p>
+    </fieldset>
+    <label className="matn-border-choice"><span>إطار الشهادة</span>
+     <select aria-label="إطار شهادة المتن" value={value.borderNumber??'default'} onChange={e=>onChange({...value,borderNumber:e.target.value})}>
+      <option value="default">الإطار الحالي</option><option value="none">بدون إطار</option>
+      {artwork.filter(a=>a.kind==='borders'&&a.line==='frame').map(a=><option key={a.number} value={a.number}>{a.label||'إطار '+a.number}</option>)}
+     </select>
+    </label>
+    <fieldset className="rounded-lg border p-3 space-y-2">
+     <legend className="font-semibold">الفواصل بين أجزاء المتن</legend>
+     {([{key:'afterIntro',label:'بدء كلمات الإجازة في سطر جديد بعد المقدمة'},
+       {key:'afterWording',label:'بدء السند في سطر جديد بعد كلمات الإجازة'},
+       {key:'afterSanad',label:'بدء الخاتمة في سطر جديد بعد السند'}] as const).map(item=>
+      <label key={item.key} className="flex items-center gap-2 text-sm">
+       <input type="checkbox" checked={breaks[item.key]} onChange={e=>onChange({...value,sectionBreaks:{...breaks,[item.key]:e.target.checked}})}/>{item.label}
+      </label>)}
+    </fieldset>
+   </div>
+  </details>
+  <button type="button" className="rounded-md border px-3 py-1.5 text-sm"
+   onClick={()=>onReset?onReset():onChange({...DEFAULT_MATN_HEADING})}>استعادة تنسيق SVG الأصلي</button>
+ </div>;
 }
 
 /** Per-matn size override; template text and formatting remain untouched. */
