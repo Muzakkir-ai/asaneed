@@ -1,3 +1,7 @@
+## Integration baseline and release QA (10 November 2026)
+
+GitHub main and the READY production alias both point to `292dc0d5dbd27556b4004051b782cc369946c21d`. The [release QA matrix](RELEASE-QA.md) records baseline checks, two failing suites, and the pending staging and recovery gates for ordered multi-sanad issuance and number-only lookup. This documentation change does not alter runtime behavior.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.
@@ -292,51 +296,7 @@ The user recording exposed a broad outer Card hover/focus selector that filled e
 
 The review branch now applies the same primary-color interaction language through shared button/card/tab primitives, desktop/collapsed/mobile navigation, certificate actions/menus, scientific-matn and account records, shaykh cards and certificate-section choices. Navigation uses tinted icon tiles with filled hover/current/focus states. Outline/ghost actions use primary icons and hover/focus feedback; destructive actions retain red, primary/secondary button semantics remain, and headers retain their white controls. The matn toolbar keeps its compact dimensions and gets consistent primary active states. All new theme rules are screen-only; no artwork, typography, certificate snapshot or database changes.
 
-Added npm run test:workspace-theme: isolated real-component browser fixture with mocked APIs, desktop/mobile navigation, keyboard tab behavior, disabled/destructive actions, dark filled-icon contrast (5.20:1), focus and reduced motion. Passed at 1280/390/320px. Existing Arabic typing/tashkil, selection/undo, heading geometry, overflow and two-paragraph print browser checks also passed; production build passed. Screenshots reviewed on desktop, dark and mobile. These are representative component fixtures, not a claim to inspect every production account/page. Pending preview review; production is unchanged.
-
-## Primary-color cards — review branch, 4 November 2026
-
-Branch feat/primary-color-cards adapts Telawah card feedback to Asaneed's existing teal theme. Shared-text categories and saved-book cards use tinted icon tiles, primary hover/focus borders, white icons on filled tiles, directional arrows and subtle lift. Touch remains responsive and reduced-motion disables transforms. No certificate, artwork, database or print styles changed. Verified typecheck, production build and actual browser checks at 1280/390/320px, including dark contrast, Arabic typing, keyboard focus, touch and reduced motion. This styling is pending review and is not released to production.
-
-## Production release — 4 November 2026
-
-User explicitly approved the exact production schema migration, merge and Jazarīyah move. PR #6 is merged; production main commit is 22c983c31ce973c3cbbb7ceb7642bb8928b449b7. Vercel production is READY and asaneed.vercel.app points to this commit. The unified-sanad schema migration is applied.
-
-Migration fingerprints verified unchanged certificates, snapshots, old workspace records and original builder-chain fields. Existing security advisor counts did not increase. A private application backup was created before release.
-
-المقدمة الجزرية is published in the shared المتون العلمية catalog, category التجويد, author الإمام ابن الجزري, original artwork 02. Creation was performed through the signed-in administrator workspace. Its one existing additional-shaykh personal entry was backed up and linked by catalogId. Assertions verified every other personal field, exact scholarly text, wording, formatting and ownership remained unchanged. Certificates, all legacy snapshots, original chains and every other workspace record compare unchanged after the move.
-
-Nine route comparisons still require review. No bulk sanad conversion, historical approval or certificate rewrite was performed. Older draft/migration-pending sections below are historical and superseded by this release note.
-
-## Unified sanad architecture — draft PR #6, 4 November 2026
-
-Continued the existing management branch after fetching PR #6 follow-up fixes. One shared composition core serves builder previews and legacy holding/certificate adapters. New explicit route references flow through personal preparation, qiraah issuance, additional-shaykh issuance and draft snapshot resolution. Shared saves no longer rewrite copied holdings, prepared sanads or snapshots.
-
-Shared texts use four responsive icon categories, approved continuation metadata in existing sections, read-only CHAIN sources, explicit selection/style preservation, central route continuation selection and a separate advanced override. Admin-only HTTP/RLS guards, audited comparison review and reversible conversion proposals are prepared. See [SANAD-UNIFICATION.md](SANAD-UNIFICATION.md) for paths, migration protocol and limitations.
-
-Read-only audit: 23 active routes; 14/14 Shatibiyyah seven-name prefixes match the saved Ibn al-Jazari → al-Dani segment. General ordered-name comparison leaves 9 routes needing review. There are 47 core drafts and no finalized core snapshots, but all 45 older workspace snapshots (30 carrying issue dates) remain uncertain and excluded from conversion.
-
-TypeScript, production build, unified/legacy workflow and local SQL migration tests, editor/matn suites, desktop/mobile Chrome Arabic typing and real A4 landscape print fixtures passed. Dark theme and mobile cards were visually reviewed. No authenticated hosted mutation, physical printer or historical-authentication coverage is claimed.
-
-**Not merged or deployed to production.** Migration 20261104164423_unified_sanad_continuations.sql is prepared, not applied. No stored-chain conversion occurred. Production remains the merged PR #5 main release 7743ecf. The earlier matn migration already exists in the inspected hosted schema; it is separate from this new migration.
-
-## Compact editor PR #5 correction — 4 November 2026
-
-The same `feat/compact-formatting-editor` branch and draft PR #5 were corrected after review. The primary toolbar now contains only preset, size, bold, Lucide alignment icons, palette and ellipsis. Save/status are in the header. The More disclosure contains selection/reset/history/variables/font/paragraph controls, supports Escape and outside-pointer dismissal, and does not permanently expose secondary rows. Native disclosures expose expanded state; icons have Arabic names/tooltips and alignment/bold/color controls reflect the selection. The preset selector retains the applied preset.
-
-Pending typing marks now survive capture events at the same caret and subsequent typing; actual caret movement clears them. Scoped section metadata is rebased alongside rich spans on editing, including unambiguous surrounding-text edits. Rich print source scopes produce inline runs inside paragraphs rather than separate wrapper blocks; only explicit newlines split the rich flow. The old phrase-only and historical finalized-matn rendering paths remain intact.
-
-Verification: DOM regressions cover pending marks across keyup, caret changes, scoped rebasing and continuous/multi-paragraph print boundaries. `npm run test:editor:browser` runs the actual components in installed Chrome with a local-only synthetic fixture: Arabic/tashkil input `بَارَكَ اللّٰهُ فِيهِ`, applied preset/active alignment, More disclosure, 1280px desktop and 320/390px mobile with no horizontal page overflow, configured KSA/Sakkal fonts and no browser page errors. Screenshots were visually reviewed. Chrome produced a real one-page A4 landscape PDF using the certificate print-area stylesheet; Poppler rendering was inspected for continuous source/prefix/suffix flow and the explicit second paragraph. The fixture route is created and removed by the browser test and is not shipped.
-
-Limits: this is a browser/PDF fixture check of the actual components, not a live account/certificate issuance, native Arabic IME session, iOS browser or physical printer test. No hosted data mutation or production deployment was performed. The earlier preview Google-login redirect investigation remains separate and was not changed in this correction.
-
-## Compact formatting editor — review branch, 4 November 2026
-
-Implemented on `feat/compact-formatting-editor`; **not deployed**. `/studio/client.tsx` dynamically imports `legacy/App.tsx`; the matn and section editors in `legacy/components` are active. Both now share the compact editor, six semantic presets, selection actions, semantic colors, variable insertion, collapsed advanced font/paragraph controls and responsive toolbar styling.
-
-Collapsed clear resets typing marks; inline clear preserves paragraph settings. Explicit paragraph alignment wins over the default justification; paragraph actions retain the original selection. Transactions handle insert/delete/paste, undo/redo, grapheme boundaries and atomic placeholders. New section edits save exact scoped ranges in an optional `rich` member of the existing formatting JSON; original phrase metadata remains available. Legacy phrase-only records retain their historical all-occurrence behavior until intentionally edited. Boundary whitespace trimming rebases the new spans.
-
-The version-2 paragraph/run adapter is in-memory and round-trips untouched legacy metadata with a backup; storage remains compatible JSON in the existing columns. No SQL migration, hosted database mutation, bulk data rewrite or snapshot rewrite was performed. Existing finalized matn documents retain historical alignment rendering; newly created documents carry `editorVersion:2`. Existing Arabic font definitions, artwork and certificate palette settings were retained.
+Added npm run test:workspace-theme: isolated real-component browser fixture with mocked APIs, desktop/mobile navigation, keyboard tab behavior, disabled/destructive actions, dark filled-icon contrast (5.20:1), focus and reduced motion. Passed at 1280/390/320px. Existing Arabic typing/tashkil, selection/undo, heading geometry, overflow and two-paragraph print browser checks also passed; production build passed. Screenshots reviewed on desktop, dark and mobile. These are representative component fixtures, not a claim to inspect every production account/page. Pending preview review; production is …1994 tokens truncated…nment rendering; newly created documents carry `editorVersion:2`. Existing Arabic font definitions, artwork and certificate palette settings were retained.
 
 Validation: `npm run test:editor` (DOM interaction plus real certificate render helpers), `npm run typecheck`, production build, existing matn rich-text/recovery/assembly/render/API/persistence and certificate format-settings suites passed. Tests cover repeated vocalized names, clear/typing, undo/redo, selection preservation, atomic variables, mixed Latin identifiers, scoped/multiline section print rendering, legacy conversion and saved whitespace offsets. The React checklist was reviewed for selection listeners, controlled values, toolbar labels and composition guards.
 
