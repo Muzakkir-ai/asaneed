@@ -9,7 +9,7 @@ import QurraHistoricalPanel from './QurraHistoricalPanel';
 import {historicalSection,allHistoricalSections,type HistoricalSegmentKind} from '../../../legacy/lib/qurraHistoricalSegments';
 import {QURRA,displayRawi,shortQariName} from '../../../legacy/lib/qurra';
 import {savedRawiName} from '../../../legacy/lib/rawiIdentity';
-import {buildQurraTransmissionData,sharedJazariDaniPaths,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
+import {buildQurraTransmissionData,qurraCanonicalReadingCount,qurraRouteOptions,sharedJazariDaniPaths,type QurraStage} from '../../../legacy/lib/qurraTransmissionData';
 import {groupSimilarSanadRoutes} from '../../../legacy/lib/sanadRouteGrouping';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
 import {workspaceHeaders} from '../../../legacy/lib/workspaceSelection';
@@ -23,7 +23,7 @@ const stages:{id:QurraStage;name:string;description:string}[]=[
  {id:'jazari-dani',name:'ابن الجزري ← الداني',description:'الإسناد المشترك من ابن الجزري إلى الداني'},
  {id:'dani-seven',name:'الداني ← القراء السبعة',description:'طرق القراء السبعة المحفوظة بعد الداني'},
  {id:'jazari-three',name:'ابن الجزري ← القراء الثلاثة',description:'طرق أبي جعفر ويعقوب وخلف البزار'},
- {id:'other-seven',name:'مسارات السبعة الأخرى',description:'طرق محفوظة أخرى لا تمر بالداني'},
+ {id:'other-seven',name:'مسارات السبعة الأخرى',description:'طرق محفوظة لا يتوفر لها مقطع معروض يبدأ من الداني'},
 ];
 
 export default function QurraTransmissionWorkspace(){
@@ -62,22 +62,24 @@ export default function QurraTransmissionWorkspace(){
  const historicalRawis=historicalKind==='rawi-imam'?(QURRA.find(q=>q.id===activeHistoricalQari)?.rawis||[]):[];
  const activeHistoricalRawi=historicalRawis.some(r=>r===route)?route:historicalRawis[0]||'';
  const historicalView=isHistorical?historicalSection(sections,activeHistoricalQari,activeHistoricalRawi,historicalKind,library?.people||[]):null;
- const candidates=(data?.witnesses||[]).filter(w=>w.stage===stage);
+ const candidates=useMemo(()=>data?.witnesses.filter(w=>w.stage===stage)||[],[data,stage]);
  const sharedStage=stage==='jazari-dani';
  const overviewStage=stage==='all-ten';
  const groupedStage=sharedStage||overviewStage;
  const sharedPaths=sharedJazariDaniPaths(candidates);
  const qariOptions=QURRA.filter(q=>candidates.some(w=>w.qariId===q.id));
  const activeQari=qariOptions.some(q=>q.id===qari)?qari:qariOptions[0]?.id||'';
- const routeOptions=[...new Map(candidates.filter(w=>w.qariId===activeQari).map(w=>[w.routeId,w])).values()];
- const activeRoute=routeOptions.some(w=>w.routeId===route)?route:routeOptions[0]?.routeId||'';
+ const savedRoutes=useMemo(()=>library&&candidates.length?qurraRouteOptions(candidates,library):[],[candidates,library]);
+ const routeOptions=savedRoutes.filter(({witness})=>witness.qariId===activeQari);
+ const routeLabels=new Map(savedRoutes.map(({witness,label})=>[witness.routeId,label]));
+ const activeRoute=routeOptions.some(({witness})=>witness.routeId===route)?route:routeOptions[0]?.witness.routeId||'';
  // Jazari → Dani is a common chain. Do not choose Qalun or any other reading
  // just because its saved route happens to be the first witness.
  const uniqueFullPaths=[...new Map(candidates.map(w=>[JSON.stringify(w.ids),w])).values()];
  const chosen=sharedStage?sharedPaths:overviewStage?uniqueFullPaths:showAll?candidates:candidates.filter(w=>w.routeId===activeRoute);
  const paths=chosen.map(w=>w.ids);
  const grouped=groupSimilarSanadRoutes(paths);
- const current=groupedStage?undefined:routeOptions.find(w=>w.routeId===activeRoute);
+ const current=groupedStage?undefined:routeOptions.find(({witness})=>witness.routeId===activeRoute)?.witness;
  const currentChain=library?.chains.find(c=>c.id===activeRoute&&!c.archived&&c.kind==='route');
  const editingChain=library?.chains.find(c=>c.id===editingRouteId&&!c.archived&&c.kind==='route');
  const currentBook=library?.books.find(b=>b.id===current?.bookId);
@@ -153,7 +155,7 @@ export default function QurraTransmissionWorkspace(){
     <label className="block min-w-0 text-sm font-medium">الرواية والطريق
      <select aria-label="الرواية والطريق" className="mt-1 w-full rounded-md border bg-background p-2.5 text-sm" value={activeRoute}
       onChange={event=>{setRoute(event.target.value);setShowAll(false);setEditingRouteId('');}}>
-      {routeOptions.map(w=><option key={w.routeId} value={w.routeId}>{displayRawi(w.qariId,w.rawi)} · {w.book} · {w.title}</option>)}
+      {routeOptions.map(({witness,label})=><option key={witness.routeId} value={witness.routeId}>{label}</option>)}
      </select>
     </label>
    </div>}
@@ -162,7 +164,7 @@ export default function QurraTransmissionWorkspace(){
     {!editingChain&&<div className="flex flex-wrap items-center justify-between gap-3">
      <div className="min-w-0">
       <h2 className="font-semibold">{overviewStage?'ابن الجزري ← القراء العشرة · الطرق المحفوظة':sharedStage?'السند المشترك: ابن الجزري ← الداني':showAll?'جميع الأسانيد المحفوظة':current?displayRawi(current.qariId,current.rawi)+' عن '+shortQariName(current.qariId):'السند المحفوظ'}</h2>
-      <p className="mt-1 text-xs text-muted-foreground">{overviewStage?'طرق ظاهرة: '+arabicDigits(paths.length)+' · روايات محفوظة: '+arabicDigits(new Set(candidates.map(w=>w.routeId)).size):sharedStage?'أسانيد محفوظة: '+arabicDigits(paths.length)+' · شواهد مصدرية: '+arabicDigits(candidates.length):showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} {sharedStage?'سند مميّز':'مسار'}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{overviewStage?'مسارات مرسومة: '+arabicDigits(paths.length)+' · سجلات طرق: '+arabicDigits(savedRoutes.length)+' · روايات ممثلة: '+arabicDigits(qurraCanonicalReadingCount(candidates))+' / '+arabicDigits(QURRA.reduce((total,q)=>total+q.rawis.length,0)):sharedStage?'أسانيد محفوظة: '+arabicDigits(paths.length)+' · شواهد مصدرية: '+arabicDigits(candidates.length):showAll?arabicDigits(chosen.length)+' أوجه محفوظة':currentBook?.title||''} · {arabicDigits(new Set(paths.flat()).size)} راوٍ · {arabicDigits(grouped.length)} {sharedStage?'سند مميّز':'مسار'}</p>
      </div>
      {!groupedStage&&<div className="flex flex-wrap gap-2">
       <button type="button" aria-pressed={showAll} onClick={()=>setShowAll(v=>!v)}
@@ -175,7 +177,7 @@ export default function QurraTransmissionWorkspace(){
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
      paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage||sharedStage} sharedSanads={sharedStage} personNames={data.names}
-      routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
+      routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+routeLabels.get(w.routeId))}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>
       :<p className="p-4 text-sm text-muted-foreground">لا توجد وصلة محفوظة.</p>}
@@ -203,7 +205,7 @@ export default function QurraTransmissionWorkspace(){
       <strong className="text-foreground">تغطية القراء</strong>
       <div className="mt-2 flex flex-wrap gap-2">{(overviewStage?QURRA:coverage).map(q=><span key={q.id} className="rounded border px-2 py-1">{shortQariName(q.id)}: {covered.has(q.id)?'محفوظ':'غير متاح'}</span>)}</div>
      </div>}
-     {showAll&&<div className="max-h-40 overflow-auto space-y-1">{[...new Map(chosen.map(w=>[w.routeId,w])).values()].map(w=><p key={w.routeId}>{displayRawi(w.qariId,w.rawi)} — {w.book} — {w.title}</p>)}</div>}
+     {(showAll||overviewStage)&&<div className="max-h-40 overflow-auto space-y-1">{savedRoutes.map(({witness,label})=><p key={witness.routeId}>{shortQariName(witness.qariId)} — {label}</p>)}</div>}
     </div>
    </details>
   </section>}
