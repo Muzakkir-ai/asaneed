@@ -1,4 +1,4 @@
-import {QURRA} from './qurra';
+import {QURRA,displayRawi,plainReadingName} from './qurra';
 import {builderNameKey,type BuilderLibrary,type BuilderChain} from './bookBuilder';
 
 /** Historical segments are assembled ONLY from saved explicit narrator IDs
@@ -33,6 +33,45 @@ export function sharedJazariDaniPaths(witnesses:readonly QurraWitness[]):QurraWi
   seen.add(identity);
   return true;
  });
+}
+
+/** One selectable item per saved route ID. Multiple witnesses can belong
+ * to the same record and must remain in the graph when it is selected. */
+export function qurraRouteOptions(witnesses:readonly QurraWitness[],library:BuilderLibrary){
+ const routes=[...new Map(witnesses.map(w=>[w.routeId,w])).values()];
+ const chains=new Map(library.chains.map(chain=>[chain.id,chain]));
+ const people=new Map(library.people.filter(p=>!p.archived).map(person=>[person.id,person]));
+ const options=routes.map(witness=>{
+  const rawi=displayRawi(witness.qariId,witness.rawi);
+  const [titleLead,...titleRest]=witness.title.split(/\s+[—–-]\s+/u);
+  const title=displayRawi(witness.qariId,plainReadingName(titleLead))===rawi
+   ?titleRest.join(' — '):witness.title;
+  return {witness,label:[rawi,witness.book,title].filter(Boolean).join(' · ')};
+ });
+ const counts=new Map<string,number>();
+ for(const {label} of options){
+  const key=builderNameKey(label);
+  counts.set(key,(counts.get(key)||0)+1);
+ }
+ return options.map(({witness,label})=>{
+  if(counts.get(builderNameKey(label))===1)return {witness,label};
+  const chain=chains.get(witness.routeId);
+  const sources=[...new Set(chain?.branches.flatMap(branch=>branch
+   .filter(node=>node.route_source)
+   .map(node=>people.get(node.person_id))
+   .filter(person=>person!==undefined)
+   .map(person=>person.display_name.trim()||person.name))||[])];
+  // The saved route number identifies the record even when two records
+  // cite the same named source. It does not assert distinct historical paths.
+  const detail=[sources.join('، '),'رقم الطريق '+(chain?.route_code||witness.routeId)].filter(Boolean);
+  return {witness,label:[label,...detail].join(' · ')};
+ });
+}
+
+export function qurraCanonicalReadingCount(witnesses:readonly QurraWitness[]){
+ return QURRA.reduce((total,qari)=>total+qari.rawis.filter(rawi=>witnesses.some(w=>
+  w.qariId===qari.id&&builderNameKey(displayRawi(w.qariId,w.rawi))===builderNameKey(displayRawi(qari.id,rawi)),
+ )).length,0);
 }
 
 const noRepeats=(ids:readonly string[])=>new Set(ids).size===ids.length;

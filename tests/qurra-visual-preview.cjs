@@ -27,6 +27,7 @@ const people=[
  person('afterDani','أبو الفتح فارس'),
  person('other','أبو الحسين المكي'),
  person('threeTeacher','أبو إسحاق البغدادي'),
+ person('otherThreeTeacher','أبو عبد الله البغدادي'),
 ];
 const node=person_id=>({person_id,route_source:false});
 const bookParent={
@@ -45,14 +46,23 @@ const otherSeven={...sevenRoute,id:'route-warsh',rawi:'ورش',title:'طريق �
 const threeRoute={...sevenRoute,id:'route-ibnwardan',book_id:'three',book_chain_id:'parent-three',
  qari_id:'abujafar',rawi:'ابن وردان',title:'طريق ابن وردان',
  branches:[[node('threeTeacher')]]};
+const khalafRoutes=['إسحاق','إدريس'].flatMap((rawi,index)=>
+ ['threeTeacher','otherThreeTeacher'].map((id,branch)=>({
+  ...threeRoute,id:'khalaf-'+index+'-'+branch,qari_id:'khalaf',rawi,title:rawi+' — خلف البزار',
+  route_code:String(1100+index*2+branch),branches:[[{...node(id),route_source:true}]],
+ })));
+const duriRoutes=['abiamr','kisai'].map(qari_id=>({
+ ...sevenRoute,id:'route-duri-'+qari_id,qari_id,rawi:'حفص الدوري',title:'حفص الدوري — مثال',
+}));
 const library={
  people,
  books:[{id:'seven',title:'الشاطبية',author_id:'shatibi',archived:false},
   {id:'three',title:'الدرة',author_id:'jazari',archived:false}],
- chains:[bookParent,parentThree,sevenRoute,sharedSeven,otherSeven,threeRoute],
+ chains:[bookParent,parentThree,sevenRoute,sharedSeven,otherSeven,threeRoute,...khalafRoutes,...duriRoutes],
  suggestions:[],continuations:{},canManage:true,
  continuationSections:[
   {id:'rawi',title:'CHAIN:nafi:قالون',body:'عن أبي محمد عبد الرحمن، عن أبي موسى عيسى بن مينا بن وردان المدني صاحب الرواية، عن الإمام نافع بن عبد الرحمن المدني صاحب القراءة.'},
+  {id:'synthetic-warsh-fallback',title:'CHAIN:nafi:ورش',body:'عن راوٍ في النص التجريبي، عن إمام القراءة.'},
   {id:'sahaba',title:'CHAIN:nafi:sahaba',body:'عن أبي جعفر يزيد بن القعقاع، وأبي داود عبد الرحمن بن هرمز، وأخذ هؤلاء عن أبي هريرة، وعبد الله بن عباس، وهما عن أبي بن كعب.'},
   {id:'prophet',title:'CHAIN:nafi:prophet',body:'وَقَرَأَ أُبَيُّ بْنُ كَعْبٍ عَلَى رَسُولِ الله مُحَمَّدِ بْنِ عَبْدِ الله ﷺ.'},
  ],
@@ -117,7 +127,7 @@ const library={
      assert.equal(await page.getByLabel('الرواية والطريق').count(),0,
       'Shared Jazari-to-Dani view must NOT show route or riwayah filters');
      await page.getByRole('heading',{name:'السند المشترك: ابن الجزري ← الداني'}).waitFor({timeout:15000});
-     await page.getByText('أسانيد محفوظة: ١ · شواهد مصدرية: ٢',{exact:false}).waitFor();
+     await page.getByText('أسانيد محفوظة: ١ · شواهد مصدرية: ٤',{exact:false}).waitFor();
     }else if(i===2||i===3){
      assert.equal(await page.getByLabel('القارئ').count(),1,
       'Reader filters belong only to the reading-specific stages');
@@ -136,6 +146,26 @@ const library={
     console.log('Saved '+target);
    }
   }
+  const select=page.getByLabel('الرواية والطريق');
+  await page.getByRole('button',{name:'ابن الجزري ← القراء الثلاثة',exact:true}).click();
+  await page.getByLabel('القارئ',{exact:true}).selectOption('khalaf');
+  const options=await select.locator('option').evaluateAll(options=>options.map(o=>[o.value,o.textContent]));
+  assert.deepEqual(options.map(([id])=>id),khalafRoutes.map(route=>route.id));
+  assert.equal(new Set(options.map(([,label])=>label)).size,4,'Distinct Khalaf route IDs need distinct labels');
+  assert.match(options[0][1],/أبو إسحاق البغدادي/u,'Use saved route-source evidence');
+  assert.match(options[1][1],/أبو عبد الله البغدادي/u,'Keep the other saved source distinct');
+  await select.selectOption('khalaf-1-1');
+  await page.getByRole('heading',{name:'إدريس عن خلف البزار',exact:true}).waitFor();
+  await page.locator('[data-combined-narrator="otherThreeTeacher"]').waitFor();
+  await page.getByRole('button',{name:'الداني ← القراء السبعة',exact:true}).click();
+  await page.getByLabel('القارئ',{exact:true}).selectOption('abiamr');
+  assert.match(await select.locator('option').first().textContent(),/^الدوري ·/u);
+  assert.doesNotMatch(await select.locator('option').first().textContent(),/حفص الدوري/u);
+  await page.getByLabel('القارئ',{exact:true}).selectOption('kisai');
+  assert.match(await select.locator('option').first().textContent(),/^حفص الدوري ·/u);
+
+  await page.getByRole('button',{name:'ابن الجزري ← القراء العشرة',exact:true}).click();
+  await page.getByText('مسارات مرسومة: ٤ · سجلات طرق: ١٠ · روايات ممثلة: ٧ / ٢٠',{exact:false}).waitFor();
   // Test all three lower historical text views, including sources and
   // branch prose, independently of the saved book-chain graph.
   await page.goto(url,{waitUntil:'domcontentloaded'});
@@ -184,6 +214,13 @@ const library={
    await page.screenshot({path:screenshot,fullPage:true,animations:'disabled'});
    assert.ok(fs.statSync(screenshot).size>2000);
   }
+  await page.getByRole('button',{name:'الرواة ← الأئمة',exact:true}).click();
+  await page.getByLabel('الراوي في تتمة السند').selectOption('ورش');
+  await page.getByText('فروع نصية محفوظة · تحتاج مراجعة',{exact:true}).waitFor();
+  assert.equal(await page.locator('[data-combined-narrator]').count(),0,'Unresolved source draws no narrator edges');
+  await page.getByRole('button',{name:'عرض النص الأصلي'}).click();
+  await page.getByText('CHAIN:nafi:ورش',{exact:true}).waitFor();
+  await page.getByText('عن راوٍ في النص التجريبي، عن إمام القراءة.',{exact:true}).last().waitFor();
   // The selected saved route opens a short ordered-list editor. This tests
   // real narrator identity autocomplete with a synthetic library only.
   await page.setViewportSize({width:1440,height:960});
