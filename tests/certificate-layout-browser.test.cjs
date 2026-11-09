@@ -63,6 +63,11 @@ const {chromium}=require('playwright');
   assert.ok(footerBefore&&footerAfter&&footerBefore.y-footerAfter.y>3,
    'issuer footer, stamp, signature, date and registration move upward together');
   await page.getByLabel('جزء الشهادة').selectOption('reading');
+  const advancedMatn=panel.locator('[data-testid="matn-heading-advanced"]');
+  assert.equal(await advancedMatn.evaluate(node=>node.open),false,'matn complex options start collapsed');
+  if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+   await panel.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-matn-basic-controls.png'});
+  await advancedMatn.locator('summary').click();
   const headingControl=page.getByRole('spinbutton',{name:'المسافة بعد السند',exact:true});
   await headingControl.fill('6');
   await headingControl.blur();
@@ -127,8 +132,19 @@ const {chromium}=require('playwright');
   const qMock=JSON.parse(qData);
   const qPage=await browser.newPage({viewport:{width:1440,height:900}});
   try{
-   await qPage.route('**/api/workspace/certificateDraftPreview',request=>
-    request.fulfill({json:qMock}));
+   let qSaved=null;
+   const qChanges=[];
+   await qPage.route('**/api/workspace/certificateDraftPreview',request=>{
+    const formatting=JSON.parse(qMock.formatting);
+    if(qSaved)formatting.settings=qSaved;
+    request.fulfill({json:{...qMock,formatting:JSON.stringify(formatting)}});
+   });
+   await qPage.route('**/api/workspace/certificateDraftFormatting',request=>{
+    const input=request.request().postDataJSON();
+    qChanges.push(input);
+    qSaved=input.action==='reset'?null:input.settings;
+    request.fulfill({json:{saved:input.action==='save'}});
+   });
    const qiraatDraftReady=qPage.waitForResponse(response=>
     response.url().includes('/api/workspace/certificateDraftPreview')&&response.status()===200);
    await qPage.goto(qiraatUrl);
@@ -151,6 +167,25 @@ const {chromium}=require('playwright');
    const f0=await relativeY('.certificate-footer');
    assert.ok([h0,b0,f0].every(Number.isFinite),'all qiraat page rectangles exist');
    await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   await qPage.getByLabel('جزء الشهادة').selectOption('reading');
+   const qSvg=qPage.locator('[data-testid="qiraat-svg-controls"]');
+   assert.equal(await qSvg.count(),1,'qiraat SVG editor is available');
+   const ijazahGraphic=qPage.locator('.certificate-ijazah-svg');
+   const readingGraphic=qPage.locator('.certificate-reading-svg-line');
+   const widthBefore=(await ijazahGraphic.boundingBox()).width;
+   const heightBefore=(await readingGraphic.boundingBox()).height;
+   await qPage.getByRole('spinbutton',{name:'عرض رسم إجازة',exact:true}).fill('106');
+   await qPage.getByRole('spinbutton',{name:'ارتفاع سطر الرواية',exact:true}).fill('9');
+   await qPage.getByRole('spinbutton',{name:'المسافة بين الرسم وسطر الرواية',exact:true}).fill('4');
+   await qPage.getByRole('spinbutton',{name:'رفع أو خفض رسم إجازة',exact:true}).fill('1');
+   await qPage.getByRole('spinbutton',{name:'رفع أو خفض سطر الرواية',exact:true}).fill('1');
+   await qPage.waitForFunction(()=>Number.parseFloat(getComputedStyle(document.querySelector('.certificate-ijazah-svg')).width)>400);
+   const widthAfter=(await ijazahGraphic.boundingBox()).width;
+   const heightAfter=(await readingGraphic.boundingBox()).height;
+   assert.ok(widthAfter>widthBefore*1.04,'ijazah SVG enlarges without stretching the reading glyphs');
+   assert.ok(heightAfter>heightBefore*1.02,'riwayah SVG line scales separately without changing ijazah sizing');
+   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
+    await qSvg.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-svg-controls.png'});
    const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
    const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
    await qHeading.fill('3');await qHeading.blur();
@@ -200,6 +235,20 @@ const {chromium}=require('playwright');
     });
    assert.equal(await qPage.locator('.certificate-settings-panel[role="alert"]').count(),0,
     'reasonable title/footer offsets remain inside the ornamental safety zone');
+   await qPage.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).click();
+   assert.equal(qChanges.at(-1)?.action,'save','SVG positions are saved without final approval');
+   assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.ijazahWidthMm,106);
+   assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.riwayahHeightMm,9);
+   assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.riwayahGapMm,4);
+   await qPage.reload();
+   await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   await qPage.getByLabel('جزء الشهادة').selectOption('reading');
+   assert.equal(Number(await qPage.getByRole('spinbutton',{name:'عرض رسم إجازة',exact:true}).inputValue()),106,
+    'per-certificate SVG sizing persists through reload');
+   await qPage.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
+   await qPage.waitForFunction(()=>document.querySelector('input[aria-label="عرض رسم إجازة"]')?.value==='98.0244');
+   assert.equal(Number(await qPage.getByRole('spinbutton',{name:'ارتفاع سطر الرواية',exact:true}).inputValue()),8.445,
+    'restore resets individual riwayah SVG height without changing shared templates');
   }finally{await qPage.close();}
   console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{
