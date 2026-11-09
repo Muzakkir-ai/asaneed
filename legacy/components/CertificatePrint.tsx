@@ -1,6 +1,8 @@
 import PrintSafeIssuerArtwork,{type ArtworkStatus} from './PrintSafeIssuerArtwork';
 import CertificateBorder from './CertificateBorder';
 import {MatnHeadingControls} from './MatnHeadingControls';
+import QiraatHeadingControls from './QiraatHeadingControls';
+import type {QiraatHeadingSettings} from '../lib/qiraatHeadingSettings';
 import {headingTextTopMm,matnArtwork,resolveMatnHeading,type MatnHeadingSettings} from '../lib/matnPresentation';
 import {renderRichSanadFlow} from './RichSanadFlow';
 import {scopedPhraseRanges} from '../lib/sanadFormatting';
@@ -316,6 +318,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   const [borderColor,setBorderColor]=useState('#926e35');
   const [accentColor,setAccentColor]=useState('#075f69');
   const [headingOverride,setHeadingOverride]=useState<MatnHeadingSettings|null|undefined>();
+  const [qiraatHeading,setQiraatHeading]=useState<QiraatHeadingSettings|null|undefined>();
   const [typography,setTypography]=useState<Record<Area,Typography>>(defaults);
   // Independent per-certificate artwork positioning; neither changes sanad data.
   // Negative mm = move upward; positive mm = move downward.
@@ -346,7 +349,20 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     // safe zone rather than allowing the issuer text to reach the border.
     const mm=p.width/297;
     const borderUnsafe=f.bottom>p.bottom-12*mm||Boolean(h&&h.top<p.top+8*mm);
-    const unsafe=endingOverlaps||borderUnsafe||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
+    const svgBasmala=header?.querySelector<HTMLElement>('.certificate-basmalah-svg');
+    const svgMain=header?.querySelector<HTMLElement>('.certificate-ijazah-svg');
+    const svgSecond=header?.querySelector<HTMLElement>('.certificate-reading-svg-line, .certificate-reading-label');
+    // Negative per-SVG offsets are allowed only when their actual shapes do
+    // not collide. A large line must also fit within the ornamental safe area.
+    const svgCollides=!!(qiraatHeading&&!matnDocument&&svgBasmala&&svgMain&&svgSecond&&(
+      svgMain.getBoundingClientRect().top<svgBasmala.getBoundingClientRect().bottom-0.1||
+      svgSecond.getBoundingClientRect().top<svgMain.getBoundingClientRect().bottom-0.1||
+      [svgBasmala,svgMain,svgSecond].some(node=>{
+       const r=node.getBoundingClientRect();
+       return r.left<p.left+7*mm||r.right>p.right-7*mm;
+      })
+    ));
+    const unsafe=endingOverlaps||borderUnsafe||svgCollides||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
     setOverflow(unsafe);setLayoutChecked(true);return unsafe;
   };
   const [textTopMm,setTextTopMm]=useState(52.8);
@@ -357,7 +373,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   // Reapply formatting explicitly on Restore even when the source JSON is
   // identical to its previously loaded value (local unsaved edits may exist).
   const loadFormatting=(raw:string|undefined)=>{
-    setHeadingOverride(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
+    setHeadingOverride(undefined);setQiraatHeading(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
     setHeadingOffsetMm(0);setFooterOffsetMm(0);
     setBorderColor('#926e35');setAccentColor('#075f69');
     if(isDraft)setDraftPrintMode('number');
@@ -368,6 +384,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       if(Array.isArray(saved.phrases))setSharedPhrases(saved.phrases);
       if(saved.settings){
         setHeadingOverride(saved.settings.matnHeading);
+        setQiraatHeading(saved.settings.qiraatHeading);
         setTypography(saved.settings.typography||defaults);
         setHeadingOffsetMm(saved.settings.headingOffsetMm??0);
         setFooterOffsetMm(saved.settings.footerOffsetMm??0);
@@ -445,7 +462,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,headingOffsetMm,footerOffsetMm,styledPhrases]);
+  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
@@ -454,7 +471,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     for(const node of [printArea.current,bodyArea.current,sanadElement.current,footerArea.current,headerArea.current])if(node)observer.observe(node);
     check();document.fonts.ready.then(check).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,cert.id,sanadBody,cert.notes,typography,headingOverride,headingOffsetMm,footerOffsetMm,styledPhrases,textTopMm,centerFits,footerName]);
+  },[printPermission,cert.id,sanadBody,cert.notes,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,styledPhrases,textTopMm,centerFits,footerName]);
   const printCertificate=()=>{if(preparingIssuerArtwork){toast.error('انتظر تجهيز رسم المجيز للطباعة');return;}if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
   const captureSelection=()=>{
     const selection=window.getSelection();
@@ -498,7 +515,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     finally{printArea.current?.classList.remove('certificate-export-original-paper');setExporting(false);}
   };
   const areaStyle=(area:Area):React.CSSProperties=>{const t=typography[area],scale=(t.scalePercent??100)/100;return {fontFamily:`'${t.font}', serif`,fontWeight:t.font==='Sakkal Kitab'?700:undefined,fontSynthesis:t.font==='Sakkal Kitab'?'none':undefined,fontSize:`${(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`,lineHeight:t.lineSpacing??(area==='sanad'?`${16*scale}pt`:undefined),color:resolvedColor(t.color,borderColor,accentColor),textAlign:(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),textAlignLast:t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),textIndent:t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined,'--certificate-text-scale':scale,'--certificate-paragraph-gap':t.paragraphSpacing!==undefined?`${t.paragraphSpacing}pt`:undefined,'--certificate-alignment':(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),'--certificate-last-alignment':t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),'--certificate-line-height':t.lineSpacing?`${t.lineSpacing*(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`:undefined,'--certificate-first-indent':t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined} as React.CSSProperties;};
-  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,headingOffsetMm,footerOffsetMm,typography:next,phrases:styledPhrases,...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
+  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,headingOffsetMm,footerOffsetMm,typography:next,phrases:styledPhrases,...(!matnDocument?{qiraatHeading:qiraatHeading??null}:{}),...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
   const saveFormat=async()=>{
     if(!isDraft||readOnly||previewPalette||savingFormat)return;
     if(measureOverflow()){toast.error('أصلح تداخل النص أو التذييل قبل حفظ التنسيق');return;}
@@ -575,6 +592,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                 artwork={activeArtwork} base={activeArtworkBase} primary={borderColor} secondary={accentColor} showPreview={false}/>
             </div>
           }
+          {activeArea==='reading'&&!matnDocument&&
+           <QiraatHeadingControls value={qiraatHeading??{}} onChange={setQiraatHeading} onReset={()=>setQiraatHeading(null)}/>}
           <div className="rounded-lg border p-3 space-y-2" aria-label="مواضع عنوان الإجازة والختم">
             <p className="text-sm font-semibold">موضع العنوان والختم — في الشهادة الحالية فقط</p>
             <div className="flex flex-wrap items-start gap-4">
@@ -602,7 +621,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
               {key:'lineSpacing',label:'تباعد الأسطر',min:1,max:3,step:0.1,value:activeArea==='sanad'?1.68:1.6},
               {key:'paragraphSpacing',label:'المسافة بين الفقرات (pt)',min:0,max:30,step:1,value:matnDocument?6:3},
               {key:'firstLineIndent',label:'إزاحة أول سطر (mm)',min:0,max:25,step:1,value:0}] as const)
-              .filter(c=>activeArea!=='reading'||(!matnDocument&&c.key==='scalePercent')).map(c=>
+              .filter(c=>activeArea!=='reading').map(c=>
                 <label key={c.key} className="text-sm">{c.label}
                   <input aria-label={c.label} className="ms-2 w-20 rounded border bg-background p-2"
                     type="number" min={c.min} max={c.max} step={c.step} value={typography[activeArea][c.key]??c.value}
@@ -614,11 +633,21 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                 </label>
               )}
             {activeArea==='reading'&&!matnDocument&&
-              <label className="text-sm">المسافة بعد رسوم العنوان (mm)
-                <input aria-label="المسافة بعد رسوم العنوان" className="ms-2 w-20 rounded border bg-background p-2"
-                 type="number" min={0} max={20} step={0.5} value={typography.reading.headingGapMm??2}
-                 onChange={e=>{if(!Number.isFinite(e.target.valueAsNumber))return;setTypography(prev=>({...prev,reading:{...prev.reading,headingGapMm:Math.max(0,Math.min(20,e.target.valueAsNumber))}}));}}/>
-              </label>
+             <details className="w-full rounded-md border p-2">
+              <summary className="cursor-pointer text-sm">خيارات العنوان القديمة (للتوافق مع الشهادات المحفوظة)</summary>
+              <div className="mt-2 flex flex-wrap gap-3">
+               <label className="text-sm">تكبير جميع الرسوم سابقًا (%)
+                <input aria-label="تكبير جميع الرسوم سابقًا" type="number" min={50} max={150} step={1}
+                 className="ms-2 w-20 rounded border bg-background p-2" value={typography.reading.scalePercent??100}
+                 onChange={e=>{const n=e.target.valueAsNumber;if(Number.isFinite(n))setTypography(prev=>({...prev,reading:{...prev.reading,scalePercent:Math.max(50,Math.min(150,n))}}));}}/>
+               </label>
+               <label className="text-sm">المسافة القديمة بعد رسوم العنوان (mm)
+                <input aria-label="المسافة القديمة بعد رسوم العنوان" type="number" min={0} max={20} step={0.5}
+                 className="ms-2 w-20 rounded border bg-background p-2" value={typography.reading.headingGapMm??2}
+                 onChange={e=>{const n=e.target.valueAsNumber;if(Number.isFinite(n))setTypography(prev=>({...prev,reading:{...prev.reading,headingGapMm:Math.max(0,Math.min(20,n))}}));}}/>
+               </label>
+              </div>
+             </details>
             }
             {activeArea==='conclusion'&&
               <label className="text-sm">رفع أو خفض الخاتمة (mm)
@@ -659,7 +688,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''} ${printMode==='qr'?'certificate-qr-footer':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 16mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-heading-offset':`${headingOffsetMm}mm`, '--certificate-footer-offset':`${footerOffsetMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <CertificateBorder number={sharedHeading?resolvedHeading.borderNumber:undefined} color={borderColor} artwork={activeArtwork} base={activeArtworkBase||undefined}/>
-          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnArtworkNumber={matnDocument?.headingArtworkNumber} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
+          <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnArtworkNumber={matnDocument?.headingArtworkNumber} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} qiraatSettings={matnDocument?undefined:qiraatHeading??undefined} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
             <div ref={bodyArea} className="certificate-body-content w-full">
             {sanadBody?.trim() ? (
