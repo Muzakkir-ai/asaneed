@@ -82,7 +82,7 @@ const readingsFor=(title:string):NarratorOccurrence[]=>{
  return q?(match[2]==='sahaba'||match[2]==='prophet'?q.rawis.map(rawi=>({qariId:q.id,rawi})):[{qariId:q.id,rawi:match[2]}]):[];
 };
 
-export function buildNarratorDirectory(sections:SourceSection[],students:{name:string;readings:NarratorOccurrence[]}[]=[]):NarratorDirectory{
+export function buildNarratorDirectory(sections:SourceSection[]):NarratorDirectory{
  type ProfileInternal=NarratorProfile&{teacherSet:Set<string>;studentSet:Set<string>;readingSet:Set<string>;sourceSet:Set<string>};
  const people=new Map<string,ProfileInternal>();
  let links=0;
@@ -255,23 +255,8 @@ export function buildNarratorDirectory(sections:SourceSection[],students:{name:s
   const sahabaByImam:Record<string,string[]>={nafi:[u],ibnkathir:[um,u,za],abiamr:[um,ot,al,u,mu,za],ibnamir:[ot,'أبى الدرداء'],asim:[ot,al,ms,u,za],hamza:[um,ot,al,ms,u,za],kisai:[um,ot,al,ms,u,za],khalaf:[um,ot,al,ms,u,za],yaqub:[um,ot,al,ms,u,mu,za],abujafar:[u]};
   fan(sahabaByImam[imam.id]||[],[prophet],title);
  }
- // Students of Sheikh Zakaullah come from the student register, not guessed links.
- const studentSource='طلبة الشيخ ذكاء الله';
- sourceMap.set(studentSource,{id:'students',title:studentSource,body:''});
- const studentIds=new Set<string>();
- for(const student of students){
-  if(!student.name.trim())continue;
-  link(student.name,'الشيخ ذكاء الله بن راغب محمد سليمان',studentSource);
-  const id=canonical(tidy(student.name)),person=people.get(id);
-  if(!person)continue;
-  studentIds.add(id);
-  for(const reading of student.readings){
-   const key=reading.qariId+'|'+reading.rawi;
-   if(!person.readingSet.has(key)){person.readingSet.add(key);person.readings.push(reading);}
-  }
- }
  const result=[...people.values()]
-  .filter(p=>p.readings.length>0||studentIds.has(p.id))
+  .filter(p=>p.readings.length>0)
   .map(({teacherSet,studentSet,readingSet,sourceSet,...p})=>({...p,readings:p.readings.sort((a,b)=>QURRA.findIndex(x=>x.id===a.qariId)-QURRA.findIndex(x=>x.id===b.qariId)||a.rawi.localeCompare(b.rawi,'ar'))}));
  result.sort((a,b)=>a.name.localeCompare(b.name,'ar'));
  return {people:result,links,sections:sections.filter(s=>s.title.startsWith('CHAIN:')||s.title===route||s.title===ubaydi||s.title===zakaSource).length};
