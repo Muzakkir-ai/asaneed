@@ -72,3 +72,36 @@ Finalization preserves both ordered provenance and the number-only setting, and 
 | Integrated staging and recovery | Open. The local migration replay skips the production-only issuer correction and does not establish hosted schema parity. Separate-session concurrency on the combined candidate, authenticated browser role flows, physical print and native iOS export, and a full application backup/restore and previous-app rollback rehearsal remain release gates. The public exact lookup still needs a decision on abuse controls at both HTTP and direct RPC. |
 
 The synthetic integration fixture runs in one process. Its local transport adapts fixture storage to SQL and does not validate the hosted workspace adapter or Supabase Auth. Chat 04's two-session concurrency evidence applies to its source PR. No hosted data or infrastructure was changed.
+
+## PR #121 release QA follow-up · 10 November 2026
+
+Reviewed the 41-file candidate at `fd36d957f5917bfb54db291583f4e0ada4fbfa92` against GitHub main `292dc0d5dbd27556b4004051b782cc369946c21d`. This follow-up adds evidence and a disposable database fixture. The app, migrations, and diagram geometry are unchanged.
+
+| Check and command | Result |
+| --- | --- |
+| GitHub Actions `npm run test:personal-sanads`, `node tests/ordered-sanads.test.cjs`, `node tests/public-verification.test.cjs` | Pass at the reviewed candidate SHA, along with install and typecheck. [Sanad editor run](https://github.com/Muzakkir-ai/asaneed/actions/runs/42826676642) |
+| GitHub Actions `npm run test:certificate-layout` and `node tests/certificate-layout-browser.test.cjs` | Pass. Chromium checks A4 landscape PDFs, draft save/reset, responsive preview, number-only draft output and historical QR/hidden/number render modes. The successful hosted runner resolves the local Chromium launch blocker for this fixture. [PDF run and synthetic artifacts](https://github.com/Muzakkir-ai/asaneed/actions/runs/42826676478) |
+| `node tests/release-qa-postgres.test.cjs` — access and approval | Pass on local PostgreSQL 18.6. Assigned issuer can read and approve; linked recipient sees only the finalized certificate and snapshot. Unrelated issuer and recipient cannot read or approve; an assigned account without issuance capability cannot approve. A second session visibly waited on the first approval's database lock and returned the same registration number. Concurrent approvals of two other drafts allocated different numbers. The first snapshot won and stayed frozen. |
+| Same fixture — migration parity | Pass. All 44 migrations applied in a fresh replay and in a main-to-candidate upgrade. The old issuer-code correction used synthetic prerequisite rows at the IDs specified in that migration. Compared public/private functions and grants, policies, relation privileges and RLS flags, and column definitions. The upgrade preserved the pre-existing QR snapshot, certificate ID and verification token. |
+| Same fixture — backup and restore | The JSON restore initially failed atomically with `23505` because a fresh migration replay seeded issuer code `02` under a different ID. After removing only the empty target's synthetic placeholder and assignment, restore passed in the separate disposable database. Compared four certificates, snapshots, projections, annual allocations and counters, recipient isolation, anonymous number lookup and the historical token. A real recovery needs an approved plan to reconcile seeded issuer IDs in the restore target. |
+| Same fixture — scoped database rollback | Pass. Restored main's finalization function in the disposable target while keeping the verification hardening. Main's function returned its expected already-finalized error on retry and the original number, snapshot, and projection stayed unchanged. Reapplying the candidate function restored successful retry behavior. Historical token and anonymous number lookup still passed. |
+| `npm run test:sanad` at clean main | Reproduced the candidate's baseline failure in `sanad-path-layout.test.ts`: four single routes where the fixture expects one fan-in. Layout changes remain separate. |
+
+### Reproduce the native database checks
+
+Use PostgreSQL 18.6 binaries and a fresh local data directory. The fixture refuses servers whose data directory and disposable marker do not match. It creates and drops two uniquely named databases on the same loopback-only server, and uses a minimal synthetic Auth schema.
+
+```sh
+qa_dir="$(mktemp -d)"
+npm install --prefix "$qa_dir/client" --no-save --no-audit --no-fund pg@8.23.1
+initdb -D "$qa_dir/pg" -A trust --no-locale -E UTF8
+pg_ctl -D "$qa_dir/pg" -l "$qa_dir/postgres.log" \
+  -o "-h 127.0.0.1 -p 35432 -k '' -c asaneed.qa_disposable=release-qa" start
+ASANEED_QA_DATA_DIR="$qa_dir/pg" NODE_PATH="$qa_dir/client/node_modules" \
+  node tests/release-qa-postgres.test.cjs
+pg_ctl -D "$qa_dir/pg" stop
+```
+
+### Remaining release gates
+
+No authorized staging database was confirmed isolated from production. Hosted migration history and schema parity, browser sign-in through Supabase Auth, role-based Workspace and recipient flows, and the full previous-app rollback against the candidate schema remain open. The local restore rehearsed application JSON recovery only. Provider-level backup/PITR, restore timing at real scale, post-backup write reconciliation and the issuer seed collision need an operational plan. Physical print, native iOS export and abuse controls for public HTTP and RPC lookup are also pending.
