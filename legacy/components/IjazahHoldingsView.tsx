@@ -1,3 +1,4 @@
+import {OrderedSanadOrder,OrderedSanadPreviewPanel} from './OrderedSanadPicker';
 import PersonalSanadInput from './PersonalSanadInput';
 import EditorPage from './EditorPage';
 import {certificateRoutePhrase} from '../lib/certificateRouteChoice';
@@ -7,7 +8,7 @@ import {arabicDigits} from '../lib/arabicDigits';
 import {ijazahCoverage} from '../lib/ijazahCoverage';
 import {useEffect,useState} from 'react';
 import {matchesArabic} from '../lib/arabicSearch';
-import {ijazahHoldings,sanadSections,personalWording,IjazahHoldingsOutputType,SanadSectionsOutputType} from '../lib/api';
+import {prepareIjazah,ijazahHoldings,sanadSections,personalWording,IjazahHoldingsOutputType,SanadSectionsOutputType} from '../lib/api';
 import {Pencil,Plus,Trash2,Eye} from 'lucide-react';
 import {Button} from '@project/components/ui/button';
 import {Card,CardContent,CardHeader,CardTitle} from '@project/components/ui/card';
@@ -72,6 +73,9 @@ export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
    toast.success('تم حفظ أسانيد القراءات والروايات');reset();await refresh();onSaved?.();
   }catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ الإجازات');await refresh();}finally{setBusy(false);}
  };
+ const mergeBase=holdings.find(holding=>holding.id===mergeIds[0]);
+ const eligibleForMerge=(holding:Holding)=>canUsePersonalSanad(holding)&&Boolean(holding.rawi)&&(!mergeBase||
+  holding.qariId===mergeBase.qariId&&holding.rawi===mergeBase.rawi&&holding.tariqNumber===mergeBase.tariqNumber&&holding.tariqName===mergeBase.tariqName);
  const mergeSelected=async()=>{
   setBusy(true);try{const result=await ijazahHoldings({action:'mergePreview',mergeIds});if(!result.merged)throw Error('تعذر إعداد الدمج');const m=result.merged;start();setAddCategory('qiraat');setChoices([{qariId:m.qariId,rawi:m.rawi}]);setShortName(m.shortName);setPersonal(m.personalChain);setChainMode('complete');setJunction('jazari');setTariqNumber(m.tariqNumber);setTariqName(m.tariqName);setIntroductionId(m.introductionId);setWordingId(m.wordingId);setBookAuthor(m.bookAuthor);setRouteSource(m.routeSource);setMergeIds([]);toast.success('راجع الفروع المدمجة ثم احفظها باسم جديد؛ الأصول محفوظة');}catch(e){toast.error(e instanceof Error?e.message:'تعذر الدمج');}finally{setBusy(false);}
  };
@@ -133,7 +137,12 @@ export default function IjazahHoldingsView({onSaved}:{onSaved?:()=>void}){
 
   </>}</div></EditorPage>}
   {holdings.length===0&&!editing&&<p className="rounded-lg border p-8 text-center text-muted-foreground">لا توجد إجازات محفوظة بعد. اضغط «إضافة إجازة» واختر القراءة وسندك الشخصي.</p>}
-  {!editing&&holdings.length>1&&<div className="rounded-lg border p-3 flex flex-wrap items-center gap-3"><p className="text-sm flex-1">اختر سندين أو أكثر للرواية والطريق نفسيهما لحفظ نسخة مدمجة، أو اختر سندًا واحدًا عند إصدار الشهادة.</p><Button disabled={busy||mergeIds.length<2} onClick={mergeSelected}>دمج الأسانيد المختارة ({mergeIds.length})</Button></div>}
-  <div className="grid gap-3 md:grid-cols-2">{sortedHoldings.map(h=><Card key={h.id}><CardContent className="flex items-center justify-between gap-3 p-4" dir="rtl"><label className="shrink-0"><Checkbox aria-label={"اختيار للدمج: "+(h.shortName||h.name)} checked={mergeIds.includes(h.id)} disabled={busy||Boolean(editing)||!mergeIds.includes(h.id)&&mergeIds.length>=5} onCheckedChange={checked=>setMergeIds(v=>checked===true?[...v,h.id]:v.filter(id=>id!==h.id))}/></label><div className="min-w-0">{h.shortName&&<span className="block text-sm font-semibold text-primary">{h.shortName}</span>}<strong className="text-lg">{(()=>{const q=QURRA.find(q=>q.id===h.qariId);return q?(h.rawi?`رواية ${displayRawi(q.id,h.rawi)} عن ${q.imam}`:`قراءة ${q.reading}`):h.name;})()}</strong><p className="text-sm text-muted-foreground">{h.chainMode==='complete'?'سند كامل':h.junction==='jazari'?'إلى ابن الجزري':'إلى العُبيدي'}{!h.rawi?' · للروايتين':''}{h.sourceTeacherName?' · عن '+h.sourceTeacherName:''}</p></div><div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" title="تعديل" aria-label={`تعديل ${h.name}`} onClick={()=>start(h)}><Pencil className="h-4 w-4"/></Button><Button variant="ghost" size="icon" title="حذف" aria-label={`حذف ${h.name}`} disabled={busy} onClick={()=>remove(h)}><Trash2 className="h-4 w-4 text-red-600"/></Button></div></CardContent></Card>)}</div>
+  {!editing&&holdings.length>1&&<div className="rounded-lg border p-3 space-y-3">
+   <p className="text-sm">اختر الأسانيد المحفوظة للرواية والطريق نفسيهما، ثم رتّبها وراجع السند المجمّع.</p>
+   <OrderedSanadOrder options={holdings.map(h=>({id:h.id,name:h.shortName||h.sourceTeacherName||h.name}))} ids={mergeIds} disabled={busy} onChange={setMergeIds}/>
+   {mergeBase&&<OrderedSanadPreviewPanel key={JSON.stringify(mergeIds)} disabled={busy} load={async()=>(await prepareIjazah({holdingId:mergeBase.id,holdingIds:mergeIds,rawi:mergeBase.rawi,previewOnly:true})).preview}/>}
+   <Button disabled={busy||mergeIds.length<2} onClick={mergeSelected}>دمج الأسانيد المختارة ({mergeIds.length})</Button>
+  </div>}
+  <div className="grid gap-3 md:grid-cols-2">{sortedHoldings.map(h=><Card key={h.id}><CardContent className="flex items-center justify-between gap-3 p-4" dir="rtl"><label className="shrink-0"><Checkbox aria-label={"اختيار للدمج: "+(h.shortName||h.name)} checked={mergeIds.includes(h.id)} disabled={busy||Boolean(editing)||!mergeIds.includes(h.id)&&(!eligibleForMerge(h)||mergeIds.length>=5)} onCheckedChange={checked=>setMergeIds(v=>checked===true?[...v,h.id]:v.filter(id=>id!==h.id))}/></label><div className="min-w-0">{h.shortName&&<span className="block text-sm font-semibold text-primary">{h.shortName}</span>}<strong className="text-lg">{(()=>{const q=QURRA.find(q=>q.id===h.qariId);return q?(h.rawi?`رواية ${displayRawi(q.id,h.rawi)} عن ${q.imam}`:`قراءة ${q.reading}`):h.name;})()}</strong><p className="text-sm text-muted-foreground">{h.chainMode==='complete'?'سند كامل':h.junction==='jazari'?'إلى ابن الجزري':'إلى العُبيدي'}{!h.rawi?' · للروايتين':''}{h.sourceTeacherName?' · عن '+h.sourceTeacherName:''}</p></div><div className="flex shrink-0 gap-1"><Button variant="ghost" size="icon" title="تعديل" aria-label={`تعديل ${h.name}`} onClick={()=>start(h)}><Pencil className="h-4 w-4"/></Button><Button variant="ghost" size="icon" title="حذف" aria-label={`حذف ${h.name}`} disabled={busy} onClick={()=>remove(h)}><Trash2 className="h-4 w-4 text-red-600"/></Button></div></CardContent></Card>)}</div>
  </div>;
 }

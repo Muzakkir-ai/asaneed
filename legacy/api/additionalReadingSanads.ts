@@ -55,6 +55,6 @@ export default createEndpoint({
    else await zite.additionalShaykhReadingSanads.create({record:row});
   }
   const {records:result}=await zite.additionalShaykhReadingSanads.findAll({filters:{shaykhId:shaykh.id},limit:2000});
-  return {sanads:result.filter(x=>x.shaykhId===shaykh.id).map(x=>({continuationId:x.continuationId,variantName:x.variantName,preparedPeople:x.prepareNarratorBoxes?prepareSavedSanadPeople(x.sanadText||'',x.personalPeopleReviewed===true):null,personalPersonIds:x.personalPersonIds||[],unifiedSanad:x.unifiedSanad||null,bookAuthor:x.bookAuthor||'',routeSource:x.routeSource||'',tariqNumber:x.tariqNumber||'',tariqName:x.tariqName||'',id:x.id,qariId:x.qariId||'',rawi:x.rawi||'',sanadText:x.sanadText||'',junction:x.junction==='jazari'?'jazari' as const:'ubaydi' as const}))};
+  return {sanads:result.filter(x=>x.shaykhId===shaykh.id).map(x=>({continuationId:x.continuationId,variantName:x.variantName,preparedPeople:x.prepareNarratorBoxes?prepareSavedSanadPeople(x.sanadText||'',x.personalPeopleReviewed===true,x.personalPersonIds?.length&&x.sanadText?.includes('(ح)')?'end':'ubaydi'):null,personalPersonIds:x.personalPersonIds||[],unifiedSanad:x.unifiedSanad||null,bookAuthor:x.bookAuthor||'',routeSource:x.routeSource||'',tariqNumber:x.tariqNumber||'',tariqName:x.tariqName||'',id:x.id,qariId:x.qariId||'',rawi:x.rawi||'',sanadText:x.sanadText||'',junction:x.junction==='jazari'?'jazari' as const:'ubaydi' as const}))};
  }
 });
