@@ -117,3 +117,23 @@ Read-only inventory against candidate `e441e609cfa6546959396982d60a1d013b786a20`
 | Signed-in issuer and recipient flow | Blocked | Need authorized synthetic issuer, linked recipient and unrelated control accounts in isolated Auth, plus two approved synthetic sanads for one riwāyah. Exercise ordered draft reload, approval and retry, recipient visibility and anonymous number lookup. |
 | Full app rollback | Blocked | Need a staging-only routing or rollback control, candidate and previous app builds, and the isolated candidate schema. Verify both builds against the same issued snapshot and historical token. The local SQL function rollback passed. |
 | Provider-level recovery | Blocked | Need confirmed backup or PITR coverage for the isolated project, recovery permissions, a separate disposable restore target and a plan to reconcile seeded issuer IDs. Measure restore and validate IDs, counters, snapshots, tokens and role boundaries. The local JSON restore is separate evidence. |
+
+## Isolated staging rehearsal — 10 November 2026
+
+Candidate Preview `asaneed-gb7t6dhuj-halaqaat.vercel.app` is READY at `ea8e3364094b67867d1d89a257901d8d760527a8`. Its branch-specific Preview URL and publishable key match the separate `asaneed-staging` Database and Auth project. The Preview login page returned HTTP 200 through Vercel-protected access. The live alias still resolved to `292dc0d5dbd27556b4004051b782cc369946c21d`. The first hosted inventory above records the earlier state.
+
+| Hosted release gate | Status | Evidence or missing prerequisite |
+| --- | --- | --- |
+| Candidate app and database isolation | Pass | Vercel deployment metadata, scoped environment settings, and Supabase inventory show separate project references. The staging settings predate the Preview build. |
+| Hosted migration parity | Blocked | 26 of 44 files applied in repository order through Supabase Apply Migration. The ledger matched the first 26 source filenames. The provider generated its own version timestamps and the repository filenames were recorded in the names. Migration 27 (`20261031152251_lifetime_issuer_certificate_numbers.sql`) awaited provider confirmation and expired twice. There are 18 files still pending and the migration 27 allocation relation is absent. Compare the complete ledger and schema, grants and RLS after replay. |
+| Signed-in issuer and recipient flow | Blocked | The schema replay must finish first. The protected login page returned HTTP 200, but Chromium did not start in the disposable runner. The staging counts were zero certificates, zero snapshots and one synthetic Auth prerequisite. No authenticated flow or certificate issuance was attempted. |
+| Full app rollback | Blocked | Finish candidate schema replay and synthetic issuance, then provision a baseline Preview scoped to the same staging database and rehearse switching a staging-only alias. The local SQL-function rollback is separate evidence. |
+| Provider-level recovery | Blocked | The staging organization is on Supabase Free, which provides no managed daily backup or PITR. A recovery rehearsal needs managed backup coverage and a separate disposable restore target. The local application JSON restore is separate evidence. |
+
+The foundation issuer seed used a synthetic name and no legacy ID. The earlier issuer-code correction used three synthetic placeholders at its fixed prerequisite IDs. Migration 27's backup requires an active administrator, so staging has one synthetic administrator with an unroutable email and no configured password. No production rows were copied.
+
+### Resume and verify
+
+1. Use Supabase `list_migrations` for staging only. Check that the 26 names match the sorted repository filename prefix. Read the zero certificate and snapshot counts and check `to_regclass('private.certificate_number_allocations')` before retrying.
+2. Use Supabase `apply_migration` for `20261031152251_lifetime_issuer_certificate_numbers.sql`. Approve the provider confirmation in the client with the staging target displayed. Continue in filename order after it succeeds and record the final ledger and schema comparison.
+3. Run the authenticated issuer and recipient browser flow, the staging-only app rollback, and the separate provider recovery rehearsal once their prerequisites are available.
