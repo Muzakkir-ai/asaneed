@@ -53,6 +53,7 @@ async function resolveCurrentIssuance(sanadId:string,uid:string,{persist=true}:{
   const matnDocument=await currentMatnDocument(sanad,uid);
   return {chain:matnDocument?matnDocumentChain(matnDocument):sanad.chain,matnDocument};
  }
+ if(sanad.orderedSanads?.version===1&&sanad.chain)return {chain:sanad.chain};
  // Additional-shaykh drafts use the chain validated when they were created or
  // transferred. Previewing must not rewrite their preserved sanad.
  if(sanad.additionalShaykh){
@@ -136,7 +137,7 @@ export async function collectSnapshotFormatting(sanadId:string,uid:string,chain:
  let transmission:unknown=null;
  try{transmission={chain:extractTeacherTransmission(chain,sourceHolding?.personalChain||'',sections.filter(s=>s.sectionType==='conclusion').map(s=>s.body||'')),qariId:reading?.qariId||'',rawi:reading?.rawi||'',tariqNumber:sourceHolding?.tariqNumber||sanad.tariqNumber||'',tariqName:sourceHolding?.tariqName||sanad.tariqName||''};}catch{}
  const appearanceDefaults=sanad.additionalShaykh?null:await personalAppearance(context().client,uid);if(!settings&&appearanceDefaults)settings=appearanceDefaults;
- return JSON.stringify({appearanceDefaults:!!appearanceDefaults,transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
+ return JSON.stringify({appearanceDefaults:!!appearanceDefaults,orderedSanads:sanad.orderedSanads,transmission,routeEmphasis,phrases:phrases.slice(0,180),settings,palette});
 }
 
 /** Resolve a draft afresh; old certificates with an unavailable original holding

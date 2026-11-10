@@ -1,3 +1,6 @@
+import {isDeepStrictEqual} from 'node:util';
+import {assembleOrderedSanads} from '../lib/assembleOrderedSanads';
+import {orderedSanadIds,orderedSanadPreviewSchema,personalBranchDiagram,resolveOrderedSanads,type OrderedSanadProvenance} from '../lib/orderedSanads';
 import {isAppAdmin} from '../lib/admin';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
@@ -8,8 +11,8 @@ import {canUsePersonalSanad,sanadBlockMessage} from '../lib/personalSanadValidat
 export default createEndpoint({
  description:'Prepare one stable, automatically assembled sanad per held ijazah, updating it instead of creating duplicates',
  authenticated:true,
- inputSchema:z.object({holdingId:z.string(),rawi:z.string().optional(),ownerId:z.string().optional()}),
- outputSchema:z.object({sanadId:z.string(),updated:z.boolean(),heading:z.string()}),
+ inputSchema:z.object({holdingId:z.string(),holdingIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),rawi:z.string().optional(),ownerId:z.string().optional()}),
+ outputSchema:z.object({sanadId:z.string(),updated:z.boolean(),heading:z.string(),preview:orderedSanadPreviewSchema.optional()}),
  execute:async({input,context})=>{
   const admin=(await isAppAdmin(context.user.email));
   const uid=admin&&input.ownerId?input.ownerId:context.user.id;
@@ -23,6 +26,29 @@ export default createEndpoint({
   if(!selectedRawi)throw new Error('إصدار الشهادة برواية واحدة فقط؛ اختر إحدى الروايتين');
   if(!q.rawis.some(r=>r===selectedRawi)||(holding.rawi&&holding.rawi!==selectedRawi))throw new Error('الرواية غير متاحة في إجازتك');
   const {records:sections}=await zite.sanadSections.findAll({limit:2000});
+  if(input.holdingIds){
+   if(input.holdingIds[0]!==holding.id)throw Error('اختر السند الأساسي أولًا');
+   const {records}=await zite.ijazahHoldings.findAll({filters:{ownerId:uid},limit:2000});
+   const selected=resolveOrderedSanads(input.holdingIds,records,h=>h.ownerId===uid&&h.qariId===q.id&&(!h.rawi||h.rawi===selectedRawi)&&canUsePersonalSanad(h));
+   const assembled=await assembleOrderedSanads(selected.map(h=>({
+    holding:{...h,qariId:q.id,rawi:selectedRawi,personalChain:h.personalChain||'',junction:h.junction||'ubaydi'},
+    branch:{sourceId:h.id,continuationId:null,routeId:h.unifiedSanad?.routeId??null,label:h.shortName||h.sourceTeacherName||h.name||'سند محفوظ',
+     ...personalBranchDiagram(h.unifiedSanad?.prefix??h.personalChain??'',h.unifiedSanad?.prefixPersonIds??h.personalPersonIds??[])},
+   })),sections.filter(s=>!s.ownerId||s.ownerId===uid).map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
+   if(input.previewOnly)return {sanadId:'',updated:false,heading:assembled.heading,preview:{chain:assembled.chain,branches:assembled.branches}};
+   const orderedSanads:OrderedSanadProvenance={version:1,kind:'holding',qariId:q.id,rawi:selectedRawi,branches:assembled.branches};
+   const {records:previous}=await zite.asaneed.findAll({filters:{shaykh:uid},limit:2000});
+   const reusable=previous.find(row=>!row.additionalShaykh&&row.chain===assembled.chain&&(row.tariqNumber||'')===(holding.tariqNumber||'')&&
+    (row.tariqName||'')===(holding.tariqName||'')&&
+    isDeepStrictEqual(row.orderedSanads,orderedSanads)&&
+    (row.bookAuthor||'')===(holding.bookAuthor||'')&&(row.routeSource||'')===(holding.routeSource||''));
+   if(reusable)return {sanadId:reusable.id,updated:false,heading:assembled.heading};
+   const saved=await zite.asaneed.create({record:{orderedSanads,tariqNumber:holding.tariqNumber||'',tariqName:holding.tariqName||'',
+    bookAuthor:holding.bookAuthor||'',routeSource:holding.routeSource||'',title:selectedRawi+' — السند المعتمد',
+    chain:assembled.chain,qiraah:null,shaykh:uid,certificates:null}});
+   return {sanadId:saved.id,updated:false,heading:assembled.heading};
+  }
+  if(input.previewOnly)throw Error('اختر سندًا محفوظًا للمعاينة');
   const assembled=await assembleHoldingIjazah({...holding,rawi:selectedRawi} as Parameters<typeof assembleHoldingIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
   if(assembled.missing.length)throw new Error('لم تكتمل الأسانيد: '+assembled.missing.join('، '));
   const {records:preparations}=await zite.preparedIjazahs.findAll({filters:{ownerId:uid},limit:2000});
