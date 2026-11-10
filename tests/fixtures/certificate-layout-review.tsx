@@ -30,11 +30,11 @@ const preview={
   showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true},
 };
 export default function CertificateLayoutReview(){
- return <main className="zite-app min-w-0" dir="rtl" data-testid="certificate-layout-review">
+ return <div className="zite-app min-w-0" dir="rtl" data-testid="certificate-layout-review">
   <script id="certificate-review-data" type="application/json"
    dangerouslySetInnerHTML={{__html:JSON.stringify(preview)}}/>
   <CertificatePrint cert={cert as any}
    sanad={{id:'synthetic-matn',title:'المقدمة الجزرية',qiraahName:'',chain:preview.chain,shaykhId:'synthetic'}}
    shaykhName="الشيخ عبد الله بن أحمد" onClose={()=>{}} onFinalized={()=>{}}/>
- </main>;
+ </div>;
 }

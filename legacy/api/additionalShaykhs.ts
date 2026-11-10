@@ -1,5 +1,7 @@
+import {assembleOrderedSanads} from '../lib/assembleOrderedSanads';
+import {orderedSanadIds,orderedSanadPreviewSchema,personalBranchDiagram,resolveOrderedSanads,type OrderedSanadProvenance} from '../lib/orderedSanads';
 import {verifiedOnwardSources} from '../lib/verifiedOnwardSources';
-import {automaticSharedBridgeId,composeReferencedPersonalSanad,personalSanadEndsAtSavedNarrator} from '../lib/sharedBridge';
+import {automaticSharedBridgeId,composeReferencedPersonalSanad,personalSanadEndsAtSavedNarrator,savedSharedBridgeDiagram} from '../lib/sharedBridge';
 import {guestKubraRoutes,usesLibraryKubra} from '../lib/guestKubra';
 import {loadBuilderLibrary} from '../../lib/sanad-library';
 import {resolveBuilderPrefix} from '../lib/builderPrefix';
@@ -11,6 +13,7 @@ import {ensureCertificateRegistration} from '../lib/certificateRegistration';
 import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
+import type {additionalShaykhReadingSanadsRow} from '../compat/rows';
 import {isAppAdmin} from '../lib/admin';
 import {QURRA} from '../lib/qurra';
 import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
@@ -32,12 +35,12 @@ export default createEndpoint({
    action:z.enum(['list','save','saveShared','issue']).default('list'),continuationId:z.string().uuid().nullable().optional(),id:z.string().optional(),
    name:z.string().optional(),qualification:z.string().optional(),teachingRole:z.string().optional(),
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
-   libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
+   libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),personalSanadIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
    tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
  }),
- outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional()}),
+ outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional(),preview:orderedSanadPreviewSchema.optional()}),
  execute:async({input,context})=>{
   if(!(await isAppAdmin(context.user.email)))throw new Error('Permission denied');
   let {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
@@ -115,9 +118,10 @@ export default createEndpoint({
    const guest=input.id?await zite.additionalShaykhs.findOne({id:input.id}).catch(()=>null):null;
    if(!guest)throw new Error('Select an additional sheikh');
    const known=serialize(guest);
-   if(!input.studentName?.trim()||!input.completionDate)throw new Error('Student and completion date required');
+   if(!input.previewOnly&&(!input.studentName?.trim()||!input.completionDate))throw new Error('Student and completion date required');
    const imam=QURRA.find(q=>q.id===input.qariId);
    if(!imam)throw new Error('اختر قراءة صحيحة');
+   if((input.personalSanadIds&&(!input.rawi||input.personalSanadId))||(input.previewOnly&&!input.personalSanadIds))throw Error('اختر أسانيد رواية واحدة');
    const rawis=input.rawi?[input.rawi]:[...imam.rawis];
    const catalogRoute=known.libraryKubra?automatic.find(r=>r.tariqNumber===input.tariqNumber&&r.qariId===imam.id&&r.rawi===input.rawi):undefined;
    if(!catalogRoute&&rawis.some(rawi=>!known.readings.some(r=>r.qariId===imam.id&&r.rawi===rawi)))throw new Error('هذه القراءة أو الرواية غير مضافة للمُجيز');
@@ -127,49 +131,72 @@ export default createEndpoint({
    const intro=shared.find(x=>x.sectionType==='introduction');
    const wording=shared.find(x=>x.title==='كلمات الإجازة'&&x.sectionType==='wording')||shared.find(x=>x.sectionType==='wording');
    const {records:holdings}=await zite.ijazahHoldings.findAll({filters:{ownerId:'guest:'+guest.id},limit:2000});
+   let continuationLibrary:ReturnType<typeof loadBuilderLibrary>|undefined;
    // Validate both riwayat before creating either draft.
    const entries=await Promise.all(rawis.map(async rawi=>{
-    const variant=input.personalSanadId?specific.find(r=>r.shaykhId===guest.id&&r.id===input.personalSanadId&&r.variantName&&r.qariId===imam.id&&r.rawi===rawi&&!r.tariqNumber):undefined;
-    if(input.personalSanadId&&!variant)throw Error('اختر سندًا شخصيًا محفوظًا لهذه الرواية');
-    if(variant&&input.tariqNumber&&!catalogRoute)throw Error('السند البديل متاح للرواية أو لطريق مرتبط بالمكتبة');
-    const useShared=!variant&&usesSharedSughra(known,input.tariqNumber);
-    const selected=specific.find(x=>!x.variantName&&x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
-    if(input.tariqNumber&&!selected&&!catalogRoute)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
-    const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
-    const kubraChain=known.kubraSanadMode==='separate'?known.kubraPersonalChain:known.personalChain;
-    if(!variant&&catalogRoute&&(known.kubraSanadMode==='individual'||(known.kubraSanadMode==='separate'&&!kubraChain)))throw Error('اختر سندًا شخصيًا لهذه الرواية من الكبرى أو احفظ سند الكبرى المشترك في ملف الشيخ');
-    if(!variant&&!input.tariqNumber&&known.individualSughra&&!selected?.sanadText)throw Error('احفظ سندًا شخصيًا لهذه الرواية أو اختر سندًا محفوظًا عند الإصدار');
-    const composePersonal=async(text:string,ids:string[],reference?:string|null)=>{
-     if(!reference&&(!ids.length||reachesJunction({personalChain:text,junction:'jazari'})||(reference===undefined&&reachesJunction({personalChain:text,junction:'ubaydi'}))))return text;
-     const reviewed=library??await loadBuilderLibrary(requestContext().client);
-     const context={qariId:imam.id,rawi,routeId:catalogRoute?.route.id,shaykhId:guest.id};
-     const bridges=verifiedOnwardSources(reviewed,context);
-     const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
-     if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
-     return composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
-    };
-    const kubraSeparate=known.kubraSanadMode==='separate';
-    const catalogPersonal=catalogRoute?await composePersonal(variant?.sanadText||kubraChain,variant?.personalPersonIds??(kubraSeparate?known.kubraPersonalPersonIds:known.personalPersonIds),variant?variant.continuationId:kubraSeparate?known.kubraContinuationId:known.continuationId):'';
-    const prefix=catalogRoute?resolveBuilderPrefix(catalogPersonal,library!.prefixContinuations).text:'';
-    const preview=catalogRoute?builderPreview(catalogRoute.book,catalogRoute.parent,catalogRoute.route,library!.people,prefix):undefined;
-    const personal=variant??(!useShared&&selected?.sanadText?selected:null);
-    const savedChain=personal?.sanadText||known.personalChain;
-    const chain=preview?.text||(input.tariqNumber?savedChain:await composePersonal(savedChain,personal?.personalPersonIds??known.personalPersonIds,personal?personal.continuationId:known.continuationId));
-    const joinedPersonal=!preview&&chain!==savedChain;
-    const junction=catalogRoute||joinedPersonal?'jazari':variant?.junction||(useShared?known.junction:selected?.junction||known.junction);
-    if(input.tariqNumber?chain.length<100:!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
-    const assemblyHolding={unifiedSanad:catalogRoute?{version:1,routeId:catalogRoute.route.id,prefix}:useShared||variant||joinedPersonal?undefined:selected?(selected.unifiedSanad||undefined):(source?.unifiedSanad||undefined),tariqNumber:input.tariqNumber,tariqName:catalogRoute?.tariqName||selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
-      introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id};
-    const assembled=await assembleHoldingIjazah(assemblyHolding,
-      all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''})),catalogRoute?library??undefined:undefined);
+    const sourceIds=input.personalSanadIds??(input.personalSanadId?[input.personalSanadId]:undefined);
+    const defaultSource:additionalShaykhReadingSanadsRow={id:guest.id,shaykhId:guest.id,qariId:imam.id,rawi};
+    const variants=sourceIds?resolveOrderedSanads(sourceIds,[...specific,defaultSource],r=>r.shaykhId===guest.id&&r.qariId===imam.id&&r.rawi===rawi&&(r.id===guest.id?!!input.personalSanadIds:!!r.variantName&&!r.tariqNumber)):[undefined];
+    const sources=await Promise.all(variants.map(async choice=>{
+     const variant=choice?.id===guest.id?undefined:choice;
+     if(variant&&input.tariqNumber&&!catalogRoute)throw Error('السند البديل متاح للرواية أو لطريق مرتبط بالمكتبة');
+     const useShared=!variant&&usesSharedSughra(known,input.tariqNumber);
+     const selected=specific.find(x=>!x.variantName&&x.qariId===imam.id&&x.rawi===rawi&&(x.tariqNumber||'')===input.tariqNumber);
+     if(input.tariqNumber&&!selected&&!catalogRoute)throw Error('لم يُحفظ سند هذا الطريق لهذه الرواية');
+     const source=holdings.find(x=>x.qariId===imam.id&&x.rawi===rawi)||holdings.find(x=>x.qariId===imam.id&&!x.rawi);
+     const kubraChain=known.kubraSanadMode==='separate'?known.kubraPersonalChain:known.personalChain;
+     if(!variant&&catalogRoute&&(known.kubraSanadMode==='individual'||(known.kubraSanadMode==='separate'&&!kubraChain)))throw Error('اختر سندًا شخصيًا لهذه الرواية من الكبرى أو احفظ سند الكبرى المشترك في ملف الشيخ');
+     if(!variant&&!input.tariqNumber&&known.individualSughra&&!selected?.sanadText)throw Error('احفظ سندًا شخصيًا لهذه الرواية أو اختر سندًا محفوظًا عند الإصدار');
+     let continuationId:string|null=null;
+     let diagram:ReturnType<typeof personalBranchDiagram>|undefined;
+     const composePersonal=async(text:string,ids:string[],reference?:string|null)=>{
+      if(!reference&&(!ids.length||reachesJunction({personalChain:text,junction:'jazari'})||(reference===undefined&&reachesJunction({personalChain:text,junction:'ubaydi'}))))return text;
+      const reviewed=library??await (continuationLibrary??=loadBuilderLibrary(requestContext().client));
+      const context={qariId:imam.id,rawi,routeId:catalogRoute?.route.id,shaykhId:guest.id};
+      const bridges=verifiedOnwardSources(reviewed,context);
+      const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
+      if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
+      const composed=composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
+      continuationId=selectedReference;
+      if(input.personalSanadIds){
+       const reviewed=savedSharedBridgeDiagram(text,ids,bridges,undefined,undefined,selectedReference,context)?.diagram;
+       if(!reviewed)throw Error('راجع التتمة المحفوظة');
+       diagram={paths:reviewed.paths,names:reviewed.names};
+       return reviewed.paths.map(path=>'كما أخذته عن '+[...path].reverse().map(id=>reviewed.names[id]).join('، عن ')).join('\n\n(ح)\n\n');
+      }
+      return composed;
+     };
+     const kubraSeparate=known.kubraSanadMode==='separate';
+     const catalogPersonal=catalogRoute?await composePersonal(variant?.sanadText||kubraChain,variant?.personalPersonIds??(kubraSeparate?known.kubraPersonalPersonIds:known.personalPersonIds),variant?variant.continuationId:kubraSeparate?known.kubraContinuationId:known.continuationId):'';
+     const prefix=catalogRoute?resolveBuilderPrefix(catalogPersonal,library!.prefixContinuations).text:'';
+     const preview=catalogRoute?builderPreview(catalogRoute.book,catalogRoute.parent,catalogRoute.route,library!.people,prefix):undefined;
+     const personal=variant??(!useShared&&selected?.sanadText?selected:null);
+     const savedChain=personal?.sanadText||known.personalChain;
+     const chain=preview?.text||(input.tariqNumber?savedChain:await composePersonal(savedChain,personal?.personalPersonIds??known.personalPersonIds,personal?personal.continuationId:known.continuationId));
+     const joinedPersonal=!preview&&chain!==savedChain;
+     const junction=catalogRoute||joinedPersonal?'jazari':variant?.junction||(useShared?known.junction:selected?.junction||known.junction);
+     if(input.tariqNumber?chain.length<100:!reachesJunction({personalChain:chain,junction}))throw new Error('Sheikh sanad does not reach its junction');
+     const assemblyHolding={unifiedSanad:catalogRoute?{version:1,routeId:catalogRoute.route.id,prefix}:useShared||variant||joinedPersonal?undefined:selected?(selected.unifiedSanad||undefined):(source?.unifiedSanad||undefined),tariqNumber:input.tariqNumber,tariqName:catalogRoute?.tariqName||selected?.tariqName,qariId:imam.id,rawi,personalChain:chain,junction,
+       introductionId:source?.introductionId||intro?.id,wordingId:source?.wordingId||wording?.id};
+     const branch={sourceId:variant?.id??(!catalogRoute&&!useShared?selected?.id:undefined)??guest.id,
+      continuationId,routeId:assemblyHolding.unifiedSanad?.routeId??null,label:variant?.variantName||'السند المعتمد للشيخ',
+      ...(diagram??personalBranchDiagram(catalogRoute?catalogPersonal:savedChain,personal?.personalPersonIds??(catalogRoute&&kubraSeparate?known.kubraPersonalPersonIds:known.personalPersonIds)))};
+     return {holding:assemblyHolding,branch,tariqName:catalogRoute?.tariqName||selected?.tariqName||'',bookAuthor:preview?.author||selected?.bookAuthor||'',routeSource:preview?.sources.join('، ')||selected?.routeSource||''};
+    }));
+    const sections=all.filter(x=>!x.ownerId||x.ownerId==='guest:'+guest.id).map(x=>({id:x.id,title:x.title||'',sectionType:x.sectionType||'',body:x.body||'',formatting:x.formatting||''}));
+    const first=sources[0];
+    const assembled=input.personalSanadIds?await assembleOrderedSanads(sources,sections,library??undefined):await assembleHoldingIjazah(first.holding,sections,library??undefined);
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));
-    return {rawi,assembled,unifiedHolding:assemblyHolding.unifiedSanad?assemblyHolding:undefined,tariqName:catalogRoute?.tariqName||selected?.tariqName||'',bookAuthor:preview?.author||selected?.bookAuthor||'',routeSource:preview?.sources.join('، ')||selected?.routeSource||''};
+    const orderedSanads:OrderedSanadProvenance|undefined=input.personalSanadIds?{version:1,kind:'additional',qariId:imam.id,rawi,branches:sources.map(s=>s.branch)}:undefined;
+    const {holding,tariqName,bookAuthor,routeSource}=first;
+    return {rawi,assembled,orderedSanads,unifiedHolding:!orderedSanads&&holding.unifiedSanad?holding:undefined,tariqName,bookAuthor,routeSource};
    }));
+   if(input.previewOnly)return {sheikhs:[],preview:{chain:entries[0].assembled.chain,branches:entries[0].orderedSanads!.branches}};
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
    try{
-    for(const [index,{rawi,assembled,unifiedHolding,tariqName,bookAuthor,routeSource}] of entries.entries()){
-     const sanad=await zite.asaneed.create({record:{unifiedHolding,tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
+    for(const [index,{rawi,assembled,orderedSanads,unifiedHolding,tariqName,bookAuthor,routeSource}] of entries.entries()){
+     const sanad=await zite.asaneed.create({record:{orderedSanads,unifiedHolding,tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
        shaykh:context.user.id,additionalShaykh:known.id,chain:assembled.chain,qiraah:null,certificates:null}});
      const row={certificateId:'',sanadId:sanad.id,snapshotId:''};created.push(row);
      const cert=await zite.certificates.create({record:{
@@ -185,7 +212,7 @@ export default createEndpoint({
     }
     createdCertificateId=created[0]?.certificateId;
     // Keep a reusable student list specific to this additional sheikh, shared by both admins.
-    const studentName=input.studentName.normalize('NFKC').trim().replace(/\s+/gu,' ');
+    const studentName=input.studentName!.normalize('NFKC').trim().replace(/\s+/gu,' ');
     try{
      const ownerId='guest:'+known.id;
      const {records:students}=await zite.students.findAll({filters:{ownerId},limit:2000});
