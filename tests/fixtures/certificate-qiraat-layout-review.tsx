@@ -32,7 +32,7 @@ export default function CertificateQiraatReview(){
    printMode:snapshotMode==='legacy'?undefined:snapshotMode,
   }),
  };
- return <main className="zite-app min-w-0" dir="rtl" data-testid="certificate-qiraat-layout-review">
+ return <div className="zite-app min-w-0" dir="rtl" data-testid="certificate-qiraat-layout-review">
   <script id="certificate-review-data" type="application/json"
    dangerouslySetInnerHTML={{__html:JSON.stringify(preview)}}/>
   <div className="no-print">
@@ -42,5 +42,5 @@ export default function CertificateQiraatReview(){
   <CertificatePrint key={snapshotMode} cert={certificate as any}
    sanad={{id:'synthetic-qiraat',title:heading,qiraahName:'',chain,shaykhId:'synthetic'}}
    shaykhName="الشيخ عبد الله بن أحمد" onClose={()=>{}} onFinalized={()=>{}}/>
- </main>;
+ </div>;
 }

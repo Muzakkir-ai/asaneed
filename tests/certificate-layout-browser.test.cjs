@@ -4,13 +4,24 @@ const {execFileSync,spawn}=require('node:child_process');
 const {chromium}=require('playwright');
 const {PDFDocument}=require('pdf-lib');
 
+async function installFixtureFrame(page){
+ // The standalone fixture does not load the Studio artwork provider.
+ await page.addStyleTag({content:`.certificate-ornament{
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 292 207'%3E%3Crect x='2' y='2' width='288' height='203' fill='none' stroke='black' stroke-width='0.7'/%3E%3C/svg%3E")
+ }`});
+}
+
 async function checkPrintPdf(page,name){
+ await installFixtureFrame(page);
+ await page.emulateMedia({media:'print'});
+ await page.evaluate(()=>window.scrollTo(0,0));
  const metrics=await page.locator('.print-area').evaluate(node=>{
   const style=getComputedStyle(node);
   return [style.paddingLeft,style.paddingRight,style.paddingBottom].map(parseFloat);
  });
  for(const inset of metrics)assert.ok(Math.abs(inset-16*96/25.4)<1,'16 mm paper inset');
  const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
+ await page.emulateMedia({media:'screen'});
  const pdf=await PDFDocument.load(bytes);
  assert.equal(pdf.getPageCount(),1);
  const {width,height}=pdf.getPage(0).getSize();
@@ -60,6 +71,7 @@ async function checkPrintPdf(page,name){
    await request.fulfill({json:{saved:input.action==='save'}});
   });
   await page.goto(url);
+  await installFixtureFrame(page);
   await page.locator('.print-area .certificate-footer').waitFor();
   assert.equal(await page.getByLabel('طريقة عرض رقم الشهادة').count(),0);
   assert.equal(await page.locator('.certificate-qr-code').count(),0);
@@ -177,6 +189,7 @@ async function checkPrintPdf(page,name){
    const qiraatDraftReady=qPage.waitForResponse(response=>
     response.url().includes('/api/workspace/certificateDraftPreview')&&response.status()===200);
    await qPage.goto(qiraatUrl);
+   await installFixtureFrame(qPage);
    await qiraatDraftReady;
    await qPage.evaluate(()=>document.fonts.ready);
    await qPage.waitForTimeout(200); // settle ResizeObserver-driven print geometry
