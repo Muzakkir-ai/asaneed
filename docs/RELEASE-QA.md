@@ -105,3 +105,15 @@ pg_ctl -D "$qa_dir/pg" stop
 ### Remaining release gates
 
 No authorized staging database was confirmed isolated from production. Hosted migration history and schema parity, browser sign-in through Supabase Auth, role-based Workspace and recipient flows, and the full previous-app rollback against the candidate schema remain open. The local restore rehearsed application JSON recovery only. Provider-level backup/PITR, restore timing at real scale, post-backup write reconciliation and the issuer seed collision need an operational plan. Physical print, native iOS export and abuse controls for public HTTP and RPC lookup are also pending.
+
+## Hosted release gates · 10 November 2026
+
+Read-only inventory against candidate `e441e609cfa6546959396982d60a1d013b786a20`. The Vercel team inventory returned one Asaneed project, zero deployments for the candidate branch and no custom staging environment. Project settings assign the same unscoped `NEXT_PUBLIC_SUPABASE_URL` entry to Production and Preview, with no candidate branch override returned. Existing Preview URLs therefore do not establish database isolation. Supabase project and branch inventory calls were unavailable, so no separate database was independently identified. No hosted application login, database query, migration, deployment or recovery action was performed.
+
+| Hosted release gate | Status | Evidence or missing prerequisite |
+| --- | --- | --- |
+| Candidate app and database isolation | Blocked | Need a staging URL pinned to the candidate and a separately verified Supabase project or branch for Database and Auth, with synthetic-only data and test credentials. Verify runtime environment mapping and recovery scope before any write. |
+| Hosted migration parity | Blocked | Need read-only access to the isolated migration ledger and schema catalogs to compare migration order, functions, grants and RLS with the repository replay. Local parity passed. |
+| Signed-in issuer and recipient flow | Blocked | Need authorized synthetic issuer, linked recipient and unrelated control accounts in isolated Auth, plus two approved synthetic sanads for one riwāyah. Exercise ordered draft reload, approval and retry, recipient visibility and anonymous number lookup. |
+| Full app rollback | Blocked | Need a staging-only routing or rollback control, candidate and previous app builds, and the isolated candidate schema. Verify both builds against the same issued snapshot and historical token. The local SQL function rollback passed. |
+| Provider-level recovery | Blocked | Need confirmed backup or PITR coverage for the isolated project, recovery permissions, a separate disposable restore target and a plan to reconcile seeded issuer IDs. Measure restore and validate IDs, counters, snapshots, tokens and role boundaries. The local JSON restore is separate evidence. |
