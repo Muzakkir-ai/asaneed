@@ -22,12 +22,30 @@ async function checkPrintPdf(page,name){
  for(const inset of metrics)assert.ok(Math.abs(inset-16*96/25.4)<1,'16 mm paper inset');
  const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
  await page.emulateMedia({media:'screen'});
- const pdf=await PDFDocument.load(bytes);
+ assertA4Pdf(await PDFDocument.load(bytes));
+ const out=process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS;
+ if(out)fs.writeFileSync(out+'/certificate-'+name+'.pdf',bytes);
+}
+
+function assertA4Pdf(pdf){
  assert.equal(pdf.getPageCount(),1);
  const {width,height}=pdf.getPage(0).getSize();
  assert.ok(Math.abs(width-841.89)<2&&Math.abs(height-595.28)<2,'A4 landscape PDF');
- const out=process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS;
- if(out)fs.writeFileSync(out+'/certificate-'+name+'.pdf',bytes);
+}
+
+async function checkDownloadPdf(page){
+ const originalUserAgent=await page.evaluate(()=>navigator.userAgent);
+ await page.evaluate(()=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:'iPhone fixture'}));
+ try{
+  const [download]=await Promise.all([
+   page.waitForEvent('download'),
+   page.getByRole('button',{name:'معاينة PDF بدون اعتماد'}).click(),
+  ]);
+  assert.match(download.suggestedFilename(),/^ijazah-.*\.pdf$/);
+  assertA4Pdf(await PDFDocument.load(fs.readFileSync(await download.path())));
+ }finally{
+  await page.evaluate(userAgent=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:userAgent}),originalUserAgent);
+ }
 }
 
 (async()=>{
@@ -153,6 +171,7 @@ async function checkPrintPdf(page,name){
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الخاتمة',exact:true}).inputValue()),0,
    'system restore clears this certificate-specific khatima adjustment');
   await checkPrintPdf(page,'matn');
+  await checkDownloadPdf(page);
   await page.setViewportSize({width:390,height:844});
   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS){
    await page.locator('.print-area').screenshot({
@@ -298,6 +317,7 @@ async function checkPrintPdf(page,name){
    assert.equal(Number(await qPage.getByRole('spinbutton',{name:'ارتفاع سطر الرواية',exact:true}).inputValue()),8.445,
     'restore resets individual riwayah SVG height without changing shared templates');
    await checkPrintPdf(qPage,'qiraat');
+   await checkDownloadPdf(qPage);
    denseQiraat=true;
    await qPage.reload();
    await qPage.locator('.certificate-settings-panel[role="alert"]').waitFor();
