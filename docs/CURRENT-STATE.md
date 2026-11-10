@@ -1,3 +1,11 @@
+## Mutūn publication audit — 10 November 2026
+
+A shared introduction or conclusion moved back to draft could still enter a certificate when the current administrator could read its record. Certificate draft creation, preview and approval now treat unpublished shared templates as unavailable. Personal templates and legacy shared templates without a status remain eligible. Issued snapshots are unaffected. No migration is required.
+
+Reproduce with a synthetic certificate draft linked to a published shared introduction. Move that introduction back to draft and reopen the certificate preview as an administrator. The previous resolver incorporated the unpublished text. The branch reports the template as unavailable until it is published again or replaced on the holding.
+
+Synthetic coverage includes request approval and rejection, ownership, normalized duplicates, atomic rollback, review replay, template changes, personal overrides and frozen snapshots. Simultaneous database sessions and authenticated browser coverage remain open. The personal editor currently offers its general template list regardless of the catalog's saved template associations.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.
