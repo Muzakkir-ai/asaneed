@@ -19,7 +19,7 @@ const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 export default createEndpoint({
  description:'Publish a drafted shahada and permanently snapshot its text and selected print settings',
  authenticated:true,
- inputSchema:z.object({certificateId:z.string(),settings:style,printMode:z.enum(['number','none','qr']).default('number')}),
+ inputSchema:z.object({certificateId:z.string(),settings:style}),
  outputSchema:z.object({chain:z.string(),heading:z.string(),formatting:z.string()}),
  execute:async({input,context})=>{
   const cert=await zite.certificates.findOne({id:input.certificateId}).catch(()=>null);
@@ -55,7 +55,7 @@ export default createEndpoint({
   const {records:sources}=await zite.assetSources.findAll({filters:{key:'default'},limit:1});
   const source=sources[0];
   const artworkSnapshot={base:source?cdnBase(source.gitHubRepository||'',source.revision||source.branch||'main'):'',artwork:artworkListSchema.catch([]).parse(source?.artwork||[]),issuerNumber:registrationNumber.slice(2,4)};
-  const formatting=JSON.stringify({headerPosition:'fixed',footerWidthLinked:true,matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
+  const formatting=JSON.stringify({headerPosition:'fixed',footerWidthLinked:true,matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:'number'});
   const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
   const record={name:'شهادة '+cert.id,certificateId:cert.id,ownerId:issuer,chain,heading,formatting,issuedAt:new Date().toISOString()};
   const {client}=requestContext();

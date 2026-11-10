@@ -2,6 +2,51 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const {execFileSync,spawn}=require('node:child_process');
 const {chromium}=require('playwright');
+const {PDFDocument}=require('pdf-lib');
+
+async function installFixtureFrame(page){
+ // The standalone fixture does not load the Studio artwork provider.
+ await page.addStyleTag({content:`.certificate-ornament{
+  mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 292 207'%3E%3Crect x='2' y='2' width='288' height='203' fill='none' stroke='black' stroke-width='0.7'/%3E%3C/svg%3E")
+ }`});
+}
+
+async function checkPrintPdf(page,name){
+ await installFixtureFrame(page);
+ await page.emulateMedia({media:'print'});
+ await page.evaluate(()=>window.scrollTo(0,0));
+ const metrics=await page.locator('.print-area').evaluate(node=>{
+  const style=getComputedStyle(node);
+  return [style.paddingLeft,style.paddingRight,style.paddingBottom].map(parseFloat);
+ });
+ for(const inset of metrics)assert.ok(Math.abs(inset-16*96/25.4)<1,'16 mm paper inset');
+ const bytes=await page.pdf({preferCSSPageSize:true,printBackground:true});
+ await page.emulateMedia({media:'screen'});
+ assertA4Pdf(await PDFDocument.load(bytes));
+ const out=process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS;
+ if(out)fs.writeFileSync(out+'/certificate-'+name+'.pdf',bytes);
+}
+
+function assertA4Pdf(pdf){
+ assert.equal(pdf.getPageCount(),1);
+ const {width,height}=pdf.getPage(0).getSize();
+ assert.ok(Math.abs(width-841.89)<2&&Math.abs(height-595.28)<2,'A4 landscape PDF');
+}
+
+async function checkDownloadPdf(page){
+ const originalUserAgent=await page.evaluate(()=>navigator.userAgent);
+ await page.evaluate(()=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:'iPhone fixture'}));
+ try{
+  const [download]=await Promise.all([
+   page.waitForEvent('download'),
+   page.getByRole('button',{name:'معاينة PDF بدون اعتماد'}).click(),
+  ]);
+  assert.match(download.suggestedFilename(),/^ijazah-.*\.pdf$/);
+  assertA4Pdf(await PDFDocument.load(fs.readFileSync(await download.path())));
+ }finally{
+  await page.evaluate(userAgent=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:userAgent}),originalUserAgent);
+ }
+}
 
 (async()=>{
  const temp=fs.mkdtempSync('app/certificate-layout-review-');
@@ -28,21 +73,27 @@ const {chromium}=require('playwright');
   browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH}:{});
   const page=await browser.newPage({viewport:{width:1440,height:980}});
   const changes=[];
-  let settings=null;
+  let settings=null,denseMatn=false;
   await page.route('**/api/workspace/certificateDraftPreview',request=>{
    let formatted=JSON.parse(mock.formatting);
-   if(settings)formatted={...formatted,settings:settings.settings,draftPrintMode:settings.printMode};
+   formatted.draftPrintMode='none'; // A draft saved before the number-only change.
+   if(settings)formatted.settings=settings;
+   if(denseMatn)formatted.matnDocument.sanad=Array(120).fill(formatted.matnDocument.sanad).join(' ');
    request.fulfill({json:{...mock,formatting:JSON.stringify(formatted)}});
   });
   await page.route('**/api/workspace/certificateDraftFormatting',async request=>{
    const input=request.request().postDataJSON();
    changes.push(input);
-   if(input.action==='save')settings={settings:input.settings,printMode:input.printMode};
+   if(input.action==='save')settings=input.settings;
    if(input.action==='reset')settings=null;
    await request.fulfill({json:{saved:input.action==='save'}});
   });
   await page.goto(url);
+  await installFixtureFrame(page);
   await page.locator('.print-area .certificate-footer').waitFor();
+  assert.equal(await page.getByLabel('طريقة عرض رقم الشهادة').count(),0);
+  assert.equal(await page.locator('.certificate-qr-code').count(),0);
+  await page.locator('.certificate-registration-number').waitFor();
   await page.evaluate(()=>document.fonts.ready);
   const panel=page.locator('.certificate-settings-panel').first();
   await panel.locator('summary').click();
@@ -82,6 +133,7 @@ const {chromium}=require('playwright');
   assert.ok(before&&after&&after.y>before.y+10,'khatima moves down in document flow');
   await page.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).click();
   assert.equal(changes.at(-1)?.action,'save','draft Save sends only print settings');
+  assert.equal(Object.hasOwn(changes.at(-1),'printMode'),false);
   assert.equal(changes.at(-1)?.settings?.matnHeading?.sectionGapAfterSanadMm,6,
    'new section gap persists in certificate-specific settings');
   assert.equal(changes.at(-1)?.settings?.matnHeading?.conclusionOffsetMm,5,
@@ -118,12 +170,19 @@ const {chromium}=require('playwright');
   await page.getByLabel('جزء الشهادة').selectOption('conclusion');
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الخاتمة',exact:true}).inputValue()),0,
    'system restore clears this certificate-specific khatima adjustment');
+  await checkPrintPdf(page,'matn');
+  await checkDownloadPdf(page);
   await page.setViewportSize({width:390,height:844});
   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS){
    await page.locator('.print-area').screenshot({
     path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-print-mobile.png'
    });
   }
+  denseMatn=true;
+  await page.reload();
+  await page.locator('.certificate-settings-panel[role="alert"]').waitFor();
+  assert.equal(await page.getByRole('button',{name:'معاينة PDF بدون اعتماد'}).isDisabled(),true);
+  assert.equal(await page.locator('.certificate-qr-code').count(),0);
   // Exercise the ACTUAL qira'at title artwork (basmalah, ijazah.svg and
   // riwayah SVG glyphs). The earlier fixture covers only a matn heading.
   const qHtml=await (await fetch(qiraatUrl)).text();
@@ -132,12 +191,13 @@ const {chromium}=require('playwright');
   const qMock=JSON.parse(qData);
   const qPage=await browser.newPage({viewport:{width:1440,height:900}});
   try{
-   let qSaved=null;
+   let qSaved=null,denseQiraat=false;
    const qChanges=[];
    await qPage.route('**/api/workspace/certificateDraftPreview',request=>{
     const formatting=JSON.parse(qMock.formatting);
     if(qSaved)formatting.settings=qSaved;
-    request.fulfill({json:{...qMock,formatting:JSON.stringify(formatting)}});
+    const chain=denseQiraat?qMock.chain+'\n'+Array(120).fill('عَنِ الشَّيْخِ الاختباريِّ بِالسَّنَدِ المُتَّصِلِ.').join(' '):qMock.chain;
+    request.fulfill({json:{...qMock,chain,formatting:JSON.stringify(formatting)}});
    });
    await qPage.route('**/api/workspace/certificateDraftFormatting',request=>{
     const input=request.request().postDataJSON();
@@ -148,9 +208,16 @@ const {chromium}=require('playwright');
    const qiraatDraftReady=qPage.waitForResponse(response=>
     response.url().includes('/api/workspace/certificateDraftPreview')&&response.status()===200);
    await qPage.goto(qiraatUrl);
+   await installFixtureFrame(qPage);
    await qiraatDraftReady;
    await qPage.evaluate(()=>document.fonts.ready);
    await qPage.waitForTimeout(200); // settle ResizeObserver-driven print geometry
+   await qPage.locator('.certificate-registration-number').waitFor();
+   assert.equal(await qPage.locator('.certificate-qr-code').count(),0);
+   await qPage.emulateMedia({media:'print'});
+   await qPage.locator('.certificate-registration-number').waitFor();
+   assert.equal(await qPage.locator('.certificate-qr-code').count(),0);
+   await qPage.emulateMedia({media:'screen'});
    const artwork=qPage.locator('.certificate-header-art');
    await artwork.locator('.certificate-ijazah-svg').waitFor();
    await artwork.locator('.certificate-basmalah-svg').waitFor();
@@ -249,6 +316,24 @@ const {chromium}=require('playwright');
    await qPage.waitForFunction(()=>document.querySelector('input[aria-label="عرض رسم إجازة"]')?.value==='98.0244');
    assert.equal(Number(await qPage.getByRole('spinbutton',{name:'ارتفاع سطر الرواية',exact:true}).inputValue()),8.445,
     'restore resets individual riwayah SVG height without changing shared templates');
+   await checkPrintPdf(qPage,'qiraat');
+   await checkDownloadPdf(qPage);
+   denseQiraat=true;
+   await qPage.reload();
+   await qPage.locator('.certificate-settings-panel[role="alert"]').waitFor();
+   assert.equal(await qPage.getByRole('button',{name:'معاينة PDF بدون اعتماد'}).isDisabled(),true);
+   assert.equal(await qPage.locator('.certificate-qr-code').count(),0);
+   await qPage.route('**/api/workspace/certificatePrintAuthorization',request=>
+    request.fulfill({json:{allowed:true,message:''}}));
+   for(const mode of ['legacy','qr','none','number']){
+    await qPage.getByRole('button',{name:mode,exact:true}).click();
+    await qPage.locator('.print-area .certificate-footer').waitFor();
+    const qr=qPage.locator('.certificate-qr-code');
+    const number=qPage.locator('.certificate-registration-number');
+    assert.equal(await qr.count(),mode==='legacy'||mode==='qr'?1:0,mode);
+    assert.equal(await number.count(),mode==='none'?0:1,mode);
+    assert.equal(await qPage.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).count(),0);
+   }
   }finally{await qPage.close();}
   console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{

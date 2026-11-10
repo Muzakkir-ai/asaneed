@@ -1,3 +1,9 @@
+## Number-only certificate presentation — Chat 05 branch
+
+New and existing drafts now preview and print with the registration number. The draft verification display selector is removed, and new finalizations explicitly freeze number-only output. Previously issued snapshots still read their original presentation mode and retain their historical QR links. The application keeps verification token and registration data for compatibility.
+
+The draft formatting endpoints still save and restore typography and layout separately from final approval. Old draft presentation choices are ignored when opening the draft. No data migration accompanies this branch. The production baseline is `292dc0d5dbd27556b4004051b782cc369946c21d`; this change is pending release.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.
