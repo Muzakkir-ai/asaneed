@@ -1,3 +1,4 @@
+import {combinedSanad} from '../legacy/lib/combinedSanad';
 import {placeSanad} from '../legacy/lib/sanadPlacement';
 import {optimizeSanadPorts,routeSanadConnectors} from '../legacy/lib/sanadConnectorRouting';
 import {sharedSanadBuses} from '../legacy/lib/sanadSharedBus';
@@ -191,11 +192,30 @@ const makePlan=(rows:string[][],pairs:{from:string;to:string;routes?:number[];id
  const centers=new Map(rows.flatMap(row=>row.map((id,i)=>[id,{x:width/2+(i-(row.length-1)/2)*250}] as const)));
  const plan=planCoordinatedSanad(rows,centers,pairs,width,cardSize,80,heights);
  assert.ok(plan.valid,'all routed connectors must avoid unrelated narrator cards: '+plan.collisions.join(' | '));
- const originals=pairs.map((e,i)=>JSON.stringify([i,e.from,e.to])).sort();
- const reconstructed=plan.edgePaths.map(e=>JSON.stringify([e.edgeIndex,e.from,e.to])).sort();
+ const originals=pairs.map((e,i)=>JSON.stringify([e.originalIndex??i,e.from,e.to,e.id??null,e.routes??[]])).sort();
+ const reconstructed=plan.edgePaths.map(e=>JSON.stringify([e.edgeIndex,e.from,e.to,e.id??null,e.routes])).sort();
  assert.deepEqual(reconstructed,originals,'no relationship dropped, duplicated or invented by geometry');
  return {plan,centers};
 };
+function checkCombinedRouting(paths:string[][]){
+ const before=JSON.stringify(paths);
+ const {rows,edges}=combinedSanad(paths)!;
+ const width=Math.max(...rows.map(row=>row.length))*276+48;
+ const centers=new Map([...placeSanad(rows,edges,width,276)].map(([id,x])=>[id,{x}]));
+ const plan=planCoordinatedSanad(rows,centers,edges,width,228,80);
+ assert.ok(plan.valid,plan.collisions.join(' | '));
+ assert.deepEqual(plan.edgePaths.map(e=>[e.edgeIndex,e.from,e.to,e.routes]).sort(),
+  edges.map((e,i)=>[i,e.from,e.to,e.routes]).sort(),'exact direction and membership in combined SVG');
+ assert.equal(JSON.stringify(paths),before,'routing never alters narrator paths');
+}
+const comparative=[
+ ['jazari','uqabi','ibnGhanim','ibnShuhadha','end'],
+ ['jazari','nuwayri','umyuti','samdasi','ibnShuhadha','end'],
+ ['jazari','umyuti','samdasi','ibnShuhadha','end'],
+];
+checkCombinedRouting(comparative);
+assert.deepEqual(sanadPositions(comparative,'umyuti'),[2,3]);
+
 const fanOut=makePlan([['source'],['a','b','c','d']],
  ['a','b','c','d'].map(to=>({from:'source',to}))).plan;
 assert.deepEqual(fanOut.groups.map(g=>g.kind),['fan-out']);
@@ -204,24 +224,24 @@ assert.equal(fanOut.parts.filter(p=>p.arrow).length,4,'one drop and arrow per ac
 assert.equal(fanOut.parts.filter(p=>p.role==='feed').length,1,'one centered downward trunk');
 assert.equal(fanOut.parts.find(p=>p.role==='feed')!.d.startsWith('M530 '),true,
  'fan-out trunk leaves source card center');
-const fanIn=makePlan([['a','b','c','d'],['target']],
- ['a','b','c','d'].map(from=>({from,to:'target'}))).plan;
-assert.deepEqual(fanIn.groups.map(g=>g.kind),['fan-in']);
-assert.equal(fanIn.parts.filter(p=>p.role==='bus').length,1,'one early fan-in bus');
-assert.equal(fanIn.parts.filter(p=>p.arrow).length,1,'only one arrow at the converged destination');
-assert.equal(fanIn.parts.filter(p=>p.role==='feed').length,4);
-assert.ok(fanIn.groups[0].busY!<fanIn.tops[1]/2+40,'merge bus is closer to sources');
+const fanIn=makePlan([['root'],['a','b'],['target']],[
+ ...['a','b'].map(to=>({from:'root',to})),
+ ...['a','b'].map(from=>({from,to:'target'})),
+]).plan;
+assert.deepEqual(fanIn.groups.map(g=>g.kind),['fan-out','fan-in']);
+assert.equal(fanIn.parts.filter(p=>p.role==='drop'&&p.to==='target').length,1);
+assert.equal(fanIn.groups[1].busY,fanIn.tops[1]+80+18,'siblings merge in the first lane below the teachers');
 const manyToMany=[
- ...['A','B','C','D','E'].flatMap(from=>['X','Y','Z'].map(to=>({from,to,routes:[1,2]}))),
+ {from:'root',to:'A'},{from:'root',to:'B'},{from:'root',to:'C'},
+ ...['A','B','C'].flatMap(from=>['X','Y','Z'].map(to=>({from,to,routes:[1,2]}))),
 ];
-const fullFan=makePlan([['A','B','C','D','E'],['X','Y','Z']],manyToMany,228).plan;
-assert.equal(fullFan.groups.length,1);
-assert.equal(fullFan.groups[0].kind,'complete');
-assert.equal(fullFan.parts.filter(p=>p.role==='bus').length,1);
-assert.equal(fullFan.parts.filter(p=>p.arrow).length,3);
-assert.equal(fullFan.edgePaths.length,15);
+const fullFan=makePlan([['root'],['A','B','C'],['X','Y','Z']],manyToMany,228).plan;
+assert.deepEqual(fullFan.groups.map(g=>g.kind),['complete','fan-out']);
+assert.equal(fullFan.parts.filter(p=>p.role==='bus').length,2);
+assert.equal(fullFan.parts.filter(p=>p.arrow).length,6);
+assert.equal(fullFan.edgePaths.length,12);
 assert.ok(fullFan.parts.filter(p=>p.role==='drop').every(p=>p.d.includes(' V')),
- 'all descendants leave the one shared horizontal bus by vertical drops');
+ 'all descendants leave the shared horizontal bus by vertical drops');
 const partial=makePlan([['A','B'],['X','Y']],
  [{from:'A',to:'X'},{from:'B',to:'Y'}]).plan;
 assert.equal(partial.groups.filter(g=>g.kind!=='single').length,0,
@@ -234,7 +254,7 @@ const mixed=makePlan([['A','B'],['X','Y','Z'],['one']],
  [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'Y'},
  {from:'X',to:'one'},{from:'Y',to:'one'},{from:'Z',to:'one'}]).plan;
 assert.equal(mixed.edgePaths.length,6,'mixed fan-in and fan-out reuse same routing engine');
-assert.ok(mixed.groups.some(g=>g.kind==='fan-in'));
+assert.ok(mixed.groups.every(g=>g.kind!=='fan-in'),'all parents must qualify for a shared arrow');
 const asym=makePlan([['root'],['one','two','three','four']],
  ['one','two','three','four'].map(to=>({from:'root',to})),228,
  new Map([['root',132],['one',70],['two',106],['three',160],['four',90]])).plan;
@@ -244,6 +264,25 @@ const bypass=makePlan([['source'],['obstacle1','obstacle2','obstacle3'],['destin
 assert.equal(bypass.edgePaths.length,1);
 assert.ok(bypass.edgePaths[0].d.includes(' H'),
  'long route uses a clear side corridor around intervening narrator cards');
+const staggered=makePlan([['root'],['a','b'],['target']],[
+ {from:'root',to:'a'},{from:'root',to:'b'},
+ {from:'a',to:'target'},{from:'b',to:'target'},{from:'root',to:'target'},
+]).plan;
+assert.equal(staggered.parts.filter(p=>p.arrow&&p.to==='target').length,3,
+ 'a skipped-rank teacher prevents even a partial merge of the incoming arrows');
+assert.equal(staggered.parts.find(p=>p.role==='feed'&&p.from==='root')!.d,'M280 80 V98',
+ 'a fan-out leaves the center even when a separate long edge shares its source');
+const portPlan=(xs:number[],rows=[['source'],['target']])=>
+ planCoordinatedSanad(rows,new Map(rows.flat().map((id,i)=>[id,{x:xs[i]}])),
+ [{from:'source',to:'target'}],700,192,80);
+assert.equal(portPlan([250,250.25]).edgePaths[0].d,'M250.125 80 V143',
+ 'near-aligned independent narrators share one vertical coordinate');
+assert.equal(portPlan([150,470]).edgePaths[0].d,'M246 58 H470 V143',
+ 'an outward side departure shortens a clear one-bend connection');
+const blockedSide=portPlan([150,470,470],[['source','obstacle'],['target']]);
+assert.ok(blockedSide.valid);
+assert.equal(blockedSide.edgePaths[0].d,'M150 80 V168 H373',
+ 'an unrelated card blocks the side departure, so the shorter clear route enters at the side');
 const filtered=makePlan([['A','B'],['X','Y']],[
  {from:'A',to:'X',routes:[0]},{from:'B',to:'Y',routes:[1]},
 ]).plan;
@@ -450,6 +489,7 @@ for(const imam of QURRA){
  assert.ok(graph.paths.every(path=>path[0]==='imam:'+imam.id),'Cross-reader links in '+imam.id);
  assert.ok(graph.paths.every(path=>path.length>=2&&new Set(path).size===path.length),'Invalid path for '+imam.id);
  assert.ok(graph.paths.length<=120,'Historical branch preview exceeds safety cap for '+imam.id);
+ checkCombinedRouting(graph.paths);
 }
 console.log('All ten Imam-to-Companions source-indexed graph layouts passed');
 
