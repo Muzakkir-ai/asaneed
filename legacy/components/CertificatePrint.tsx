@@ -234,11 +234,14 @@ const defaults:Record<Area,Typography> = {
 };
 export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onFinalized,readOnly=false,previewPalette }: Props) {
   const isDraft=cert.publicationStatus==='draft';
-  // New certificates default to number-only; already finalized certificates
-  // without a printMode snapshot retain their historical QR presentation.
-  const [draftPrintMode,setDraftPrintMode]=useState<'number'|'none'>('number');
-  const savedPrintMode=(()=>{if(isDraft)return 'number';try{const mode=JSON.parse(cert.snapshotFormatting||'{}').printMode;return mode==='number'||mode==='none'?mode:'qr';}catch{return 'qr';}})();
-  const printMode=isDraft?draftPrintMode:savedPrintMode;
+  // Existing issued snapshots may use QR or omit the registration number.
+  const printMode=(()=>{
+    if(isDraft)return 'number';
+    try{
+      const mode=JSON.parse(cert.snapshotFormatting||'{}').printMode;
+      return mode==='number'||mode==='none'?mode:'qr';
+    }catch{return 'qr';}
+  })();
   const [draftData,setDraftData]=useState<Awaited<ReturnType<typeof certificateDraftPreview>>|null>(null);
   const [printPermission,setPrintPermission]=useState<'checking'|'allowed'|'blocked'>('checking');
   const [printMessage,setPrintMessage]=useState('');
@@ -270,10 +273,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(isDraft)return '';
     try{return JSON.parse(cert.snapshotFormatting||'{}').verificationToken||'';}catch{return '';}
   })();
-  // Draft preview: a visual QR placeholder with no active certificate verification.
-  // The real token and verification link are issued only when finalized.
+  // Older issued snapshots can have the original placeholder instead of a token.
   const verificationUrl=verificationToken?`https://asaneed.vercel.app/verify/${verificationToken}`:'';
-  const previewQrUrl='https://asaneed.vercel.app/verify/demo';
+  const historicalQrPlaceholderUrl='https://asaneed.vercel.app/verify/demo';
   const snapshotDetails=(()=>{
     if(isDraft||!cert.snapshotFormatting)return null;
     try{return JSON.parse(cert.snapshotFormatting) as {footerProfile?:PrintProfile;issuerDisplayName?:string;artworkSnapshot?:{base:string;artwork:Artwork[];issuerNumber:string}};}catch{return null;}
@@ -376,11 +378,9 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     setHeadingOverride(undefined);setQiraatHeading(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
     setHeadingOffsetMm(0);setFooterOffsetMm(0);
     setBorderColor('#926e35');setAccentColor('#075f69');
-    if(isDraft)setDraftPrintMode('number');
     if(!raw)return;
     try{
       const saved=JSON.parse(raw);
-      if(isDraft)setDraftPrintMode(saved.draftPrintMode==='none'?'none':'number');
       if(Array.isArray(saved.phrases))setSharedPhrases(saved.phrases);
       if(saved.settings){
         setHeadingOverride(saved.settings.matnHeading);
@@ -521,7 +521,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(measureOverflow()){toast.error('أصلح تداخل النص أو التذييل قبل حفظ التنسيق');return;}
     setSavingFormat(true);
     try{
-      await certificateDraftFormatting({action:'save',certificateId:cert.id,settings:printSettings(),printMode:draftPrintMode});
+      await certificateDraftFormatting({action:'save',certificateId:cert.id,settings:printSettings()});
       toast.success('حُفظ تنسيق هذه الشهادة كمسودة — دون اعتماد نهائي');
     }catch(e){toast.error(e instanceof Error?e.message:'تعذر حفظ تنسيق المسودة');}
     finally{setSavingFormat(false);}
@@ -543,7 +543,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(measureOverflow()){toast.error('لا يمكن اعتماد الشهادة قبل معالجة تجاوز مساحة الطباعة.');return;}
     setFinalizing(true);
     try{
-      const result=await finalizeCertificate({certificateId:cert.id,settings:printSettings(),printMode:draftPrintMode});
+      const result=await finalizeCertificate({certificateId:cert.id,settings:printSettings()});
       setConfirmFinal(false);
       toast.success('اعتمدت الشهادة وأُنشئت نسختها النهائية');
       onFinalized(result);
@@ -558,7 +558,6 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         <div className="flex flex-wrap items-center gap-3" dir="rtl">
           {isDraft&&<span className="text-sm font-semibold">{previewPalette?'معاينة الألوان غير المحفوظة · لا يتم اعتماد الشهادة هنا':'معاينة · مسودة'}</span>}
           {isDraft&&draftData?.source==='saved'&&<span className="text-xs text-muted-foreground">سند محفوظ سابقًا</span>}
-          {isDraft&&<label className="flex items-center gap-2 text-sm font-semibold">طريقة التحقق <select aria-label="طريقة عرض رقم الشهادة" className="rounded-md border border-input bg-background px-3 py-2 text-foreground" value={draftPrintMode} onChange={e=>setDraftPrintMode(e.target.value as 'number'|'none')}><option value="number">رقم الشهادة</option><option value="none">بدون رقم الشهادة</option></select></label>}
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الأساسي <input type="color" disabled={!isDraft||!!previewPalette} value={borderColor} onChange={e=>setBorderColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           <label className="flex items-center gap-2 text-sm font-semibold">اللون الثانوي <input type="color" disabled={!isDraft||!!previewPalette} value={accentColor} onChange={e=>setAccentColor(e.target.value)} className="h-9 w-12 rounded border disabled:cursor-default" /></label>
           {hasNumberedArtwork&&issuerArtStatus!=='ready'&&<span role="status" className="text-sm">{issuerArtStatus==='error'?<><span>تعذر تجهيز رسم المجيز للطباعة.</span><Button variant="outline" size="sm" onClick={()=>setIssuerArtRetry(v=>v+1)}>إعادة المحاولة</Button></>:'جارٍ تجهيز رسم المجيز للطباعة…'}</span>}
@@ -712,7 +711,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
                   <tr className="certificate-footer-details">
                     <td className={`certificate-footer-right certificate-footer-qr-cell ${printMode==='number'?'certificate-footer-number-only':''}`}>
                       <div className="certificate-footer-verification">
-                        {printMode==='qr'&&<CertificateQR url={verificationUrl||previewQrUrl} primary={borderColor} secondary={accentColor}/>} 
+                        {printMode==='qr'&&<CertificateQR url={verificationUrl||historicalQrPlaceholderUrl} primary={borderColor} secondary={accentColor}/>}
                         {printMode!=='none'&&<span className="certificate-registration-number" dir="rtl">المسجل برقم: (<RegistrationNumber value={cert.registrationNumber||'—'}/>)</span>}
                         {printMode==='qr'&&!verificationUrl&&<span className="certificate-qr-preview-label">نموذج فقط — غير مُعتمد</span>}
                       </div>
