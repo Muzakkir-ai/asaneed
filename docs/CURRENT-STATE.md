@@ -1,10 +1,7 @@
-## Certificate integration candidate (10 November 2026)
+## Certificate integration candidate (12 November 2026)
 
-The [release QA matrix](RELEASE-QA.md) records the combined certificate candidate and local synthetic evidence. The production release remains at the baseline SHA.
+Draft #121 passed isolated staging migration parity, synthetic two-Ḥafṣ issuance and recipient access, historical verification, and staging app rollback. Hosted print, abuse controls and provider recovery remain release gates. See the [release QA matrix](RELEASE-QA.md) for the tested commits and approval checkpoint.
 
-## Integration baseline and release QA (10 November 2026)
-
-GitHub main and the READY production alias both point to `292dc0d5dbd27556b4004051b782cc369946c21d`. The [release QA matrix](RELEASE-QA.md) records baseline checks, two failing suites, and the pending staging and recovery gates for ordered multi-sanad issuance and number-only lookup. This documentation change does not alter runtime behavior.
 ## Chat 03 review branch — ordered sanads for one riwāyah
 
 The certificate selector and personal-sanad generator can preview an ordered list of up to five authorized saved sanads. Selections must share an issuer, riwāyah and certificate ṭarīq. The combined text retains a complete branch for every selection, separated by `(ح)`, and uses the first selection's framing. Diagrams display saved personal paths and any identity-verified continuation. Legacy prose without stable narrator IDs remains visible as text. The additional-shaykh editor retains every branch when reopening a reviewed variant, uses the rows returned by Save and discards superseded loading responses.
