@@ -8,7 +8,7 @@ export default function VerificationForm() {
  const {locale,t}=useLanguage();
  const [number,setNumber] = useState('');
  const [loading,setLoading] = useState(false);
- const [error,setError] = useState<''|'invalid'|'unavailable'>('');
+ const [error,setError] = useState<''|'invalid'|'unavailable'|'rateLimited'>('');
  const [invalid,setInvalid] = useState(false);
  const [result,setResult] = useState<VerificationResult|null>(null);
  async function submit(event: FormEvent<HTMLFormElement>) {
@@ -20,6 +20,7 @@ export default function VerificationForm() {
   setLoading(true);
   try {
    const response = await fetch('/api/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({number:normalized}),cache:'no-store',signal:AbortSignal.timeout(12000)});
+   if (response.status === 429) { setError('rateLimited'); return; }
    const data: unknown = await response.json();
    if (!response.ok || !isVerificationResult(data)) throw new Error('unavailable');
    setResult(data);
