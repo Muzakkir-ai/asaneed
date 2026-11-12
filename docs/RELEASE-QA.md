@@ -210,3 +210,25 @@ These messages are ready to paste. Each chat should preserve stable IDs, privacy
 - **Chat 10.** Recover the local accessibility change reported at 378c54f. Produce a draft PR or reviewable diff and verify mobile navigation, RTL, keyboard and focus, language and theme in Chromium.
 - **Chat 11.** Update the one-issuer/one-recipient pilot plan with the hosted evidence and outstanding gates. Keep the pilot in planning and retain the private reporting workflow.
 - **Chat 12.** Use the updated QA matrix. Keep #121 a draft, resolve remaining release gates, and reconcile only the documented overlap when integrating approved scopes. Keep diagram routing separate and leave production untouched.
+
+### Chat 12 approval checkpoint
+
+Candidate reviewed at `70e938767b6dc9ac4894ee856476f0d0aaf89bc3`. Production and GitHub main were independently checked at `292dc0d5dbd27556b4004051b782cc369946c21d`. The [Chromium PDF workflow](https://github.com/Muzakkir-ai/asaneed/actions/runs/43216698465) and [sanad editor workflow](https://github.com/Muzakkir-ai/asaneed/actions/runs/43216698487) passed on the reviewed head, including browser PDF, ordered sanad and public verification steps. The staging PASS results above come from the recorded rehearsal.
+
+| Workstream | Integration decision |
+| --- | --- |
+| #112 Qurra labels and route IDs | Independent UI change. Keep its visual evidence and source-fallback review with #112. Recheck its combined graph suite if paired with #117. |
+| #116 onboarding and issuer assignments | Independent permission change. Its shared workspace request parsing can affect certificate calls, so repeat the certificate request and role matrix if the PRs are later combined. Hosted setup, recovery and assignment evidence belongs to #116. |
+| #117 shared-bus routing | Independent geometry change. Its passing routing and graph checks address the known baseline failure. Review the comparative diagrams in that workstream. |
+| #120 narrator registry | Independent provenance and privacy change. Review hosted RLS, pagination and the removed private pupil overlay in #120. |
+
+The recorded merge-tree rehearsals found only current-state documentation conflicts for these four PRs. The certificate status now appears once at the top of `CURRENT-STATE.md`. When a neighboring scope is approved, preserve its dated entry alongside the certificate handoff and rerun CI on the combined tree.
+
+| Remaining gate | Status | Acceptance evidence |
+| --- | --- | --- |
+| Hosted certificate print and export · Chat 05 / #113 | FAIL | Reproduce the recipient window closure after print authorization on candidate and baseline. Capture sanitized console, popup/page-close and browser-exit evidence. Verify hosted A4 PDF for the new number-only and historical QR fixtures. Record physical A4 and native iOS export separately. |
+| Verification abuse controls · Chat 01 / #115 | BLOCKED | Review a design that applies a shared request budget or removes bypassable public direct-RPC access while keeping exact lookup and historical tokens working. Test direct calls, HTTP limits, unpublished denial and legitimate retry with synthetic data. |
+| Supabase Free recovery | BLOCKED | Managed daily backups and PITR are unavailable on Free. Rehearse encrypted off-site logical export and restore in a separately confirmed disposable project. Capture CLI role, schema and data dumps plus migration history. Inventory Auth configuration and any custom Auth/Storage schema changes and stored objects separately. Preflight issuer codes against stable IDs before restore. Compare access policies, identifiers, snapshots, number allocations and historical links, and measure recovery time and the recoverable data window. Follow provider confirmations before any restore. [Backup guidance](https://supabase.com/docs/guides/platform/backups) and [CLI restore guidance](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore) |
+| Owner approval | BLOCKED | Review the hosted print and abuse-control evidence, decide the accepted recovery procedure, and approve a pinned candidate and rollout scope separately. |
+
+Chat 01 and Chat 05 handoffs are recorded above for their existing workstreams. Delivery to the original chats was unavailable in this session.
