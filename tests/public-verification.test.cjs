@@ -6,6 +6,8 @@ const swc = require('next/dist/build/swc');
 
 const migrations = 'supabase/migrations';
 const hardening = '20261109221703_restrict_verification_projection_reads.sql';
+const gateMigration = '20261112122627_guard_certificate_number_lookup.sql';
+const capability = 'a'.repeat(64);
 const authId = 'f1000000-0000-4000-8000-000000000001';
 const issuerId = 'f1000000-0000-4000-8000-000000000002';
 const studentId = 'f1000000-0000-4000-8000-000000000003';
@@ -128,16 +130,49 @@ async function main() {
     await assert.rejects(db.query('select id from public.certificates'), { code: '42501' });
     await assert.rejects(db.query('select content from public.certificate_snapshots'), { code: '42501' });
 
+    await db.exec('reset role');
+    await migration(gateMigration);
+    const guardedLookup = async (number, key, secret = capability) => (
+      await row('select public.lookup_certificate_number($1, $2, $3) as result', [number, key, secret])
+    ).result;
+    const historicalLink = async () => (await row(
+      'select public.verify_certificate_token($1) as result', [before.verification_token]
+    )).result;
+    await db.exec('set role anon');
+    await assert.rejects(guardedLookup(number, 'b'.repeat(64)), { code: '42501' });
+    await db.exec('reset role');
+    await db.query(
+      "insert into private.verification_lookup_capability(secret_hash) values (sha256(convert_to($1, 'UTF8')))",
+      [capability],
+    );
+    for (const role of ['anon', 'authenticated']) {
+      await db.exec(`set role ${role}`);
+      await assert.rejects(lookup(number), { code: '42501' });
+      await assert.rejects(db.query('select private.verify_ijazah_number($1)', [number]), { code: '42501' });
+      await assert.rejects(guardedLookup(number, 'b'.repeat(64), 'c'.repeat(64)), { code: '42501' });
+      await assert.rejects(db.query('select * from private.verification_lookup_budget'), { code: '42501' });
+      await assert.rejects(db.query('select * from private.verification_lookup_capability'), { code: '42501' });
+      assert.equal((await historicalLink()).certificate.registrationNumber, number);
+      await db.exec('reset role');
+    }
+    await db.exec('set role anon');
+    await assert.rejects(guardedLookup('%', 'b'.repeat(64)), { code: '22023' });
+
+    process.env.VERCEL = '1';
+    process.env.CERTIFICATE_LOOKUP_CAPABILITY = capability;
     process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://synthetic.example.test';
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = 'synthetic-test-key';
     let rpcCalls = 0;
     let unavailable = false;
     let mismatch = false;
     global.fetch = async (url, init) => {
-      assert.equal(String(url), 'https://synthetic.example.test/rest/v1/rpc/verify_ijazah');
+      assert.equal(String(url), 'https://synthetic.example.test/rest/v1/rpc/lookup_certificate_number');
       rpcCalls++;
       if (unavailable) throw new Error('private transport error');
-      const result = await lookup(JSON.parse(init.body).p_number);
+      const { p_number, p_client_key, p_capability } = JSON.parse(init.body);
+      assert.match(p_client_key, /^[a-f0-9]{64}$/);
+      assert.equal(p_capability, capability);
+      const result = await guardedLookup(p_number, p_client_key, p_capability);
       if (result.status === 'verified') {
         result.certificate.internal = 'private fixture';
         if (mismatch) result.certificate.registration_number = '0000-0000';
@@ -146,8 +181,9 @@ async function main() {
     };
 
     const post = await loadRoute();
-    const request = async (body, status, expectedBody) => {
-      const response = await post(new Request('http://localhost/api/verify', { method: 'POST', body }));
+    const request = async (body, status, expectedBody, headers = { 'x-vercel-forwarded-for': '192.0.2.1' }) => {
+      const response = await post(new Request('http://localhost/api/verify', { method: 'POST', body, headers }));
+      if (status === 429) assert.equal(response.headers.get('Retry-After'), '60');
       assert.equal(response.status, status);
       assert.equal(response.headers.get('Cache-Control'), 'no-store');
       assert.deepEqual(await response.json(), expectedBody);
@@ -163,11 +199,44 @@ async function main() {
       await request(input, 400, { error: 'invalid_number' });
     }
     assert.equal(rpcCalls, beforeInvalid);
+    await request(JSON.stringify({ number }), 503, { error: 'unavailable' }, { 'x-forwarded-for': '192.0.2.1' });
+    delete process.env.CERTIFICATE_LOOKUP_CAPABILITY;
+    await request(JSON.stringify({ number }), 503, { error: 'unavailable' });
+    process.env.CERTIFICATE_LOOKUP_CAPABILITY = capability;
+    assert.equal(rpcCalls, beforeInvalid);
     mismatch = true;
     await request(JSON.stringify({ number }), 503, { error: 'unavailable' });
     unavailable = true;
     await request(JSON.stringify({ number }), 503, { error: 'unavailable' });
     unavailable = false;
+    mismatch = false;
+
+    // Freeze the window for the synthetic test. The HTTP calls share the database budget.
+    await db.exec(`
+      reset role;
+      truncate private.verification_lookup_budget;
+      begin;
+      insert into private.verification_lookup_budget
+        values (floor(extract(epoch from transaction_timestamp()) / 60)::bigint - 1, 'global', 60);
+      set local role anon;
+    `);
+    const body = JSON.stringify({ number });
+    const caller = { 'x-vercel-forwarded-for': '2001:db8::1' };
+    const responses = await Promise.all(Array.from({ length: 12 }, () =>
+      post(new Request('http://localhost/api/verify', { method: 'POST', body, headers: caller }))));
+    assert.equal(responses.filter(response => response.status === 200).length, 10);
+    assert.equal(responses.filter(response => response.status === 429).length, 2);
+    await request(body, 429, { error: 'rate_limited' }, {
+      'x-vercel-forwarded-for': '2001:0db8:0:0:0:0:0:1',
+      'x-forwarded-for': '192.0.2.50',
+    });
+
+    for (let i = 0; i < 50; i++) {
+      assert.equal((await guardedLookup('0000-0000', i.toString(16).padStart(64, '0'))).status, 'not_found');
+    }
+    await request(body, 429, { error: 'rate_limited' });
+    assert.equal((await historicalLink()).verified, true, 'historical tokens survive budget exhaustion');
+    await db.exec('rollback');
 
     await db.exec('reset role; update private.ijazah_verification_index set published=false; set role anon');
     await request(JSON.stringify({ number }), 200, { status: 'preparing' });
@@ -179,8 +248,8 @@ async function main() {
       [draftId, { chain: 'Synthetic private chain', formatting: '{"printMode":"number"}' }],
     )).number;
     await db.exec('reset role; set role anon');
-    assert.equal((await lookup(newNumber)).status, 'verified', 'new finalization still publishes after grants change');
-    assert.deepEqual(await lookup(number), { status: 'not_found' }, 'unpublished records stay concealed');
+    assert.equal((await guardedLookup(newNumber, 'd'.repeat(64))).status, 'verified');
+    assert.deepEqual(await guardedLookup(number, 'd'.repeat(64)), { status: 'not_found' });
 
   } finally {
     global.fetch = realFetch;
@@ -188,5 +257,5 @@ async function main() {
   }
 }
 
-main().then(() => console.log('PASS: public verification HTTP handler, exact RPC, publication, privacy and historical link'))
+main().then(() => console.log('PASS: public verification HTTP handler, shared budgets, RPC bypass denial, publication, privacy and historical link'))
   .catch((error) => { console.error(error); process.exitCode = 1; });
