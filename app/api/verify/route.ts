@@ -16,6 +16,12 @@ export async function POST(request: Request) {
   });
   const { data, error } = await client.rpc('verify_ijazah',{p_number:number});
   if (error || !isVerificationResult(data)) return reply({error:'unavailable'},503);
-  return reply(data);
+  if (data.status !== 'verified') return reply({ status: data.status });
+  const { registration_number, student_name, issuer_name, qiraah_name, riwayah_name, completion_date } = data.certificate;
+  if (registration_number !== number) return reply({ error: 'unavailable' }, 503);
+  return reply({
+   status: 'verified',
+   certificate: { registration_number, student_name, issuer_name, qiraah_name, riwayah_name, completion_date },
+  });
  } catch { return reply({error:'unavailable'},503); }
 }

@@ -14,6 +14,18 @@ on:
       - 'legacy/lib/narratorSelection.ts'
       - 'tests/narrator-picker-ux.test.cjs'
       - 'tests/reusable-reading-sanad.test.cjs'
+      - 'legacy/components/OrderedSanadPicker.tsx'
+      - 'legacy/components/CertificateForm.tsx'
+      - 'legacy/api/prepareIjazah.ts'
+      - 'legacy/api/additionalShaykhs.ts'
+      - 'legacy/api/additionalReadingSanads.ts'
+      - 'legacy/lib/*OrderedSanads.ts'
+      - 'legacy/lib/orderedSanads.ts'
+      - 'tests/ordered-sanads.test.cjs'
+      - 'tests/public-verification.test.cjs'
+      - 'app/api/verify/route.ts'
+      - 'legacy/api/finalizeCertificate.ts'
+      - 'supabase/migrations/**'
       - 'package.json'
       - '.github/workflows/sanad-editor-regressions.yml'
   workflow_dispatch:
@@ -35,3 +47,5 @@ jobs:
       - run: node scripts/build-studio.cjs
       - run: npm run typecheck
       - run: npm run test:personal-sanads
+      - run: node tests/ordered-sanads.test.cjs
+      - run: node tests/public-verification.test.cjs

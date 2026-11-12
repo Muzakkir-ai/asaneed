@@ -47,10 +47,12 @@ jobs:
         env:
           CI: 'true'
           ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS: /tmp
-      - name: Upload certificate desktop/mobile screenshots
+      - name: Upload synthetic certificate screenshots and PDFs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: certificate-pdf-layout-screenshots
-          path: /tmp/certificate-*.png
+          path: |
+            /tmp/certificate-*.png
+            /tmp/certificate-*.pdf
           if-no-files-found: ignore

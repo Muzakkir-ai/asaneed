@@ -63,12 +63,24 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
   const [readingReuseNotice,setReadingReuseNotice]=useState('');
   const [readingSaveError,setReadingSaveError]=useState('');
   const readingSaveLock=useRef(false);
- const loadReadingSanads=async(id:string)=>{try{setSavedReadingSanads((await additionalReadingSanads({action:'list',shaykhId:id})).sanads)}catch{toast.error('تعذر تحميل أسانيد الروايات')}};
+ const readingRequest=useRef(0);
+ const loadReadingSanads=async(id:string)=>{
+  const request=++readingRequest.current;
+  try{const {sanads}=await additionalReadingSanads({action:'list',shaykhId:id});if(request===readingRequest.current)setSavedReadingSanads(sanads);}
+  catch{if(request===readingRequest.current)toast.error('تعذر تحميل أسانيد الروايات');}
+ };
  const openReading=async(r:Reading,owner?:Sheikh)=>{
   if(owner){select(owner,false);setSection('qiraat');}
-  let rows=savedReadingSanads;
-  if(owner){try{rows=(await additionalReadingSanads({action:'list',shaykhId:owner.id})).sanads;setSavedReadingSanads(rows);}catch{toast.error('تعذر تحميل سند الرواية');return;}}
+  const request=++readingRequest.current;
+  const ownerId=owner?.id||selected;
+  if(!ownerId)return;
+  let rows;
+  try{rows=(await additionalReadingSanads({action:'list',shaykhId:ownerId})).sanads;}
+  catch{if(request===readingRequest.current)toast.error('تعذر تحميل سند الرواية');return;}
+  if(request!==readingRequest.current)return;
+  setSavedReadingSanads(rows);
   const profile=owner||form,specific=r.newVariant?undefined:rows.find(x=>(r.variantId?x.id===r.variantId:!x.variantName)&&x.qariId===r.qariId&&x.rawi===r.rawi&&(x.tariqNumber||'')===(r.tariqNumber||''));
+  if(r.variantId&&!specific){toast.error('السند الشخصي المحفوظ غير متاح');return;}
   const savedProfile=owner||items.find(shaykh=>shaykh.id===selected);
   const sourceProfile=!r.newVariant&&!profile.individualSughra&&!specific?.sanadText&&savedProfile?.personalChain===profile.personalChain?savedProfile:undefined;
    const baseChain=profile.individualSughra?'':profile.personalChain;
@@ -82,9 +94,10 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
     const message='اكتب اسم السند الشخصي أولًا، ثم احفظه.';
     setReadingSaveError(message);toast.error(message);return false;
    }
+   const request=readingRequest.current;
    readingSaveLock.current=true;setReadingSaving(true);setReadingSaveError('');
    try{
-    await additionalReadingSanads({
+    const {sanads}=await additionalReadingSanads({
      action:'save',variantId:readingEditor.variantId,variantName:variantName.trim()||undefined,
      personalPersonIds:adopted?.ids??readingPeople,
      continuationId:adopted?adopted.continuationId:readingContinuation,
@@ -93,14 +106,13 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
      qariId:readingEditor.qariId,rawi:readingEditor.rawi,
      sanadText:adopted?.text??readingText,junction:adopted?.junction??readingJunction
     });
-    await loadReadingSanads(selected);
+    if(request===readingRequest.current){setSavedReadingSanads(sanads);setReadingEditor(null);}
     await load();
-    setReadingEditor(null);
     toast.success('تم حفظ سند الرواية في قاعدة البيانات');
     return true;
    }catch(e){
     const message=e instanceof Error?e.message:'تعذر حفظ السند';
-    setReadingSaveError(message);
+    if(request===readingRequest.current)setReadingSaveError(message);
     toast.error(message);
     return false;
    }finally{readingSaveLock.current=false;setReadingSaving(false);}
@@ -117,7 +129,7 @@ export default function AdditionalShaykhsPage({onSaved,issuers=[]}:{onSaved:(iss
  const load=async()=>{setLoading(true);setLoadError('');try{const r=await additionalShaykhs({action:'list'});setItems(r.sheikhs);setViewing(current=>current?r.sheikhs.find(item=>item.id===current.id)||current:null);}catch(e){setLoadError(e instanceof Error?e.message:'تعذر تحميل المشايخ الإضافيين');}finally{setLoading(false);}};
  useEffect(()=>{void load();contentManagement({action:'list'}).then(r=>setCatalog(r.catalog.filter(item=>item.status==='published'))).catch(()=>toast.error('تعذر تحميل فهرس المتون'));mutoonTemplates({action:'list'}).then(r=>setTemplates(r.templates)).catch(()=>{});},[]);
  const setField=(key:keyof typeof blank,value:any)=>setForm(x=>({...x,[key]:value}));
- const select=(s?:Sheikh,loadSanads=true)=>{setSelected(s?.id||'');setForm(s?{
+ const select=(s?:Sheikh,loadSanads=true)=>{readingRequest.current++;setSelected(s?.id||'');setForm(s?{
   kubraSanadMode:s.kubraSanadMode,individualSughra:s.individualSughra,sharedSughraSanad:s.sharedSughraSanad,libraryKubra:!!s.libraryKubra,email:s.email,mutoon:s.mutoon,name:s.name,qualification:s.qualification,teachingRole:s.teachingRole,
   madrasaName:s.madrasaName,madrasaPlace:s.madrasaPlace,personalChain:s.personalChain,
   junction:s.junction,readings:s.readings}:blank);setSection('profile');setMatnOpen(false);setEditingOpen(true);setSavedReadingSanads([]);if(s&&loadSanads)void loadReadingSanads(s.id);};
