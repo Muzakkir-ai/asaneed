@@ -1,6 +1,6 @@
 import {personalAppearance} from './certificateAppearance';
 import {readMatnPresentation,DEFAULT_MATN_HEADING,resolveMatnHeading} from './matnPresentation';
-import {assembleMatnCertificate,defaultMatnWording,matnFormats} from './matnCertificate';
+import {assembleMatnCertificate,defaultMatnWording,findMatnCertificateTemplate,matnFormats} from './matnCertificate';
 import {currentRouteEmphasis} from './currentRouteEmphasis';
 import {currentPreservedRouteText} from './certificateRouteChoice';
 import {standardRouteSources} from './standardRouteSources';
@@ -39,7 +39,7 @@ async function currentMatnDocument(sanad:any,uid:string){
  let name=source.name,shared=original.heading??DEFAULT_MATN_HEADING,headingArtworkNumber=original.headingArtworkNumber;
  if(source.catalogId){const {data,error}=await context().client.from('matn_catalog').select('title,heading,artwork_number,status').eq('id',source.catalogId).maybeSingle();if(error)throw error;if(data?.status==='published'){name=data.title||name;shared=data.heading??DEFAULT_MATN_HEADING;headingArtworkNumber=data.artwork_number||undefined;}}
  const {records:templates}=await zite.mutoonTextTemplates.findAll({limit:2000});
- const intro=templates.find(t=>t.id===source.introductionId),end=templates.find(t=>t.id===source.conclusionId);
+ const intro=findMatnCertificateTemplate(templates,source.introductionId),end=findMatnCertificateTemplate(templates,source.conclusionId);
  if(source.introductionId&&!intro||source.conclusionId&&!end)throw Error('نموذج المقدمة أو الخاتمة غير متاح');
  return {...original,editorVersion:2,bookName:name,intro:intro?.body||'',wording:source.wordingText?.trim()||defaultMatnWording,sanad:source.sanadText,end:end?.body||'',formats:matnFormats(source.sanadFormatting),introFormats:matnFormats(intro?.formatting),endFormats:matnFormats(end?.formatting),headingArtworkNumber,heading:resolveMatnHeading(shared,readMatnPresentation(source.sanadFormatting).heading??null,undefined,{})};
 }
