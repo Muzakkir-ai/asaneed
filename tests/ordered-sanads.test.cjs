@@ -4,7 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await swc.loadBindings();
  const id=n=>'00000000-0000-4000-8000-'+String(n).padStart(12,'0');
  const owner=id(1),guestId=id(2),jazari=id(3);
- const names=['الشيخ أَحْمَد','الشيخ بَكْر','الشيخ حَسَن'];
+ const names=['الشيخ أَحْمَد','الشيخ بَكْر','الشيخ حَسَن','الشيخ خَالِد','الشيخ زَيْد','الشيخ سَعِيد'];
  const variants=names.map((name,i)=>({id:id(10+i),shaykhId:guestId,qariId:'asim',rawi:'حفص',variantName:name,junction:'jazari',
   personalPersonIds:[id(20+i),jazari],sanadText:'كما أخذته عن '+name+'، عن الإمام ابن الجزري'}));
  const guest={id:guestId,name:'شيخ تجريبي',junction:'jazari',personalChain:'كما أخذته عن شيخ رابع، عن الإمام ابن الجزري',sharedSughraSanad:true,
@@ -16,6 +16,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const sanads=[],certs=[],snapshots=[];
  let admin=true,finalized;
  const entity=rows=>({findAll:async()=>({records:structuredClone(rows)}),findOne:async({id})=>structuredClone(rows.find(r=>r.id===id)),
+  update:async({id,record})=>structuredClone(Object.assign(rows.find(row=>row.id===id),record)),
   create:async({record})=>{const row=structuredClone({...record,id:crypto.randomUUID()});rows.push(row);return row;}});
  const db={additionalShaykhs:entity([guest]),additionalShaykhExtensions:entity([]),additionalShaykhReadingSanads:entity(variants),
   sanadSections:entity(sections),ijazahHoldings:entity(holdings),asaneed:entity(sanads),certificates:entity(certs),
@@ -37,23 +38,27 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   '../compat/context':{context:()=>({client})},'../../lib/sanad-library':{loadBuilderLibrary:async()=>library},
   '../lib/certificateRegistration':{ensureCertificateRegistration:async()=>'2601-0101'},'../lib/shahadaSequence':{nextShahadaNumber:async()=>1},
   './certificateAppearance':{personalAppearance:async()=>null}};
+ const React=require('react');
  const cache=new Map();
- function load(file){
+ function load(file,print=false){
   file=path.resolve(file);
   if(cache.has(file))return cache.get(file);
   const mod=new Module(file,module);
   mod.paths=module.paths;
   mod.require=request=>{
    if(request in mocks)return mocks[request];
+   if(request==='@project/components/ui/button')return {Button:({variant,size,...props})=>React.createElement('button',props)};
+   if(print&&!['./RichSanadFlow','../lib/sanadFormatting','../lib/prophetChainRanges'].includes(request)
+    &&(request.startsWith('.')||request.startsWith('@project/')))return {};
    if(request.startsWith('.')){
     const local=path.resolve(path.dirname(file),request);
     if(request.endsWith('.json'))return require(local);
-    if(fs.existsSync(local+'.ts'))return load(local+'.ts');
+    for(const ext of ['.ts','.tsx'])if(fs.existsSync(local+ext))return load(local+ext);
    }
    return require(request);
   };
-  mod._compile(swc.transformSync(fs.readFileSync(file,'utf8'),{
-   filename:file,jsc:{parser:{syntax:'typescript'}},module:{type:'commonjs'},
+  mod._compile(swc.transformSync(fs.readFileSync(file,'utf8')+(print?'\nexport {renderSanadWithConclusion};':''),{
+   filename:file,jsc:{parser:{syntax:'typescript',tsx:file.endsWith('.tsx')},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'},
   }).code,file);
   cache.set(file,mod.exports);
   return mod.exports;
@@ -67,9 +72,18 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
   sanadText:'كما أخذته عن الشيخ أَحْمَد، عن الشيخ خالد، عن إبراهيم العُبيدي (ح). وقرأ الشيخ أَحْمَد أيضًا على الشيخ صالح، عن إبراهيم العُبيدي',
   personalPersonIds:[id(20),id(91),id(92),id(93),id(92)]};
  variants.push(branchFixture);
+ const savedReading=await call('additionalReadingSanads',{action:'save',shaykhId:guestId,variantId:branchFixture.id,
+  variantName:branchFixture.variantName,qariId:'asim',rawi:'حفص',junction:branchFixture.junction,
+  sanadText:branchFixture.sanadText,personalPersonIds:branchFixture.personalPersonIds,continuationId:null});
  const rows=(await call('additionalReadingSanads',{action:'list',shaykhId:guestId})).sanads;
  const reopened=rows.find(row=>row.id===branchFixture.id);
  assert.equal(reopened.preparedPeople.tokens.length,5,'reload prepares the branch as well as the first route');
+ assert.deepEqual(savedReading.sanads.find(row=>row.id===branchFixture.id),reopened);
+ assert.deepEqual(reopened.personalPersonIds,branchFixture.personalPersonIds);
+ assert.equal(reopened.continuationId,null);
+ assert.equal(load('legacy/lib/preparedSanadPeople.ts').preparedSanadText(reopened.preparedPeople),branchFixture.sanadText);
+ assert.deepEqual(load('legacy/lib/orderedSanads.ts').personalBranchDiagram(reopened.sanadText,reopened.personalPersonIds).paths,
+  [[id(92),id(91),id(20)],[id(92),id(93),id(20)]]);
  variants.pop();
  const issue={action:'issue',id:guestId,qariId:'asim',rawi:'حفص',studentName:'طالب تجريبي',completionDate:'2026-11-10'};
  const preview=async(personalSanadIds,tariqNumber='')=>(await call('additionalShaykhs',{...issue,previewOnly:true,personalSanadIds,tariqNumber})).preview;
@@ -87,20 +101,22 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await assert.rejects(()=>preview([]));
  await assert.rejects(()=>preview([ids[0],ids[0]]),/مختلفة/);
  await assert.rejects(()=>preview([ids[0],id(999)]),/غير متاح/);
- for(const selected of [ids.slice(0,1),ids.slice(0,2),[...ids].reverse()]){
+ await assert.rejects(()=>preview(ids),/at most|maximum|<=5/);
+ for(let count=1;count<=5;count++){
+  const selected=ids.slice(0,count).reverse();
   const result=await preview(selected);
   assertOrder(result,selected);
   assert.equal(result.chain.split('(ح)').length-1,selected.length-1);
   assert.equal(result.chain.split('مقدمة تجريبية').length-1,1);
  }
  variants[2].rawi='شعبة';
- await assert.rejects(()=>preview(ids),/غير متاح/);
+ await assert.rejects(()=>preview(ids.slice(0,5)),/غير متاح/);
  variants[2].rawi='حفص';
  variants[2].shaykhId=id(98);
- await assert.rejects(()=>preview(ids),/غير متاح/);
+ await assert.rejects(()=>preview(ids.slice(0,5)),/غير متاح/);
  variants[2].shaykhId=guestId;
  admin=false;
- await assert.rejects(()=>preview(ids),/Permission denied/);
+ await assert.rejects(()=>preview(ids.slice(0,5)),/Permission denied/);
  admin=true;
  assert.match((await preview([guestId,ids[0]])).chain,/شيخ رابع.*\(ح\).*الشيخ أَحْمَد/su);
  guest.libraryKubra=true;
@@ -121,7 +137,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const {createdCertificateId}=await call('additionalShaykhs',{...issue,personalSanadIds:order});
  const cert=certs.find(row=>row.id===createdCertificateId);
  assert.deepEqual(sanads.find(row=>row.id===cert.sanad).orderedSanads.branches,expected.branches);
- variants.shift();
+ const [removedVariant]=variants.splice(0,1);
  await assert.rejects(()=>preview(order),/غير متاح/);
  const snapshot=load('legacy/lib/certificateSnapshot.ts');
  assert.equal((await snapshot.getDraftSanadForCertificate(cert.sanad,owner,cert.id)).chain,expected.chain);
@@ -140,5 +156,106 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  assert.equal((await snapshot.getDraftSanadForCertificate(sanadId,owner,'fixture')).chain,personal.chain);
  holdings[0].ownerId=id(98);
  await assert.rejects(()=>call('prepareIjazah',prepare),/غير متاح/);
+ variants.unshift(removedVariant);
+ async function verifyEditor(){
+  const {JSDOM}=require('jsdom');
+  const {renderToStaticMarkup}=require('react-dom/server');
+  const {createRoot}=require('react-dom/client');
+  const {act,createElement:h}=React;
+  const dom=new JSDOM('<div id="fixture"></div>',{url:'http://localhost'});
+  global.window=dom.window;
+  global.document=dom.window.document;
+  global.IS_REACT_ACT_ENVIRONMENT=true;
+  const container=document.getElementById('fixture');
+  const root=createRoot(container);
+  const {default:Picker,OrderedSanadPreviewPanel}=load('legacy/components/OrderedSanadPicker.tsx');
+  const {renderSanadWithConclusion}=load('legacy/components/CertificatePrint.tsx',true);
+  const options=variants.map(row=>({id:row.id,name:row.variantName}));
+  let savedDraft;
+  function Editor(){
+   const [selected,setSelected]=React.useState([]);
+   return h(React.Fragment,null,h(Picker,{options,ids:selected,onChange:setSelected}),
+    selected.length>0&&h(OrderedSanadPreviewPanel,{key:selected.join(','),load:()=>preview(selected)}),
+    h('button',{onClick:async()=>{
+     const response=await call('additionalShaykhs',{...issue,personalSanadIds:selected});
+     savedDraft=certs.find(row=>row.id===response.createdCertificateId);
+    }},'Save fixture'));
+  }
+  const click=async label=>{
+   const button=[...container.querySelectorAll('button')].find(node=>node.getAttribute('aria-label')===label||node.textContent===label);
+   assert.ok(button,label);
+   await act(async()=>button.click());
+  };
+  const add=async sourceId=>{
+   const select=container.querySelector('select');
+   select.value=sourceId;
+   await act(async()=>select.dispatchEvent(new window.Event('change',{bubbles:true})));
+  };
+  const headingless=text=>text.replace(/^【بيان القراءة:[^】]+】\s*/u,'');
+  const visibleText=()=>container.querySelector('p.whitespace-pre-wrap')?.textContent;
+  function checkRendered(result,selected){
+   assertOrder(result,selected);
+   assert.equal(visibleText(),headingless(result.chain));
+   const diagrams=[...container.querySelectorAll('details > section')];
+   assert.equal(diagrams.length,selected.length);
+   result.branches.forEach((branch,index)=>{
+    const nodes=[...diagrams[index].querySelectorAll('[data-sanad-node]')];
+    const variant=variants.find(row=>row.id===selected[index]);
+    assert.deepEqual(nodes.map(node=>node.dataset.sanadNode),branch.paths[0]);
+    assert.deepEqual(nodes.map(node=>node.textContent),branch.paths[0].map(id=>branch.names[id]));
+    assert.ok(variant.personalPersonIds.every(id=>branch.paths[0].includes(id)));
+    assert.equal(branch.continuationId,variant.continuationId??null);
+   });
+   const print=renderToStaticMarkup(renderSanadWithConclusion(headingless(result.chain),'#123456','#654321'));
+   const template=document.createElement('template');
+   template.innerHTML=print;
+   const rendered=[...template.content.querySelectorAll('.certificate-sanad-paragraph')].map(p=>p.textContent).join(' ');
+   const normalized=text=>text.replace(/\s+/gu,' ').trim();
+   assert.equal(normalized(rendered),normalized(headingless(result.chain)));
+   assert.equal(template.content.querySelectorAll('.certificate-route-switch').length,selected.length-1);
+  }
+  async function reloadDraft(expected){
+   assert.ok(savedDraft);
+   const draft=await snapshot.getDraftSanadForCertificate(savedDraft.sanad,owner,savedDraft.id);
+   const formatting=JSON.parse(await snapshot.collectSnapshotFormatting(savedDraft.sanad,owner,draft.chain));
+   const reopened={chain:draft.chain,branches:formatting.orderedSanads.branches};
+   assert.deepEqual(reopened,expected,'draft reload retains exact text, paths and ordered provenance');
+   return reopened;
+  }
+  try{
+   await act(async()=>root.render(h(Editor)));
+   for(let count=1;count<=5;count++){
+    await add(ids[count-1]);
+    await click('معاينة السند المجمّع');
+    const selected=ids.slice(0,count);
+    const expected=await preview(selected);
+    checkRendered(expected,selected);
+    await click('Save fixture');
+    await reloadDraft(expected);
+   }
+   assert.equal(container.querySelector('select'),null,'five selections hide the add control');
+   await click('رفع '+names[1]);
+   assert.equal(visibleText(),undefined,'reordering clears the old preview');
+   await click('إزالة '+names[3]);
+   assert.ok(container.querySelector('select'),'removal makes room for another source');
+   const selected=[ids[1],ids[0],ids[2],ids[4]];
+   const beforeSave=await preview(selected);
+   await click('معاينة السند المجمّع');
+   checkRendered(beforeSave,selected);
+   await click('Save fixture');
+   const reopened=await reloadDraft(beforeSave);
+   await act(async()=>root.render(h(OrderedSanadPreviewPanel,{load:async()=>reopened})));
+   await click('معاينة السند المجمّع');
+   checkRendered(reopened,selected);
+  }finally{
+   await act(async()=>root.unmount());
+   dom.window.close();
+   delete global.window;
+   delete global.document;
+   delete global.IS_REACT_ACT_ENVIRONMENT;
+  }
+  console.log('PASS: editor add 1–5, sixth-source limit, reorder/remove/save/reload, stable diagram IDs, tashkīl, and certificate renderer parity');
+ }
+ await verifyEditor();
  console.log('PASS: branched reload, ordered personal and additional sanads, Ṣughrā and Kubrā, reviewed continuations, stale/foreign denial, draft reload and immutable snapshot payload');
 })().catch(error=>{console.error(error);process.exitCode=1;});
