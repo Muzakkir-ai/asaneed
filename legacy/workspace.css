@@ -52,9 +52,9 @@
 @media screen and (max-width:1023px){
  .zite-app .workspace-shell,.zite-app .workspace-shell.sidebar-collapsed{padding-right:0}
  .zite-app .workspace-sidebar{display:none}
- .zite-app .mobile-nav-button{display:inline-flex;position:absolute;right:12px;top:15px;z-index:35;background:transparent;color:#fff;border-color:#ffffff80}
- .zite-app .studio-header-brand{padding-right:44px}
- .zite-app .workspace-drawer{inset:0 0 0 auto;transform:none;width:min(88vw,310px);height:100dvh;max-height:100dvh;max-width:none;border-radius:0;padding:12px;display:block;animation:none}
+ .zite-app .mobile-nav-button{display:inline-flex;position:absolute;inset-inline-start:12px;top:15px;z-index:35;background:transparent;color:#fff;border-color:#ffffff80}
+ .zite-app .studio-header-brand{padding-inline-start:44px}
+ .zite-app .workspace-drawer{inset-block:0;inset-inline:0 auto;transform:none;width:min(88vw,310px);height:100dvh;max-height:100dvh;max-width:none;border-radius:0;padding:12px;display:block;animation:none}
  .zite-app .workspace-drawer nav{margin-top:24px}
 }
 @media screen and (max-width:767px){
