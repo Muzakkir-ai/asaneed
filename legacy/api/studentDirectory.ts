@@ -34,17 +34,23 @@ export default createEndpoint({
    if(counts.get(key))throw new Error('لا يمكن حذف الطالب لأن لديه إجازة محفوظة. يجب معالجة شهاداته أولًا.');
    const targets=saved.filter(row=>arabicSearchKey(row.name||'')===key);
    if(!targets.length)throw new Error('اسم الطالب غير موجود في القائمة');
+   if(targets.length>1)throw new Error('يوجد أكثر من طالب بهذا الاسم؛ لا يمكن الحذف بالاسم وحده.');
    // Check again immediately before deletion so a recently issued ijazah protects the name.
    const currentCertificates=await readAll(zite.certificates);
    if(currentCertificates.some(c=>arabicSearchKey(c.studentName||'')===key))throw new Error('أُضيفت إجازة لهذا الطالب؛ لم يُحذف اسمه.');
-   for(const row of targets)await zite.students.delete({id:row.id});
-   remaining=saved.filter(row=>arabicSearchKey(row.name||'')!==key);
+   await zite.students.delete({id:targets[0].id});
+   remaining=saved.filter(row=>row.id!==targets[0].id);
   }
   const unique=new Map<string,string>();
   for(const value of [...remaining.map(row=>row.name||''),...issued.map(row=>row.studentName||'')]){
    const name=normalized(value);if(name)unique.set(arabicSearchKey(name),name);
   }
-  const entries=[...unique].map(([key,name])=>({name,certificateCount:counts.get(key)||0,canDelete:admin&&!counts.get(key)&&remaining.some(row=>arabicSearchKey(row.name||'')===key)})).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
+  const savedCounts=new Map<string,number>();
+  for(const row of remaining){
+   const key=arabicSearchKey(row.name||'');
+   savedCounts.set(key,(savedCounts.get(key)||0)+1);
+  }
+  const entries=[...unique].map(([key,name])=>({name,certificateCount:counts.get(key)||0,canDelete:admin&&!counts.get(key)&&savedCounts.get(key)===1})).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
   return {students:entries.map(row=>row.name),entries,canManageStudents:admin};
  },
 });

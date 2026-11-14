@@ -56,7 +56,15 @@ function filtered(rows:RecordRow[],filters?:Record<string,unknown>){return filte
 async function personalIssuer(){const {client,account,user,scope}=context();const assigned=checked(await client.from('issuer_accounts').select('issuer_id').eq('account_id',scope?.accountId??account.id));
  const profiles=await table('issuers');const personal=profiles.find(p=>p.print_profile?.personalAccount===(scope?.accountId??account.id)&&assigned.some((a:any)=>a.issuer_id===p.id));if(personal)return personal.id;
  if(account.role==='admin'&&!scope?.inspection&&(!scope||scope.accountId===account.id)){const id=checked(await client.rpc('create_issuer_profile',{new_name:user.name,profile:{},personal:true}));if(scope){if(!scope.issuerIds.includes(id))scope.issuerIds.push(id);}context().cache?.clear();return id;}throw new Error('Assign a personal issuing-shaykh profile first');}
-async function rememberStudent(name:string){const all=await table('students');const existing=all.find(s=>normalizeName(s.display_name)===normalizeName(name));if(existing)return existing.id;return checked(await context().client.from('students').insert({display_name:name.trim()}).select('id').single()).id;}
+async function rememberStudent(name:string,currentStudentId?:string){
+ const key=normalizeName(name);
+ const matches=(await table('students')).filter(student=>normalizeName(student.display_name)===key);
+ const current=matches.find(student=>student.id===currentStudentId);
+ if(current)return current.id;
+ if(matches.length>1)throw Error('يوجد أكثر من طالب بهذا الاسم. راجع مدير النظام لتحديد الطالب.');
+ if(matches.length===1)return matches[0].id;
+ return checked(await context().client.from('students').insert({display_name:name.trim()}).select('id').single()).id;
+}
 async function write(kind:string,id:string|undefined,record:Record<string,unknown>):Promise<RecordRow>{
  const {client,user,account}=context();
  const scope=context().scope;if(scope?.readOnly)throw Error('Workspace is read-only');
@@ -84,7 +92,7 @@ async function write(kind:string,id:string|undefined,record:Record<string,unknow
   const identity=readingIdentityFromHeading((sanad.body.chain??'').match(/^【بيان القراءة:([^】]+)】/)?.[1]??'');
   const code=sanad.body?.editor?.matnCode||(identity&&RIWAYAH_CODES[identity.qariId+'|'+identity.rawi]);if(!code)throw Error('A certificate subject is required');
   if(sanad.body?.editor?.matnCode){const subject=checked(await client.from('certificate_subjects').select('kind').eq('code',code).single());if(subject.kind!=='matn')throw Error('Invalid matn code');}
-  const editor={...old?.draft?.editor,...record};const studentId=record.studentName?await rememberStudent(String(record.studentName)):old?.student_id;
+  const editor={...old?.draft?.editor,...record};const studentId=record.studentName?await rememberStudent(String(record.studentName),old?.student_id):old?.student_id;
   const patch={student_id:studentId,sanad_id:sanadId,riwayah_code:code,completion_date:record.completionDate??old?.completion_date,draft:{...old?.draft,editor,studentName:record.studentName??old?.draft?.studentName}};
   const data=old?checked(await client.from('certificates').update(patch).eq('id',id).select().single()):checked(await client.from('certificates').insert({...patch,issuer_id:sanad.issuer_id}).select().single());
   return (await coreCertificates()).find(c=>c.id===data.id)!;
