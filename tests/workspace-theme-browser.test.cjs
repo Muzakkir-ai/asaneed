@@ -2,8 +2,11 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 (async()=>{
  const builderLibrary={people:[['p-0','الشيخ الأول'],['p-1','الشيخ الثاني'],['meeting','الشيخ الملتقى'],['p-3','الشيخ الثالث'],['p-5','الشيخ الرابع'],['p-7','الشيخ الخامس'],['p-8','الشيخ السادس'],['p-9','الشيخ إبراهيم العُبَيدِي']].map(([id,name])=>({id,name,display_name:'',archived:false})),books:[],chains:[],suggestions:[],continuations:{},prefixContinuations:[]};
  const route=path.resolve('app/workspace-theme-review'),out=path.resolve(process.env.EDITOR_ARTIFACT_DIR||'.vercel/workspace-theme-browser');
+ const studioRoute=path.resolve('app/studio-shell-review');
+ if(fs.existsSync(studioRoute))throw Error('Studio fixture route already exists');
  if(fs.existsSync(route))throw Error('Fixture route already exists');
  const generated=['AGENTS.md','next-env.d.ts','app/studio/studio.css'].map(file=>({file,content:fs.readFileSync(file)}));
+ fs.mkdirSync(studioRoute);fs.copyFileSync('tests/fixtures/studio-shell-review.tsx',path.join(studioRoute,'page.tsx'));
  fs.mkdirSync(route);fs.copyFileSync('tests/fixtures/workspace-theme-review.tsx',path.join(route,'page.tsx'));fs.mkdirSync(out,{recursive:true});let server,browser;
  try{
   execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3107'],{stdio:'pipe',windowsHide:true,detached:process.platform!=='win32'});let log='';server.stdout.on('data',b=>log+=b);server.stderr.on('data',b=>log+=b);
@@ -31,6 +34,64 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   const contrast=await view.locator('svg').evaluate(e=>{const ctx=document.createElement('canvas').getContext('2d');const l=s=>{ctx.fillStyle=s;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0)},a=l(getComputedStyle(e).color),b=l(getComputedStyle(e.closest('button')).backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});assert.ok(contrast>=4.5,'filled icon contrast in dark mode');await page.screenshot({path:path.join(out,'workspace-theme-dark.png'),fullPage:true,animations:'disabled'});
   await page.emulateMedia({reducedMotion:'reduce'});await link.hover();assert.equal(await link.locator('.sidebar-icon').evaluate(e=>getComputedStyle(e).transform),'none');await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>document.documentElement.classList.remove('dark'));
   for(const width of [390,320]){await page.setViewportSize({width,height:900});const lanes=page.locator('[data-testid=parallel-mobile] .connected-chain-split');assert.equal(await lanes.evaluate(e=>getComputedStyle(e).gridTemplateColumns.split(' ').length),1,'parallel narrator paths stack on mobile');assert.ok(await page.locator('[data-testid=parallel-mobile] .narrator-person-card p').evaluateAll(els=>els.every(e=>e.getBoundingClientRect().height<180)),'names stay readable instead of wrapping letter by letter');assert.ok(await page.getByTestId('prepared-branch-review').locator('[data-sanad-node]').evaluateAll(els=>els.every(e=>e.getBoundingClientRect().width>=120)),'prepared graph node width stays readable');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'فتح قائمة التنقل'}).click();await page.getByRole('dialog').waitFor();await page.screenshot({path:path.join(out,`workspace-theme-mobile-${width}.png`),fullPage:true,animations:'disabled'});await page.getByRole('dialog').getByRole('button',{name:'أسانيدي',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});}
+  const menu = page.getByRole('button', {name:'فتح قائمة التنقل',includeHidden:true});
+  await menu.focus();
+  await page.keyboard.press('Enter');
+  const drawer = page.getByRole('dialog', {name:'الأسانيد والإجازات'});
+  await drawer.waitFor();
+  assert.equal(await menu.getAttribute('aria-expanded'), 'true');
+  assert.equal(await drawer.getAttribute('dir'), 'rtl');
+  await page.keyboard.press('Tab');
+  assert.ok(await drawer.evaluate(el => el.contains(document.activeElement)));
+  await page.keyboard.press('Escape');
+  await drawer.waitFor({state:'hidden'});
+  await page.waitForFunction(() => document.activeElement?.classList.contains('mobile-nav-button'));
+  assert.equal(await menu.getAttribute('aria-expanded'), 'false');
+  console.log('Workspace desktop/390/320px, Arabic keyboard focus, reduced motion and dark icon contrast:',contrast);
+  const studio = await browser.newPage({viewport:{width:1280,height:900}});
+  studio.on('pageerror',error=>errors.push(error.message));
+  const certificate={id:'fixture-cert',studentName:'طالب تجريبي',shaykhName:'مجيز تجريبي',completionDate:'2026-10-01',registrationNumber:'2601-12305',certificateNumber:1,qiraahName:'برواية حفص عن عاصم',publicationStatus:'draft'};
+  await studio.route('**/*', request=>{
+   const url=new URL(request.request().url());
+   if(url.hostname!=='127.0.0.1')return request.abort();
+   if(url.pathname==='/api/workspace-scope')return request.fulfill({json:{actorId:'fixture-issuer',isAdmin:false,accounts:[],issuers:[]}});
+   if(url.pathname.endsWith('/assetSource'))return request.fulfill({json:{repository:'',branch:'main'}});
+   if(url.pathname.endsWith('/getDashboard'))return request.fulfill({json:{certificates:[certificate],issuers:[],asaneed:[]}});
+   if(url.pathname.startsWith('/api/'))return request.fulfill({json:{requests:[]}});
+   return request.continue();
+  });
+  const studioUrl='http://127.0.0.1:3107/studio-shell-review';
+  await studio.goto(studioUrl+'?page=certs');
+  const registration=studio.getByLabel('٢٦٠١-١٢٣٠٥').filter({visible:true});
+  for(const width of [1280,390,320]){
+   await studio.setViewportSize({width,height:900});
+   await registration.waitFor();
+   assert.ok(await registration.evaluate(el=>{
+    const parts=[...el.children].map(child=>child.getBoundingClientRect().left);
+    return getComputedStyle(el).unicodeBidi==='isolate' && parts.every((left,index)=>index===0||left>parts[index-1]);
+   }),'registration groups display left-to-right in Arabic');
+   assert.ok(await studio.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Studio width: '+width);
+  }
+  const studioMenu=studio.getByRole('button',{name:'فتح قائمة التنقل'});
+  await studioMenu.click();
+  const studioDrawer=studio.getByRole('dialog');
+  await studioDrawer.getByRole('button',{name:'الوضع الداكن'}).click();
+  await studioDrawer.getByRole('button',{name:'English'}).click();
+  await studioDrawer.getByRole('button',{name:'Students & certificates'}).click();
+  assert.equal(new URL(studio.url()).searchParams.get('page'),'certs');
+  const englishMenu=studio.getByRole('button',{name:'Open navigation menu'});
+  await englishMenu.focus();
+  await studio.keyboard.press('Enter');
+  await studioDrawer.waitFor();
+  assert.equal(await studioDrawer.getAttribute('dir'),'ltr');
+  await studio.keyboard.press('Escape');
+  await studioDrawer.waitFor({state:'hidden'});
+  await studio.waitForFunction(()=>document.activeElement?.classList.contains('mobile-nav-button'));
+  await studio.reload();
+  await registration.waitFor();
+  assert.deepEqual(await studio.evaluate(()=>[document.documentElement.lang,document.documentElement.dir,document.documentElement.classList.contains('dark')]),['en','ltr',true]);
+  console.log('Studio shell: 1280/390/320px, mixed-direction numbers, direct certificates URL, language/theme reload and English drawer focus passed');
+  if(process.argv.includes('--studio-shell')){assert.deepEqual(errors,[]);return;}
   const review=page.getByTestId('narrator-create-review');await review.getByRole('combobox').fill('الاختباري أَحْمَد');assert.equal(await page.getByRole('listbox',{name:'الرواة المحفوظون'}).getByRole('option').count(),10,'unordered vocalized words find saved people');await review.getByRole('combobox').press('Escape');await review.getByRole('button',{name:'مراجعة وإنشاء شخص جديد'}).click();
   const duplicateList=review.locator('.narrator-duplicate-list');assert.equal(await duplicateList.getByRole('button').count(),10);assert.ok(await duplicateList.evaluate(e=>e.clientHeight<=240&&e.scrollHeight>e.clientHeight),'duplicate choices have bounded scrolling');
   assert.ok(await duplicateList.getByRole('button').evaluateAll(els=>els.every(e=>{const b=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return b.left>=p.left-1&&b.right<=p.right+1&&e.scrollWidth<=e.clientWidth+1;})),'long choices wrap within the narrow card');
@@ -91,5 +152,5 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   await mobile.screenshot({path:path.join(out,'workspace-meeting-selector.png'),fullPage:true});
   await touchContext.close();
   assert.deepEqual(errors,[]);console.log(JSON.stringify({themedMeetingSelector:true,searchAndKeyboard:true,gradient:true,touchFeedback:true,singleTap:true,scrollCancellation:true,isolatedCardHover:true,isolatedPanelFocus:true,desktop:true,mobile:[390,320],keyboardNavigation:true,disabled:true,destructive:true,darkIconContrast:contrast,reducedMotion:true,errors}));
- }finally{await browser?.close();if(server){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{try{process.kill(-server.pid,'SIGTERM');}catch{}}}fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').includes('workspace-theme-review/page'))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);}
+ }finally{await browser?.close();if(server){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{try{process.kill(-server.pid,'SIGTERM');}catch{}}}fs.unlinkSync(path.join(studioRoute,'page.tsx'));fs.rmdirSync(studioRoute);fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').match(/(?:workspace-theme-review|studio-shell-review)\/page/))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);}
 })().catch(e=>{console.error(e);process.exitCode=1});
