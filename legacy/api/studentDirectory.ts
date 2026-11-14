@@ -17,7 +17,7 @@ export default createEndpoint({
  description:'Shared student selection; administrators may delete unused saved names without deleting certificates',
  authenticated:true,
  inputSchema:z.object({action:z.enum(['list','delete']).default('list'),name:z.string().trim().min(1).optional(),ownerId:z.string().optional()}),
- outputSchema:z.object({students:z.array(z.string()),entries:z.array(z.object({name:z.string(),certificateCount:z.number(),canDelete:z.boolean()})),canManageStudents:z.boolean()}),
+ outputSchema:z.object({students:z.array(z.string()),entries:z.array(z.object({id:z.string(),name:z.string(),label:z.string(),certificateCount:z.number(),canDelete:z.boolean()})),canManageStudents:z.boolean()}),
  execute:async({input,context})=>{
   const admin=await isAppAdmin(context.user.email);
   const [saved,issued]=await Promise.all([readAll(zite.students),readAll(zite.certificates)]);
@@ -41,16 +41,29 @@ export default createEndpoint({
    await zite.students.delete({id:targets[0].id});
    remaining=saved.filter(row=>row.id!==targets[0].id);
   }
-  const unique=new Map<string,string>();
-  for(const value of [...remaining.map(row=>row.name||''),...issued.map(row=>row.studentName||'')]){
-   const name=normalized(value);if(name)unique.set(arabicSearchKey(name),name);
-  }
   const savedCounts=new Map<string,number>();
+  const suffixCounts=new Map<string,number>();
   for(const row of remaining){
    const key=arabicSearchKey(row.name||'');
    savedCounts.set(key,(savedCounts.get(key)||0)+1);
+   const suffixKey=key+'|'+row.id.slice(-8);
+   suffixCounts.set(suffixKey,(suffixCounts.get(suffixKey)||0)+1);
   }
-  const entries=[...unique].map(([key,name])=>({name,certificateCount:counts.get(key)||0,canDelete:admin&&!counts.get(key)&&savedCounts.get(key)===1})).sort((a,b)=>a.name.localeCompare(b.name,'ar'));
-  return {students:entries.map(row=>row.name),entries,canManageStudents:admin};
+  const legacyNames=new Map<string,string>();
+  for(const value of [...remaining.map(row=>row.name||''),...issued.map(row=>row.studentName||'')]){
+   const name=normalized(value);
+   if(name)legacyNames.set(arabicSearchKey(name),name);
+  }
+  const entries=remaining.flatMap(row=>{
+   const name=normalized(row.name||'');
+   if(!name)return [];
+   const key=arabicSearchKey(name);
+   const duplicate=(savedCounts.get(key)||0)>1;
+   const suffix=row.id.slice(-8);
+   const reference=(suffixCounts.get(key+'|'+suffix)||0)>1?row.id:suffix;
+   const label=duplicate?name+' · معرّف '+reference:name;
+   return [{id:row.id,name,label,certificateCount:counts.get(key)||0,canDelete:admin&&!counts.get(key)&&!duplicate}];
+  }).sort((a,b)=>a.name.localeCompare(b.name,'ar')||a.id.localeCompare(b.id));
+  return {students:[...legacyNames.values()].sort((a,b)=>a.localeCompare(b,'ar')),entries,canManageStudents:admin};
  },
 });

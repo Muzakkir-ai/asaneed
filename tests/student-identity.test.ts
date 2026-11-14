@@ -4,6 +4,7 @@ import {zite} from '../legacy/compat/database';
 
 const firstStudent='00000000-0000-4000-8000-000000000001';
 const secondStudent='00000000-0000-4000-8000-000000000002';
+let created:Record<string,unknown>|undefined;
 const draft={id:'draft',student_id:secondStudent,sanad_id:'sanad',issuer_id:'issuer',status:'draft',draft:{}};
 const tables:Record<string,Record<string,unknown>[]>={
  students:[{id:firstStudent,display_name:'أَحْمَد الاختبار'},{id:secondStudent,display_name:'احمد الاختبار'}],
@@ -24,12 +25,16 @@ const client={
   update:(patch:Record<string,unknown>)=>({
    eq:()=>({select:()=>({single:async()=>{
     writes.push({table,patch});
+    Object.assign(draft,patch);
     return {data:draft,error:null};
    }})}),
   }),
   insert:(patch:Record<string,unknown>)=>{
    writes.push({table,patch});
-   throw Error('Unexpected insert');
+   assert.equal(table,'certificates');
+   created={...patch,id:'created-'+writes.length};
+   tables.certificates.push(created);
+   return {select:()=>({single:async()=>({data:created,error:null})})};
   },
  }),
 };
@@ -45,5 +50,15 @@ requestContext.run(context,async()=>{
  assert.equal(writes.length,1);
  assert.equal(writes[0].table,'certificates');
  assert.equal(writes[0].patch.student_id,secondStudent);
- console.log('PASS: ambiguous new certificate blocked and existing draft retains its student ID');
+ const reloaded=await zite.certificates.findOne({id:draft.id});
+ assert.equal(reloaded.studentId,secondStudent);
+ for(const studentId of [firstStudent,secondStudent]){
+  const saved=await zite.certificates.create({record:{sanad:'sanad',studentName:'أحمد الاختبار',studentId}});
+  assert.equal(saved.studentId,studentId);
+  assert.equal(created?.student_id,studentId);
+ }
+ await assert.rejects(()=>zite.certificates.create({record:{sanad:'sanad',studentName:'طالب مختلف',studentId:firstStudent}}),/غير متاح/);
+ await assert.rejects(()=>zite.certificates.create({record:{sanad:'sanad',studentName:'أحمد الاختبار',studentId:'stale'}}),/غير متاح/);
+ assert.equal(writes.length,3);
+ console.log('PASS: distinct IDs save independently; stale and mismatched choices are rejected; ambiguous new certificate blocked and an existing draft reloads with its student ID');
 }).catch(error=>{console.error(error);process.exitCode=1;});

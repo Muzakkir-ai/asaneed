@@ -19,7 +19,7 @@ export default createEndpoint({
     shaykhs:z.array(z.object({id:z.string(),name:z.string()})),
     asaneed: z.array(z.object({ id: z.string(), title: z.string(), qiraahName: z.string(), chain: z.string(), shaykhId:z.string() })),
     certificates: z.array(z.object({
-      id: z.string(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
+      id: z.string(), studentId:z.string().optional(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
       qiraahName: z.string(), notes: z.string(), certificateNumber: z.number(), registrationNumber:z.string(),issuerKey:z.string(),qariId:z.string(),rawi:z.string(), publicationStatus:z.enum(['draft','final']), shaykhId:z.string(), shaykhName:z.string(), additionalShaykh:z.string(), snapshotChain:z.string(), snapshotHeading:z.string(), snapshotFormatting:z.string(),
     })),
   }),
@@ -76,6 +76,7 @@ export default createEndpoint({
       certificates: ownCerts
         .map((c) => ({
           id: c.id,
+          studentId:c.studentId,
           studentName: c.studentName ?? '',
           completionDate: c.completionDate ?? '',
           hijriDayOffset:c.hijriDayOffset??0,
