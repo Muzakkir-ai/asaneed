@@ -4,7 +4,7 @@ A shared introduction or conclusion moved back to draft could still enter a cert
 
 Reproduce with a synthetic certificate draft linked to a published shared introduction. Move that introduction back to draft and reopen the certificate preview as an administrator. The previous resolver incorporated the unpublished text. The branch reports the template as unavailable until it is published again or replaced on the holding.
 
-Synthetic coverage includes request approval and rejection, ownership, normalized duplicates, atomic rollback, review replay, template changes, personal overrides and frozen snapshots. Simultaneous database sessions and authenticated browser coverage remain open. The personal editor currently offers its general template list regardless of the catalog's saved template associations.
+Synthetic coverage includes request approval and rejection, ownership, normalized duplicates, atomic rollback, review replay, template changes, personal overrides and frozen snapshots. A disposable PostgreSQL 18 cluster confirmed that a competing administrator waits on the request row lock, then receives `Pending request required` after the first review commits. Exactly one catalog row and one audit decision are recorded. The personal editor now lists associated published shared templates first and keeps existing selections and other choices available. The local component fixture exercises normalized title/author search, category filtering, and draft visibility for the staff view. Hosted signed-in browser verification remains open.
 
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
