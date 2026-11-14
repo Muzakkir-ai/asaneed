@@ -16,6 +16,12 @@ on:
       - 'legacy/api/certificateDraftFormatting.ts'
       - 'legacy/api/certificateDraftPreview.ts'
       - 'legacy/api/finalizeCertificate.ts'
+      - 'legacy/api/studentDirectory.ts'
+      - 'legacy/compat/database.ts'
+      - 'legacy/components/CertificateForm.tsx'
+      - 'legacy/components/CertificateCreation.tsx'
+      - 'tests/student-identity.test.ts'
+      - 'tests/received-sanad-api.test.cjs'
       - 'legacy/index.css'
       - 'tests/certificate-footer-lift.test.ts'
       - 'tests/certificate-layout-browser.test.cjs'
@@ -41,6 +47,11 @@ jobs:
         run: npm run typecheck
       - name: Test spacing, footer lift and schema constraints
         run: npm run test:certificate-layout
+      - name: Test student identity and received sanad
+        run: |
+          npx tsc --ignoreConfig tests/student-identity.test.ts --outDir .vercel/chat04-followup --module commonjs --target es2022 --resolveJsonModule --esModuleInterop --skipLibCheck --types node --noEmitOnError
+          node .vercel/chat04-followup/tests/student-identity.test.js
+          node tests/received-sanad-api.test.cjs
       - run: npx playwright install --with-deps chromium
       - name: Browser test PDF formatting controls and draft save/reset
         run: node tests/certificate-layout-browser.test.cjs
