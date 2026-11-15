@@ -62,14 +62,6 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
   // group the single-hop narrators without inventing a combined route.
   const single=lanes.filter(l=>l.length===1);
   const grouped=single.length>=2;
-  const rendered:string[][]=[];
-  for(const lane of lanes){
-   if(grouped&&lane.length===1){
-    if(rendered.some(item=>item===single))continue;
-    rendered.push(single);
-   }else rendered.push([lane[0]]);
-  }
-  const expanded:string[][]=grouped?lanes.filter(l=>l.length>1).map(l=>l):lanes;
   const choices:(string[]|string[][])[]=[];
   let inserted=false;
   for(const lane of lanes){
