@@ -68,11 +68,11 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  const graphText=path=>'كما أخذته عن '+path.map(id=>graphNames[id]).join('، عن ')+'.';
  const graphBranch=(path,names=graphNames)=>({paths:[[...path].reverse()],names});
  const merged=mergeOrderedSanadText(graphPaths.map(graphText),graphPaths.map(path=>graphBranch(path)));
- assert.ok(merged?.includes('(ح)'), 'junction-aware text inserts transmission switches');
+ assert.ok(merged?.includes('وكلاهما عن'), 'direct parallel narrators share a single transmission group');
  assert.equal((merged.match(/الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
  assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
  assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
- assert.equal((merged.match(/\(ح\)/gu)||[]).length,2,'only two actual split points');
+ assert.equal((merged.match(/\(ح\)/gu)||[]).length,0,'no (ح) for direct parallel narrators sharing both endpoints');
  assert.equal(mergeOrderedSanadText(graphPaths.slice(0,2).map(graphText),[
   graphBranch(graphPaths[0]),graphBranch(graphPaths[1],{...graphNames,e:'اسم آخر'})]),null,'conflicting identity display must not merge');
  assert.equal(mergeOrderedSanadText([graphText(graphPaths[0]),graphText(graphPaths[1]).replace(/\.$/u,'، عن تتمة مختلفة.')],
