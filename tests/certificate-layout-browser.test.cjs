@@ -334,6 +334,20 @@ async function checkDownloadPdf(page){
     assert.equal(await number.count(),mode==='none'?0:1,mode);
     assert.equal(await qPage.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).count(),0);
    }
+   // Exercise the actual finalized-certificate print button, not only page.pdf().
+   // Stub the native print dialog so CI remains deterministic and check the page stays alive.
+   await qPage.evaluate(()=>{
+    window.__asaneedPrintInvocations=0;
+    window.print=()=>{window.__asaneedPrintInvocations+=1;};
+   });
+   const printButton=qPage.getByRole('button',{name:'طباعة',exact:true});
+   await printButton.waitFor({state:'visible'});
+   await printButton.waitFor({state:'attached'});
+   assert.equal(await printButton.isDisabled(),false,'finalized print button must be enabled');
+   await printButton.click();
+   assert.equal(await qPage.evaluate(()=>window.__asaneedPrintInvocations),1,
+    'finalized print button must invoke native printing exactly once');
+   assert.equal(qPage.isClosed(),false,'print action must leave certificate page open');
   }finally{await qPage.close();}
   console.log('PASS PDF viewer matn and qiraat SVG title, mujeez footer, draft save/reset and responsive print');
  }finally{
