@@ -138,7 +138,7 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
   const blocks=sanadPathLayout(partials,true);
   if(!blocks)return null;
   const section=renderBlocks(blocks,'كما أخذته عن',null).trim();
-  if(section)paragraphs.push((paragraphs.length?'(ح) ':'')+section);
+  if(section)paragraphs.push((paragraphs.length&&new Set(partials.map(p=>p[0])).size>1?'(ح) ':'')+section);
   paragraphs.push('ثم تلتقي الطرق عند '+person(meeting));
   for(const path of partials)path.forEach(id=>mentioned.add(id));
   mentioned.add(meeting);
