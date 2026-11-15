@@ -81,7 +81,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assert.equal(mergeOrderedSanadText(partial.map(graphText),partial.map(path=>graphBranch(path))),null,'do not introduce a missing crossed route');
  const independent=[['a','d','h'],['b','d','h']];
  const independentText=mergeOrderedSanadText(independent.map(graphText),independent.map(path=>graphBranch(path)));
- assert.match(independentText||'',/كما أخذته أيضًا عن الشيخ عبد الغفار/u,'independent sources retain their own opening');
+ assert.match(independentText||'',/الشيخ عبد الغفار، وكلاهما عن الشيخ الحلواني/u,'same student and onward teacher are grouped without extra (ح)');
  // When three or four teachers share the same student and same onward teacher,
  // the group is not three or four independent (ح) transmission switches.
  for(const count of [3,4]){
