@@ -50,10 +50,39 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
   if(index===blocks.length-1||!block.lanes.length||block.lanes.some(l=>!l.length||l.some(b=>b.kind!=='person')))return null;
   const lanes=block.lanes.map(l=>l.map(b=>(b as {kind:'person';id:string}).id));
   const clause=(lane:string[])=>lane.map(id=>names.get(id)).join('، عن ');
-  result+=lead+clause(lanes[0]);
-  for(const lane of lanes.slice(1)){
-   result+=' (ح). '+(pivot?'وقرأ '+subject(pivot)+' أيضًا على ':'كما أخذته أيضًا عن ')+clause(lane);
+  // Several narrators between exactly the same student and teacher make one
+  // parallel transmission group, not a separate (ح) transition per narrator.
+  if(lanes.every(l=>l.length===1)){
+   result+=lead+lanes.map((lane,i)=>(i?'و':'')+names.get(lane[0])).join('، ');
+   lead=lanes.length===2?'، وكلاهما عن ':'، وكلهم عن ';
+   pivot=null;
+   continue;
   }
+  // If single-hop alternatives coexist with longer independent branches,
+  // group the single-hop narrators without inventing a combined route.
+  const single=lanes.filter(l=>l.length===1);
+  const grouped=single.length>=2;
+  const rendered:string[][]=[];
+  for(const lane of lanes){
+   if(grouped&&lane.length===1){
+    if(rendered.some(item=>item===single))continue;
+    rendered.push(single);
+   }else rendered.push([lane[0]]);
+  }
+  const expanded:string[][]=grouped?lanes.filter(l=>l.length>1).map(l=>l):lanes;
+  const choices:(string[]|string[][])[]=[];
+  let inserted=false;
+  for(const lane of lanes){
+   if(grouped&&lane.length===1){
+    if(!inserted){choices.push(single);inserted=true;}
+   }else choices.push(lane);
+  }
+  const formatChoice=(choice:string[]|string[][])=>Array.isArray(choice[0])
+   ?(choice as string[][]).map(l=>names.get(l[0])).join('، و')
+   :clause(choice as string[]);
+  result+=lead+formatChoice(choices[0]);
+  for(const choice of choices.slice(1))
+   result+=' (ح). '+(pivot?'وقرأ '+subject(pivot)+' أيضًا على ':'كما أخذته أيضًا عن ')+formatChoice(choice);
   lead='، وقرأ '+lanes.map(l=>subject(l[l.length-1])).join(' و')+' على ';
   pivot=null;
  }
