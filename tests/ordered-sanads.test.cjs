@@ -72,10 +72,10 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assert.equal((merged.match(/، عن الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
  assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
  assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
- assert.equal((merged.match(/\\(ح\\)/gu)||[]).length,2,'only two actual split points');
+ assert.equal((merged.match(/\(ح\)/gu)||[]).length,2,'only two actual split points');
  assert.equal(mergeOrderedSanadText(graphPaths.slice(0,2).map(graphText),[
   graphBranch(graphPaths[0]),graphBranch(graphPaths[1],{...graphNames,e:'اسم آخر'})]),null,'conflicting identity display must not merge');
- assert.equal(mergeOrderedSanadText([graphText(graphPaths[0]),graphText(graphPaths[1]).replace(/\\.$/u,'، عن تتمة مختلفة.')],
+ assert.equal(mergeOrderedSanadText([graphText(graphPaths[0]),graphText(graphPaths[1]).replace(/\.$/u,'، عن تتمة مختلفة.')],
   graphPaths.slice(0,2).map(path=>graphBranch(path))),null,'different continuations remain separate');
  const partial=graphPaths.slice(0,3);
  assert.equal(mergeOrderedSanadText(partial.map(graphText),partial.map(path=>graphBranch(path))),null,'do not introduce a missing crossed route');
