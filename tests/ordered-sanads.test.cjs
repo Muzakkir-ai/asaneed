@@ -69,7 +69,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  const graphBranch=(path,names=graphNames)=>({paths:[[...path].reverse()],names});
  const merged=mergeOrderedSanadText(graphPaths.map(graphText),graphPaths.map(path=>graphBranch(path)));
  assert.ok(merged?.includes('تلتقي الطرق عند'), 'direct parallel narrators converge at the recorded meeting');
- assert.equal((merged.match(/الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
+ assert.equal((merged.match(/تلتقي الطرق عند الشيخ الحلواني/gu)||[]).length,1,'junction is formally introduced only once');
  assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
  assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
  assert.equal((merged.match(/\(ح\)/gu)||[]).length,0,'no (ح) for direct parallel narrators sharing both endpoints');
@@ -89,7 +89,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   const together=mergeOrderedSanadText(routes.map(graphText),routes.map(p=>graphBranch(p)));
   assert.ok(together,'direct parallel narrator alternatives are safe to group');
   assert.equal((together.match(/\(ح\)/gu)||[]).length,0,'single-hop teacher group needs no (ح)');
-  assert.equal((together.match(/الشيخ الحلواني/gu)||[]).length,1,'common teacher appears once');
+  assert.equal((together.match(/تلتقي الطرق عند الشيخ الحلواني/gu)||[]).length,1,'common meeting is recorded once');
   assert.ok(middle.every(mid=>together.includes(graphNames[mid])),'no teacher is omitted');
  }
  // Sheikh Uwais Hafs-style fixture: 5 incoming paths × 5 outward routes,
