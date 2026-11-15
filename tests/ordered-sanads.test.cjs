@@ -120,7 +120,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  for(const selected of [ids.slice(0,1),ids.slice(0,2),[...ids].reverse()]){
   const result=await preview(selected);
   assertOrder(result,selected);
-  assert.equal(result.chain.split('(ح)').length-1,selected.length-1);
+  assert.equal(result.chain.split('(ح)').length-1,0,'parallel direct-to-junction narrators are grouped');
   assert.equal(result.chain.split('مقدمة تجريبية').length-1,1);
  }
  variants[2].rawi='شعبة';
@@ -132,7 +132,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  admin=false;
  await assert.rejects(()=>preview(ids),/Permission denied/);
  admin=true;
- assert.match((await preview([guestId,ids[0]])).chain,/شيخ رابع.*\(ح\).*الشيخ أَحْمَد/su);
+ assert.match((await preview([guestId,ids[0]])).chain,/شيخ رابع.*الشيخ أَحْمَد/su);
  guest.libraryKubra=true;
  const kubra=await preview(ids.slice(0,2),'1031');
  assertOrder(kubra,ids.slice(0,2));
