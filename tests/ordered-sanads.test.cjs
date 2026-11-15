@@ -82,6 +82,16 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  const independent=[['a','d','h'],['b','d','h']];
  const independentText=mergeOrderedSanadText(independent.map(graphText),independent.map(path=>graphBranch(path)));
  assert.match(independentText||'',/كما أخذته أيضًا عن الشيخ عبد الغفار/u,'independent sources retain their own opening');
+ // When three or four teachers share the same student and same onward teacher,
+ // the group is not three or four independent (ح) transmission switches.
+ for(const count of [3,4]){
+  const middle=['b','c','f','g'].slice(0,count),routes=middle.map(mid=>['a',mid,'d','e','h']);
+  const together=mergeOrderedSanadText(routes.map(graphText),routes.map(p=>graphBranch(p)));
+  assert.ok(together,'direct parallel narrator alternatives are safe to group');
+  assert.equal((together.match(/\(ح\)/gu)||[]).length,0,'single-hop teacher group needs no (ح)');
+  assert.equal((together.match(/الشيخ الحلواني/gu)||[]).length,1,'common teacher appears once');
+  assert.ok(middle.every(mid=>together.includes(graphNames[mid])),'no teacher is omitted');
+ }
  const ids=variants.map(v=>v.id);
  const branchFixture={...variants[0],id:id(90),prepareNarratorBoxes:true,personalPeopleReviewed:true,junction:'ubaydi',
   sanadText:'كما أخذته عن الشيخ أَحْمَد، عن الشيخ خالد، عن إبراهيم العُبيدي (ح). وقرأ الشيخ أَحْمَد أيضًا على الشيخ صالح، عن إبراهيم العُبيدي',
