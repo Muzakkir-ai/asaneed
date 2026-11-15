@@ -22,3 +22,9 @@ The website accepts one valid IP from the Vercel-managed `x-vercel-forwarded-for
 - **PASS local** · Synthetic PostgreSQL fixtures and the HTTP handler cover exact lookup, direct RPC denial for both roles, forged and missing credentials, shared budgets, response privacy, publication, historical token compatibility and later finalization.
 - **PASS concurrent database admission** · Disposable PostgreSQL 18.6 with 16 independent connections admitted 10 of 16 requests for one client, then 50 of 64 requests from distinct clients before reaching the shared cap of 60.
 - **BLOCKED hosted** · The new gate needs a staged deployment and capability provisioning. Hosted evidence in #121 at `70e9387` validates the earlier lookup and historical token behavior. The new ingress, PostgREST transaction behavior, end-to-end limit and cleanup still need rehearsal.
+
+## Release checklist
+
+- **PASS locally** · The same fixture exhausts the website client budget, tries the old RPC, the guarded public RPC and the private wrapper as both public roles, and verifies each returns permission denied. Subsequent legitimate requests can still spend the remaining shared budget. The historical token resolves during exhaustion and the issued snapshot and token are byte-for-byte identical.
+- **BLOCKED hosted** · Chat 12 still needs an authorized isolated deployment of the gate, matching staging credentials, ingress and REST verification, and the cleanup and rollback rehearsal above.
+- **OPEN / deferred** · Chat 05's hosted A4 print and PDF check remains open in #121.

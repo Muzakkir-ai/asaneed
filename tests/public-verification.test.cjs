@@ -231,12 +231,34 @@ async function main() {
       'x-forwarded-for': '192.0.2.50',
     });
 
+    // An exhausted website client must not get a result by changing entry points.
+    for (const role of ['anon', 'authenticated']) {
+      await db.exec(`set local role ${role}`);
+      for (const directAttempt of [
+        () => lookup(number),
+        () => guardedLookup(number, 'f'.repeat(64), null),
+        () => guardedLookup(number, 'f'.repeat(64), '0'.repeat(64)),
+        () => db.query('select private.guard_certificate_number_lookup($1, $2, $3)',
+          [number, 'f'.repeat(64), '0'.repeat(64)]),
+      ]) {
+        await db.exec('savepoint direct_rpc');
+        await assert.rejects(directAttempt, { code: '42501' });
+        await db.exec('rollback to savepoint direct_rpc; release savepoint direct_rpc');
+      }
+    }
+    await db.exec('set local role anon');
+    // Denied direct attempts did not consume the remaining shared budget.
     for (let i = 0; i < 50; i++) {
       assert.equal((await guardedLookup('0000-0000', i.toString(16).padStart(64, '0'))).status, 'not_found');
     }
     await request(body, 429, { error: 'rate_limited' });
     assert.equal((await historicalLink()).verified, true, 'historical tokens survive budget exhaustion');
-    await db.exec('rollback');
+    await db.exec('rollback; reset role');
+    const afterAbuseTests = await row(
+      'select content, verification_token from public.certificate_snapshots join public.certificates on id=certificate_id where id=$1',
+      [issueId],
+    );
+    assert.deepEqual(afterAbuseTests, before, 'budget activity does not change the issued snapshot or token');
 
     await db.exec('reset role; update private.ijazah_verification_index set published=false; set role anon');
     await request(JSON.stringify({ number }), 200, { status: 'preparing' });
