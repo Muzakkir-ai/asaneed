@@ -28,3 +28,40 @@ The website accepts one valid IP from the Vercel-managed `x-vercel-forwarded-for
 - **PASS locally** · The same fixture exhausts the website client budget, tries the old RPC, the guarded public RPC and the private wrapper as both public roles, and verifies each returns permission denied. Subsequent legitimate requests can still spend the remaining shared budget. The historical token resolves during exhaustion and the issued snapshot and token are byte-for-byte identical.
 - **BLOCKED hosted** · Chat 12 still needs an authorized isolated deployment of the gate, matching staging credentials, ingress and REST verification, and the cleanup and rollback rehearsal above.
 - **OPEN / deferred** · Chat 05's hosted A4 print and PDF check remains open in #121.
+
+## Staging counter-retention operator runbook (15 November 2026)
+
+Read-only staging inspection on project `tpomthcopeeyotthzpjs` confirmed migration count 45, one capability-hash record, zero budget rows, and `pg_cron` **available** (version 1.6.4) but **not installed**. This is not evidence that scheduled cleanup is running. The isolated candidate Preview at `e9fae46d` is READY; hosted POST rate-limit tests are still pending.
+
+The preferred database-local scheduler is `pg_cron`, if the project owner approves enabling the extension and the hosting plan permits it. **Do not apply the following to production as part of staging rehearsal.** Execute only as a privileged operator on the confirmed staging project, with the migration/extension policy reviewed:
+
+```sql
+-- Staging only: requires a privileged role and explicit operational approval.
+create extension if not exists pg_cron with schema pg_catalog;
+select cron.schedule(
+  'asaneed-verification-budget-cleanup',
+  '17 * * * *',
+  $$delete from private.verification_lookup_budget
+    where minute < floor(extract(epoch from now()) / 60)::bigint - 60$$
+);
+```
+
+Before scheduling, confirm `cron.schedule` has the necessary privileges to delete from the private table in its execution role; a successful schedule registration is not proof of successful execution. Verify without exposing secrets:
+
+```sql
+select jobid, jobname, schedule, active
+from cron.job
+where jobname = 'asaneed-verification-budget-cleanup';
+
+select jobid, status, start_time, end_time, return_message
+from cron.job_run_details
+where jobid in (select jobid from cron.job
+                where jobname = 'asaneed-verification-budget-cleanup')
+order by start_time desc limit 5;
+
+select count(*) as stale_rows
+from private.verification_lookup_budget
+where minute < floor(extract(epoch from now()) / 60)::bigint - 60;
+```
+
+If the extension or scheduler is unavailable, choose a separately authenticated, privileged external scheduler and document its execution identity, schedule, retry behavior, monitoring and revocation procedure before release. Do **not** expose a public unauthenticated cleanup HTTP endpoint. Keep the 60-minute retention window and record a successful execution and zero stale rows as the acceptance evidence. During rollback, retain the guarded lookup grants and this cleanup job; do not restore public execution of the legacy number-lookup RPC.
