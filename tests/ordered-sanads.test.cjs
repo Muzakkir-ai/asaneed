@@ -69,7 +69,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  const graphBranch=(path,names=graphNames)=>({paths:[[...path].reverse()],names});
  const merged=mergeOrderedSanadText(graphPaths.map(graphText),graphPaths.map(path=>graphBranch(path)));
  assert.ok(merged?.includes('(ح)'), 'junction-aware text inserts transmission switches');
- assert.equal((merged.match(/، عن الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
+ assert.equal((merged.match(/الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
  assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
  assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
  assert.equal((merged.match(/\(ح\)/gu)||[]).length,2,'only two actual split points');
