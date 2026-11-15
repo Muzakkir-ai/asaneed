@@ -338,7 +338,7 @@ main().then(async () => {
   console.log('PASS: public verification HTTP handler, shared budgets, RPC bypass denial, publication, privacy and historical link');
   // CI on this isolated release branch also exercises the hosted Preview using
   // a synthetic nonexistent number. Never run this probe against production.
-  if (process.env.GITHUB_ACTIONS !== 'true' || process.env.GITHUB_REF_NAME !== 'audit/chat12-integration-c1ae83cba1a2') return;
+  if (process.env.GITHUB_ACTIONS !== 'true' || ![process.env.GITHUB_REF_NAME, process.env.GITHUB_HEAD_REF].includes('audit/chat12-integration-c1ae83cba1a2')) return;
   const base = 'https://asaneed-hznu0183d-halaqaat.vercel.app';
   const res = await fetch(base + '/api/verify', {
     method: 'POST',
