@@ -232,3 +232,20 @@ The recorded merge-tree rehearsals found only current-state documentation confli
 | Owner approval | BLOCKED | Review the hosted print and abuse-control evidence, decide the accepted recovery procedure, and approve a pinned candidate and rollout scope separately. |
 
 Chat 01 and Chat 05 handoffs are recorded above for their existing workstreams. Delivery to the original chats was unavailable in this session.
+
+### 15 November verification abuse gate integration
+
+Integrated the tested #115 runtime and regression changes from `0b930b0dc76db3f74b654d8b60ec0e01e5bc5f59`. The merged fixture retains the ordered two-sanad lifecycle and runs it through the guarded number lookup. Migration 45 adds the gate after projection hardening and certificate finalization. The rollback fixture now names the finalization migration explicitly and uses the guarded RPC for authorized lookups.
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Integrated HTTP and database fixtures | PASS | `npm run typecheck` and `node tests/public-verification.test.cjs`. Ordered draft, finalization, both limits, direct RPC denial for both roles, historical QR-token lookup during exhaustion, unchanged issued snapshot, and expiry-boundary cleanup passed. Header checks used synthetic Request headers and mocked Supabase transport. |
+| Migration parity and local recovery | PASS | `node tests/release-qa-postgres.test.cjs` on disposable PostgreSQL 18.6. Fresh replay and upgrade matched across all 45 migrations. Concurrent finalization, access boundaries, backup restore and scoped finalization rollback passed. |
+| Vercel staging target | PASS | The existing protected deployment at `ea8e3364094b67867d1d89a257901d8d760527a8` is a Preview. The integration branch's Preview-only Supabase URL names a different project from production. The production alias resolved to `292dc0d5dbd27556b4004051b782cc369946c21d`. |
+| Hosted staging provisioning | BLOCKED | Supabase project metadata, migration inventory and read-only SQL calls returned Unknown tool. The database identity and current migration ledger could not be independently checked through the available database connection. No migration, credential, hash, or Preview deployment was applied. |
+| Hosted ingress and abuse checks | BLOCKED | Requires the coordinated staging migration and matching server credential/hash. Run the actual forwarded-header overwrite tests on the immutable Preview URL and staging alias. Check committed PostgREST counters across separate requests, denial for both public roles, both limits and the historical QR link during exhaustion. |
+| Hosted cleanup and rollback | BLOCKED | Requires the provisioned Preview and database gate. Verify stale-only counter deletion and retain the database revocations during rollback. Confirm historical verification and issued snapshots survive a gate-compatible rollback or expected temporary number-lookup outage. |
+| Hosted A4 print and PDF | OPEN / deferred | Retain the prior Chat 05 evidence and recheck with the linked synthetic recipient when print work resumes. |
+| Release approval | BLOCKED | Hosted abuse checks and recovery acceptance remain open. |
+
+Follow the [verification abuse gate handoff](VERIFICATION-ABUSE-GATE.md) to coordinate configuration after Supabase staging access is available. The 44-migration hosted rehearsal predates the abuse gate.

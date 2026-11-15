@@ -8,6 +8,8 @@ const dataDir = process.env.ASANEED_QA_DATA_DIR;
 assert.ok(dataDir && path.isAbsolute(dataDir), 'Set ASANEED_QA_DATA_DIR to a dedicated local PostgreSQL data directory');
 const files = fs.readdirSync(migrations).filter(f => f.endsWith('.sql')).sort();
 const candidate = files.filter(f => f >= '20261109221703');
+const finalizationMigration = '20261110082014_serialize_certificate_finalization.sql';
+const capability = 'a'.repeat(64);
 const id = n => 'f1210000-0000-4000-8000-' + String(n).padStart(12, '0');
 const [admin, issuer, other, recipient, stranger, disabled] = [1,2,3,4,5,6].map(id);
 const [owned, foreign, student, historical, first, second, third] = [12,13,14,15,16,17,18].map(id);
@@ -24,7 +26,9 @@ const actor = async (db, uid) => {
   await db.query("select set_config('request.jwt.claim.sub',$1,false)",[uid]);
   await db.query('set role authenticated');
 };
-const verify = async (db, number) => (await row(db,'select public.verify_ijazah($1) as result',[number])).result;
+const verify = async (db, number) => (await row(db,
+  'select public.lookup_certificate_number($1,$2,$3) as result',
+  [number,'b'.repeat(64),capability])).result;
 const token = async (db, value) => (await row(db,'select public.verify_certificate_token($1) as result',[value])).result;
 const issue = async (db, cert, chain, printMode='number') => (await row(db,
   'select public.finalize_certificate($1,$2) as number',[cert,{chain,formatting:JSON.stringify({printMode})}])).number;
@@ -180,7 +184,12 @@ async function run() {
     assert.ok(await row(b,'select certificate_id from public.certificate_snapshots where certificate_id=$1',[first]));
     await actor(b,stranger);
     assert.equal(await row(b,'select certificate_id from public.certificate_snapshots where certificate_id=$1',[first]),undefined);
-    await b.query('reset role; set role anon');
+    await b.query('reset role');
+    await b.query(
+      "insert into private.verification_lookup_capability(secret_hash) values (sha256(convert_to($1,'UTF8')))",
+      [capability],
+    );
+    await b.query('set role anon');
     assert.equal((await verify(b,newNumber)).status,'verified');
     assert.equal((await token(b,old.certificate.verification_token)).certificate.registrationNumber,oldNumber);
     console.log('PASS application JSON backup and restore into separate database with exact certificates, snapshots, projection, counters, access and tokens ('+Math.round(performance.now()-started)+' ms)');
@@ -190,7 +199,7 @@ async function run() {
     await assert.rejects(issue(b,first,'Rollback retry must preserve snapshot'),/already finalized/);
     await b.query('reset role');
     assert.deepEqual(await state(b,first),frozen);
-    await migrate(b,candidate.at(-1));
+    await migrate(b,finalizationMigration);
     await actor(b,issuer);
     assert.equal(await issue(b,first,'Reapplied retry must preserve snapshot'),newNumber);
     await b.query('reset role; set role anon');

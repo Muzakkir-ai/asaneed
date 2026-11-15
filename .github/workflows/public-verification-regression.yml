@@ -1,0 +1,33 @@
+name: Public certificate verification regression
+
+on:
+  pull_request:
+    paths:
+      - 'app/api/verify/**'
+      - 'app/verification-form.tsx'
+      - 'lib/i18n.ts'
+      - 'lib/registration.ts'
+      - 'lib/verification.ts'
+      - 'lib/database.types.ts'
+      - 'supabase/migrations/**'
+      - 'tests/public-verification.test.cjs'
+      - 'package-lock.json'
+      - '.github/workflows/public-verification-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  synthetic-verification:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node tests/public-verification.test.cjs

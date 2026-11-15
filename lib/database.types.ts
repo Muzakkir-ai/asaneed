@@ -969,6 +969,10 @@ export type Database = {
       }
       submit_matn_request: { Args: { entry: Json }; Returns: string }
       verify_certificate_token: { Args: { token: string }; Returns: Json }
+      lookup_certificate_number: {
+        Args: { p_capability: string; p_client_key: string; p_number: string }
+        Returns: Json
+      }
       verify_ijazah: { Args: { p_number: string }; Returns: Json }
     }
     Enums: {
