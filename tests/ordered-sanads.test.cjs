@@ -62,6 +62,26 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   const endpoint=load('legacy/api/'+file+'.ts').default;
   return endpoint.outputSchema.parse(await endpoint.execute({input:endpoint.inputSchema.parse(value),context}));
  };
+ const {mergeOrderedSanadText}=load('legacy/lib/mergeOrderedSanadText.ts');
+ const graphNames={a:'الشيخ عبد الوهاب',b:'الشيخ عبد الغفار',c:'الشيخ بكري',d:'الشيخ الحلواني',e:'الشيخ الأجهوري',f:'الشيخ السنباطي',g:'الشيخ ابن غانم',h:'الإمام ابن الجزري'};
+ const graphPaths=[['a','b','d','e','f','h'],['a','b','d','e','g','h'],['a','c','d','e','f','h'],['a','c','d','e','g','h']];
+ const graphText=path=>'كما أخذته عن '+path.map(id=>graphNames[id]).join('، عن ')+'.';
+ const graphBranch=(path,names=graphNames)=>({paths:[[...path].reverse()],names});
+ const merged=mergeOrderedSanadText(graphPaths.map(graphText),graphPaths.map(path=>graphBranch(path)));
+ assert.ok(merged?.includes('(ح)'), 'junction-aware text inserts transmission switches');
+ assert.equal((merged.match(/، عن الشيخ الحلواني/gu)||[]).length,1,'shared narrator sequence prints once');
+ assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
+ assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
+ assert.equal((merged.match(/\\(ح\\)/gu)||[]).length,2,'only two actual split points');
+ assert.equal(mergeOrderedSanadText(graphPaths.slice(0,2).map(graphText),[
+  graphBranch(graphPaths[0]),graphBranch(graphPaths[1],{...graphNames,e:'اسم آخر'})]),null,'conflicting identity display must not merge');
+ assert.equal(mergeOrderedSanadText([graphText(graphPaths[0]),graphText(graphPaths[1]).replace(/\\.$/u,'، عن تتمة مختلفة.')],
+  graphPaths.slice(0,2).map(path=>graphBranch(path))),null,'different continuations remain separate');
+ const partial=graphPaths.slice(0,3);
+ assert.equal(mergeOrderedSanadText(partial.map(graphText),partial.map(path=>graphBranch(path))),null,'do not introduce a missing crossed route');
+ const independent=[['a','d','h'],['b','d','h']];
+ const independentText=mergeOrderedSanadText(independent.map(graphText),independent.map(path=>graphBranch(path)));
+ assert.match(independentText||'',/كما أخذته أيضًا عن الشيخ عبد الغفار/u,'independent sources retain their own opening');
  const ids=variants.map(v=>v.id);
  const branchFixture={...variants[0],id:id(90),prepareNarratorBoxes:true,personalPeopleReviewed:true,junction:'ubaydi',
   sanadText:'كما أخذته عن الشيخ أَحْمَد، عن الشيخ خالد، عن إبراهيم العُبيدي (ح). وقرأ الشيخ أَحْمَد أيضًا على الشيخ صالح، عن إبراهيم العُبيدي',
@@ -113,7 +133,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   routes:[[{id:meeting,name:'الشيخ مُلْتَقًى'},{id:'teacher-'+i,name:i?'شيخ التتمة الثانية':'شيخ التتمة الأولى'},{id:jazari,name:'الإمام ابن الجزري'}]]}));
  for(let i=0;i<2;i++)Object.assign(variants[i],{sanadText:'كما أخذته عن '+names[i]+'، عن الشيخ مُلْتَقًى',
   personalPersonIds:[id(20+i),meeting],continuationId:references[0]});
- assert.equal((await preview(ids.slice(0,2))).chain.split('شيخ التتمة الأولى').length-1,2);
+ assert.equal((await preview(ids.slice(0,2))).chain.split('شيخ التتمة الأولى').length-1,1,'reviewed shared continuation prints only once');
  variants[1].continuationId=references[1];
  const order=[ids[1],ids[0]],expected=await preview(order);
  assertOrder(expected,order);
