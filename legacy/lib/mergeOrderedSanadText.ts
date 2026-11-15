@@ -1,84 +1,148 @@
-import {sanadPathLayout} from './sanadPathLayout';
 import type {SanadBranch} from './orderedSanads';
+import {sanadPathLayout,type SanadPathBlock} from './sanadPathLayout';
 
-/** Merge only fully traceable narrator-ID paths, not matching prose or similar names.
- * The shared literal continuation is copied once only when it matches exactly.
- * Any ambiguous prose, distinct continuation or correlated split stays unchanged. */
-export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'paths'|'names'>[]):string|null{
+/** Compress only identity-backed paths that reproduce exactly the original
+ * selected routes. Ambiguous text, unrelated continuations and crossing
+ * selections fall back to the unchanged literal sources. */
+export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'paths'|'names'>[]):string|null {
  if(texts.length<2||texts.length!==branches.length)return null;
- const ids:string[][]=[],names=new Map<string,string>();
- let prefix:string|undefined,suffix:string|undefined;
+ const routes:{ids:string[];tail:string}[]=[],names=new Map<string,string>();
+ const normalize=(s:string)=>s.normalize('NFKC').replace(/[\u064b-\u065f\u0670\u0640\u06d6-\u06ed]/gu,'')
+  .replace(/[أإآٱ]/gu,'ا').replace(/ى/gu,'ي').replace(/\s+/gu,' ').trim();
+ const comparable=(s:string)=>normalize(s).replace(/[.،؛\s]+$/u,'')
+  .replace(/^(?:(?:الشيخ|الشيخة|المقرئ|الإمام|الامام|السيد)\s+)+/u,'');
+ let opening:string|undefined;
  for(let i=0;i<texts.length;i++){
-  const branch=branches[i],text=texts[i];
-  if(branch.paths.length!==1||!text||text.includes('(ح)'))return null;
-  // Stored diagram paths run from the older teacher toward the student.
-  const path=[...branch.paths[0]].reverse();
-  if(path.length<2||new Set(path).size!==path.length)return null;
-  let cursor=0,leading='';
-  for(const [index,id] of path.entries()){
-   const name=branch.names[id];
-   if(!id||!name||name.includes('،')||name.includes('(ح)'))return null;
-   const previous=names.get(id);
-   if(previous!==undefined&&previous!==name)return null;
-   names.set(id,name);
-   const at=text.indexOf(name,cursor);
-   if(at<0)return null;
-   const between=text.slice(cursor,at);
-   if(index===0){
-    if(!/^\s*(?:كما أخذته عن|عن)\s+$/u.test(between))return null;
-    leading=between;
-   }else if(!/^\s*،\s*عن\s+$/u.test(between))return null;
-   cursor=at+name.length;
+  const pathList=branches[i].paths.map(path=>[...path].reverse());
+  const segments=texts[i].split(/\s*\(ح\)\s*/u).map(s=>s.trim()).filter(Boolean);
+  if(!pathList.length||segments.length!==pathList.length)return null;
+  const unused=new Set(pathList.map((_,index)=>index));
+  for(const segment of segments){
+   const m=/^(كما أخذته عن|عن)\s+(.+)$/su.exec(segment);
+   if(!m)return null;
+   const words=m[2].split(/،\s*عن\s+/u),matches:number[]=[];
+   for(const j of unused){
+    const ids=pathList[j];
+    if(ids.length<2||new Set(ids).size!==ids.length||words.length<ids.length)continue;
+    if(ids.every((id,k)=>{
+     const name=branches[i].names[id];
+     return !!id&&!!name&&comparable(words[k])===comparable(name);
+    }))matches.push(j);
+   }
+   if(matches.length!==1)return null;
+   const index=matches[0],ids=pathList[index];unused.delete(index);
+   if(opening!==undefined&&opening!==m[1])return null;
+   opening=m[1];
+   for(const id of ids){
+    const name=branches[i].names[id],existing=names.get(id);
+    if(existing!==undefined&&comparable(existing)!==comparable(name))return null;
+    if(!existing)names.set(id,name);
+   }
+   const trailing=words.slice(ids.length).join('، عن ');
+   routes.push({ids,tail:trailing?'، عن '+trailing:''});
   }
-  const trailing=text.slice(cursor);
-  if(prefix!==undefined&&(prefix!==leading||suffix!==trailing))return null;
-  prefix=leading;suffix=trailing;
-  ids.push(path);
+  if(unused.size)return null;
  }
- if(!ids.every(path=>path[path.length-1]===ids[0][ids[0].length-1]))return null;
- const blocks=sanadPathLayout(ids,true);
- if(!blocks||!blocks.length||blocks[blocks.length-1]?.kind!=='person')return null;
- const subject=(id:string)=>(names.get(id)||'').replace(/^أَبِي(?=\s)/u,'أَبُو').replace(/^أبي(?=\s)/u,'أبو');
- let result=prefix!.trimEnd(),lead=' ',pivot:string|null=null;
- for(const [index,block] of blocks.entries()){
-  if(block.kind==='person'){
-   result+=lead+names.get(block.id);
-   lead='، عن ';pivot=block.id;
-   continue;
+ if(!routes.length||routes.some(r=>r.ids.at(-1)!==routes[0].ids.at(-1)))return null;
+ const suffixes=[...new Set(routes.map(r=>r.tail).filter(s=>s.trim()))];
+ if(suffixes.length>1)return null;
+ const suffix=suffixes[0]||'';
+ const inputRoutes=[...new Set(routes.map(r=>JSON.stringify(r.ids)))].map(s=>JSON.parse(s) as string[]);
+ const outgoing=new Map<string,Set<string>>(),incoming=new Map<string,Set<string>>(),all=new Set<string>();
+ for(const path of inputRoutes)for(let i=0;i<path.length;i++){
+  const id=path[i];all.add(id);
+  if(i+1<path.length){
+   const to=path[i+1];
+   if(!outgoing.has(id))outgoing.set(id,new Set());
+   outgoing.get(id)!.add(to);
+   if(!incoming.has(to))incoming.set(to,new Set());
+   incoming.get(to)!.add(id);
   }
-  // Nested/crossing groups cannot be stated faithfully with a single (ح) clause.
-  if(index===blocks.length-1||!block.lanes.length||block.lanes.some(l=>!l.length||l.some(b=>b.kind!=='person')))return null;
-  const lanes=block.lanes.map(l=>l.map(b=>(b as {kind:'person';id:string}).id));
-  const clause=(lane:string[])=>lane.map(id=>names.get(id)).join('، عن ');
-  // Several narrators between exactly the same student and teacher make one
-  // parallel transmission group, not a separate (ح) transition per narrator.
-  if(lanes.every(l=>l.length===1)){
-   result+=lead+lanes.map((lane,i)=>(i?'و':'')+names.get(lane[0])).join('، ');
-   lead=lanes.length===2?'، وكلاهما عن ':'، وكلهم عن ';
-   pivot=null;
-   continue;
-  }
-  // If single-hop alternatives coexist with longer independent branches,
-  // group the single-hop narrators without inventing a combined route.
-  const single=lanes.filter(l=>l.length===1);
-  const grouped=single.length>=2;
-  const choices:(string[]|string[][])[]=[];
-  let inserted=false;
-  for(const lane of lanes){
-   if(grouped&&lane.length===1){
-    if(!inserted){choices.push(single);inserted=true;}
-   }else choices.push(lane);
-  }
-  const formatChoice=(choice:string[]|string[][])=>Array.isArray(choice[0])
-   ?(choice as string[][]).map(l=>names.get(l[0])).join('، و')
-   :clause(choice as string[]);
-  result+=lead+formatChoice(choices[0]);
-  for(const choice of choices.slice(1))
-   result+=' (ح). '+(pivot?'وقرأ '+subject(pivot)+' أيضًا على ':'كما أخذته أيضًا عن ')+formatChoice(choice);
-  lead='، وقرأ '+lanes.map(l=>subject(l[l.length-1])).join(' و')+' على ';
-  pivot=null;
  }
- result+=suffix;
- if(result.length>30000)throw Error('السند المدمج أطول من الحد المتاح؛ اختر أسانيد أقل');
- return result;
+ const roots=[...all].filter(id=>!incoming.get(id)?.size);
+ if(!roots.length||all.size>256||inputRoutes.length>128)return null;
+ // Check DAG closure rather than just edge counts. This prevents silently
+ // inventing a sanad by crossing two correlated choices.
+ const closed:string[][]=[];let invalid=false;
+ function walk(node:string,path:string[]){
+  if(invalid||path.includes(node)||closed.length>128){invalid=true;return;}
+  const next=[...path,node],children=[...(outgoing.get(node)||[])];
+  if(!children.length){closed.push(next);return;}
+  for(const child of children)walk(child,next);
+ }
+ for(const root of roots)walk(root,[]);
+ const key=(ids:string[])=>JSON.stringify(ids);
+ if(invalid||closed.length!==inputRoutes.length||
+   new Set(closed.map(key)).size!==inputRoutes.length||
+   inputRoutes.some(p=>!closed.some(q=>key(p)===key(q))))return null;
+ const indegree=new Map([...all].map(id=>[id,incoming.get(id)?.size||0]));
+ const work=[...roots],order:string[]=[];
+ while(work.length){
+  const id=work.shift()!;order.push(id);
+  for(const to of outgoing.get(id)||[]){
+   indegree.set(to,indegree.get(to)!-1);
+   if(indegree.get(to)===0)work.push(to);
+  }
+ }
+ if(order.length!==all.size)return null;
+ // Encounter meeting points from the living student toward older teachers.
+ const joins=order.filter(id=>(incoming.get(id)?.size||0)>1);
+ const terminal=inputRoutes[0].at(-1)!;
+ if(!joins.includes(terminal))joins.push(terminal);
+ const mentioned=new Set<string>(),paragraphs:string[]=[];
+ const person=(id:string)=>(names.get(id)||'').replace(/[،.\s]+$/u,'').replace(/^أبو(?=\s)/u,'أبي');
+ const subject=(id:string)=>person(id).replace(/^أَبِي(?=\s)/u,'أَبُو').replace(/^أبي(?=\s)/u,'أبو');
+ function renderBlocks(blocks:SanadPathBlock[],starter:string,pivot:string|null):string {
+  let out='',first=true,current=pivot;
+  for(const block of blocks){
+   if(block.kind==='person'){
+    if(first&&mentioned.has(block.id)){
+     out='ومن طريق '+person(block.id);current=block.id;first=false;continue;
+    }
+    out+=(out?'، عن ':starter+' ')+person(block.id);
+    current=block.id;first=false;continue;
+   }
+   const lanes=block.lanes;
+   if(!lanes.length)return '';
+   // 2, 3 or 4 parallel direct links between the same student/teacher
+   // form one named group, not multiple (ح) branches.
+   if(lanes.every(l=>l.length===1&&l[0].kind==='person')){
+    const ids=lanes.map(l=>(l[0] as {kind:'person';id:string}).id);
+    out+=(out?'، عن ':starter+' ')+ids.map(person).join('، و');
+    current=null;first=false;continue;
+   }
+   const rendered=lanes.map((lane,i)=>{
+    const intro=i===0?(out?'عن':starter):(current?'وقرأ '+subject(current)+' أيضًا على':'كما أخذته عن');
+    return renderBlocks(lane,intro,null);
+   }).filter(Boolean);
+   if(!rendered.length)continue;
+   out+=(out?'، ':'')+rendered.join(' (ح) ');
+   current=null;first=false;
+  }
+  return out;
+ }
+ for(const meeting of joins){
+  const partials:string[][]=[],seen=new Set<string>();
+  function backward(current:string,rev:string[]){
+   if(rev.includes(current))throw Error('invalid loop');
+   const next=[...rev,current];
+   if(mentioned.has(current)||!incoming.get(current)?.size){
+    const path=next.reverse(),k=JSON.stringify(path);
+    if(!seen.has(k)){seen.add(k);partials.push(path);}
+    return;
+   }
+   for(const parent of incoming.get(current)!)backward(parent,next);
+  }
+  for(const parent of incoming.get(meeting)||[])backward(parent,[]);
+  if(!partials.length)continue;
+  const blocks=sanadPathLayout(partials,true);
+  if(!blocks)return null;
+  const section=renderBlocks(blocks,'كما أخذته عن',null).trim();
+  if(section)paragraphs.push((paragraphs.length?'(ح) ':'')+section);
+  paragraphs.push('ثم تلتقي الطرق عند '+person(meeting));
+  for(const path of partials)path.forEach(id=>mentioned.add(id));
+  mentioned.add(meeting);
+ }
+ const text=paragraphs.join('، ').replace(/،\s*\./gu,'.')+(suffix||'.');
+ return text&&text.length<=30000?text:null;
 }
