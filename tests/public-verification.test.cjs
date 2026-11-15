@@ -334,5 +334,20 @@ async function main() {
   }
 }
 
-main().then(() => console.log('PASS: public verification HTTP handler, shared budgets, RPC bypass denial, publication, privacy and historical link'))
-  .catch((error) => { console.error(error); process.exitCode = 1; });
+main().then(async () => {
+  console.log('PASS: public verification HTTP handler, shared budgets, RPC bypass denial, publication, privacy and historical link');
+  // CI on this isolated release branch also exercises the hosted Preview using
+  // a synthetic nonexistent number. Never run this probe against production.
+  if (process.env.GITHUB_ACTIONS !== 'true' || process.env.GITHUB_REF_NAME !== 'audit/chat12-integration-c1ae83cba1a2') return;
+  const base = 'https://asaneed-hznu0183d-halaqaat.vercel.app';
+  const res = await fetch(base + '/api/verify', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-forwarded-for': '203.0.113.17', 'x-real-ip': '198.51.100.9', 'x-vercel-forwarded-for': '192.0.2.31' },
+    body: JSON.stringify({ number: '9999-99999999' }),
+    signal: AbortSignal.timeout(20000),
+  });
+  assert.equal(res.status, 200, 'hosted Preview synthetic POST status; 503 indicates gate/configuration blocker');
+  const body = await res.json();
+  assert.deepEqual(body, { status: 'not_found' }, 'hosted Preview minimal response contract');
+  console.log('PASS: hosted Preview synthetic POST (no real certificate data)');
+}).catch((error) => { console.error(error); process.exitCode = 1; });
