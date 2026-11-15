@@ -47,6 +47,9 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
  const suffixes=[...new Set(routes.map(r=>r.tail).filter(s=>s.trim()))];
  if(suffixes.length>1)return null;
  const suffix=suffixes[0]||'';
+ // Never attach a novel short extension from just one selected route to all
+ // of them. Only a common explicit continuation up to the Prophet qualifies.
+ if(suffix&&!/(?:رسول\s*الله|رَسُولِ\s*الله|النبي)/u.test(suffix))return null;
  const inputRoutes=[...new Set(routes.map(r=>JSON.stringify(r.ids)))].map(s=>JSON.parse(s) as string[]);
  const outgoing=new Map<string,Set<string>>(),incoming=new Map<string,Set<string>>(),all=new Set<string>();
  for(const path of inputRoutes)for(let i=0;i<path.length;i++){
