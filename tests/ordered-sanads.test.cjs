@@ -62,6 +62,72 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   const endpoint=load('legacy/api/'+file+'.ts').default;
   return endpoint.outputSchema.parse(await endpoint.execute({input:endpoint.inputSchema.parse(value),context}));
  };
+ const {mergeOrderedSanadText}=load('legacy/lib/mergeOrderedSanadText.ts');
+ const graphNames={a:'الشيخ عبد الوهاب',b:'الشيخ عبد الغفار',c:'الشيخ بكري',d:'الشيخ الحلواني',e:'الشيخ الأجهوري',f:'الشيخ السنباطي',g:'الشيخ ابن غانم',h:'الإمام ابن الجزري'};
+ const graphPaths=[['a','b','d','e','f','h'],['a','b','d','e','g','h'],['a','c','d','e','f','h'],['a','c','d','e','g','h']];
+ const graphText=path=>'كما أخذته عن '+path.map(id=>graphNames[id]).join('، عن ')+'.';
+ const graphBranch=(path,names=graphNames)=>({paths:[[...path].reverse()],names});
+ const merged=mergeOrderedSanadText(graphPaths.map(graphText),graphPaths.map(path=>graphBranch(path)));
+ assert.ok(merged?.includes('تلتقي الطرق عند'), 'direct parallel narrators converge at the recorded meeting');
+ assert.equal((merged.match(/تلتقي الطرق عند الشيخ الحلواني/gu)||[]).length,1,'junction is formally introduced only once');
+ assert.equal((merged.match(/، عن الإمام ابن الجزري/gu)||[]).length,0,'shared endpoint is written as the merged reading, not a duplicated full route');
+ assert.equal((merged.match(/الإمام ابن الجزري/gu)||[]).length,1,'shared endpoint prints once');
+ assert.equal((merged.match(/\(ح\)/gu)||[]).length,0,'no (ح) for direct parallel narrators sharing both endpoints');
+ assert.equal(mergeOrderedSanadText(graphPaths.slice(0,2).map(graphText),[
+  graphBranch(graphPaths[0]),graphBranch(graphPaths[1],{...graphNames,e:'اسم آخر'})]),null,'conflicting identity display must not merge');
+ assert.equal(mergeOrderedSanadText([graphText(graphPaths[0]),graphText(graphPaths[1]).replace(/\.$/u,'، عن تتمة مختلفة.')],
+  graphPaths.slice(0,2).map(path=>graphBranch(path))),null,'different continuations remain separate');
+ const partial=graphPaths.slice(0,3);
+ assert.equal(mergeOrderedSanadText(partial.map(graphText),partial.map(path=>graphBranch(path))),null,'do not introduce a missing crossed route');
+ const independent=[['a','d','h'],['b','d','h']];
+ const independentText=mergeOrderedSanadText(independent.map(graphText),independent.map(path=>graphBranch(path)));
+ assert.match(independentText||'',/الشيخ عبد الغفار، ثم تلتقي الطرق عند الشيخ الحلواني/u,'parallel paths group without extra (ح)');
+ // When three or four teachers share the same student and same onward teacher,
+ // the group is not three or four independent (ح) transmission switches.
+ for(const count of [3,4]){
+  const middle=['b','c','f','g'].slice(0,count),routes=middle.map(mid=>['a',mid,'d','e','h']);
+  const together=mergeOrderedSanadText(routes.map(graphText),routes.map(p=>graphBranch(p)));
+  assert.ok(together,'direct parallel narrator alternatives are safe to group');
+  assert.equal((together.match(/\(ح\)/gu)||[]).length,0,'single-hop teacher group needs no (ح)');
+  assert.equal((together.match(/تلتقي الطرق عند الشيخ الحلواني/gu)||[]).length,1,'common meeting is recorded once');
+  assert.ok(middle.every(mid=>together.includes(graphNames[mid])),'no teacher is omitted');
+ }
+ // Sheikh Uwais Hafs-style fixture: 5 incoming paths × 5 outward routes,
+ // partly overlapping at Salim, Ubaydi, al-Baqari, al-Umyuti and al-Jazari.
+ const base=[
+  ['wa','dar','eyes','salim','mar','ub','aj','smah','baq'],
+  ['wa','bkri','salim','mar','ub','aj','smah','baq'],
+  ['ammar','f1','f2','mun','baq'],
+  ['ay','a1','khal','kahil','had','ub','aj','smah','baq'],
+  ['ay','a1','nafisa','kahil','had','ub','aj','smah','baq']
+ ];
+ const onward=[
+  ['yam','ibnghan','samad','umy','jaz'],
+  ['yam','sun','shad','tab','zak','qal','jaz'],
+  ['yam','sun','shad','tab','zak','nuwa','jaz'],
+  ['yam','sun','shad','tab','zak','uqbi','jaz'],
+  ['yam','sun','shad','tab','zak','umy','jaz']
+ ];
+ const nameById=Object.fromEntries([...new Set([...base,...onward].flat())].map(x=>[x,'الشيخ '+x]));
+ const fullRoutes=base.map(prefix=>onward.map(tail=>[...prefix,...tail]));
+ const fullTexts=fullRoutes.map(paths=>paths.map(path=>graphText(path.map(x=>x))).join('\n\n(ح)\n\n'));
+ const exactTexts=fullRoutes.map(paths=>paths.map(path=>'كما أخذته عن '+path.map(x=>nameById[x]).join('، عن ')).join('\n\n(ح)\n\n'));
+ const exactBranches=fullRoutes.map(paths=>({paths:paths.map(path=>[...path].reverse()),names:nameById}));
+ const compact=mergeOrderedSanadText(exactTexts,exactBranches);
+ assert.ok(compact,'25 valid overlapping routes should merge without invented combinations');
+ assert.ok(compact.length<exactTexts.join('\n\n(ح)\n\n').length/2,'shared routes must be compressed');
+ const meetings=['salim','ub','baq'].map(id=>compact.indexOf('تلتقي الطرق عند '+nameById[id]));
+ assert.ok(meetings[0]>=0&&meetings[0]<meetings[1]&&meetings[1]<meetings[2],
+  'newest meeting comes first: Salim, then Ubaydi, then al-Baqari');
+ assert.equal((compact.match(/تلتقي الطرق عند الشيخ jaz/gu)||[]).length,1,
+  'last common narrator Ibn al-Jazari is emitted once');
+ // Dropping one correlated input route must not be mistaken for a complete DAG.
+ const incompleteRoutes=fullRoutes.map(paths=>[...paths]);
+ incompleteRoutes[2]=incompleteRoutes[2].slice(0,4);
+ const incompleteTexts=incompleteRoutes.map(paths=>paths.map(path=>'كما أخذته عن '+path.map(x=>nameById[x]).join('، عن ')).join('\n\n(ح)\n\n'));
+ const incompleteBranches=incompleteRoutes.map(paths=>({paths:paths.map(path=>[...path].reverse()),names:nameById}));
+ assert.equal(mergeOrderedSanadText(incompleteTexts,incompleteBranches),null,
+  'no synthetic paths may be inferred when only some combinations were saved');
  const ids=variants.map(v=>v.id);
  const branchFixture={...variants[0],id:id(90),prepareNarratorBoxes:true,personalPeopleReviewed:true,junction:'ubaydi',
   sanadText:'كما أخذته عن الشيخ أَحْمَد، عن الشيخ خالد، عن إبراهيم العُبيدي (ح). وقرأ الشيخ أَحْمَد أيضًا على الشيخ صالح، عن إبراهيم العُبيدي',
@@ -90,7 +156,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  for(const selected of [ids.slice(0,1),ids.slice(0,2),[...ids].reverse()]){
   const result=await preview(selected);
   assertOrder(result,selected);
-  assert.equal(result.chain.split('(ح)').length-1,selected.length-1);
+  assert.equal(result.chain.split('(ح)').length-1,0,'parallel direct-to-junction narrators are grouped');
   assert.equal(result.chain.split('مقدمة تجريبية').length-1,1);
  }
  variants[2].rawi='شعبة';
@@ -102,7 +168,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  admin=false;
  await assert.rejects(()=>preview(ids),/Permission denied/);
  admin=true;
- assert.match((await preview([guestId,ids[0]])).chain,/شيخ رابع.*\(ح\).*الشيخ أَحْمَد/su);
+ assert.match((await preview([guestId,ids[0]])).chain,/شيخ رابع.*الشيخ أَحْمَد/su);
  guest.libraryKubra=true;
  const kubra=await preview(ids.slice(0,2),'1031');
  assertOrder(kubra,ids.slice(0,2));
@@ -113,7 +179,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   routes:[[{id:meeting,name:'الشيخ مُلْتَقًى'},{id:'teacher-'+i,name:i?'شيخ التتمة الثانية':'شيخ التتمة الأولى'},{id:jazari,name:'الإمام ابن الجزري'}]]}));
  for(let i=0;i<2;i++)Object.assign(variants[i],{sanadText:'كما أخذته عن '+names[i]+'، عن الشيخ مُلْتَقًى',
   personalPersonIds:[id(20+i),meeting],continuationId:references[0]});
- assert.equal((await preview(ids.slice(0,2))).chain.split('شيخ التتمة الأولى').length-1,2);
+ assert.equal((await preview(ids.slice(0,2))).chain.split('شيخ التتمة الأولى').length-1,1,'reviewed shared continuation prints only once');
  variants[1].continuationId=references[1];
  const order=[ids[1],ids[0]],expected=await preview(order);
  assertOrder(expected,order);

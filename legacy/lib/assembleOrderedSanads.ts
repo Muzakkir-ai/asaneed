@@ -1,6 +1,7 @@
 import {assembleIjazah,type AssemblySection} from './assembleIjazah';
 import {assembleHoldingIjazah,type UnifiedHolding} from './assembleHoldingIjazah';
 import {joinOrderedSanads,type SanadBranch} from './orderedSanads';
+import {mergeOrderedSanadText} from './mergeOrderedSanadText';
 import type {BuilderLibrary} from './bookBuilder';
 
 export async function assembleOrderedSanads(sources:{holding:UnifiedHolding;branch:SanadBranch}[],sections:AssemblySection[],library?:BuilderLibrary) {
@@ -13,7 +14,8 @@ export async function assembleOrderedSanads(sources:{holding:UnifiedHolding;bran
  const results=await Promise.all(sources.map(({holding})=>assembleHoldingIjazah(holding,sections,library)));
  for(const result of results)if(result.missing.length||!result.isnad)throw Error('أكمل السند قبل الدمج: '+result.missing.join('، '));
  const assembled=sources.length===1?results[0]:assembleIjazah({
-  ...first,chainMode:'complete',personalChain:joinOrderedSanads(results.map(result=>result.isnad)),
+  ...first,chainMode:'complete',personalChain:mergeOrderedSanadText(results.map(result=>result.isnad),sources.map(source=>source.branch))
+   ??joinOrderedSanads(results.map(result=>result.isnad)),
  },sections);
  if(assembled.missing.length)throw Error('أكمل السند قبل الدمج: '+assembled.missing.join('، '));
  return {...assembled,branches:sources.map(({branch})=>branch)};
