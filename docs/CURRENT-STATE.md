@@ -1,3 +1,9 @@
+## Whole certificate content size — 18 November 2026
+
+The draft certificate preview includes **حجم محتوى الشهادة ٪** with a 50–150% range and a 100% reset. It scales the heading, sanad, conclusion, issuer artwork, dates and registration together around the paper center. The border and A4 paper retain their dimensions. The value is saved in certificate-only draft formatting and frozen on finalization. Existing formatting defaults to 100%. Preview, native print and PDF capture share the same content transform. Existing overlap and safe-area checks remain active.
+
+Verified with the production build, heading and formatting suites, footer-layout tests, and synthetic Chromium screen/print measurements at 50%, 85%, 125% and 150%. An authenticated real-certificate print and physical printer were not exercised. The build reports an existing Next.js security advisory.
+
 ## Certificate integration candidate (12 November 2026)
 
 Draft #121 passed isolated staging migration parity, synthetic two-Ḥafṣ issuance and recipient access, historical verification, and staging app rollback. Hosted print, abuse controls and provider recovery remain release gates. See the [release QA matrix](RELEASE-QA.md) for the tested commits and approval checkpoint.

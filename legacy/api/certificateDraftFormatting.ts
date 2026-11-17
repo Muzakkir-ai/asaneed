@@ -15,7 +15,7 @@ const typography=z.object({
  paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional(),
  offsetMm:z.number().min(-15).max(15).optional(),alignment:z.enum(['right','center','justify']).optional(),
 });
-const style=z.object({
+const style=z.object({contentScalePercent:z.number().min(50).max(150).optional(),
  matnHeading:matnHeadingSchema.nullable().optional(),qiraatHeading:qiraatHeadingSchema.nullable().optional(),headingOffsetMm:z.number().min(-12).max(12).optional(),footerOffsetMm:z.number().min(-15).max(4).optional(),borderColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  accentColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  typography:z.object({reading:typography,sanad:typography,conclusion:typography,shaykh:typography}),

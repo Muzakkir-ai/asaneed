@@ -147,7 +147,8 @@
 /* Isolate the ornament behind the complete sanad text, including PDF capture. */
 .print-area { isolation: isolate; }
 .print-area > .certificate-ornament { z-index: 0 !important; }
-.print-area > .certificate-content { position: relative; z-index: 2 !important; }
+.print-area > .certificate-content,
+.print-area > .certificate-scaled-content > .certificate-content { position: relative; z-index: 2 !important; }
 
 /* Artwork coordinates are measured from the top-left of the 297 × 210 mm paper. */
 .certificate-header-art {
@@ -181,11 +182,13 @@
 .certificate-conclusion { display: block; width: 100%; white-space: pre-line; text-align: center !important; }
 
 /* Fixed-width centered sanad text area: 297mm page minus 16mm on each side. */
-.print-area > .certificate-content { width: 265mm; max-width: 100%; margin-inline: auto; }
+.print-area > .certificate-content,
+.print-area > .certificate-scaled-content > .certificate-content { width: 265mm; max-width: 100%; margin-inline: auto; }
 
 /* Preserve the full print content height while balancing the heading:
    short ijazah text must NEVER pull the issuer footer up the page. */
-.print-area.certificate-auto-center-fit > .certificate-content {
+.print-area.certificate-auto-center-fit > .certificate-content,
+.print-area.certificate-auto-center-fit > .certificate-scaled-content > .certificate-content {
   height:100% !important;
   transform:translateY(var(--certificate-center-shift,0px));
 }
@@ -764,3 +767,13 @@ select:not([multiple]):not([size]){appearance:none;-webkit-appearance:none;backg
 select:not([multiple]):not([size]):dir(rtl){background-position:left 12px center;padding-left:38px!important;padding-right:12px!important;}
 .certificate-print-screen [style*="Sakkal Kitab"]{font-feature-settings:"ss16" 1;}
 .certificate-print-screen .certificate-reading-label[style*="Sakkal Kitab"]{font-feature-settings:"ss14" 1,"ss16" 1;}
+
+/* Scale every certificate element together inside the unchanged ornament. */
+.certificate-scaled-content {
+  position:absolute;
+  inset:0;
+  box-sizing:border-box;
+  padding:var(--sanad-text-top,52.8mm) 16mm 16mm;
+  transform-origin:center center;
+  z-index:2;
+}
