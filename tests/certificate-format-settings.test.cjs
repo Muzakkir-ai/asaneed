@@ -13,6 +13,17 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),Module=require(
  const frozen=final.inputSchema.parse({certificateId:'draft',settings:reopened.settings,printMode:'qr'});
  assert.deepEqual(frozen.settings,settings);
  assert.equal(Object.hasOwn(frozen,'printMode'),false,'legacy clients cannot choose the new snapshot presentation');
+ const certificateDraft=await load('legacy/api/certificateDraftFormatting.ts');
+ for(const contentScalePercent of [50,85,100,125,150]){
+  const scaled={...settings,contentScalePercent};
+  assert.equal(certificateDraft.inputSchema.parse({certificateId:'draft',action:'save',settings:scaled}).settings.contentScalePercent,contentScalePercent);
+  assert.equal(final.inputSchema.parse({certificateId:'draft',settings:scaled}).settings.contentScalePercent,contentScalePercent);
+ }
+ for(const contentScalePercent of [0,49,151,NaN,Infinity]){
+  const scaled={...settings,contentScalePercent};
+  assert.equal(certificateDraft.inputSchema.safeParse({certificateId:'draft',action:'save',settings:scaled}).success,false);
+  assert.equal(final.inputSchema.safeParse({certificateId:'draft',settings:scaled}).success,false);
+ }
  await assert.rejects(()=>draft.execute({context:{user:{id:'other'}},input}));
  for(const patch of [{svgHeightPt:0},{scalePercent:0},{lineSpacing:10},{paragraphSpacing:-1},{firstLineIndent:100}])assert.equal(draft.inputSchema.safeParse({...input,settings:{...settings,typography:{...settings.typography,sanad:{...t,...patch}}}}).success,false);
  const heading={version:1,mainHeightPt:60,secondaryHeightPt:30,lineGapMm:4,afterGapMm:8,basmalahOffsetMm:8,introductionSizePt:13,conclusionSizePt:11};const withHeading={...settings,matnHeading:heading};assert.deepEqual(draft.inputSchema.parse({...input,settings:withHeading}).settings.matnHeading,heading);assert.deepEqual(final.inputSchema.parse({certificateId:'draft',settings:withHeading}).settings.matnHeading,heading);assert.equal(final.inputSchema.parse({certificateId:'draft',settings:{...settings,matnHeading:null}}).settings.matnHeading,null);assert.equal(draft.inputSchema.safeParse({...input,settings:{...settings,matnHeading:{...heading,mainHeightPt:1000}}}).success,false);

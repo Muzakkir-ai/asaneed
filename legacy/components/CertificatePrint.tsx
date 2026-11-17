@@ -326,6 +326,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   // Negative mm = move upward; positive mm = move downward.
   const [headingOffsetMm,setHeadingOffsetMm]=useState(0);
   const [footerOffsetMm,setFooterOffsetMm]=useState(0);
+  const [contentScalePercent,setContentScalePercent]=useState(100);
+  const contentLayout=useRef<HTMLDivElement>(null);
   const sharedHeading=!!matnDocument&&(isDraft||!!matnDocument.heading);
   const resolvedHeading=resolveMatnHeading(matnDocument?.heading,headingOverride,typography.reading,matnArtwork(matnDocument?.bookName||'',activeArtwork,matnDocument?.headingArtworkNumber));
   const [activeArea,setActiveArea]=useState<Area>('sanad');
@@ -364,7 +366,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
        return r.left<p.left+7*mm||r.right>p.right-7*mm;
       })
     ));
-    const unsafe=endingOverlaps||borderUnsafe||svgCollides||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:page.scrollHeight,clientHeight:page.clientHeight,scrollWidth:page.scrollWidth,clientWidth:page.clientWidth});
+    const layout=contentLayout.current??page;
+    const unsafe=endingOverlaps||borderUnsafe||svgCollides||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:layout.scrollHeight,clientHeight:layout.clientHeight,scrollWidth:layout.scrollWidth,clientWidth:layout.clientWidth});
     setOverflow(unsafe);setLayoutChecked(true);return unsafe;
   };
   const [textTopMm,setTextTopMm]=useState(52.8);
@@ -376,7 +379,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
   // identical to its previously loaded value (local unsaved edits may exist).
   const loadFormatting=(raw:string|undefined)=>{
     setHeadingOverride(undefined);setQiraatHeading(undefined);setTypography(defaults);setStyledPhrases([]);setSharedPhrases([]);
-    setHeadingOffsetMm(0);setFooterOffsetMm(0);
+    setHeadingOffsetMm(0);setFooterOffsetMm(0);setContentScalePercent(100);
     setBorderColor('#926e35');setAccentColor('#075f69');
     if(!raw)return;
     try{
@@ -388,6 +391,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         setTypography(saved.settings.typography||defaults);
         setHeadingOffsetMm(saved.settings.headingOffsetMm??0);
         setFooterOffsetMm(saved.settings.footerOffsetMm??0);
+        const savedScale=saved.settings.contentScalePercent;
+        setContentScalePercent(Number.isFinite(savedScale)?Math.max(50,Math.min(150,savedScale)):100);
         setStyledPhrases(saved.settings.phrases||[]);
         setBorderColor(saved.settings.borderColor||'#926e35');
         setAccentColor(saved.settings.accentColor||'#075f69');
@@ -430,14 +435,14 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     setCenterFits(true);
     const page=printArea.current;
     if(page){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-footer-lift','0px');}
-  },[cert.id,activeSanad?.id,sanadBody,footerName,typography,headingOverride,styledPhrases]);
+  },[cert.id,activeSanad?.id,sanadBody,footerName,typography,headingOverride,contentScalePercent,styledPhrases]);
   useEffect(()=>{
     if(!centerFits)return;
     const page=printArea.current,header=headerArea.current,footer=footerArea.current,body=bodyArea.current;
     if(!page||!header||!footer||!body)return;
     let frame=0;
     const center=()=>{
-      const p=page.getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
+      const p=(contentLayout.current??page).getBoundingClientRect(),a=header.getBoundingClientRect(),b=footer.getBoundingClientRect();
       const old=parseFloat(page.style.getPropertyValue('--certificate-center-shift'))||0;
       const balanced=certificateBalance({pageTop:p.top,pageBottom:p.bottom,pageWidth:p.width,layoutWidth:page.offsetWidth,headerTop:a.top,footerBottom:b.bottom,previousShift:old,anchorHeader:fixedHeader,pinnedFooter:true});
       if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-footer-lift','0px');setCenterFits(false);return;}
@@ -462,7 +467,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,styledPhrases]);
+  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,contentScalePercent,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
@@ -471,7 +476,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     for(const node of [printArea.current,bodyArea.current,sanadElement.current,footerArea.current,headerArea.current])if(node)observer.observe(node);
     check();document.fonts.ready.then(check).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[printPermission,cert.id,sanadBody,cert.notes,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,styledPhrases,textTopMm,centerFits,footerName]);
+  },[printPermission,cert.id,sanadBody,cert.notes,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,contentScalePercent,styledPhrases,textTopMm,centerFits,footerName]);
   const printCertificate=()=>{if(preparingIssuerArtwork){toast.error('انتظر تجهيز رسم المجيز للطباعة');return;}if(measureOverflow()){toast.error('محتوى الشهادة يتجاوز المساحة الآمنة. راجع التنسيق قبل الطباعة.');return;}window.print();};
   const captureSelection=()=>{
     const selection=window.getSelection();
@@ -515,7 +520,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     finally{printArea.current?.classList.remove('certificate-export-original-paper');setExporting(false);}
   };
   const areaStyle=(area:Area):React.CSSProperties=>{const t=typography[area],scale=(t.scalePercent??100)/100;return {fontFamily:`'${t.font}', serif`,fontWeight:t.font==='Sakkal Kitab'?700:undefined,fontSynthesis:t.font==='Sakkal Kitab'?'none':undefined,fontSize:`${(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`,lineHeight:t.lineSpacing??(area==='sanad'?`${16*scale}pt`:undefined),color:resolvedColor(t.color,borderColor,accentColor),textAlign:(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),textAlignLast:t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),textIndent:t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined,'--certificate-text-scale':scale,'--certificate-paragraph-gap':t.paragraphSpacing!==undefined?`${t.paragraphSpacing}pt`:undefined,'--certificate-alignment':(isDraft||t.lastLineAlignment)?'justify':t.alignment??(area==='conclusion'?'center':undefined),'--certificate-last-alignment':t.lastLineAlignment??(isDraft?(t.alignment==='center'||area==='conclusion'?'center':'right'):undefined),'--certificate-line-height':t.lineSpacing?`${t.lineSpacing*(area==='sanad'?9.5:+(t.size*1.1).toFixed(2))*scale}pt`:undefined,'--certificate-first-indent':t.firstLineIndent!==undefined?`${t.firstLineIndent}mm`:undefined} as React.CSSProperties;};
-  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,headingOffsetMm,footerOffsetMm,typography:next,phrases:styledPhrases,...(!matnDocument?{qiraatHeading:qiraatHeading??null}:{}),...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
+  const printSettings=()=>{const next={...typography};for(const area of ['sanad','conclusion'] as const)next[area]={...next[area],alignment:'justify',lastLineAlignment:next[area].lastLineAlignment??(next[area].alignment==='center'||area==='conclusion'?'center':'right')};if(matnDocument){const {svgHeightPt,headingGapMm,scalePercent,...reading}=next.reading;next.reading=reading;}return {borderColor,accentColor,headingOffsetMm,footerOffsetMm,contentScalePercent,typography:next,phrases:styledPhrases,...(!matnDocument?{qiraatHeading:qiraatHeading??null}:{}),...(matnDocument?{matnHeading:headingOverride===undefined?(typography.reading.svgHeightPt!==undefined||typography.reading.headingGapMm!==undefined||typography.reading.scalePercent!==undefined?resolvedHeading:null):headingOverride}:{})};};
   const saveFormat=async()=>{
     if(!isDraft||readOnly||previewPalette||savingFormat)return;
     if(measureOverflow()){toast.error('أصلح تداخل النص أو التذييل قبل حفظ التنسيق');return;}
@@ -571,6 +576,17 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       {isDraft&&<details className="certificate-settings-panel no-print container mx-auto px-4 mb-4" dir="rtl">
         <summary className="cursor-pointer font-semibold">تنسيق الشهادة — النص والفقرات والرسوم</summary>
         <fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 space-y-4 rounded-lg border bg-background p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="text-sm font-medium">حجم محتوى الشهادة ٪
+              <input aria-label="حجم محتوى الشهادة ٪" type="number" min={50} max={150} step={1}
+                className="ms-2 w-24 rounded border bg-background p-2" value={contentScalePercent}
+                onChange={e=>{
+                  const value=e.target.valueAsNumber;
+                  if(Number.isFinite(value))setContentScalePercent(Math.max(50,Math.min(150,value)));
+                }}/>
+            </label>
+            <Button type="button" variant="outline" onClick={()=>setContentScalePercent(100)}>١٠٠٪</Button>
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             <label className="text-sm font-medium">الجزء
               <select aria-label="جزء الشهادة" className="ms-2 rounded border bg-background p-2"
@@ -687,6 +703,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''} ${printMode==='qr'?'certificate-qr-footer':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 16mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-heading-offset':`${headingOffsetMm}mm`, '--certificate-footer-offset':`${footerOffsetMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <CertificateBorder number={sharedHeading?resolvedHeading.borderNumber:undefined} color={borderColor} artwork={activeArtwork} base={activeArtworkBase||undefined}/>
+          <div ref={contentLayout} className="certificate-scaled-content" style={{transform:`scale(${contentScalePercent/100})`}}>
           <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnArtworkNumber={matnDocument?.headingArtworkNumber} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} qiraatSettings={matnDocument?undefined:qiraatHeading??undefined} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
             <div ref={bodyArea} className="certificate-body-content w-full">
@@ -735,6 +752,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
               </table>
             </div>
           </div>,false,isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?'Sakkal Kitab':'KSA Regular')}
+          </div>
         </div>
       </CertificateViewport>
       <AlertDialog open={confirmFinal} onOpenChange={v=>{if(!finalizing)setConfirmFinal(v);}}>
