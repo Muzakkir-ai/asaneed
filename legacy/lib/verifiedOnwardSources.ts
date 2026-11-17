@@ -43,9 +43,10 @@ export function verifiedOnwardSources(library:BuilderLibrary,context:OnwardConte
    add(route.id,book.title+' — '+route.title,paths,route);
   }
  }
- const personal=(library.reviewedPersonalGraphs??[]).filter(graph=>graph.source.shaykhId===context.shaykhId
-  &&(!context.qariId||graph.source.qariId===context.qariId)
-  &&(!context.rawi||sanadKey(graph.source.rawi??'')===sanadKey(context.rawi)));
+ const personal=(library.reviewedPersonalGraphs??[]).filter(graph=>context.qariId&&context.rawi
+  ?graph.source.qariId===context.qariId&&sanadKey(graph.source.rawi??'')===sanadKey(context.rawi)
+   &&(!context.routeId||graph.source.shaykhId===context.shaykhId)
+  :graph.source.shaykhId===context.shaykhId);
  return [...shared,...indexed,...personal];
 }
 

@@ -1,7 +1,7 @@
 import {prepareSavedSanadPeople} from '../legacy/lib/preparedSanadPeople';
 import {preparedSanadGraph} from '../legacy/lib/preparedSanadGraph';
 import type {ReviewedSharedBridge} from '../legacy/lib/sharedBridge';
-import {attachIbrahimUbaydiRoot,linkedBridgeTails,reviewedSharedBridge} from '../legacy/lib/sharedBridge';
+import {attachIbrahimUbaydiRoot,linkedBridgeTails,reviewedSharedBridge,joinSharedBridgeRoutes} from '../legacy/lib/sharedBridge';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import {QURRA} from '../legacy/lib/qurra';
 import {buildNarratorDirectory} from '../legacy/lib/narratorDirectory';
@@ -24,15 +24,38 @@ export async function loadBuilderLibrary(client:SupabaseClient,prefixOwnerId?:st
  );
  const activeIds=new Set(people.filter(person=>!person.archived).map(person=>person.id));
  const jazariIds=new Set(sharedBridgeGraphs.flatMap(graph=>graph.routes.map(path=>path.at(-1)?.id)));
- const reviewedPersonalGraphs:ReviewedSharedBridge[]=(check(reviewedReadings)||[]).flatMap(({id,payload})=>{
+ const sectionReferences:ReviewedSharedBridge[]=(check(sections)||[]).flatMap(({id,payload})=>{
+  if(payload.ownerId||payload.sectionType!=='route'||!payload.qariId||!payload.rawi)return [];
+  const graph=reviewedSharedBridge({id,body:payload.body||'',title:payload.title,kind:'personal',qariId:payload.qariId,rawi:payload.rawi},payload.sharedBridgeReview,people);
+  return graph?[graph]:[];
+ });
+ const partialPersonalGraphs:ReviewedSharedBridge[]=(check(reviewedReadings)||[]).flatMap(({id,payload})=>{
   const ids=payload.personalPersonIds as string[]|undefined;
-  if(payload.tariqNumber||payload.unifiedSanad||!payload.shaykhId||!ids?.length||!jazariIds.has(ids.at(-1))||ids.some(personId=>!activeIds.has(personId)))return [];
+  if(payload.tariqNumber||payload.unifiedSanad||!payload.shaykhId||!ids?.length||ids.some(personId=>!activeIds.has(personId)))return [];
   const source=prepareSavedSanadPeople(payload.sanadText||'',true,'end');
-  if(!source||source.tokens.length!==ids.length)return [];
+  if(!source||source.suffix.trim()||source.tokens.length!==ids.length)return [];
   const graph=preparedSanadGraph(source,source.tokens.map((token,i)=>({...token,personId:ids[i]})));
   if(!graph)return [];
   const names=new Map(graph.nodes.map(node=>[node.id,node.name]));
-  return [{source:{id,body:payload.sanadText,title:payload.variantName||payload.name,kind:'personal' as const,shaykhId:payload.shaykhId,qariId:payload.qariId,rawi:payload.rawi},routes:graph.paths.map(path=>path.map(personId=>({id:personId,name:names.get(personId)!}))),unresolved:[]}];
+  return [{source:{id,body:payload.sanadText,title:payload.variantName||payload.name,kind:'personal' as const,shaykhId:payload.shaykhId,qariId:payload.qariId,rawi:payload.rawi},
+   routes:graph.paths.map(path=>path.map(personId=>({id:personId,name:names.get(personId)!}))),unresolved:[]}];
+ });
+ // A reviewed source ending before Ibn al-Jazari may reuse a single
+ // reviewed shared continuation at its last narrator.
+ const reviewedPersonalGraphs:ReviewedSharedBridge[]=[...partialPersonalGraphs,...sectionReferences].flatMap(graph=>{
+  const meeting=graph.routes[0]?.at(-1)?.id;
+  if(!meeting||graph.routes.some(path=>path.at(-1)?.id!==meeting))return [];
+  if(jazariIds.has(meeting))return [graph];
+  const options=sharedBridgeGraphs.map(bridge=>bridge.routes.flatMap(route=>{
+   const index=route.findIndex(node=>node.id===meeting);
+   return index>=0&&index<route.length-1?[route.slice(index+1)]:[];
+  })).filter(tails=>tails.length);
+  if(options.length!==1)return [];
+  const tails=[...new Map(options[0].map(tail=>[JSON.stringify(tail.map(node=>node.id)),tail])).values()];
+  const joined=joinSharedBridgeRoutes(graph.routes.map(path=>path.map(node=>node.id)),tails,meeting);
+  if(!joined)return [];
+  const names=new Map([...graph.routes.flat(),...tails.flat()].map(node=>[node.id,node.name]));
+  return [{...graph,routes:joined.map(path=>path.map(id=>({id,name:names.get(id)!})))}];
  });
  const continuations:Record<string,string>={};for(const q of QURRA)for(const rawi of q.rawis){const resolved=resolveSanadContinuation(continuationSections,q.id,rawi);if(!resolved.missing.length)continuations[q.id+'|'+rawi]=resolved.text;}
  for(const chain of chains){if(chain.continuation_ids?.length){const resolved=resolveSanadContinuation(continuationSections,chain.qari_id,chain.rawi,chain.continuation_ids);chain.continuation=resolved.text;if(resolved.missing.length)chain.confirmed=false;}}

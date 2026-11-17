@@ -89,7 +89,10 @@ export function reviewedSharedBridge(source:SharedBridgeSource,review:unknown,pe
  if(!review||typeof review!=='object')return null;
  const candidate=review as Partial<SharedBridgeReview>;
  if(candidate.version!==1||candidate.sourceBody!==source.body||!Array.isArray(candidate.identities))return null;
- const paths=sharedBridgePaths(source.body);
+ const linear=/^عن\s+([^،؛.()\n]+(?:،\s*عن\s+[^،؛.()\n]+)+)$/u.exec(source.body.trim());
+ const paths=source.kind==='personal'&&linear
+  ?[linear[1].split(/،\s*عن\s+/u).map(name=>name.trim())]
+  :sharedBridgePaths(source.body);
  if(!paths)return null;
  const active=new Set(people.filter(person=>!person.archived).map(person=>person.id));
  const names=new Set(paths.flat());
@@ -132,7 +135,13 @@ export function savedSharedBridgeDiagram(source:string,ids:string[],bridges:Revi
   return joined?[{id:bridge.source.id,paths:unique,joined}]:[];
  });
  const preferred=contextualOnwardIds(options.map(option=>option.id),bridges,context);
- const match=options.find(option=>option.id===(continuationId||(preferred.length===1?preferred[0]:undefined)));
+ const distinct=new Map<string,string>();
+ for(const option of options.filter(option=>preferred.includes(option.id))){
+  const key=JSON.stringify(option.paths.map(path=>JSON.stringify(path.map(node=>node.id))).sort());
+  if(!distinct.has(key))distinct.set(key,option.id);
+ }
+ const automaticId=distinct.size===1?distinct.values().next().value:undefined;
+ const match=options.find(option=>option.id===(continuationId||automaticId));
  if(!match)return {options:options.map(option=>option.id),diagram:null};
  const {joined,paths}=match;
  const names=Object.fromEntries([...paths.flat(),...graph.nodes].map(node=>[node.id,node.name]));
@@ -215,7 +224,7 @@ export function personalSanadEndsAtSavedNarrator(text:string,ids:string[]){
 
 export function automaticSharedBridgeId(text:string,ids:string[],bridges:ReviewedSharedBridge[],context:OnwardContext={}){
  if(!personalSanadEndsAtSavedNarrator(text,ids))return null;
- const options=contextualOnwardIds(savedSharedBridgeDiagram(text,ids,bridges)?.options??[],bridges,context);
- if(options.length!==1)return null;
- try{composeReferencedPersonalSanad(text,ids,bridges,options[0]);return options[0];}catch{return null;}
+ const id=savedSharedBridgeDiagram(text,ids,bridges,undefined,undefined,undefined,context)?.diagram?.sourceId;
+ if(!id)return null;
+ try{composeReferencedPersonalSanad(text,ids,bridges,id);return id;}catch{return null;}
 }
