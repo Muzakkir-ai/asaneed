@@ -307,11 +307,12 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     try{configured=JSON.parse(footerProfile.footerLineStyles||'{}');}catch{}
     const settings=configured[line]||{};
     const size=typeof settings.size==='number'&&Number.isFinite(settings.size)?Math.min(18,Math.max(7,settings.size)):line==='name'?11:9;
-    return {'--footer-line-font-size':`${size}pt`,'--footer-line-font-weight':settings.bold?700:400} as React.CSSProperties;
+    return {'--footer-line-font-size':`calc(${size}pt * var(--certificate-content-scale, 1))`,'--footer-line-font-weight':settings.bold?700:400} as React.CSSProperties;
   };
   const matnDocument=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').matnDocument;}catch{return null;}})();
   const fixedHeader=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').headerPosition==='fixed';}catch{return false;}})();
   const linkedFooter=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').footerWidthLinked===true;}catch{return false;}})();
+  const fixedContentLayout=isDraft||(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').settings?.contentScalePercent!==undefined;}catch{return false;}})();
   const modernMatnLayout=isDraft||!!(()=>{try{return JSON.parse(cert.snapshotFormatting||'{}').matnHeadingArtwork;}catch{return false;}})();
   const routeEmphasis=(()=>{try{return JSON.parse((isDraft?draftData?.formatting:cert.snapshotFormatting)||'{}').routeEmphasis||{};}catch{return {};}})();
   const sanadBody = activeSanad?.chain ? highlightCertificateNames(activeSanad.chain.replace(/^【بيان القراءة:[^】]+】\s*/, ''),footerName,cert.studentName,readingMarker?.[1]?.trim()||'',routeEmphasis) : undefined;
@@ -358,7 +359,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     const svgSecond=header?.querySelector<HTMLElement>('.certificate-reading-svg-line, .certificate-reading-label');
     // Negative per-SVG offsets are allowed only when their actual shapes do
     // not collide. A large line must also fit within the ornamental safe area.
-    const svgCollides=!!(qiraatHeading&&!matnDocument&&svgBasmala&&svgMain&&svgSecond&&(
+    const svgCollides=!!((qiraatHeading||contentScalePercent!==100)&&!matnDocument&&svgBasmala&&svgMain&&svgSecond&&(
       svgMain.getBoundingClientRect().top<svgBasmala.getBoundingClientRect().bottom-0.1||
       svgSecond.getBoundingClientRect().top<svgMain.getBoundingClientRect().bottom-0.1||
       [svgBasmala,svgMain,svgSecond].some(node=>{
@@ -367,7 +368,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       })
     ));
     const layout=contentLayout.current??page;
-    const unsafe=endingOverlaps||borderUnsafe||svgCollides||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:layout.scrollHeight,clientHeight:layout.clientHeight,scrollWidth:layout.scrollWidth,clientWidth:layout.clientWidth});
+    const footerOverflows=footer.scrollHeight>footer.clientHeight+2||footer.scrollWidth>footer.clientWidth+2;
+    const unsafe=endingOverlaps||borderUnsafe||svgCollides||footerOverflows||certificateOverflows({page:p,footer:f,body:b,header:h,scrollHeight:layout.scrollHeight,clientHeight:layout.clientHeight,scrollWidth:layout.scrollWidth,clientWidth:layout.clientWidth});
     setOverflow(unsafe);setLayoutChecked(true);return unsafe;
   };
   const [textTopMm,setTextTopMm]=useState(52.8);
@@ -448,7 +450,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       if(!balanced.fits){page.style.setProperty('--certificate-center-shift','0px');page.style.setProperty('--certificate-footer-lift','0px');setCenterFits(false);return;}
       if(Math.abs(balanced.shift-old)>0.25)page.style.setProperty('--certificate-center-shift',balanced.shift.toFixed(2)+'px');
       const oldLift=parseFloat(page.style.getPropertyValue('--certificate-footer-lift'))||0;
-      const lift=certificateFooterLift({
+      const lift=fixedContentLayout?0:certificateFooterLift({
        pageWidth:p.width,layoutWidth:page.offsetWidth,
        bodyBottom:body.getBoundingClientRect().bottom,
        footerTop:b.top,previousLift:oldLift,manualOffsetMm:footerOffsetMm,
@@ -467,7 +469,7 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
     if(sanadElement.current)observer.observe(sanadElement.current);
     document.fonts.ready.then(request).catch(()=>{});
     return()=>{cancelAnimationFrame(frame);observer.disconnect();};
-  },[fixedHeader,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,contentScalePercent,styledPhrases]);
+  },[fixedHeader,fixedContentLayout,printPermission,centerFits,textTopMm,activeSanad?.id,cert.id,sanadBody,cert.notes,footerName,typography,headingOverride,qiraatHeading,headingOffsetMm,footerOffsetMm,contentScalePercent,styledPhrases]);
   useEffect(()=>{
     if(printPermission!=='allowed'){setLayoutChecked(false);return;}
     let frame=0;
@@ -577,8 +579,8 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
         <summary className="cursor-pointer font-semibold">تنسيق الشهادة — النص والفقرات والرسوم</summary>
         <fieldset disabled={readOnly||!!previewPalette||savingFormat} className="mt-3 space-y-4 rounded-lg border bg-background p-4">
           <div className="flex flex-wrap items-center gap-3">
-            <label className="text-sm font-medium">حجم محتوى الشهادة ٪
-              <input aria-label="حجم محتوى الشهادة ٪" type="number" min={50} max={150} step={1}
+            <label className="text-sm font-medium">حجم النص والرسوم ٪
+              <input aria-label="حجم النص والرسوم ٪" type="number" min={50} max={150} step={1}
                 className="ms-2 w-24 rounded border bg-background p-2" value={contentScalePercent}
                 onChange={e=>{
                   const value=e.target.valueAsNumber;
@@ -703,10 +705,10 @@ export default function CertificatePrint({ cert, sanad, shaykhName, onClose, onF
       <CertificateViewport>
         <div ref={printArea} className={`print-area mx-auto bg-white shadow-xl relative ${centerFits?'certificate-auto-center-fit':''} ${printMode==='qr'?'certificate-qr-footer':''}`} style={{ width: '297mm', height: '210mm', boxSizing: 'border-box', padding: `var(--sanad-text-top, 52.8mm) 16mm 16mm`, '--sanad-text-top':`${textTopMm}mm`, '--certificate-heading-offset':`${headingOffsetMm}mm`, '--certificate-footer-offset':`${footerOffsetMm}mm`, '--certificate-route-source-font':isDraft||routeEmphasis.routeSourceFont==='Sakkal Kitab'?"'Sakkal Kitab'":"'KSA Regular'", '--certificate-primary':borderColor, '--certificate-secondary':accentColor, color:'#202020' } as React.CSSProperties}>
           <CertificateBorder number={sharedHeading?resolvedHeading.borderNumber:undefined} color={borderColor} artwork={activeArtwork} base={activeArtworkBase||undefined}/>
-          <div ref={contentLayout} className="certificate-scaled-content" style={{transform:`scale(${contentScalePercent/100})`}}>
+          <div ref={contentLayout} className={`certificate-scaled-content ${fixedContentLayout?'certificate-fixed-content':''}`} style={{'--certificate-content-scale':contentScalePercent/100,'--certificate-artwork-scale':contentScalePercent/100} as React.CSSProperties}>
           <CertificateHeading artwork={activeArtwork} artworkBase={activeArtworkBase||undefined} ref={headerArea} heading={readingLabel} primary={borderColor} secondary={accentColor} matnArtworkNumber={matnDocument?.headingArtworkNumber} matnSettings={sharedHeading?resolvedHeading:undefined} matnHeightPt={typography.reading.svgHeightPt??(isDraft&&matnDocument?15:undefined)} scalePercent={typography.reading.scalePercent} qiraatSettings={matnDocument?undefined:qiraatHeading??undefined} useMatnArtwork={modernMatnLayout} readingStyle={areaStyle('reading')} preserveHistoricalRoute={!isDraft&&!snapshotArtwork}/>
           {sakkalPrintNodes(<div className="certificate-content relative z-10 h-full flex flex-col items-center text-center certificate-text" dir="rtl">
-            <div ref={bodyArea} className="certificate-body-content w-full">
+            <div ref={bodyArea} className="certificate-body-content w-full" style={{zoom:contentScalePercent/100,width:'100%','--certificate-content-scale':1} as React.CSSProperties}>
             {sanadBody?.trim() ? (
               <div ref={sanadElement} onMouseUp={captureSelection} onKeyUp={captureSelection} className="certificate-composed-sanad w-full whitespace-pre-line" style={{...areaStyle('sanad'),'--certificate-conclusion-offset':`${typography.conclusion.offsetMm??0}mm`} as React.CSSProperties}>{matnDocument?<div style={{'--matn-primary':borderColor,'--matn-secondary':accentColor} as React.CSSProperties}><MatnPreview {...matnDocument} headingSettings={sharedHeading?resolvedHeading:undefined} legacyAlignment={!isDraft&&!matnDocument.editorVersion} bare studentName={cert.studentName} teacherName={footerName} certificateFont={typography.sanad.font} phraseOverrides={styledPhrases} justifyParagraphs={isDraft||!!typography.sanad.lastLineAlignment} centerConclusion={modernMatnLayout} legacySpacing={!modernMatnLayout} bodyStyle={modernMatnLayout?{lineHeight:typography.sanad.lineSpacing,marginBlockEnd:typography.sanad.paragraphSpacing!==undefined?`${typography.sanad.paragraphSpacing}pt`:'6pt',textIndent:typography.sanad.firstLineIndent!==undefined?`${typography.sanad.firstLineIndent}mm`:undefined,textAlign:'justify',textAlignLast:typography.sanad.lastLineAlignment??(typography.sanad.alignment==='center'?'center':'right')}:undefined} conclusionStyle={modernMatnLayout?areaStyle('conclusion'):undefined}/></div>:renderSanadWithConclusion(sanadBody.trim(), borderColor,accentColor,areaStyle('conclusion'), [...sharedPhrases.filter(p=>!styledPhrases.some(x=>x.text===p.text)), ...styledPhrases])}</div>
             ) : (

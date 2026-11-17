@@ -4,7 +4,7 @@
 .certificate-text { font-family: 'KSA Regular', serif; }
 .certificate-text p { line-height: inherit; }
 .certificate-text .certificate-verse { font-family: 'QCF2', serif; direction: rtl; }
-.certificate-text .certificate-verse-bracket { font-family: 'Traditional Arabic', 'KSA Regular', serif; font-size: 8pt; }
+.certificate-text .certificate-verse-bracket { font-family: 'Traditional Arabic', 'KSA Regular', serif; font-size: calc(8pt * var(--certificate-content-scale, 1)); }
 
 @tailwind base;
 @tailwind components;
@@ -141,7 +141,7 @@
 
 .certificate-composed-sanad { font-family: 'KSA Regular', serif; overflow-wrap: anywhere; }
 .certificate-verse-inline { white-space: nowrap; direction: rtl; unicode-bidi: isolate; }
-.certificate-qcf { font-family: 'QCF2', serif; font-size: 9pt; }
+.certificate-qcf { font-family: 'QCF2', serif; font-size: calc(9pt * var(--certificate-content-scale, 1)); }
 .certificate-ayah-marker { font-family: 'KSA Regular', serif; }
 
 /* Isolate the ornament behind the complete sanad text, including PDF capture. */
@@ -244,7 +244,7 @@
 .certificate-reading-label { font-family: 'Sakkal Kitab', serif; line-height: normal; }
 
 /* All KSA sanad copy uses the requested 9pt size. */
-.font-sanad { font-size: 9pt; }
+.font-sanad { font-size: calc(9pt * var(--certificate-content-scale, 1)); }
 
 /* 208.2 mm reading text box, original vertical metrics unchanged. */
 .certificate-reading-label { width: 208.2mm; max-width: none; flex: 0 0 auto; align-self: center; }
@@ -253,7 +253,7 @@
 .certificate-qcf { font-family: 'QCF2', serif !important; font-weight: normal !important; }
 
 /* Quranic typography remains fixed independently of editable sanad sections. */
-.certificate-verse-bracket { font-family: 'Traditional Arabic', serif !important; font-size: 8pt !important; color: var(--certificate-primary, #926e35) !important; }
+.certificate-verse-bracket { font-family: 'Traditional Arabic', serif !important; font-size: calc(8pt * var(--certificate-content-scale, 1)) !important; color: var(--certificate-primary, #926e35) !important; }
 .certificate-verse-inline, .certificate-ayah-marker { color: var(--certificate-primary, #926e35) !important; }
 .certificate-qcf { color: var(--certificate-primary, #926e35) !important; }
 /* Justify the body without stretching the paragraph's final line; keep the closing khutbah centered. */
@@ -264,11 +264,11 @@
 /* Bottom-anchored signing zone: 30mm reserved above the page safe edge.
    The first 6mm separates sanad text from actual footer content. The table
    expands inside the zone, keeping dates and registration near the border. */
-.certificate-footer { width:265mm; max-width:100%; flex-shrink:0; display:flex; flex-direction:column; box-sizing:border-box; min-height:30mm; padding-top:6mm; margin-top:auto; transform:translateY(calc(var(--certificate-footer-offset,0mm) - var(--certificate-footer-lift, 0px))); font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; line-height:1.2; }
+.certificate-footer { width:265mm; max-width:100%; flex-shrink:0; display:flex; flex-direction:column; box-sizing:border-box; min-height:30mm; padding-top:6mm; margin-top:auto; transform:translateY(calc(var(--certificate-footer-offset,0mm) - var(--certificate-footer-lift, 0px))); font-family:'KSA Regular',serif; font-size:calc(10pt * var(--certificate-content-scale, 1)); font-weight:normal; line-height:1.2; }
 .certificate-footer-table { width:100%; height:100%; flex:1; table-layout:fixed; border-collapse:collapse; border:0 !important; }
 /* Historical QR certificates need additional space for the full QR and label. */
 .print-area.certificate-qr-footer .certificate-footer { min-height:36mm; }
-.certificate-footer-table td { border:0 !important; padding:0 2mm; vertical-align:top; font-family:'KSA Regular',serif; font-size:10pt; font-weight:normal; }
+.certificate-footer-table td { border:0 !important; padding:0 2mm; vertical-align:top; font-family:'KSA Regular',serif; font-size:calc(10pt * var(--certificate-content-scale, 1)); font-weight:normal; }
 /* Anchor every first-row footer heading to the bottom of its cell. */
 .certificate-footer-head td { vertical-align:bottom !important; padding-bottom:1mm; }
 .certificate-footer-right { text-align:right; }
@@ -301,19 +301,19 @@
 }
 
 /* Shahada body text uses exact 9.5pt type and 16pt line height; keep decorative sizes unchanged. */
-.certificate-text { font-size:9.5pt; line-height:16pt; }
-.certificate-text .certificate-title { font-size:26.4pt; line-height:33pt; }
-.certificate-text .certificate-name { font-size:18.7pt; line-height:25.3pt; }
-.certificate-composed-sanad { font-size:9.5pt; line-height:16pt; }
-.certificate-text .certificate-verse { font-size:9.9pt; line-height:16.5pt; }
-.certificate-qcf { font-size:9.9pt !important; line-height:16.5pt; }
-.certificate-ayah-marker { font-size:12.1pt; line-height:16.5pt; }
-.certificate-verse-bracket, .certificate-text .certificate-verse-bracket { font-size:8.8pt !important; }
-.certificate-symbol { font-size:12.1pt; }
-.certificate-reading-label { font-size:12.1pt; }
-.certificate-footer, .certificate-footer-table td { font-size:11pt; }
-.certificate-footer-name { font-size:11pt; }
-.certificate-footer-head .certificate-footer-heading { font-size:11pt !important; }
+.certificate-text { font-size:calc(9.5pt * var(--certificate-content-scale, 1)); line-height:16pt; }
+.certificate-text .certificate-title { font-size:calc(26.4pt * var(--certificate-content-scale, 1)); line-height:33pt; }
+.certificate-text .certificate-name { font-size:calc(18.7pt * var(--certificate-content-scale, 1)); line-height:25.3pt; }
+.certificate-composed-sanad { font-size:calc(9.5pt * var(--certificate-content-scale, 1)); line-height:16pt; }
+.certificate-text .certificate-verse { font-size:calc(9.9pt * var(--certificate-content-scale, 1)); line-height:16.5pt; }
+.certificate-qcf { font-size:calc(9.9pt * var(--certificate-content-scale, 1)) !important; line-height:16.5pt; }
+.certificate-ayah-marker { font-size:calc(12.1pt * var(--certificate-content-scale, 1)); line-height:16.5pt; }
+.certificate-verse-bracket, .certificate-text .certificate-verse-bracket { font-size:calc(8.8pt * var(--certificate-content-scale, 1)) !important; }
+.certificate-symbol { font-size:calc(12.1pt * var(--certificate-content-scale, 1)); }
+.certificate-reading-label { font-size:calc(12.1pt * var(--certificate-content-scale, 1)); }
+.certificate-footer, .certificate-footer-table td { font-size:calc(11pt * var(--certificate-content-scale, 1)); }
+.certificate-footer-name { font-size:calc(11pt * var(--certificate-content-scale, 1)); }
+.certificate-footer-head .certificate-footer-heading { font-size:calc(11pt * var(--certificate-content-scale, 1)) !important; }
 
 /* Compact separation between certificate paragraphs; keep within-paragraph line height unchanged. */
 .certificate-composed-sanad .certificate-sanad-paragraph { margin:0 0 3pt 0; text-align:justify; text-align-last:right; }
@@ -329,8 +329,8 @@
 .certificate-footer-details td > div:not(.certificate-footer-name),
 .certificate-footer-details .certificate-footer-dates,
 .certificate-footer-details .certificate-footer-dates div,
-.certificate-footer-details .certificate-stamp-extra { font-family:'KSA Regular',serif !important; font-size:9pt !important; }
-.certificate-footer-details .certificate-footer-name { font-family:'Sakkal Kitab',serif !important; font-size:11pt !important; }
+.certificate-footer-details .certificate-stamp-extra { font-family:'KSA Regular',serif !important; font-size:calc(9pt * var(--certificate-content-scale, 1)) !important; }
+.certificate-footer-details .certificate-footer-name { font-family:'Sakkal Kitab',serif !important; font-size:calc(11pt * var(--certificate-content-scale, 1)) !important; }
 
 /* The salawat glyph always follows the *secondary* riwayah color, including
    inside primary-colored imam names and the Prophet chain. */
@@ -343,7 +343,7 @@
    a general-purpose styled section. */
 .certificate-composed-sanad .certificate-jazari-normal {
   font-family:'KSA Regular',serif !important;
-  font-size:9.9pt !important;
+  font-size:calc(9.9pt * var(--certificate-content-scale, 1)) !important;
   font-weight:400 !important;
 }
 
@@ -374,7 +374,7 @@
  width:auto !important;
  margin:0 !important;
  font-family:'Sakkal Kitab',serif !important;
- font-size:10pt !important;
+ font-size:calc(10pt * var(--certificate-content-scale, 1)) !important;
  font-weight:700 !important;
  font-synthesis:none;
  line-height:inherit;
@@ -421,7 +421,7 @@
 .certificate-footer-dates .certificate-date-value {
   flex:0 0 auto;
   font-family:'KSA Regular',serif !important;
-  font-size:9pt !important;
+  font-size:calc(9pt * var(--certificate-content-scale, 1)) !important;
 }
 .certificate-footer-dates .certificate-date-label {text-align:right !important;}
 .certificate-footer-dates .certificate-date-value {text-align:left !important;}
@@ -454,7 +454,7 @@
  flex:0 0 auto;
  white-space:nowrap;
  font-family:'KSA Regular',serif !important;
- font-size:9pt !important;
+ font-size:calc(9pt * var(--certificate-content-scale, 1)) !important;
  color:var(--certificate-primary,#926e35) !important;
 }
 /* Keep issuer name centered, but spread the individual words in detail rows. */
@@ -494,11 +494,11 @@
 
 /* Each of the four mujeez lines respects its independently configured typography. */
 .certificate-footer-table .certificate-footer-details .certificate-footer-right > div {
- font-size:var(--footer-line-font-size,9pt) !important;
+ font-size:var(--footer-line-font-size,calc(9pt * var(--certificate-content-scale, 1))) !important;
  font-weight:var(--footer-line-font-weight,400) !important;
 }
 .certificate-footer-table .certificate-footer-details .certificate-footer-right > div.certificate-footer-name {
- font-size:var(--footer-line-font-size,11pt) !important;
+ font-size:var(--footer-line-font-size,calc(11pt * var(--certificate-content-scale, 1))) !important;
 }
 
 /* The Prophet chain's inline alignment and bold Sakkal Kitab treatment are
@@ -508,7 +508,7 @@
 .certificate-composed-sanad .certificate-aimma-name {
   font-family:'Sakkal Kitab',serif !important;
   font-weight:700 !important;
-  font-size:10pt !important;
+  font-size:calc(10pt * var(--certificate-content-scale, 1)) !important;
   font-synthesis:none;
   color:var(--certificate-primary,#926e35) !important;
 }
@@ -657,12 +657,12 @@
   padding:0 3mm !important;
 }
 .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez > div {
-  font-size:var(--footer-line-font-size,9pt) !important;
+  font-size:var(--footer-line-font-size,calc(9pt * var(--certificate-content-scale, 1))) !important;
   line-height:1.2;
 }
 .certificate-footer-table .certificate-footer-details > td.certificate-footer-mujeez .certificate-footer-name {
   font-family:'Sakkal Kitab',serif !important;
-  font-size:var(--footer-line-font-size,11pt) !important;
+  font-size:var(--footer-line-font-size,calc(11pt * var(--certificate-content-scale, 1))) !important;
   font-weight:700 !important;
 }
 .certificate-footer-table .certificate-footer-details > td.certificate-footer-qr-cell {
@@ -688,7 +688,7 @@
   white-space:nowrap;
   font-family:'KSA Regular',serif !important;
   font-weight:700;
-  font-size:8pt;
+  font-size:calc(8pt * var(--certificate-content-scale, 1));
   color:var(--certificate-primary,#926e35) !important;
   text-align:center !important;
 }
@@ -697,7 +697,7 @@
 .certificate-qr-preview-label {
   display:block;
   font-family:'KSA Regular',serif;
-  font-size:7pt;
+  font-size:calc(7pt * var(--certificate-content-scale, 1));
   line-height:1;
   color:var(--certificate-secondary,#075f69);
   white-space:nowrap;
@@ -768,7 +768,7 @@ select:not([multiple]):not([size]):dir(rtl){background-position:left 12px center
 .certificate-print-screen [style*="Sakkal Kitab"]{font-feature-settings:"ss16" 1;}
 .certificate-print-screen .certificate-reading-label[style*="Sakkal Kitab"]{font-feature-settings:"ss14" 1,"ss16" 1;}
 
-/* Scale every certificate element together inside the unchanged ornament. */
+/* Preserve paper coordinates while resizing text and artwork in their own slots. */
 .certificate-scaled-content {
   position:absolute;
   inset:0;
@@ -776,4 +776,32 @@ select:not([multiple]):not([size]):dir(rtl){background-position:left 12px center
   padding:var(--sanad-text-top,52.8mm) 16mm 16mm;
   transform-origin:center center;
   z-index:2;
+}
+
+.certificate-scaled-content .certificate-header-art {
+  --certificate-content-scale:1;
+}
+.certificate-fixed-content .certificate-footer {
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  margin-inline:auto;
+  height:32mm;
+  min-height:32mm;
+  max-height:32mm;
+}
+.certificate-qr-footer .certificate-fixed-content .certificate-footer {
+  height:36mm;
+  min-height:36mm;
+  max-height:36mm;
+}
+.certificate-scaled-content .certificate-header-art > :not(.matn-heading-group),
+.certificate-scaled-content .matn-heading-group > .certificate-basmalah-svg,
+.certificate-scaled-content .matn-heading-art > *,
+.certificate-scaled-content .certificate-numbered-artwork > img,
+.certificate-scaled-content .certificate-numbered-artwork > span,
+.certificate-scaled-content .certificate-zakaullah-line {
+  scale:var(--certificate-artwork-scale,1);
+  transform-origin:center top;
 }

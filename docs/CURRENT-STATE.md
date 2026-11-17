@@ -1,8 +1,8 @@
 ## Whole certificate content size — 18 November 2026
 
-The draft certificate preview includes **حجم محتوى الشهادة ٪** with a 50–150% range and a 100% reset. It scales the heading, sanad, conclusion, issuer artwork, dates and registration together around the paper center. The border and A4 paper retain their dimensions. The value is saved in certificate-only draft formatting and frozen on finalization. Existing formatting defaults to 100%. Preview, native print and PDF capture share the same content transform. Existing overlap and safe-area checks remain active.
+The draft certificate preview includes **حجم النص والرسوم ٪** with a 50–150% range and a 100% reset. Text reflows inside its original full-width box. The footer keeps its width and fixed bottom anchor, with a 32 mm signing slot (36 mm for historical QR output). Heading and issuer artwork resize inside their original slots, preserving each slot's top and horizontal alignment. The border and A4 paper retain their dimensions. The value is saved in certificate-only draft formatting and frozen on finalization. Existing formatting defaults to 100%. Preview, native print and PDF capture share these rules. Overlap and safe-area checks remain active, including footer overflow.
 
-Verified with the production build, heading and formatting suites, footer-layout tests, and synthetic Chromium screen/print measurements at 50%, 85%, 125% and 150%. An authenticated real-certificate print and physical printer were not exercised. The build reports an existing Next.js security advisory.
+Verified with the production build, heading and formatting suites, footer-layout tests, and synthetic Chromium screen/print measurements at 50%, 85%, 125% and 150%. Measurements verify unchanged text and footer widths and unchanged header/footer anchors. An authenticated real-certificate print and physical printer were not exercised. The build reports an existing Next.js security advisory.
 
 ## Certificate integration candidate (12 November 2026)
 
