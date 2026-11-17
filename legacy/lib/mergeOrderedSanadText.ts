@@ -89,38 +89,53 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
  }
  if(order.length!==all.size)return null;
  // Encounter meeting points from the living student toward older teachers.
- const joins=order.filter(id=>(incoming.get(id)?.size||0)>1);
  const terminal=inputRoutes[0].at(-1)!;
+ const joins=order.filter(id=>{
+  const parents=[...(incoming.get(id)??[])];
+  if(parents.length<2)return false;
+  const students=incoming.get(parents[0]);
+  // Keep a direct teacher group inside its route to the next meeting.
+  return id===terminal||students?.size!==1||!parents.every(parent=>
+   outgoing.get(parent)?.size===1&&incoming.get(parent)?.size===1&&
+   incoming.get(parent)?.has([...students][0]));
+ });
  if(!joins.includes(terminal))joins.push(terminal);
- const mentioned=new Set<string>(),paragraphs:string[]=[];
+ const mentioned=new Set<string>();
+ let text='',previousMeeting:string|undefined;
  const person=(id:string)=>(names.get(id)||'').replace(/[،.\s]+$/u,'').replace(/^أبو(?=\s)/u,'أبي');
  const subject=(id:string)=>person(id).replace(/^أَبِي(?=\s)/u,'أَبُو').replace(/^أبي(?=\s)/u,'أبو');
- function renderBlocks(blocks:SanadPathBlock[],starter:string,pivot:string|null):string {
-  let out='',first=true,current=pivot;
-  for(const block of blocks){
+ const alternateIntro=()=> 'وكما أخذته أيضًا عن ';
+ function renderBlocks(blocks:SanadPathBlock[],intro:string,pivot?:string):string {
+  let out='',current=pivot;
+  for(let index=0;index<blocks.length;index++){
+   const block=blocks[index];
    if(block.kind==='person'){
-    if(first&&mentioned.has(block.id)){
-     out='ومن طريق '+person(block.id);current=block.id;first=false;continue;
+    if(index===0&&intro===alternateIntro()&&mentioned.has(block.id)){
+     out='وقرأ '+subject(block.id)+' أيضًا على ';
+     const rest=renderBlocks(blocks.slice(1),'',block.id);
+     return rest?out+rest:'';
     }
-    out+=(out?'، عن ':starter+' ')+person(block.id);
-    current=block.id;first=false;continue;
+    out+=(out?'، عن ':intro)+person(block.id);
+    current=block.id;
+    continue;
    }
-   const lanes=block.lanes;
-   if(!lanes.length)return '';
-   // 2, 3 or 4 parallel direct links between the same student/teacher
-   // form one named group, not multiple (ح) branches.
-   if(lanes.every(l=>l.length===1&&l[0].kind==='person')){
-    const ids=lanes.map(l=>(l[0] as {kind:'person';id:string}).id);
-    out+=(out?'، عن ':starter+' ')+ids.map(person).join('، و');
-    current=null;first=false;continue;
+   const meeting=blocks[index+1];
+   if(meeting?.kind!=='person')return '';
+   // Immediate alternative teachers with the same student and teacher share one phrase.
+   if(current&&block.lanes.every(lane=>lane.length===1&&lane[0].kind==='person')){
+    const teachers=block.lanes.map(lane=>person((lane[0] as {kind:'person';id:string}).id));
+    out+=(out?'، عن ':intro)+teachers.join('، و');
+    current=undefined;
+    continue;
    }
-   const rendered=lanes.map((lane,i)=>{
-    const intro=i===0?(out?'عن':starter):(current?'وقرأ '+subject(current)+' أيضًا على':'كما أخذته عن');
-    return renderBlocks(lane,intro,null);
-   }).filter(Boolean);
-   if(!rendered.length)continue;
-   out+=(out?'، ':'')+rendered.join(' (ح) ');
-   current=null;first=false;
+   // Repeat the shared narrator in each lane so every switch comes after its meeting.
+   const rendered=block.lanes.map((lane,laneIndex)=>renderBlocks([...lane,meeting],
+    laneIndex===0?(out?'، عن ':intro):
+     current?'وقرأ '+subject(current)+' أيضًا على ':alternateIntro()));
+   if(rendered.some(lane=>!lane))return '';
+   out+=rendered.join(' (ح) ');
+   current=meeting.id;
+   index++;
   }
   return out;
  }
@@ -138,14 +153,36 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
   }
   for(const parent of incoming.get(meeting)||[])backward(parent,[]);
   if(!partials.length)continue;
-  const blocks=sanadPathLayout(partials,true);
+  // Put the route that continues the previous meeting before independent arrivals.
+  const ordered=partials.filter(path=>path[0]===previousMeeting)
+   .concat(partials.filter(path=>path[0]!==previousMeeting));
+  const blocks=sanadPathLayout(ordered,true);
   if(!blocks)return null;
-  const section=renderBlocks(blocks,'كما أخذته عن',null).trim();
-  if(section)paragraphs.push((paragraphs.length&&new Set(partials.map(p=>p[0])).size>1?'(ح) ':'')+section);
-  paragraphs.push('ثم تلتقي الطرق عند '+person(meeting));
+  const first=blocks[0];
+  const meetingBlock={kind:'person' as const,id:meeting};
+  if(first?.kind==='split'&&first.lanes[0][0]?.kind==='person'&&
+    first.lanes[0][0].id===previousMeeting){
+   // The previous meeting is already at the end of the current sentence.
+   const nextMeeting=blocks[1]??meetingBlock;
+   if(nextMeeting.kind!=='person')return null;
+   const continuation=renderBlocks([...first.lanes[0].slice(1),nextMeeting],'، عن ',previousMeeting);
+   const alternatives=first.lanes.slice(1).map(lane=>renderBlocks([...lane,nextMeeting],alternateIntro()));
+   const remaining=blocks.length>1?[...blocks.slice(2),meetingBlock]:[];
+   const tail=renderBlocks(remaining,'، عن ',nextMeeting.id);
+   if(!continuation||alternatives.some(lane=>!lane)||(remaining.length&&!tail))return null;
+   text+=[continuation,...alternatives].join(' (ح) ')+tail;
+  }else{
+   const continues=first?.kind==='person'&&first.id===previousMeeting;
+   const section=renderBlocks([...(continues?blocks.slice(1):blocks),meetingBlock],
+    continues?'، عن ':text?alternateIntro():(opening??'كما أخذته عن')+' ',
+    continues?previousMeeting:undefined);
+   if(!section)return null;
+   text+=(text&&!continues?' (ح) ':'')+section;
+  }
+  previousMeeting=meeting;
   for(const path of partials)path.forEach(id=>mentioned.add(id));
   mentioned.add(meeting);
  }
- const text=paragraphs.join('، ').replace(/،\s*\./gu,'.')+(suffix||'.');
+ text+=suffix||'.';
  return text&&text.length<=30000?text:null;
 }
