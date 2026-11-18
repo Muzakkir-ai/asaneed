@@ -796,12 +796,19 @@ select:not([multiple]):not([size]):dir(rtl){background-position:left 12px center
   min-height:36mm;
   max-height:36mm;
 }
-.certificate-scaled-content .certificate-header-art > :not(.matn-heading-group),
-.certificate-scaled-content .matn-heading-group > .certificate-basmalah-svg,
-.certificate-scaled-content .matn-heading-art > *,
 .certificate-scaled-content .certificate-numbered-artwork > img,
 .certificate-scaled-content .certificate-numbered-artwork > span,
 .certificate-scaled-content .certificate-zakaullah-line {
+  scale:var(--certificate-artwork-scale,1);
+  transform-origin:center top;
+}
+
+/* Resize the complete heading rhythm from its fixed basmalah anchor. */
+.certificate-heading-content {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
   scale:var(--certificate-artwork-scale,1);
   transform-origin:center top;
 }

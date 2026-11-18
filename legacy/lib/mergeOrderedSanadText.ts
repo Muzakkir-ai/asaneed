@@ -104,7 +104,7 @@ export function mergeOrderedSanadText(texts:string[],branches:Pick<SanadBranch,'
  let text='',previousMeeting:string|undefined;
  const person=(id:string)=>(names.get(id)||'').replace(/[،.\s]+$/u,'').replace(/^أبو(?=\s)/u,'أبي');
  const subject=(id:string)=>person(id).replace(/^أَبِي(?=\s)/u,'أَبُو').replace(/^أبي(?=\s)/u,'أبو');
- const alternateIntro=()=> 'وكما أخذته أيضًا عن ';
+ const alternateIntro=()=> 'وقد أخذت أيضًا عن ';
  function renderBlocks(blocks:SanadPathBlock[],intro:string,pivot?:string):string {
   let out='',current=pivot;
   for(let index=0;index<blocks.length;index++){

@@ -81,7 +81,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assert.equal(mergeOrderedSanadText(partial.map(graphText),partial.map(path=>graphBranch(path))),null,'do not introduce a missing crossed route');
  const independent=[['a','d','h'],['b','d','h']];
  const independentText=mergeOrderedSanadText(independent.map(graphText),independent.map(path=>graphBranch(path)));
- assert.match(independentText||'',/الشيخ الحلواني \(ح\) وكما أخذته أيضًا عن الشيخ عبد الغفار، عن الشيخ الحلواني/u);
+ assert.match(independentText||'',/الشيخ الحلواني \(ح\) وقد أخذت أيضًا عن الشيخ عبد الغفار، عن الشيخ الحلواني/u);
  // When three or four teachers share the same student and same onward teacher,
  // the group is not three or four independent (ح) transmission switches.
  for(const count of [3,4]){
@@ -122,7 +122,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
 
  assert.ok(compact.endsWith('عن الشيخ jaz.'));
  assert.ok(!compact.includes('ثم تلتقي الطرق عند'));
- assert.match(compact,/عن الشيخ salim \(ح\) وقرأ الشيخ wa أيضًا على الشيخ bkri، عن الشيخ salim، عن الشيخ mar، عن الشيخ ub \(ح\) وكما أخذته أيضًا عن الشيخ ay/u);
+ assert.match(compact,/عن الشيخ salim \(ح\) وقرأ الشيخ wa أيضًا على الشيخ bkri، عن الشيخ salim، عن الشيخ mar، عن الشيخ ub \(ح\) وقد أخذت أيضًا عن الشيخ ay/u);
  // Dropping one correlated input route must not be mistaken for a complete DAG.
  const incompleteRoutes=fullRoutes.map(paths=>[...paths]);
  incompleteRoutes[2]=incompleteRoutes[2].slice(0,4);
@@ -137,7 +137,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  const uwaisPaths=[['wa','dar','eyes','salim','ub','jaz'],['wa','bkri','salim','ub','jaz'],['ay','ub','jaz']];
  const uwaisText=mergeOrderedSanadText(uwaisPaths.map(path=>'كما أخذته عن '+path.map(id=>uwaisNames[id]).join('، عن ')),
   uwaisPaths.map(path=>graphBranch(path,uwaisNames)));
- assert.equal(uwaisText,'كما أخذته عن الشيخ عبد الوهاب بن قحطان، عن الشيخ عبد الغفار الدُّروبي، عن الشيخ عبد العزيز عيون السود، عن الشيخ محمد سليم الحلواني (ح) وقرأ الشيخ عبد الوهاب بن قحطان أيضًا على الشيخ بكري الطرابيشي، عن الشيخ محمد سليم الحلواني، عن الشيخ إبراهيم العبيدي (ح) وكما أخذته أيضًا عن الشيخ أيمن، عن الشيخ إبراهيم العبيدي، عن الإمام ابن الجزري.');
+ assert.equal(uwaisText,'كما أخذته عن الشيخ عبد الوهاب بن قحطان، عن الشيخ عبد الغفار الدُّروبي، عن الشيخ عبد العزيز عيون السود، عن الشيخ محمد سليم الحلواني (ح) وقرأ الشيخ عبد الوهاب بن قحطان أيضًا على الشيخ بكري الطرابيشي، عن الشيخ محمد سليم الحلواني، عن الشيخ إبراهيم العبيدي (ح) وقد أخذت أيضًا عن الشيخ أيمن، عن الشيخ إبراهيم العبيدي، عن الإمام ابن الجزري.');
  // The live report adds Ayyub to the three earlier Hafs sources.
  const ayyub=['ayyub','khalil','makki','malik','saad','juraysi','mutawalli','tihami','salamuna','ub','aj','smah','baq'];
  const fourSources=[[base[0],base[1]],[base[3],base[4]],[ayyub],[base[2]]];
@@ -152,7 +152,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assert.ok(!fourSourceText.includes('ثم تلتقي الطرق عند'));
  assert.ok(!fourSourceText.includes('ومن طريق'));
  assert.ok(fourSourceText.includes('عن الشيخ محمد سليم الحلواني (ح) وقرأ الشيخ عبد الوهاب بن قحطان'));
- assert.ok(fourSourceText.includes('عن الشيخ إبراهيم العبيدي (ح) وكما أخذته أيضًا عن الشيخ محمد أيوب بن محمد يوسف'));
+ assert.ok(fourSourceText.includes('عن الشيخ إبراهيم العبيدي (ح) وقد أخذت أيضًا عن الشيخ محمد أيوب بن محمد يوسف'));
  assert.ok(fourSourceText.includes('عن الشيخ أحمد بن محمد سَلَمونه المصري، عن الشيخ إبراهيم العبيدي، عن الشيخ aj'));
  const ids=variants.map(v=>v.id);
  const branchFixture={...variants[0],id:id(90),prepareNarratorBoxes:true,personalPeopleReviewed:true,junction:'ubaydi',
