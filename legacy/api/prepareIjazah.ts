@@ -1,3 +1,4 @@
+import {sanadNarratorCount} from '../lib/sanadNarratorCount';
 import {isDeepStrictEqual} from 'node:util';
 import {assembleOrderedSanads} from '../lib/assembleOrderedSanads';
 import {orderedSanadIds,orderedSanadPreviewSchema,personalBranchDiagram,resolveOrderedSanads,type OrderedSanadProvenance} from '../lib/orderedSanads';
@@ -26,6 +27,7 @@ export default createEndpoint({
   if(!selectedRawi)throw new Error('إصدار الشهادة برواية واحدة فقط؛ اختر إحدى الروايتين');
   if(!q.rawis.some(r=>r===selectedRawi)||(holding.rawi&&holding.rawi!==selectedRawi))throw new Error('الرواية غير متاحة في إجازتك');
   const {records:sections}=await zite.sanadSections.findAll({limit:2000});
+  const visibleSections=sections.filter(s=>!s.ownerId||s.ownerId===uid).map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''}));
   if(input.holdingIds){
    if(input.holdingIds[0]!==holding.id)throw Error('اختر السند الأساسي أولًا');
    const {records}=await zite.ijazahHoldings.findAll({filters:{ownerId:uid},limit:2000});
@@ -34,8 +36,8 @@ export default createEndpoint({
     holding:{...h,qariId:q.id,rawi:selectedRawi,personalChain:h.personalChain||'',junction:h.junction||'ubaydi'},
     branch:{sourceId:h.id,continuationId:null,routeId:h.unifiedSanad?.routeId??null,label:h.shortName||h.sourceTeacherName||h.name||'سند محفوظ',
      ...personalBranchDiagram(h.unifiedSanad?.prefix??h.personalChain??'',h.unifiedSanad?.prefixPersonIds??h.personalPersonIds??[])},
-   })),sections.filter(s=>!s.ownerId||s.ownerId===uid).map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
-   if(input.previewOnly)return {sanadId:'',updated:false,heading:assembled.heading,preview:{chain:assembled.chain,branches:assembled.branches}};
+   })),visibleSections);
+   if(input.previewOnly)return {sanadId:'',updated:false,heading:assembled.heading,preview:{chain:assembled.chain,branches:assembled.branches.map((branch,index)=>({...branch,narratorCount:sanadNarratorCount({...selected[index],qariId:q.id,rawi:selectedRawi,personalChain:selected[index].personalChain||'',junction:selected[index].junction||'ubaydi'},branch,visibleSections)}))}};
    const orderedSanads:OrderedSanadProvenance={version:1,kind:'holding',qariId:q.id,rawi:selectedRawi,branches:assembled.branches};
    const {records:previous}=await zite.asaneed.findAll({filters:{shaykh:uid},limit:2000});
    const reusable=previous.find(row=>!row.additionalShaykh&&row.chain===assembled.chain&&(row.tariqNumber||'')===(holding.tariqNumber||'')&&

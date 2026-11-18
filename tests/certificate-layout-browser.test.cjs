@@ -5,6 +5,7 @@ const {chromium}=require('playwright');
 const {PDFDocument}=require('pdf-lib');
 
 async function installFixtureFrame(page){
+ await page.route('**/svg/basmalah.svg*',route=>route.fulfill({contentType:'image/svg+xml',body:fs.readFileSync('tests/fixtures/basmalah.svg')}));
  // The standalone fixture does not load the Studio artwork provider.
  await page.addStyleTag({content:`.certificate-ornament{
   mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 292 207'%3E%3Crect x='2' y='2' width='288' height='203' fill='none' stroke='black' stroke-width='0.7'/%3E%3C/svg%3E")
@@ -35,7 +36,7 @@ function assertA4Pdf(pdf){
 
 async function checkDownloadPdf(page){
  const originalUserAgent=await page.evaluate(()=>navigator.userAgent);
- await page.evaluate(()=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:'iPhone fixture'}));
+ await page.evaluate(()=>{Object.defineProperty(navigator,'userAgent',{configurable:true,value:'iPhone fixture'});Object.defineProperty(navigator,'canShare',{configurable:true,value:()=>false});});
  try{
   const [download]=await Promise.all([
    page.waitForEvent('download'),
@@ -44,7 +45,7 @@ async function checkDownloadPdf(page){
   assert.match(download.suggestedFilename(),/^ijazah-.*\.pdf$/);
   assertA4Pdf(await PDFDocument.load(fs.readFileSync(await download.path())));
  }finally{
-  await page.evaluate(userAgent=>Object.defineProperty(navigator,'userAgent',{configurable:true,value:userAgent}),originalUserAgent);
+  await page.evaluate(userAgent=>{Object.defineProperty(navigator,'userAgent',{configurable:true,value:userAgent});delete navigator.canShare;},originalUserAgent);
  }
 }
 
@@ -63,6 +64,7 @@ async function checkDownloadPdf(page){
    {detached:process.platform!=='win32',stdio:'inherit'});
   let html='';
   for(let i=0;i<90&&!html;i++){
+   if(server.exitCode!==null)break;
    try{const res=await fetch(url);if(res.ok)html=await res.text();}catch{}
    if(!html)await new Promise(resolve=>setTimeout(resolve,300));
   }
@@ -96,11 +98,12 @@ async function checkDownloadPdf(page){
   await page.locator('.certificate-registration-number').waitFor();
   await page.evaluate(()=>document.fonts.ready);
   const panel=page.locator('.certificate-settings-panel').first();
-  await panel.locator('summary').click();
+  await panel.locator('summary').first().click();
   const title=page.locator('.certificate-header-art');
   const footer=page.locator('.print-area .certificate-footer');
   const titleBefore=await title.boundingBox();
   const footerBefore=await footer.boundingBox();
+  await panel.getByText('موضع العنوان والختم',{exact:true}).click();
   const titleOffset=page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
   const footerOffset=page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
   await titleOffset.fill('3');
@@ -118,7 +121,7 @@ async function checkDownloadPdf(page){
   assert.equal(await advancedMatn.evaluate(node=>node.open),false,'matn complex options start collapsed');
   if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
    await panel.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-matn-basic-controls.png'});
-  await advancedMatn.locator('summary').click();
+  await advancedMatn.locator('summary').first().click();
   const headingControl=page.getByRole('spinbutton',{name:'المسافة بعد السند',exact:true});
   await headingControl.fill('6');
   await headingControl.blur();
@@ -131,7 +134,7 @@ async function checkDownloadPdf(page){
   await offsetControl.blur();
   const after=await page.locator('[data-matn-section="conclusion"]').boundingBox();
   assert.ok(before&&after&&after.y>before.y+10,'khatima moves down in document flow');
-  await page.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).click();
+  await page.getByRole('button',{name:'حفظ التنسيق'}).click();
   assert.equal(changes.at(-1)?.action,'save','draft Save sends only print settings');
   assert.equal(Object.hasOwn(changes.at(-1),'printMode'),false);
   assert.equal(changes.at(-1)?.settings?.matnHeading?.sectionGapAfterSanadMm,6,
@@ -151,12 +154,13 @@ async function checkDownloadPdf(page){
   }
 
   await page.reload();
-  await page.locator('.certificate-settings-panel').first().locator('summary').click();
+  await page.locator('.certificate-settings-panel').first().locator('summary').first().click();
+  if(!await page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true}).isVisible())await panel.getByText('موضع العنوان والختم',{exact:true}).click();
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true}).inputValue()),3,
    'saved title shift survives a browser refresh');
   assert.equal(Number(await page.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true}).inputValue()),-4,
    'saved stamp/footer shift survives a browser refresh');
-  await page.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
+  await page.getByRole('button',{name:'إعادة الضبط'}).click();
   assert.equal(changes.at(-1)?.action,'reset','restore uses separate non-final action');
   await page.waitForFunction(()=>
    document.querySelector('input[aria-label="رفع أو خفض عنوان الإجازة"]')?.value==='0'
@@ -233,7 +237,7 @@ async function checkDownloadPdf(page){
    const b0=await relativeY('.certificate-body-content');
    const f0=await relativeY('.certificate-footer');
    assert.ok([h0,b0,f0].every(Number.isFinite),'all qiraat page rectangles exist');
-   await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   await qPage.locator('.certificate-settings-panel').first().locator('summary').first().click();
    await qPage.getByLabel('جزء الشهادة').selectOption('reading');
    const qSvg=qPage.locator('[data-testid="qiraat-svg-controls"]');
    assert.equal(await qSvg.count(),1,'qiraat SVG editor is available');
@@ -253,6 +257,7 @@ async function checkDownloadPdf(page){
    assert.ok(heightAfter>heightBefore*1.02,'riwayah SVG line scales separately without changing ijazah sizing');
    if(process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS)
     await qSvg.screenshot({path:process.env.ASANEED_CERTIFICATE_REVIEW_SCREENSHOTS+'/certificate-qiraat-svg-controls.png'});
+   await qPage.getByText('موضع العنوان والختم',{exact:true}).click();
    const qHeading=qPage.getByRole('spinbutton',{name:'رفع أو خفض عنوان الإجازة',exact:true});
    const qFooter=qPage.getByRole('spinbutton',{name:'رفع أو خفض الختم ومعلومات المجيز',exact:true});
    await qHeading.fill('3');await qHeading.blur();
@@ -302,17 +307,17 @@ async function checkDownloadPdf(page){
     });
    assert.equal(await qPage.locator('.certificate-settings-panel[role="alert"]').count(),0,
     'reasonable title/footer offsets remain inside the ornamental safety zone');
-   await qPage.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).click();
+   await qPage.getByRole('button',{name:'حفظ التنسيق'}).click();
    assert.equal(qChanges.at(-1)?.action,'save','SVG positions are saved without final approval');
    assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.ijazahWidthMm,106);
    assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.riwayahHeightMm,9);
    assert.equal(qChanges.at(-1)?.settings?.qiraatHeading?.riwayahGapMm,4);
    await qPage.reload();
-   await qPage.locator('.certificate-settings-panel').first().locator('summary').click();
+   await qPage.locator('.certificate-settings-panel').first().locator('summary').first().click();
    await qPage.getByLabel('جزء الشهادة').selectOption('reading');
    assert.equal(Number(await qPage.getByRole('spinbutton',{name:'عرض رسم إجازة',exact:true}).inputValue()),106,
     'per-certificate SVG sizing persists through reload');
-   await qPage.getByRole('button',{name:'استعادة تنسيق النظام'}).click();
+   await qPage.getByRole('button',{name:'إعادة الضبط'}).click();
    await qPage.waitForFunction(()=>document.querySelector('input[aria-label="عرض رسم إجازة"]')?.value==='98.0244');
    assert.equal(Number(await qPage.getByRole('spinbutton',{name:'ارتفاع سطر الرواية',exact:true}).inputValue()),8.445,
     'restore resets individual riwayah SVG height without changing shared templates');
@@ -332,7 +337,7 @@ async function checkDownloadPdf(page){
     const number=qPage.locator('.certificate-registration-number');
     assert.equal(await qr.count(),mode==='legacy'||mode==='qr'?1:0,mode);
     assert.equal(await number.count(),mode==='none'?0:1,mode);
-    assert.equal(await qPage.getByRole('button',{name:'حفظ تنسيق هذه الشهادة'}).count(),0);
+    assert.equal(await qPage.getByRole('button',{name:'حفظ التنسيق'}).count(),0);
    }
    // Exercise the actual finalized-certificate print button, not only page.pdf().
    // Stub the native print dialog so CI remains deterministic and check the page stays alive.

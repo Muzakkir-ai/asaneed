@@ -2,12 +2,12 @@ import {z} from 'zod';
 import {prepareSavedSanadPeople} from './preparedSanadPeople';
 import {preparedSanadGraph} from './preparedSanadGraph';
 
-export const maxOrderedSanads = 5;
+export const maxOrderedSanads = 2000;
 export const orderedSanadIds = z.array(z.string().uuid()).min(1).max(maxOrderedSanads)
  .refine(ids => new Set(ids.map(id => id.toLowerCase())).size === ids.length, 'اختر أسانيد مختلفة');
 export const sanadBranchSchema = z.object({
  sourceId:z.string(), continuationId:z.string().nullable(), routeId:z.string().nullable(),
- label:z.string(), paths:z.array(z.array(z.string())), names:z.record(z.string(),z.string()),
+ narratorCount:z.number().int().positive().nullable().optional(), label:z.string(), paths:z.array(z.array(z.string())), names:z.record(z.string(),z.string()),
 });
 export const orderedSanadPreviewSchema = z.object({chain:z.string(),branches:z.array(sanadBranchSchema)});
 export type SanadBranch = z.infer<typeof sanadBranchSchema>;

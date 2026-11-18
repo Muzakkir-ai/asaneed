@@ -48,4 +48,5 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:personal-sanads
       - run: node tests/ordered-sanads.test.cjs
+      - run: npm run test:sanad-count
       - run: node tests/public-verification.test.cjs

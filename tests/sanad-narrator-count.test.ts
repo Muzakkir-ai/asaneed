@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import sections from './fixtures/sanad-count-sources.json';
+import {sanadNarratorCount} from '../legacy/lib/sanadNarratorCount';
+import {orderedSanadIds} from '../legacy/lib/orderedSanads';
+const holding={qariId:'asim',rawi:'حفص',personalChain:'',junction:'jazari'};
+const branch={sourceId:'source',continuationId:null,routeId:null,label:'test',paths:[['jazari','teacher']],names:{jazari:'الإمام ابن الجزري',teacher:'الشيخ التجريبي'}};
+assert.equal(sanadNarratorCount(holding,branch,sections),17);
+assert.equal(sanadNarratorCount(holding,{...branch,paths:[['ubaydi','teacher']],names:{ubaydi:'إبراهيم العُبيدي',teacher:'شيخ تجريبي'}},sections),27,'include the longest Ubaydi to Jazari branch');
+const longer={...branch,paths:[['jazari','teacher'],['jazari','other','teacher']],names:{...branch.names,other:'الشيخ الثاني'}};
+assert.equal(sanadNarratorCount(holding,longer,sections),18,'use the longest full route, without double counting its meeting point or the Prophet');
+assert.equal(sanadNarratorCount(holding,branch,sections.filter(s=>s.title!=='CHAIN:asim:prophet')),null);
+assert.equal(sanadNarratorCount(holding,branch,sections.map(s=>({...s,body:s.title==='CHAIN:asim:حفص'?'عن شخص آخر':s.body}))),null,'changed source text cannot reuse hand-indexed names');
+assert.equal(sanadNarratorCount({...holding,tariqNumber:'other'},{...branch,paths:[['prophet','jazari','teacher']],names:{...branch.names,prophet:'رسول الله ﷺ'}},sections),2,'complete explicit routes need no standard continuation');
+assert.equal(sanadNarratorCount({...holding,tariqNumber:'other'},branch,sections),null,'never borrow standard continuation for a custom route');
+assert.equal(sanadNarratorCount(holding,{...branch,paths:[['teacher','teacher']]},sections),null);
+assert.equal(orderedSanadIds.parse(Array.from({length:8},(_,i)=>'00000000-0000-4000-8000-'+String(i).padStart(12,'0'))).length,8,'select all is not limited to five sanads');
+console.log('PASS longest complete sanad count, source scope, missing/changed sources, custom route isolation, repeated narrator denial, more than five selections');

@@ -1,3 +1,4 @@
+import {sanadNarratorCount} from '../lib/sanadNarratorCount';
 import {assembleOrderedSanads} from '../lib/assembleOrderedSanads';
 import {orderedSanadIds,orderedSanadPreviewSchema,personalBranchDiagram,resolveOrderedSanads,type OrderedSanadProvenance} from '../lib/orderedSanads';
 import {verifiedOnwardSources} from '../lib/verifiedOnwardSources';
@@ -189,9 +190,9 @@ export default createEndpoint({
     if(assembled.missing.length||!assembled.chain)throw new Error('Incomplete sanad: '+assembled.missing.join('، '));
     const orderedSanads:OrderedSanadProvenance|undefined=input.personalSanadIds?{version:1,kind:'additional',qariId:imam.id,rawi,branches:sources.map(s=>s.branch)}:undefined;
     const {holding,tariqName,bookAuthor,routeSource}=first;
-    return {rawi,assembled,orderedSanads,unifiedHolding:!orderedSanads&&holding.unifiedSanad?holding:undefined,tariqName,bookAuthor,routeSource};
+    return {rawi,assembled,previewBranches:input.previewOnly?sources.map(s=>({...s.branch,narratorCount:sanadNarratorCount(s.holding,s.branch,sections)})):undefined,orderedSanads,unifiedHolding:!orderedSanads&&holding.unifiedSanad?holding:undefined,tariqName,bookAuthor,routeSource};
    }));
-   if(input.previewOnly)return {sheikhs:[],preview:{chain:entries[0].assembled.chain,branches:entries[0].orderedSanads!.branches}};
+   if(input.previewOnly)return {sheikhs:[],preview:{chain:entries[0].assembled.chain,branches:entries[0].previewBranches!}};
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
    try{

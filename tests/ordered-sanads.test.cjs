@@ -208,11 +208,12 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assert.equal((await preview(ids.slice(0,2))).chain.split('شيخ التتمة الأولى').length-1,1,'reviewed shared continuation prints only once');
  variants[1].continuationId=references[1];
  const order=[ids[1],ids[0]],expected=await preview(order);
+ const persistedBranches=expected.branches.map(({narratorCount,...branch})=>branch);
  assertOrder(expected,order);
  assert.deepEqual(expected.branches.map(b=>b.continuationId),[...references].reverse());
  const {createdCertificateId}=await call('additionalShaykhs',{...issue,personalSanadIds:order});
  const cert=certs.find(row=>row.id===createdCertificateId);
- assert.deepEqual(sanads.find(row=>row.id===cert.sanad).orderedSanads.branches,expected.branches);
+ assert.deepEqual(sanads.find(row=>row.id===cert.sanad).orderedSanads.branches,persistedBranches);
  variants.shift();
  await assert.rejects(()=>preview(order),/غير متاح/);
  const snapshot=load('legacy/lib/certificateSnapshot.ts');
@@ -222,7 +223,7 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
   typography:{reading:style,sanad:style,conclusion:style,shaykh:style},phrases:[]}});
  assert.equal(finalized.chain,expected.chain);
  assert.equal(JSON.parse(finalized.formatting).printMode,'number');
- assert.deepEqual(JSON.parse(finalized.formatting).orderedSanads.branches,expected.branches);
+ assert.deepEqual(JSON.parse(finalized.formatting).orderedSanads.branches,persistedBranches);
  await call('additionalShaykhs',{...issue,personalSanadId:ids[2]});
  assert.equal(sanads.at(-1).orderedSanads,undefined);
  const prepare={holdingId:order[0],holdingIds:order,rawi:'حفص'};
