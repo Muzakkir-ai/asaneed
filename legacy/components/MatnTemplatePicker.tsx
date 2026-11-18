@@ -41,7 +41,7 @@ export default function MatnTemplatePicker({kind,value,templates,onSelect,onTemp
    <Button type="button" variant="outline" disabled={saving} onClick={()=>{setName('');setBody('');setFormats([]);setCreating(true);}}><Plus className="h-4 w-4" aria-hidden="true"/>{kind==='introduction'?'مقدمة جديدة':'خاتمة جديدة'}</Button>
    {value&&!creating&&<Button type="button" variant="outline" onClick={()=>{
     const template=templates.find(item=>item.id===value);if(!template)return;
-    setName(template.name+' — نسخة');setBody(template.body);setFormats(parseMatnFormat(template.formatting));setCreating(true);
+    setName(template.name.slice(0,140)+' — نسخة');setBody(template.body);setFormats(parseMatnFormat(template.formatting));setCreating(true);
    }}>إنشاء نسخة</Button>}
   </div>
   {creating&&<div className="space-y-3 rounded-lg border p-3">
