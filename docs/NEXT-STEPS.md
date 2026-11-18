@@ -1,6 +1,6 @@
 ## Additional shaykh readings
 
-Use اختيار الروايات to select full Ṣughrā, individual Ṣughrā riwāyāt or library-linked Kubrā. Approve a route in الكتب والطرق to include it for Kubrā-linked profiles. Use الأسانيد الشخصية للرواية to create an alternative, then choose it in the issuance form for that riwāyah.
+Use اختيار الروايات to select full Ṣughrā, individual Ṣughrā riwāyāt or library-linked Kubrā. Approve a route in الكتب والطرق to include it for Kubrā-linked profiles. أسانيد هذه الرواية lists the basic/shared sanad and named alternatives. Use إضافة سند آخر لهذه الرواية to create an alternative. Check the updated riwayah save/cancel flow and reusable introduction/conclusion choices with real issuing accounts on mobile after release.
 
 ## Viewing and editing sanads — 6 November 2026
 

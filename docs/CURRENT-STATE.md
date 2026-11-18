@@ -1,3 +1,11 @@
+## Riwayah editing and reusable matn texts — 18 November 2026
+
+Saved-sanad copy cards show the sheikh, riwayah and saved variant name. Save/adopt and cancel return to the same riwayah view and retain its URL. The reading list now includes the basic/shared sanad as well as named alternatives, using explicit saved-reading metadata. Cancel and discard actions use red text. The optional saved-route section explains its link to the books/routes library.
+
+Introduction and conclusion tabs offer saved choices, new rich-text entries and copies. Authors can opt in to reuse by other issuing accounts. The database SELECT policy exposes only published opted-in templates to active staff. Ownership and write policies are unchanged. Legacy private templates stay private. Heading controls use compact labels, icons, rounded displayed measurements and aligned checkbox rows. The redundant per-matn size explanation is removed.
+
+Validated personal-sanad, ordered-sanad, heading and formatting suites, save/cancel URL regressions, cross-owner template API denial, staging rollback-only SELECT/UPDATE/DELETE checks and synthetic browser layouts at 796/390 px. The browser fixture verifies template save and automatic selection. Real user content and publication were not modified by tests.
+
 ## Heading spacing and additional sanad wording — 18 November 2026
 
 The basmalah, ijazah title and riwayah line now scale as one heading group from the fixed basmalah anchor, so their intervening gaps follow the percentage control. Text-box and footer widths and the footer anchor remain fixed. Additional independent incoming sanads use **وقد أخذت أيضًا عن** after the first sanad. Branches from an already named narrator retain **وقرأ … أيضًا على**. Validated ordered-sanad and heading/formatting suites, TypeScript, and synthetic screen/print heading-spacing measurements.

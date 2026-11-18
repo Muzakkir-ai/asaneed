@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),Module=require('node:module');
 const {JSDOM}=require('jsdom'),React=require('react'),{act}=React;
-const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost'});
+const dom=new JSDOM('<div id="root"></div>',{url:'http://localhost/studio?page=extra-sheikhs'});
 Object.assign(global,{window:dom.window,document:dom.window.document,HTMLElement:dom.window.HTMLElement,IS_REACT_ACT_ENVIRONMENT:true});
 const {createRoot}=require('react-dom/client');
 
@@ -68,6 +68,12 @@ const {createRoot}=require('react-dom/client');
  assert.equal(writes[0].continuationId,null,'new sanad does not inherit an unverified reference');
  assert.equal(writes[0].unifiedSanad,null,'new sanad does not inherit an old route reference');
  assert.equal(successes.length,1,'successful save gives confirmation');
+ assert.ok(document.querySelector('.editor-page h2')?.textContent.includes('حفص'),'save stays inside the riwayah');
+ assert.equal(new URL(window.location.href).searchParams.get('rawi'),'حفص','save retains the inner riwayah URL');
+ await click('تعديل السند');
+ await click('إلغاء والعودة');
+ assert.ok(document.querySelector('.editor-page h2')?.textContent.includes('حفص'),'cancel returns to the same riwayah view');
+ assert.equal(new URL(window.location.href).searchParams.get('rawi'),'حفص','cancel retains the inner riwayah URL');
 
  failSave=true;
  await click('افتح سند حفص');

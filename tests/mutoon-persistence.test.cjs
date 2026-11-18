@@ -14,6 +14,14 @@ const assert=require('node:assert/strict'),fs=require('fs'),Module=require('modu
   await template.execute({context,input:{action:'save',id:rows.templates[0].id,body:text+'next',formatting:format}});
   assert.equal(rows.templates[0].body,text+'next');
   await assert.rejects(()=>template.execute({context:{user:{id:'other'}},input:{action:'save',id:rows.templates[0].id,body:'not allowed'}}));
+  const issuer={user:{id:'author'},account:{active:true,role:'shaykh'}};
+  const publicText=await template.execute({context:issuer,input:{action:'save',name:'Reusable introduction',kind:'introduction',body:text,reusable:true}});
+  assert.ok(publicText.savedId,'create returns the exact new template ID');
+  const otherView=await template.execute({context:{user:{id:'other'}},input:{action:'list'}});
+  assert.ok(otherView.templates.some(row=>row.id===publicText.savedId&&row.editable===false),'other issuers can select a reusable text without editing it');
+  assert.ok(!otherView.templates.some(row=>row.id===rows.templates[0].id),'private texts remain private');
+  await assert.rejects(()=>template.execute({context:{user:{id:'other'}},input:{action:'save',id:publicText.savedId,body:'replacement'}}));
+  await assert.rejects(()=>template.execute({context:{user:{id:'student'},account:{active:true,role:'student'}},input:{action:'save',name:'No',kind:'introduction',body:text,reusable:true}}));
   const holdingInput={action:'save',name:'Test',category:'Test',sanadText:text,wordingText:text,sanadFormatting:format};
   await assert.rejects(()=>holding.execute({context,input:holdingInput}),/اختر متنًا منشورًا/);
   await holding.execute({context,input:{...holdingInput,catalogId}});
