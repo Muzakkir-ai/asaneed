@@ -204,24 +204,22 @@ assert.equal(fanOut.parts.filter(p=>p.arrow).length,4,'one drop and arrow per ac
 assert.equal(fanOut.parts.filter(p=>p.role==='feed').length,1,'one centered downward trunk');
 assert.equal(fanOut.parts.find(p=>p.role==='feed')!.d.startsWith('M530 '),true,
  'fan-out trunk leaves source card center');
-const fanIn=makePlan([['a','b','c','d'],['target']],
+const isolatedFanIn=makePlan([['a','b','c','d'],['target']],
  ['a','b','c','d'].map(from=>({from,to:'target'}))).plan;
-assert.deepEqual(fanIn.groups.map(g=>g.kind),['fan-in']);
-assert.equal(fanIn.parts.filter(p=>p.role==='bus').length,1,'one early fan-in bus');
-assert.equal(fanIn.parts.filter(p=>p.arrow).length,1,'only one arrow at the converged destination');
-assert.equal(fanIn.parts.filter(p=>p.role==='feed').length,4);
-assert.ok(fanIn.groups[0].busY!<fanIn.tops[1]/2+40,'merge bus is closer to sources');
+assert.ok(isolatedFanIn.groups.every(group=>group.kind==='single'),'unrelated roots must keep independent incoming arrows');
+const fanIn=makePlan([['upstream'],['a','b','c'],['target']],
+ [...['a','b','c'].map(to=>({from:'upstream',to})),...['a','b','c'].map(from=>({from,to:'target'}))]).plan;
+assert.ok(fanIn.groups.some(group=>group.kind==='fan-in'),'adjacent teachers with one immediate upstream narrator may share a merge bus');
+assert.equal(fanIn.parts.filter(part=>part.arrow).length,4,'three actual outward links and one converged destination');
 const manyToMany=[
  ...['A','B','C','D','E'].flatMap(from=>['X','Y','Z'].map(to=>({from,to,routes:[1,2]}))),
 ];
 const fullFan=makePlan([['A','B','C','D','E'],['X','Y','Z']],manyToMany,228).plan;
-assert.equal(fullFan.groups.length,1);
-assert.equal(fullFan.groups[0].kind,'complete');
-assert.equal(fullFan.parts.filter(p=>p.role==='bus').length,1);
-assert.equal(fullFan.parts.filter(p=>p.arrow).length,3);
-assert.equal(fullFan.edgePaths.length,15);
-assert.ok(fullFan.parts.filter(p=>p.role==='drop').every(p=>p.d.includes(' V')),
- 'all descendants leave the one shared horizontal bus by vertical drops');
+assert.ok(fullFan.groups.every(group=>group.kind!=='complete'&&group.kind!=='fan-in'),'wide root rows must not acquire a shared meeting bus');
+assert.equal(fullFan.edgePaths.length,15,'all real dense connections survive separate routing');
+const neighbourComplete=makePlan([['root'],['A','B','C'],['X','Y','Z']],
+ [...['A','B','C'].map(to=>({from:'root',to})),...['A','B','C'].flatMap(from=>['X','Y','Z'].map(to=>({from,to})))],228).plan;
+assert.ok(neighbourComplete.groups.some(group=>group.kind==='complete'),'complete adjacent relationships with common upstream retain shared routing');
 const partial=makePlan([['A','B'],['X','Y']],
  [{from:'A',to:'X'},{from:'B',to:'Y'}]).plan;
 assert.equal(partial.groups.filter(g=>g.kind!=='single').length,0,
@@ -234,7 +232,7 @@ const mixed=makePlan([['A','B'],['X','Y','Z'],['one']],
  [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'Y'},
  {from:'X',to:'one'},{from:'Y',to:'one'},{from:'Z',to:'one'}]).plan;
 assert.equal(mixed.edgePaths.length,6,'mixed fan-in and fan-out reuse same routing engine');
-assert.ok(mixed.groups.some(g=>g.kind==='fan-in'));
+assert.ok(mixed.groups.every(g=>g.kind!=='fan-in'),'the unrelated Z source must not be joined into X/Y incoming bus');
 const asym=makePlan([['root'],['one','two','three','four']],
  ['one','two','three','four'].map(to=>({from:'root',to})),228,
  new Map([['root',132],['one',70],['two',106],['three',160],['four',90]])).plan;

@@ -78,7 +78,7 @@ const library={
    if(!started)await new Promise(resolve=>setTimeout(resolve,500));
   }
   assert.ok(started,'Next.js local screenshot fixture started');
-  browser=await chromium.launch();
+  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined});
   const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
   // Every request stays inside the runner; even the simulated save uses
   // synthetic records and does not reach production Supabase.
@@ -151,6 +151,9 @@ const library={
    assert.equal(await page.getByLabel('القارئ في تتمة السند').count(),1);
    if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
    else assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),0);
+   await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
+   assert.equal(await page.getByRole('button',{name:'مسار واضح',exact:true}).getAttribute('aria-pressed'),'true');
+   await page.getByRole('button',{name:'جميع الروابط',exact:true}).click();
    if(kind==='imam-sahaba'){
     await page.getByText('رسم من علاقات رجال الأسانيد',{exact:false}).waitFor();
     await page.locator('[data-combined-narrator="imam:nafi"]').waitFor();
