@@ -28,10 +28,11 @@ const CertificateHeading=forwardRef<HTMLDivElement,Props>(function CertificateHe
  const secondHeight=qiraatSettings?.riwayahHeightMm??RIWAYAH_SVG_HEIGHT_MM*scale;
  const basmalahWidth=qiraatSettings?.basmalahWidthMm??34.18;
  const bookSvg=(a:Artwork,color:string)=><div key={a.path} role="img" aria-label={a.line==='heading'?bookName:bookName+' — السطر الثاني'} style={{width:`${a.width*bookScale}mm`,height:`${a.height*bookScale}mm`,marginInline:'auto',marginBlock:matnHeightPt!==undefined?(a.line==='heading'?'2mm 1mm':'0'):'2mm',backgroundColor:color,WebkitMaskImage:`url("${artworkBase??assetBase()}/${a.path}")`,maskImage:`url("${artworkBase??assetBase()}/${a.path}")`,WebkitMaskSize:'contain',maskSize:'contain',WebkitMaskRepeat:'no-repeat',maskRepeat:'no-repeat',WebkitMaskPosition:'center',maskPosition:'center'}}/>;
- if(matn&&matnSettings)return <div ref={ref} className="certificate-header-art" aria-label="البسملة وشهادة الإجازة" style={{'--certificate-primary':primary,'--certificate-secondary':secondary} as CSSProperties}><MatnHeading artworkNumber={matnArtworkNumber} name={bookName} settings={matnSettings} artwork={catalog} base={artworkBase??assetBase()} primary={primary} secondary={secondary}/></div>;
+ if(matn&&matnSettings)return <div ref={ref} className="certificate-header-art" aria-label="البسملة وشهادة الإجازة" style={{'--certificate-primary':primary,'--certificate-secondary':secondary} as CSSProperties}><div className="certificate-heading-content"><MatnHeading artworkNumber={matnArtworkNumber} name={bookName} settings={matnSettings} artwork={catalog} base={artworkBase??assetBase()} primary={primary} secondary={secondary}/></div></div>;
  const pieces=matn?null:svgReadingParts(heading,{preserveHistoricalRoute,catalog:artwork});
  return <div ref={ref} className="certificate-header-art" aria-label="البسملة وشهادة الإجازة" style={{'--certificate-primary':primary,'--certificate-secondary':secondary,
   ...(qiraatSettings&&!matn?{paddingBottom:`${qiraatSettings.afterGapMm??0}mm`}:{})} as CSSProperties}>
+  <div className="certificate-heading-content">
   <div className="certificate-basmalah-svg" role="img" aria-label="بسم الله الرحمن الرحيم" style={{
    ...(qiraatSettings&&!matn?{width:`${basmalahWidth}mm`,height:`${basmalahWidth*4.4/34.18}mm`,marginBottom:`${qiraatSettings.basmalahGapMm??3}mm`}:{}),
    ...(artworkBase?{WebkitMaskImage:`url("${artworkBase}/svg/basmalah.svg")`,maskImage:`url("${artworkBase}/svg/basmalah.svg")`}:{}),
@@ -51,6 +52,7 @@ const CertificateHeading=forwardRef<HTMLDivElement,Props>(function CertificateHe
    </div>:<div className="certificate-reading-label" style={{fontFamily:"'Sakkal Kitab',serif",fontSize:'11pt',color:secondary,...readingStyle,
     ...(qiraatSettings?{marginTop:`${(qiraatSettings.riwayahGapMm??2)+(qiraatSettings.riwayahOffsetMm??0)}mm`}:{}),
    }} dir="rtl">{sakkalPrintNodes(readingLine(heading),!readingStyle?.fontFamily||readingStyle.fontFamily.includes('Sakkal Kitab'))}</div>)}
+ </div>
  </div>;
 });
 export default CertificateHeading;

@@ -1,3 +1,7 @@
+## Heading spacing and additional sanad wording — 18 November 2026
+
+The basmalah, ijazah title and riwayah line now scale as one heading group from the fixed basmalah anchor, so their intervening gaps follow the percentage control. Text-box and footer widths and the footer anchor remain fixed. Additional independent incoming sanads use **وقد أخذت أيضًا عن** after the first sanad. Branches from an already named narrator retain **وقرأ … أيضًا على**. Validated ordered-sanad and heading/formatting suites, TypeScript, and synthetic screen/print heading-spacing measurements.
+
 ## Whole certificate content size — 18 November 2026
 
 The draft certificate preview includes **حجم النص والرسوم ٪** with a 50–150% range and a 100% reset. Text reflows inside its original full-width box. The footer keeps its width and fixed bottom anchor, with a 32 mm signing slot (36 mm for historical QR output). Heading and issuer artwork resize inside their original slots, preserving each slot's top and horizontal alignment. The border and A4 paper retain their dimensions. The value is saved in certificate-only draft formatting and frozen on finalization. Existing formatting defaults to 100%. Preview, native print and PDF capture share these rules. Overlap and safe-area checks remain active, including footer overflow.
