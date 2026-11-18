@@ -1,3 +1,4 @@
+import {Type,Settings2,RotateCcw} from 'lucide-react';
 import CertificateBorder from './CertificateBorder';
 import {useEffect,useRef,useState,type ReactNode} from 'react';
 import MatnHeading from './MatnHeading';
@@ -11,8 +12,8 @@ export function MatnHeadingPreview({children,paper=false,positionedHeading=false
 }
 
 function Dimension({label,unit,min,max,value,onChange}:{label:string;unit:string;min:number;max:number;value:number;onChange:(value:number)=>void}){
- const [text,setText]=useState(String(value));useEffect(()=>setText(String(value)),[value]);
- return <label className="matn-dimension-field"><span>{label} ({unit})</span><div><input aria-label={label+' — شريط'} type="range" min={min} max={max} step={.5} value={value} onChange={e=>onChange(Number(e.target.value))}/><input aria-label={label} type="number" dir="ltr" min={min} max={max} step={.5} value={text} onChange={e=>{setText(e.target.value);const n=e.target.valueAsNumber;if(Number.isFinite(n)&&n>=min&&n<=max)onChange(n);}} onBlur={()=>{const n=Number(text);const next=text.trim()&&Number.isFinite(n)?Math.min(max,Math.max(min,n)):value;setText(String(next));onChange(next);}}/></div></label>;
+ const [text,setText]=useState(String(+value.toFixed(1)));useEffect(()=>setText(String(+value.toFixed(1))),[value]);
+ return <label className="matn-dimension-field"><span className="flex items-center justify-between gap-2"><span>{label}</span><span className="text-xs text-muted-foreground" dir="ltr">{unit}</span></span><div><input aria-label={label+' — شريط'} type="range" min={min} max={max} step={.5} value={value} onChange={e=>onChange(Number(e.target.value))}/><input aria-label={label} type="number" dir="ltr" min={min} max={max} step={.5} value={text} onChange={e=>{setText(e.target.value);const n=e.target.valueAsNumber;if(Number.isFinite(n)&&n>=min&&n<=max)onChange(n);}} onBlur={()=>{const n=Number(text);const next=text.trim()&&Number.isFinite(n)?Math.min(max,Math.max(min,n)):value;setText(String(next));onChange(next);}}/></div></label>;
 }
 export function MatnTextLayoutControls({value,onChange}:{value:MatnHeadingSettings;onChange:(value:MatnHeadingSettings)=>void}){
  return <fieldset className="matn-preview-layout rounded-lg border p-3 space-y-3"><legend className="text-sm font-semibold">مساحة النص وحجمه</legend><div className="matn-dimension-fields"><Dimension label="عرض صندوق النص" unit="mm" min={100} max={265} value={value.bodyWidthMm??265} onChange={n=>onChange({...value,bodyWidthMm:n})}/><Dimension label="حجم النص كاملًا" unit="%" min={50} max={200} value={value.bodyScalePercent??100} onChange={n=>onChange({...value,bodyScalePercent:n})}/></div><p className="text-xs text-muted-foreground">تظهر التغييرات مباشرة داخل الإطار. احفظ المتن لتثبيتها.</p></fieldset>;
@@ -28,8 +29,7 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
   </MatnHeadingPreview>}
   {!art.main&&<p className="text-xs text-muted-foreground">لا يوجد رسم مطابق؛ يُستخدم العنوان النصي.</p>}
   <div className="rounded-lg border p-3 space-y-3">
-   <div><p className="font-semibold">حجم العنوان والمسافات</p>
-    <p className="text-xs text-muted-foreground">التحكم الأساسي: حجم كل SVG والمسافة بينهما. تبقى الخيارات التفصيلية في «إعدادات متقدمة».</p></div>
+   <p className="flex items-center gap-2 font-semibold"><Type className="h-4 w-4" aria-hidden="true"/>حجم العنوان والمسافات</p>
    <div className="matn-dimension-fields">
     {lines.filter(line=>line.art).map(line=>{
      const width=value[line.width];
@@ -43,7 +43,7 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
    </div>
   </div>
   <details className="rounded-lg border p-3" data-testid="matn-heading-advanced">
-   <summary className="cursor-pointer font-semibold">إعدادات متقدمة — البسملة، طريقة التحجيم، النص والفواصل</summary>
+   <summary className="cursor-pointer font-semibold"><span className="inline-flex items-center gap-2"><Settings2 className="h-4 w-4" aria-hidden="true"/>المزيد من خيارات التنسيق</span></summary>
    <div className="mt-3 space-y-4">
     <fieldset className="space-y-2">
      <legend className="font-medium">البسملة وبداية العنوان</legend>
@@ -54,7 +54,7 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
      </div>
     </fieldset>
     <fieldset className="space-y-2">
-     <legend className="font-medium">تحديد حجم SVG بالعرض بدلًا من الارتفاع</legend>
+     <legend className="font-medium">قياس حجم العنوان</legend>
      <div className="matn-sizing-modes">
       {lines.filter(line=>line.art).map(line=><label key={line.width}><span>ضبط {line.label}</span>
        <select aria-label={'ضبط '+line.label} value={value[line.width]===undefined?'height':'width'} onChange={e=>{
@@ -71,14 +71,14 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
     </fieldset>
     {showTextLayout&&<MatnTextLayoutControls value={value} onChange={onChange}/>}
     <fieldset className="rounded-lg border p-3 space-y-2">
-     <legend className="font-semibold">المسافات بين أجزاء شهادة المتن</legend>
+     <legend className="font-semibold">مسافات النص</legend>
      <div className="matn-dimension-fields">
       <Dimension label="المسافة بعد المقدمة" unit="mm" min={0} max={20} value={value.sectionGapAfterIntroMm??0} onChange={n=>update('sectionGapAfterIntroMm',n)}/>
       <Dimension label="المسافة بعد كلمات الإجازة" unit="mm" min={0} max={20} value={value.sectionGapAfterWordingMm??0} onChange={n=>update('sectionGapAfterWordingMm',n)}/>
       <Dimension label="المسافة بعد السند" unit="mm" min={0} max={20} value={value.sectionGapAfterSanadMm??0} onChange={n=>update('sectionGapAfterSanadMm',n)}/>
       <Dimension label="رفع أو خفض الخاتمة" unit="mm" min={-15} max={15} value={value.conclusionOffsetMm??0} onChange={n=>update('conclusionOffsetMm',n)}/>
      </div>
-     <p className="text-xs text-muted-foreground">الخاتمة النصية مستقلة عن ختم المجيز أسفل الشهادة. القيمة السالبة ترفع الخاتمة النصية.</p>
+     <p className="text-xs text-muted-foreground">القيمة السالبة ترفع الخاتمة.</p>
     </fieldset>
     <label className="matn-border-choice"><span>إطار الشهادة</span>
      <select aria-label="إطار شهادة المتن" value={value.borderNumber??'default'} onChange={e=>onChange({...value,borderNumber:e.target.value})}>
@@ -87,23 +87,23 @@ export function MatnHeadingControls({artworkNumber,name,value,onChange,artwork=c
      </select>
     </label>
     <fieldset className="rounded-lg border p-3 space-y-2">
-     <legend className="font-semibold">الفواصل بين أجزاء المتن</legend>
-     {([{key:'afterIntro',label:'بدء كلمات الإجازة في سطر جديد بعد المقدمة'},
-       {key:'afterWording',label:'بدء السند في سطر جديد بعد كلمات الإجازة'},
-       {key:'afterSanad',label:'بدء الخاتمة في سطر جديد بعد السند'}] as const).map(item=>
-      <label key={item.key} className="flex items-center gap-2 text-sm">
-       <input type="checkbox" checked={breaks[item.key]} onChange={e=>onChange({...value,sectionBreaks:{...breaks,[item.key]:e.target.checked}})}/>{item.label}
+     <legend className="font-semibold">بدء سطر جديد</legend>
+     {([{key:'afterIntro',label:'كلمات الإجازة بعد المقدمة'},
+       {key:'afterWording',label:'السند بعد كلمات الإجازة'},
+       {key:'afterSanad',label:'الخاتمة بعد السند'}] as const).map(item=>
+      <label key={item.key} className="matn-break-row">
+       <input type="checkbox" checked={breaks[item.key]} onChange={e=>onChange({...value,sectionBreaks:{...breaks,[item.key]:e.target.checked}})}/><span>{item.label}</span>
       </label>)}
     </fieldset>
    </div>
   </details>
   <button type="button" className="rounded-md border px-3 py-1.5 text-sm"
-   onClick={()=>onReset?onReset():onChange({...DEFAULT_MATN_HEADING})}>استعادة تنسيق SVG الأصلي</button>
+   onClick={()=>onReset?onReset():onChange({...DEFAULT_MATN_HEADING})}><RotateCcw className="inline h-4 w-4 me-2" aria-hidden="true"/>استعادة التنسيق الأصلي</button>
  </div>;
 }
 
 /** Per-matn size override; template text and formatting remain untouched. */
 export function MatnSectionSizeControls({kind,value,onChange}:{kind:'introduction'|'conclusion';value:MatnHeadingSettings;onChange:(value:MatnHeadingSettings)=>void}){
  const key=kind==='introduction'?'introductionSizePt':'conclusionSizePt',label=kind==='introduction'?'حجم المقدمة':'حجم الخاتمة';
- return <div className="rounded-lg border p-3 space-y-3"><p className="text-sm">هذا الحجم خاص بهذا المتن؛ لا يغيّر النموذج المشترك. نسبة حجم النص كاملًا تُطبّق فوقه.</p>{value[key]===undefined?<button type="button" className="text-primary underline" onClick={()=>onChange({...value,[key]:9.5})}>تخصيص {label}</button>:<><div className="matn-dimension-fields"><Dimension label={label} unit="pt" min={6} max={72} value={value[key]!} onChange={n=>onChange({...value,[key]:n})}/></div><button type="button" className="text-primary underline" onClick={()=>{const next={...value};delete next[key];onChange(next);}}>استخدام حجم النموذج</button></>}</div>;
+ return <div className="rounded-lg border p-3 space-y-3">{value[key]===undefined?<button type="button" className="inline-flex items-center gap-2 text-primary" onClick={()=>onChange({...value,[key]:9.5})}><Type className="h-4 w-4" aria-hidden="true"/>{label}</button>:<><div className="matn-dimension-fields"><Dimension label={label} unit="pt" min={6} max={72} value={value[key]!} onChange={n=>onChange({...value,[key]:n})}/></div><button type="button" className="text-primary underline" onClick={()=>{const next={...value};delete next[key];onChange(next);}}>استخدام حجم النموذج</button></>}</div>;
 }
