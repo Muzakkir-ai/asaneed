@@ -68,7 +68,7 @@ assert.equal(separated?.personalText,personal);
 assert.equal(diagram?.personalText,personal);
 const another={...reviewed,source:{...reviewed.source,id:'another'}};
 assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.options,['reviewed-source','another']);
-assert.equal(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.diagram,null);
+assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another])?.diagram?.paths,separated?.paths,'identical approved tails saved under another source are not ambiguous');
 assert.deepEqual(savedSharedBridgeDiagram(personal,ids,[reviewed,another],undefined,undefined,'another')?.diagram?.paths,separated?.paths);
 
 const draft=composeReferencedPersonalSanad(personal,ids,[reviewed],source.id);
@@ -112,7 +112,10 @@ assert.deepEqual(attachIbrahimUbaydiRoot([reviewed],[canonicalUbaydi,{...canonic
 assert.deepEqual(attachIbrahimUbaydiRoot([reviewed],[{...canonicalUbaydi,archived:true}]),
  [reviewed],'archived narrators must not become a new meeting point');
 
-assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,another]),null);
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,another]),source.id,'equivalent approved sources share one continuation');
+const distinctTail={...another,routes:another.routes.map(route=>[...route.slice(0,-1),{id:'different-teacher',name:'شيخ مختلف'},route.at(-1)!])};
+assert.equal(savedSharedBridgeDiagram(personal,ids,[reviewed,distinctTail])?.diagram,null,'different saved tails still require explicit selection');
+assert.equal(automaticSharedBridgeId(personal,ids,[reviewed,distinctTail]),null);
 assert.equal(automaticSharedBridgeId(personal,ids,[]),null);
 assert.equal(personalSanadEndsAtSavedNarrator(personal,ids),true);
 assert.equal(personalSanadEndsAtSavedNarrator(complete,ids),false);
@@ -126,7 +129,7 @@ const library:BuilderLibrary={people:registry,books:[{id:'book',title:'كتاب'
 const sourceIndex=verifiedOnwardSources(library);
 const bookOnly='كما أخذته عن student، عن bookTeacher';
 assert.deepEqual(savedSharedBridgeDiagram(bookOnly,['student','bookTeacher'],sourceIndex)?.options,['parent','route1','route2']);
-assert.equal(automaticSharedBridgeId(bookOnly,['student','bookTeacher'],sourceIndex),null);
+assert.equal(automaticSharedBridgeId(bookOnly,['student','bookTeacher'],sourceIndex),'parent','equivalent book/route tails resolve once');
 const hafsContext={qariId:'asim',rawi:'حفص'};
 const hafsSources=verifiedOnwardSources(library,hafsContext);
 assert.equal(automaticSharedBridgeId(bookOnly,['student','bookTeacher'],hafsSources,hafsContext),'route1');
@@ -140,7 +143,7 @@ assert.ok(sourceIndex.every(item=>item.routes.every(path=>!path.some(node=>node.
 
 const sameShaykh=verifiedOnwardSources({...library,reviewedPersonalGraphs:[{...reviewed,source:{...reviewed.source,id:'private',kind:'personal',shaykhId:'one',qariId:'asim',rawi:'حفص'}}]},{...hafsContext,shaykhId:'one'});
 assert.ok(sameShaykh.some(source=>source.source.id==='private'));
-assert.ok(!verifiedOnwardSources({...library,reviewedPersonalGraphs:sameShaykh.filter(source=>source.source.id==='private')},{...hafsContext,shaykhId:'two'}).some(source=>source.source.id==='private'));
+assert.ok(verifiedOnwardSources({...library,reviewedPersonalGraphs:sameShaykh.filter(source=>source.source.id==='private')},{...hafsContext,shaykhId:'two'}).some(source=>source.source.id==='private'),'an already authorized reviewed continuation remains reusable for the same reading under another shaykh');
 assert.ok(!verifiedOnwardSources({...library,people:registry.map(person=>person.id==='routeTeacher'?{...person,archived:true}:person)}).some(source=>source.source.id==='route1'));
 const combined=combinedSanad([['jazari','umyuti','a','join'],['jazari','ansari','b','c','join'],['jazari','umyuti','b','c','join']])!;
 assert.deepEqual(combined.directStudents,['umyuti','ansari']);

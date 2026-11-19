@@ -1,0 +1,42 @@
+name: Hosted Preview verification smoke (staging only)
+on:
+  push:
+    branches:
+      - audit/chat12-integration-c1ae83cba1a2
+    paths:
+      - '.github/workflows/hosted-preview-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hosted-preview-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check isolated Preview HTTP surface (no credentials or real numbers)
+        env:
+          PREVIEW: https://asaneed-hznu0183d-halaqaat.vercel.app
+        shell: bash
+        run: |
+          set -euo pipefail
+          get_status=$(curl --silent --show-error --location --output /dev/null --write-out '%{http_code}' --max-time 20 "$PREVIEW/")
+          test "$get_status" = 200 || { echo "FAIL public page status: $get_status"; exit 1; }
+          echo 'PASS public page GET 200'
+          get_api=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 20 "$PREVIEW/api/verify")
+          test "$get_api" = 405 || { echo "FAIL API GET restriction: $get_api"; exit 1; }
+          echo 'PASS API GET 405'
+          invalid=$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 20 -X POST -H 'Content-Type: application/json' --data '{"number":"invalid"}' "$PREVIEW/api/verify")
+          test "$invalid" = 400 || { echo "FAIL malformed POST: $invalid"; exit 1; }
+          echo 'PASS malformed POST 400'
+          # Synthetic, valid-format number. A working isolated gate should return a minimal
+          # non-verified response; 503 is a blocking integration/configuration finding.
+          response=$(mktemp)
+          status=$(curl --silent --show-error --output "$response" --write-out '%{http_code}' --max-time 25 -X POST -H 'Content-Type: application/json' -H 'x-forwarded-for: 203.0.113.17' -H 'x-real-ip: 198.51.100.9' -H 'x-vercel-forwarded-for: 192.0.2.31' --data '{"number":"9999-99999999"}' "$PREVIEW/api/verify")
+          if [[ "$status" != 200 ]]; then
+            echo "BLOCKED synthetic number POST returned HTTP $status (expected 200); no private response logged"
+            exit 1
+          fi
+          node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));if(!["not_found","unverified"].includes(r.status)||Object.keys(r).some(k=>!["status"].includes(k)))process.exit(1)' "$response" || { echo 'FAIL non-verified response privacy contract'; exit 1; }
+          echo 'PASS synthetic POST 200 and minimal non-verified response'

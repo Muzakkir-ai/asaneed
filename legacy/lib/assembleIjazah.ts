@@ -7,7 +7,7 @@ export type AssemblyHolding={chainMode?:'junction'|'complete';tariqNumber?:strin
 export type AssemblySection={id:string;title:string;body:string;sectionType:string;formatting?:string};
 export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[]){
  const imam=QURRA.find(q=>q.id===holding.qariId);
- if(!imam)return {chain:'',heading:'',missing:['القارئ غير معروف'],sectionIds:[] as string[]};
+ if(!imam)return {chain:'',heading:'',isnad:'',missing:['القارئ غير معروف'],sectionIds:[] as string[]};
  const narrators=holding.rawi?[holding.rawi]:[...imam.rawis];
  const missing:string[]=[];
  const used:AssemblySection[]=[];
@@ -38,5 +38,5 @@ export function assembleIjazah(holding:AssemblyHolding,sections:AssemblySection[
  const words=(wording?.body||'').replaceAll('{{القراءة/الرواية}}',vocalizeReadingLabel([reading,wordingRoute].filter(Boolean).join(' ')));
  const isnad=composeSanadSegments([holding.personalChain,ubaidi,common,...rawis,sahaba,prophet]);
  const chain=cleanAllahSpelling(`【بيان القراءة:${heading}】\n${[intro?.body,[words,isnad].filter(Boolean).join(' '),conclusion?.body].filter(Boolean).join('\n\n')}`);
- return {chain:missing.length?'':chain,heading,missing,sectionIds:[...new Set(used.map(s=>s.id))]};
+ return {chain:missing.length?'':chain,heading,isnad,missing,sectionIds:[...new Set(used.map(s=>s.id))]};
 }

@@ -23,6 +23,14 @@ await actor(2);assert.equal(await count('matn_catalog'),1);assert.equal(await co
 const request=(await row('select public.submit_matn_request($1::jsonb) id',[JSON.stringify({title:'طلب مستقل',category:'الحديث'})])).id;await assert.rejects(()=>row('select public.submit_matn_request($1::jsonb)',[JSON.stringify({title:'طَلَب مُستقل',category:'الحديث'})]),/unique|duplicate/);
 await actor(3);assert.equal(await count('matn_requests'),0);await row('select public.acknowledge_matn_decision($1)',[request]);await assert.rejects(()=>row("select public.review_matn_request($1,'approved',$2)",[request,id]),/Administrator/);
 await actor(4);assert.equal(await count('matn_catalog'),0);await assert.rejects(()=>row('select public.submit_matn_request($1::jsonb)',[JSON.stringify({title:'Student request',category:'الحديث'})]),/Staff/);
+await actor(2);
+const rejected=(await row('select public.submit_matn_request($1::jsonb) id',[JSON.stringify({title:'طلب مرفوض تجريبي',category:'الفقه'})])).id;
+await actor(1);
+await row("select public.review_matn_request($1,'rejected',null,null,'Synthetic source required')",[rejected]);
+assert.equal((await row('select count(*) n from public.content_audit where target_id=$1',[rejected])).n,1);
+await actor(2);
+const rejection=await row('select status,explanation,catalog_id from public.matn_requests where id=$1',[rejected]);
+assert.deepEqual(rejection,{status:'rejected',explanation:'Synthetic source required',catalog_id:null});
 await actor(1);await assert.rejects(()=>row("select public.review_matn_request($1,'rejected',null,null,'')",[request]),/explanation/);await row("select public.review_matn_request($1,'approved',$2,null,'Linked to published work')",[request,id]);await assert.rejects(()=>row("select public.review_matn_request($1,'approved',$2)",[request,id]),/Pending/);
 const decision=await row('select * from public.matn_requests where id=$1',[request]);assert.equal(decision.status,'approved');assert.ok(decision.decision_by&&decision.decision_at);assert.equal(decision.seen_at,null);
 await actor(3);await row('select public.acknowledge_matn_decision($1)',[request]);await actor(2);assert.equal((await row('select seen_at from public.matn_requests where id=$1',[request])).seen_at,null);await row('select public.acknowledge_matn_decision($1)',[request]);assert.ok((await row('select seen_at from public.matn_requests where id=$1',[request])).seen_at);

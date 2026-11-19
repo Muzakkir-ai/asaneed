@@ -180,6 +180,13 @@ export function planCoordinatedSanad(
   for(const id of group.from)sourceOwners.set(id,[...(sourceOwners.get(id)||[]),i]);
   for(const id of group.to)targetOwners.set(id,[...(targetOwners.get(id)||[]),i]);
  }
+ // Ports follow physical neighbours, never the order of saved paths/groups.
+ const oppositeX=(group:number,side:'source'|'target')=>{
+  const ids=side==='source'?groups[group].to:groups[group].from;
+  return ids.reduce((sum,id)=>sum+xOf(id),0)/ids.length;
+ };
+ for(const owners of sourceOwners.values())owners.sort((a,b)=>oppositeX(a,'source')-oppositeX(b,'source')||a-b);
+ for(const owners of targetOwners.values())owners.sort((a,b)=>oppositeX(a,'target')-oppositeX(b,'target')||a-b);
  const attach=(id:string,group:number,side:'source'|'target')=>{
   const owners=(side==='source'?sourceOwners:targetOwners).get(id)||[group];
   const index=owners.indexOf(group);
@@ -408,6 +415,69 @@ export function planCoordinatedSanad(
    break;
   }
  }
+ // Compare complete physical routes, not only the distance between cards.
+ // A side-to-side outer corridor can avoid a whole fan-out below the source.
+ // Prefer no intersections/touches, then clear separation, then shorter lines.
+ const lineSegments=(d:string)=>{
+  const vertices=matches(d);
+  return vertices.slice(1).flatMap((b,index)=>{
+   const a=vertices[index];
+   return a.x===b.x&&a.y===b.y?[]:[{left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)}];
+  });
+ };
+ for(let pass=0;pass<2;pass++)for(const edge of edgePaths){
+  const gi=groups.findIndex(group=>group.kind==='single'&&group.edgeIndices.includes(edge.edgeIndex));
+  if(gi<0)continue;
+  const arrivals=targetOwners.get(edge.to)??[gi];
+  const arrivalIndex=arrivals.indexOf(gi);
+  const part=parts.find(candidate=>candidate.key===gi+':single');
+  if(!part)continue;
+  const others=parts.filter(candidate=>candidate!==part).flatMap(candidate=>lineSegments(candidate.d));
+  const score=(d:string)=>{
+   let contacts=0,near=0,length=0;
+   for(const segment of lineSegments(d)){
+    length+=segment.right-segment.left+segment.bottom-segment.top;
+    for(const other of others){
+     const dx=Math.max(segment.left,other.left)-Math.min(segment.right,other.right);
+     const dy=Math.max(segment.top,other.top)-Math.min(segment.bottom,other.bottom);
+     if(dx<=.01&&dy<=.01)contacts++;
+     else if(dx<7&&dy<7)near++;
+    }
+   }
+   return [contacts,near,length];
+  };
+  const sourceY=tops[rankOf.get(edge.from)!]+heightOf(edge.from)/2;
+  const targetY=tops[rankOf.get(edge.to)!]+heightOf(edge.to)/2;
+  const alternatives=[edge.d,...([-1,1] as const).flatMap(side=>{
+   // Only the outermost teacher may enter on that side. Middle teachers
+   // retain their top slots, so avoiding a crossing cannot reverse arrivals.
+   if(arrivals.length>1&&arrivalIndex!==(side===-1?0:arrivals.length-1))return [];
+   const sx=xOf(edge.from)+side*cardWidth/2;
+   const tx=xOf(edge.to)+side*(cardWidth/2+1);
+   const outward=side===1?Math.max(sx,tx):Math.min(sx,tx);
+   // Start beside the local cards, not at the edge of the whole canvas.
+   // Nearby card/vertical-line boundaries provide further lanes if needed.
+   const lowY=Math.min(sourceY,targetY),highY=Math.max(sourceY,targetY);
+   const candidates=[outward+side*16,
+    ...cards.filter(card=>card.bottom>=lowY&&card.top<=highY).map(card=>(side===1?card.right:card.left)+side*16),
+    ...others.filter(line=>line.left===line.right&&line.bottom>=lowY&&line.top<=highY).map(line=>line.left+side*16)];
+   const nearby=[...new Set(candidates)].filter(x=>x>=8&&x<=width-8&&side*(x-outward)>0)
+    .sort((a,b)=>Math.abs(a-outward)-Math.abs(b-outward)).slice(0,16);
+   const channels=[...new Set([...nearby,side===1?width-8:8])];
+   return channels.filter(channel=>side*(channel-outward)>0).map(channel=>
+    pathFrom([{x:sx,y:sourceY},{x:channel,y:sourceY},{x:channel,y:targetY},{x:tx,y:targetY}]));
+  })].filter(d=>!hitsUnrelatedCard(edge,d));
+  const distance=(d:string)=>lineSegments(d).reduce((sum,line)=>sum+line.right-line.left+line.bottom-line.top,0);
+  alternatives.sort((a,b)=>distance(a)-distance(b));
+  let best=edge.d,bestScore=score(best);
+  for(const candidate of alternatives){
+   const candidateScore=score(candidate);
+   if(candidateScore[0]===0&&candidateScore[1]===0){best=candidate;break;}
+   const firstDifference=candidateScore.findIndex((value,index)=>Math.abs(value-bestScore[index])>.01);
+   if(firstDifference>=0&&candidateScore[firstDifference]<bestScore[firstDifference]){best=candidate;bestScore=candidateScore;}
+  }
+  edge.d=best;part.d=best;
+ }
  for(const edge of edgePaths){
   const vertices=matches(edge.d);
   for(let j=1;j<vertices.length;j++){
@@ -428,3 +498,4 @@ export function planCoordinatedSanad(
  const valid=JSON.stringify(original)===JSON.stringify(kept)&&collisions.length===0;
  return {tops,height:tops.at(-1)!,groups,parts,edgePaths,valid,collisions};
 }
+

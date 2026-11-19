@@ -1,11 +1,13 @@
+import OrderedSanadPicker,{OrderedSanadPreviewPanel} from './OrderedSanadPicker';
+import {orderedSanadPreviewSchema} from '../lib/orderedSanads';
 import {compactRouteBook,builderCompactRouteName,type BuilderLibrary} from '../lib/bookBuilder';
 import {workspaceHeaders} from '../lib/workspaceSelection';
 import {certificateRouteBook as routeBook,certificateRouteDetail,guestRouteChoice,certificateRoutePhrase} from '../lib/certificateRouteChoice';
 import {AlertDialog,AlertDialogAction,AlertDialogCancel,AlertDialogContent,AlertDialogDescription,AlertDialogFooter,AlertDialogHeader,AlertDialogTitle} from '@project/components/ui/alert-dialog';
 import {matchesArabic} from '../lib/arabicSearch';
-import { useEffect,useState } from 'react';
+import { useCallback,useEffect,useState } from 'react';
 import { z } from 'zod';
-import { saveCertificate, prepareIjazah, issueQiraah, ijazahHoldings, studentDirectory, additionalShaykhs, type IjazahHoldingsOutputType, type StudentDirectoryOutputType, type AdditionalShaykhsOutputType } from '../lib/api';
+import { saveCertificate, certificateDraftPreview, prepareIjazah, issueQiraah, ijazahHoldings, studentDirectory, additionalShaykhs, type IjazahHoldingsOutputType, type StudentDirectoryOutputType, type AdditionalShaykhsOutputType } from '../lib/api';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@project/components/ui/dialog';
 import { Button } from '@project/components/ui/button';
 import { Input } from '@project/components/ui/input';
@@ -13,7 +15,7 @@ import { Label } from '@project/components/ui/label';
 import { Textarea } from '@project/components/ui/textarea';
 import { DatePicker } from '@project/components/ui/date-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@project/components/ui/select';
-import { Loader2, ChevronDown, Plus, Search, Check, Trash2 } from 'lucide-react';
+import { ArrowRight, Loader2, ChevronDown, Plus, Search, Check, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Cert, Data } from '../App';
 import { fromIso, toIso } from '../lib/date';
@@ -100,10 +102,14 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   useEffect(()=>{setSelectedTariq('');setSelectedBook('');setReadingScope('');},[form.shaykhId]);
   const routeOptions=[...new Map((isGuest?selectedGuest?.routes||[]:holdings).filter(h=>h.tariqNumber).map(h=>[h.tariqNumber,h.tariqName])).entries()];
   const bookOptions=[...new Set(routeOptions.filter(([,name])=>!sughraBook(name)).map(([,name])=>routeBook(name)))];
+  const hasSughra=isGuest?!!selectedGuest?.readings.length:holdings.some(h=>!h.tariqNumber||sughraBook(h.tariqName));
+  const hasKubra=bookOptions.length>0;
+  const soleScope=hasSughra&&!hasKubra?'sughra':hasKubra&&!hasSughra?'kubra':'';
+  useEffect(()=>{if(soleScope)setReadingScope(soleScope);},[form.shaykhId,soleScope]);
   const baseRouteHoldings=holdings.filter(h=>readingScope==='kubra'?!!h.tariqNumber&&!sughraBook(h.tariqName)&&(!selectedBook||routeBook(h.tariqName)===selectedBook):readingScope==='sughra'?!h.tariqNumber||sughraBook(h.tariqName):!!cert);
   const routeHoldings=baseRouteHoldings.filter((h,_i,all)=>readingScope!=='sughra'||h.tariqNumber||!all.some(v=>v.tariqNumber&&v.qariId===h.qariId&&v.rawi===h.rawi&&(v.shortName||'')===(h.shortName||'')));
-  const [guestSanadId,setGuestSanadId]=useState('');
-  const selectReading=(value:string)=>{setGuestSanadId('');setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
+  const [orderedSelection,setOrderedSelection]=useState<{key:string;ids:string[]}>();
+  const selectReading=(value:string)=>{setOrderedSelection(undefined);setForm(v=>({...v,sanadId:value}));if(value.startsWith('guest-route:'))setSelectedTariq(guestRouteChoice(value)?.tariqNumber||'');else if(value.startsWith('holding:'))setSelectedTariq(holdings.find(h=>h.id===value.split(':')[1])?.tariqNumber||'');else setSelectedTariq('');};
   const eligibleHoldings=holdings.filter(h=>canUsePersonalSanad(h));
   const readingGroups=QURRA.map(q=>({
     q,
@@ -123,6 +129,30 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const alternativeRawi=selectedGuestRoute?.rawi||(standardRawi?decodeURIComponent(standardRawi):'');
   const canChooseGuestSanad=readingScope==='sughra'||!selectedGuestRoute||selectedGuest?.routes.some(r=>r.automatic&&r.tariqNumber===selectedGuestRoute.tariqNumber&&r.qariId===alternativeQari&&r.rawi===alternativeRawi);
   const guestVariants=canChooseGuestSanad?(selectedGuest?.variants||[]).filter(v=>v.qariId===alternativeQari&&v.rawi===alternativeRawi):[];
+  const selectionKey=JSON.stringify([form.shaykhId,form.sanadId,readingScope,selectedBook]);
+  const [,baseHoldingId,encodedRawi]=form.sanadId.startsWith('holding:')?form.sanadId.split(':'):[];
+  const baseHolding=routeHoldings.find(h=>h.id===baseHoldingId);
+  const holdingRawi=encodedRawi?decodeURIComponent(encodedRawi):'';
+  const holdingOptions=baseHolding?eligibleHoldings.filter(h=>h.qariId===baseHolding.qariId&&(!h.rawi||h.rawi===holdingRawi)&&h.tariqNumber===baseHolding.tariqNumber&&h.tariqName===baseHolding.tariqName)
+   .map(h=>({id:h.id,name:h.shortName||h.sourceTeacherName||h.name})):[];
+  const guestOptions=guestVariants.length&&selectedGuest?[
+   ...(!selectedGuestRoute||readingScope==='kubra'?[{id:selectedGuest.id,name:'السند المعتمد للشيخ'}]:[]),...guestVariants,
+  ]:[];
+  const orderedIds=orderedSelection?.key===selectionKey?orderedSelection.ids:baseHolding?[baseHolding.id]:guestOptions.some(option=>option.id===selectedGuestId)?[selectedGuestId]:[];
+  const needsSanadSelection=!cert&&(guestOptions.length>0||holdingOptions.length>1);
+  const explicitOrder=orderedSelection?.key===selectionKey&&orderedIds.length>0;
+  const guestTariq=readingScope==='sughra'&&orderedIds.some(id=>id!==selectedGuestId)?'':selectedGuestRoute?.tariqNumber||selectedTariq;
+  const previewOrder=async()=>{
+   if(isGuest)return (await additionalShaykhs({action:'issue',previewOnly:true,id:selectedGuestId,qariId:alternativeQari,rawi:alternativeRawi,tariqNumber:guestTariq,personalSanadIds:orderedIds})).preview;
+   return (await prepareIjazah({holdingId:orderedIds[0],holdingIds:orderedIds,rawi:holdingRawi,ownerId:form.shaykhId,previewOnly:true})).preview;
+  };
+  const countTariq=selectedGuestRoute?.tariqNumber||selectedTariq;
+  const loadSanadCount=useCallback(async(id:string)=>{
+   const preview=isGuest
+    ?(await additionalShaykhs({action:'issue',previewOnly:true,id:selectedGuestId,qariId:alternativeQari,rawi:alternativeRawi,tariqNumber:readingScope==='sughra'&&id!==selectedGuestId?'':countTariq,personalSanadIds:[id]})).preview
+    :(await prepareIjazah({holdingId:id,holdingIds:[id],rawi:holdingRawi,ownerId:form.shaykhId,previewOnly:true})).preview;
+   return preview?.branches[0]?.narratorCount??null;
+  },[isGuest,selectedGuestId,alternativeQari,alternativeRawi,readingScope,countTariq,holdingRawi,form.shaykhId]);
   const previewChoices:{qariId:string;rawi:string;heading:string}[]=[];
   if(cert){const heading=cert.snapshotHeading||asaneed.find(s=>s.id===cert.sanadId)?.chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||cert.qiraahName;const identity=readingIdentityFromHeading(heading);previewChoices.push({qariId:identity?.qariId||'',rawi:identity?.rawi||'',heading:vocalizeReadingLabel(heading)});}
   else{
@@ -132,7 +162,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
    else if(form.sanadId.startsWith('guest-route:')){const choice=guestRouteChoice(form.sanadId);qariId=choice?.qariId||'';rawi=choice?.rawi||'';}
    else if(form.sanadId.startsWith('guest-reading:')){const parts=form.sanadId.split(':');qariId=parts[1];try{rawi=decodeURIComponent(parts.slice(2).join(':'));}catch{}}
    else if(form.sanadId.startsWith('holding:')){const [,holdingId,...parts]=form.sanadId.split(':');qariId=holdings.find(h=>h.id===holdingId)?.qariId||'';try{rawi=decodeURIComponent(parts.join(':'));}catch{}}
-   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq&&!(isGuest&&readingScope==='sughra'&&guestVariants.some(v=>v.id===guestSanadId))?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
+   const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq&&!(isGuest&&readingScope==='sughra'&&explicitOrder&&orderedIds.some(id=>id!==selectedGuestId))?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
   }
 
   const [touched, setTouched] = useState(false);
@@ -142,7 +172,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
 
   const submit = async () => {
     setTouched(true);
-    if (!parsed.success) return;
+    if (!parsed.success || (baseHolding||needsSanadSelection) && !orderedIds.length) return;
     setSaving(true);
     try {
       if(!cert&&isGuest){
@@ -154,7 +184,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         const split=parsedChoice.indexOf(':');
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
-        await additionalShaykhs({action:'issue',personalSanadId:guestVariants.find(v=>v.id===guestSanadId)?.id,tariqNumber:readingScope==='sughra'&&guestVariants.some(v=>v.id===guestSanadId)?'':routeChoice?.tariqNumber||selectedTariq,id:selectedGuest.id,qariId,rawi,
+        await additionalShaykhs({action:'issue',personalSanadIds:explicitOrder?orderedIds:undefined,tariqNumber:guestTariq,id:selectedGuest.id,qariId,rawi,
           studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
@@ -170,7 +200,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
       const selected=form.sanadId.startsWith('holding:')?form.sanadId.slice('holding:'.length):'';
       const [holdingId,rawiEncoded]=selected?selected.split(':'):['',''];
       const sanadId=selected
-        ?(await prepareIjazah({holdingId,rawi:rawiEncoded?decodeURIComponent(rawiEncoded):undefined,ownerId:form.shaykhId})).sanadId
+        ?(await prepareIjazah({holdingId:explicitOrder?orderedIds[0]:holdingId,holdingIds:explicitOrder?orderedIds:undefined,rawi:rawiEncoded?decodeURIComponent(rawiEncoded):undefined,ownerId:form.shaykhId})).sanadId
         :form.sanadId;
       await saveCertificate({ ...form, shaykhId:cert?.shaykhId??form.shaykhId, sanadId, id: cert?.id });
       toast.success('تم حفظ المسودة');
@@ -185,14 +215,14 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent dir="rtl" className="text-right">
-        {onBack&&<Button variant="outline" size="sm" onClick={onBack}>رجوع إلى المُجيز</Button>}
+        {onBack&&<Button variant="ghost" size="icon" aria-label="رجوع إلى المُجيز" title="رجوع إلى المُجيز" onClick={onBack}><ArrowRight size={20}/></Button>}
         <DialogHeader className="text-right"><DialogTitle className="font-display text-2xl">{cert ? 'تعديل بيانات الشهادة' : 'إضافة شهادة'}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           {fixedIssuer&&!isAdmin&&<p className="rounded border p-3">المُجيز: {shaykhs.find(s=>s.id===form.shaykhId)?.name||'إجازاتي'}</p>}
           {isAdmin&&<div className="space-y-1.5">
             <Label>المُجيز (الشيخ صاحب الإجازة)</Label>
             <Select dir="rtl" disabled={!!cert||fixedIssuer} value={form.shaykhId} onValueChange={v=>setForm(prev=>({...prev,shaykhId:v,sanadId:''}))}>
-              <SelectTrigger><SelectValue placeholder="اختر المُجيز" /></SelectTrigger>
+              <SelectTrigger aria-label="المُجيز"><SelectValue placeholder="اختر المُجيز" /></SelectTrigger>
               <SelectContent>
                 <SelectGroup><SelectLabel>مشايخ لهم إجازات في حساباتهم</SelectLabel>
                   {shaykhs.map(s=><SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -209,11 +239,11 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
           {guestError&&<p className="text-sm text-destructive">{guestError}</p>}
           {isGuest&&!selectedGuest&&<p className="text-sm text-muted-foreground">جارٍ تحميل إجازات الشيخ المختار…</p>}
           <div className="space-y-1.5">
-            {!cert&&<label className="block space-y-1">نوع الإجازة<select className="w-full rounded border bg-background p-2" value={readingScope} onChange={e=>{setReadingScope(e.target.value as typeof readingScope);setSelectedBook('');setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">اختر العشر الصغرى أو الكبرى</option><option value="sughra">العشر الصغرى — الشاطبية والدرة</option><option value="kubra">العشر الكبرى</option></select></label>}
+            {!cert&&hasSughra&&hasKubra&&<label className="block space-y-1">نوع الإجازة<select className="w-full rounded border bg-background p-2" value={readingScope} onChange={e=>{setReadingScope(e.target.value as typeof readingScope);setSelectedBook('');setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">اختر العشر الصغرى أو الكبرى</option><option value="sughra">العشر الصغرى — الشاطبية والدرة</option><option value="kubra">العشر الكبرى</option></select></label>}
             {!cert&&readingScope==='kubra'&&bookOptions.length>0&&<label className="block space-y-1">الكتاب / الطريق<select className="w-full rounded border bg-background p-2" value={selectedBook} onChange={e=>{setSelectedBook(e.target.value);setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">جميع كتب العشر الكبرى</option>{bookOptions.map(name=><option key={name} value={name}>{name}</option>)}</select></label>}
             <Label>القراءة أو الرواية</Label>
             <Select dir="rtl" disabled={!!cert||!readingScope} value={form.sanadId || undefined} onValueChange={selectReading}>
-              <SelectTrigger><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>
+              <SelectTrigger aria-label="القراءة أو الرواية"><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>
               <SelectContent className="max-h-[340px] min-w-[300px]" dir="rtl">
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
                   <SelectLabel className="text-xs text-muted-foreground text-right font-medium px-3 pt-3 pb-1">{shortQariName(q.id)}</SelectLabel>
@@ -244,13 +274,15 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             {choosingQiraah&&<p className="text-xs text-muted-foreground">شهادتان مستقلتان بنفس تاريخ الختم</p>}
             {err('sanadId')}
           </div>
-          {!cert&&isGuest&&guestVariants.length>0&&<label className="block space-y-1 text-sm">
-            <span>السند الشخصي</span>
-            <select className="w-full rounded border bg-background p-2" value={guestVariants.some(v=>v.id===guestSanadId)?guestSanadId:''} onChange={e=>setGuestSanadId(e.target.value)}>
-              <option value="">السند المعتمد للشيخ</option>
-              {guestVariants.map(v=><option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          </label>}
+          {!cert&&(guestOptions.length>0||holdingOptions.length>1)&&<>
+            <OrderedSanadPicker key={selectionKey} loadCount={loadSanadCount} options={isGuest?guestOptions:holdingOptions} ids={orderedIds} disabled={saving} onChange={ids=>setOrderedSelection({key:selectionKey,ids})}/>
+            {orderedIds.length>0&&<OrderedSanadPreviewPanel key={JSON.stringify([selectionKey,orderedIds])} load={previewOrder} disabled={saving}/>}
+          </>}
+          {cert?.publicationStatus==='draft'&&<OrderedSanadPreviewPanel key={cert.id} buttonLabel="معاينة السند المحفوظ في المسودة" load={async()=>{
+            const saved=await certificateDraftPreview({certificateId:cert.id});
+            const provenance=JSON.parse(saved.formatting).orderedSanads;
+            return orderedSanadPreviewSchema.parse({chain:saved.chain,branches:provenance?.branches??[]});
+          }}/>}
           {previewChoices.length>0&&<details className="rounded-lg border p-3" onToggle={e=>setHeadingPreviewOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-semibold">معاينة عنوان الإجازة قبل الحفظ</summary>{headingPreviewOpen&&<div className="space-y-3 mt-3">{previewChoices.length>1&&<p className="text-xs text-muted-foreground">القراءة كاملة: تُنشأ شهادتان مستقلتان، وهذه معاينة عنوان كل رواية.</p>}{previewColorError?<p role="alert" className="text-sm text-destructive">تعذر تحميل ألوان الروايات. أغلق المعاينة وافتحها لإعادة المحاولة.</p>:!previewColors?<p role="status">جارٍ تحميل المعاينة…</p>:previewChoices.map(choice=>{const colors=previewColors.find(c=>c.qariId===choice.qariId&&c.rawi===choice.rawi);return <div key={choice.heading} className="rounded border bg-white"><CertificateHeadingPreview heading={choice.heading} primary={colors?.primaryColor||'#926e35'} secondary={colors?.secondaryColor||'#075f69'}/></div>;})}</div>}</details>}
           <div className="space-y-1.5">
             <Label>اسم الطالب</Label>
@@ -301,7 +333,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         </div>
         <DialogFooter className="gap-2">
           <Button variant="outline" onClick={onClose}>إلغاء</Button>
-          <Button onClick={submit} disabled={saving || (touched && !parsed.success)}>
+          <Button onClick={submit} disabled={saving || Boolean((baseHolding||needsSanadSelection)&&!orderedIds.length) || (touched && !parsed.success)}>
             {saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />} {choosingQiraah?'حفظ مسودتين':'حفظ المسودة'}
           </Button>
         </DialogFooter>

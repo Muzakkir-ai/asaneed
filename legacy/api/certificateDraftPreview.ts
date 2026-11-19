@@ -41,9 +41,9 @@ export default createEndpoint({
    try{
     const systemSource=JSON.parse(sourceFormatting);
     formatting=savedDraft.systemDefault===true
-     ?JSON.stringify({...systemSource,settings:null,appearanceDefaults:false,draftPrintMode:'number'})
+     ?JSON.stringify({...systemSource,settings:null,appearanceDefaults:false})
      :savedDraft.settings&&typeof savedDraft.settings==='object'
-      ?JSON.stringify({...systemSource,settings:savedDraft.settings,draftPrintMode:savedDraft.printMode==='none'?'none':'number'})
+      ?JSON.stringify({...systemSource,settings:savedDraft.settings})
       :sourceFormatting;
    }catch{}
   }

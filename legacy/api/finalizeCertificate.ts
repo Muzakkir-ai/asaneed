@@ -13,13 +13,13 @@ import {getDraftSanadForCertificate,collectSnapshotFormatting} from '../lib/cert
 const font=z.enum(['KSA Regular','Sakkal Kitab','Majalla','Bahij Muna','Amiri']);
 const color=z.enum(['primary','secondary','charcoal']);
 const typography=z.object({font,size:z.number().min(6).max(30),color,headingGapMm:z.number().min(0).max(20).optional(),lastLineAlignment:z.enum(['right','center']).optional(),svgHeightPt:z.number().min(5).max(100).optional(),scalePercent:z.number().min(50).max(150).optional(),lineSpacing:z.number().min(1).max(3).optional(),paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional(),offsetMm:z.number().min(-15).max(15).optional(),alignment:z.enum(['right','center','justify']).optional()});
-const style=z.object({matnHeading:matnHeadingSchema.nullable().optional(),qiraatHeading:qiraatHeadingSchema.nullable().optional(),headingOffsetMm:z.number().min(-12).max(12).optional(),footerOffsetMm:z.number().min(-15).max(4).optional(),borderColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),accentColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),typography:z.object({reading:typography,sanad:typography,conclusion:typography,shaykh:typography}),phrases:z.array(z.object({text:z.string().min(1).max(300),font,size:z.number().min(6).max(30),color})).max(80)});
+const style=z.object({contentScalePercent:z.number().min(50).max(150).optional(),matnHeading:matnHeadingSchema.nullable().optional(),qiraatHeading:qiraatHeadingSchema.nullable().optional(),headingOffsetMm:z.number().min(-12).max(12).optional(),footerOffsetMm:z.number().min(-15).max(4).optional(),borderColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),accentColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),typography:z.object({reading:typography,sanad:typography,conclusion:typography,shaykh:typography}),phrases:z.array(z.object({text:z.string().min(1).max(300),font,size:z.number().min(6).max(30),color})).max(80)});
 const first=(v?:string|string[])=>Array.isArray(v)?v[0]:v;
 
 export default createEndpoint({
  description:'Publish a drafted shahada and permanently snapshot its text and selected print settings',
  authenticated:true,
- inputSchema:z.object({certificateId:z.string(),settings:style,printMode:z.enum(['number','none','qr']).default('number')}),
+ inputSchema:z.object({certificateId:z.string(),settings:style}),
  outputSchema:z.object({chain:z.string(),heading:z.string(),formatting:z.string()}),
  execute:async({input,context})=>{
   const cert=await zite.certificates.findOne({id:input.certificateId}).catch(()=>null);
@@ -27,10 +27,16 @@ export default createEndpoint({
   const issuer=first(cert.shaykh);
   const admin=(await isAppAdmin(context.user.email));
   if(!issuer||(!admin&&issuer!==context.user.id))throw new Error('لا تملك صلاحية اعتماد هذه الشهادة');
-  if(cert.publicationStatus!=='draft')throw new Error('هذه الشهادة نُشرت بالفعل');
+  const {client}=requestContext();
+  const readSnapshot=async()=>{
+   const {data,error}=await client.from('certificate_snapshots').select('content').eq('certificate_id',cert.id).single();
+   if(error)throw new Error(error.message);
+   return {chain:data.content.chain,heading:data.content.heading,formatting:data.content.formatting};
+  };
+  if(cert.publicationStatus==='final')return readSnapshot();
+  if(cert.publicationStatus!=='draft')throw new Error('هذه الشهادة ليست مسودة');
   const {records:existing}=await zite.certificateSnapshots.findAll({filters:{certificateId:cert.id},limit:100});
   if(existing.some(s=>s.ownerId!==issuer))throw new Error('صاحب النسخة المحفوظة لا يطابق المُجيز');
-  const previous=existing.find(s=>s.ownerId===issuer);
   const sanadId=first(cert.sanad);
   if(!sanadId)throw new Error('لا يوجد سند لهذه الشهادة');
   const resolved=await getDraftSanadForCertificate(sanadId,issuer,cert.id);
@@ -55,14 +61,10 @@ export default createEndpoint({
   const {records:sources}=await zite.assetSources.findAll({filters:{key:'default'},limit:1});
   const source=sources[0];
   const artworkSnapshot={base:source?cdnBase(source.gitHubRepository||'',source.revision||source.branch||'main'):'',artwork:artworkListSchema.catch([]).parse(source?.artwork||[]),issuerNumber:registrationNumber.slice(2,4)};
-  const formatting=JSON.stringify({headerPosition:'fixed',footerWidthLinked:true,matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:input.printMode});
+  const formatting=JSON.stringify({headerPosition:'fixed',footerWidthLinked:true,matnDocument:current.matnDocument,matnHeadingArtwork:!!current.matnDocument,transmission:current.transmission,orderedSanads:current.orderedSanads,routeEmphasis:current.routeEmphasis,artworkSnapshot,phrases:current.phrases||[],settings:input.settings,footerProfile,issuerDisplayName,registrationNumber,verificationToken,printMode:'number'});
   const heading=chain.match(/^【بيان القراءة:([^】]+)】/)?.[1]||'';
-  const record={name:'شهادة '+cert.id,certificateId:cert.id,ownerId:issuer,chain,heading,formatting,issuedAt:new Date().toISOString()};
-  const {client}=requestContext();
   const {error}=await client.rpc('finalize_certificate',{certificate_id:cert.id,snapshot:{chain,heading,formatting}});
   if(error)throw new Error(error.message);
-  const {data,error:readError}=await client.from('certificate_snapshots').select('content').eq('certificate_id',cert.id).single();
-  if(readError)throw new Error(readError.message);
-  return {chain:data.content.chain,heading:data.content.heading,formatting:data.content.formatting};
+  return readSnapshot();
  }
 });

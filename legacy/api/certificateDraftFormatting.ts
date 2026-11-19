@@ -15,7 +15,7 @@ const typography=z.object({
  paragraphSpacing:z.number().min(0).max(30).optional(),firstLineIndent:z.number().min(0).max(25).optional(),
  offsetMm:z.number().min(-15).max(15).optional(),alignment:z.enum(['right','center','justify']).optional(),
 });
-const style=z.object({
+const style=z.object({contentScalePercent:z.number().min(50).max(150).optional(),
  matnHeading:matnHeadingSchema.nullable().optional(),qiraatHeading:qiraatHeadingSchema.nullable().optional(),headingOffsetMm:z.number().min(-12).max(12).optional(),footerOffsetMm:z.number().min(-15).max(4).optional(),borderColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  accentColor:z.string().regex(/^#[0-9a-fA-F]{6}$/),
  typography:z.object({reading:typography,sanad:typography,conclusion:typography,shaykh:typography}),
@@ -27,7 +27,7 @@ export default createEndpoint({
  authenticated:true,
  inputSchema:z.object({
   certificateId:z.string(),action:z.enum(['save','reset']),
-  settings:style.optional(),printMode:z.enum(['number','none']).optional(),
+  settings:style.optional(),
  }),
  outputSchema:z.object({saved:z.boolean()}),
  execute:async({input,context})=>{
@@ -48,9 +48,9 @@ export default createEndpoint({
   const next={...(record.draft&&typeof record.draft==='object'&&!Array.isArray(record.draft)?record.draft:{} as Record<string,unknown>)};
   // A reset is a deliberate system-default choice for this certificate,
   // not a return to the user's shared sanad-wide styling.
-  if(input.action==='reset')next.certificatePrintStyle={version:1,systemDefault:true,printMode:'number'};
+  if(input.action==='reset')next.certificatePrintStyle={version:1,systemDefault:true};
   else next.certificatePrintStyle={
-   version:1,settings:style.parse(input.settings),printMode:input.printMode??'number',
+   version:1,settings:style.parse(input.settings),
   };
   const {data:updated,error:writeError}=await client.from('certificates')
    .update({draft:next}).eq('id',input.certificateId).eq('status','draft').select('id').maybeSingle();

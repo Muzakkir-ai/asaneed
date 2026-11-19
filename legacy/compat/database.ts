@@ -20,6 +20,7 @@ const sharedKinds=new Set(['sanadSections','sanadSectionVersions','mutoonTextTem
 async function workspaceRows(kind:string):Promise<RecordRow[]>{const rows:RecordRow[]=checked(await context().client.from('workspace_records').select('id,payload').eq('kind',kind));const s=context().scope;if(!s||s.system)return rows;
  if(kind==='sanadSectionVersions'){const sections=await workspaceRows('sanadSections');return rows.filter(r=>sections.some(p=>p.id===r.payload.sectionId));}
  return rows.filter(r=>{const p=r.payload;const owner=String(p.ownerId??(kind==='asaneed'?first(p.shaykh):p.shaykhId?'guest:'+p.shaykhId:''));
+ if(kind==='mutoonTextTemplates'&&p.reusable===true&&p.status!=='draft')return true;
  if(owner)return owner===s.authUserId||s.issuerIds.some(id=>owner==='guest:'+id);
  // Versions inherit their section's permissions in the database; their directory is shared read-only.
  return sharedKinds.has(kind)||kind==='certificateSnapshots';});}

@@ -1,4 +1,5 @@
 'use client';
+import {useState} from 'react';
 import CertificatePrint from '../../legacy/components/CertificatePrint';
 import '../../app/studio/studio.css';
 
@@ -23,11 +24,23 @@ const preview={
   showTeachingRole:true,showMadrasaName:true,showMadrasaPlace:true},
 };
 export default function CertificateQiraatReview(){
- return <main className="zite-app min-w-0" dir="rtl" data-testid="certificate-qiraat-layout-review">
+ const [snapshotMode,setSnapshotMode]=useState<'draft'|'legacy'|'qr'|'none'|'number'>('draft');
+ const certificate=snapshotMode==='draft'?cert:{
+  ...cert,id:snapshotMode,publicationStatus:'final',snapshotChain:chain,snapshotHeading:heading,
+  snapshotFormatting:JSON.stringify({
+   verificationToken:'synthetic-historical-token',
+   printMode:snapshotMode==='legacy'?undefined:snapshotMode,
+  }),
+ };
+ return <div className="zite-app min-w-0" dir="rtl" data-testid="certificate-qiraat-layout-review">
   <script id="certificate-review-data" type="application/json"
    dangerouslySetInnerHTML={{__html:JSON.stringify(preview)}}/>
-  <CertificatePrint cert={cert as any}
+  <div className="no-print">
+   {(['legacy','qr','none','number'] as const).map(mode=>
+    <button key={mode} onClick={()=>setSnapshotMode(mode)}>{mode}</button>)}
+  </div>
+  <CertificatePrint key={snapshotMode} cert={certificate as any}
    sanad={{id:'synthetic-qiraat',title:heading,qiraahName:'',chain,shaykhId:'synthetic'}}
    shaykhName="الشيخ عبد الله بن أحمد" onClose={()=>{}} onFinalized={()=>{}}/>
- </main>;
+ </div>;
 }

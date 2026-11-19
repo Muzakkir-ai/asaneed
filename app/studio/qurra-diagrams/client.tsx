@@ -2,7 +2,7 @@
 
 import {useEffect,useMemo,useState} from 'react';
 import {ChevronDown,GitBranch,Pencil} from 'lucide-react';
-import CombinedSanadView from '../../../legacy/components/CombinedSanadView';
+import SanadDiagramViewer from '../../../legacy/components/SanadDiagramViewer';
 import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
 import SimpleRouteEditor from './SimpleRouteEditor';
 import QurraHistoricalPanel from './QurraHistoricalPanel';
@@ -90,7 +90,7 @@ export default function QurraTransmissionWorkspace(){
   <header className="flex flex-wrap items-center justify-between gap-3">
    <div>
     <h1 className="text-xl font-bold sm:text-2xl">مخططات أسانيد القراء</h1>
-    <p className="mt-1 text-sm text-muted-foreground">{isHistorical?'نصوص محفوظة من الرواية إلى النبي ﷺ، مع عرض الفروع للمراجعة.':overviewStage?'جميع أسانيد القراء العشرة في مخطط واحد من السجلات المحفوظة.':sharedStage?'السند المشترك بين ابن الجزري والداني.':'اختر الرواية، شاهد سندها، وعدّل الرواة مباشرةً.'}</p>
+    <p className="mt-1 text-sm text-muted-foreground">{isHistorical?'نصوص محفوظة من الرواية إلى النبي ﷺ، مع عرض الفروع للمراجعة.':overviewStage?'مسارات القراء العشرة المحفوظة؛ اختر سندًا لقراءته أو اعرض جميع الروابط.':sharedStage?'السند المشترك بين ابن الجزري والداني.':'اختر الرواية، شاهد سندها، وعدّل الرواة مباشرةً.'}</p>
    </div>
    <div className="inline-flex items-center gap-1 rounded-lg border bg-background px-3 py-2 text-sm text-muted-foreground">
     <GitBranch size={16} aria-hidden="true"/> أسانيد محفوظة
@@ -174,7 +174,7 @@ export default function QurraTransmissionWorkspace(){
     {overviewStage&&paths.length>0&&!editingChain&&<p className="text-xs text-muted-foreground">المخطط الكامل قابل للتمرير أفقيًّا لقراءة أسماء الرجال كاملة، دون تصغير البطاقات.</p>}
     {editingChain&&library?.canManage?<SimpleRouteEditor key={editingChain.id} library={library} route={editingChain}
      onSaved={reload} onClose={()=>setEditingRouteId('')}/>:
-     paths.length?<CombinedSanadView key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage||sharedStage} sharedSanads={sharedStage} personNames={data.names}
+     paths.length?<SanadDiagramViewer key={stage+':'+activeRoute+':'+showAll} paths={paths} spacious={overviewStage||sharedStage} sharedSanads={sharedStage} personNames={data.names}
       routeLabels={chosen.map(w=>sharedStage?w.book+' — '+w.title:shortQariName(w.qariId)+' — '+w.rawi+' — '+w.book+' — '+w.title)}
       review={unreviewed}
       renderPerson={(id,positions)=><BranchPersonCard name={data.names[id]||'راوٍ غير متاح'} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>}/>

@@ -204,24 +204,22 @@ assert.equal(fanOut.parts.filter(p=>p.arrow).length,4,'one drop and arrow per ac
 assert.equal(fanOut.parts.filter(p=>p.role==='feed').length,1,'one centered downward trunk');
 assert.equal(fanOut.parts.find(p=>p.role==='feed')!.d.startsWith('M530 '),true,
  'fan-out trunk leaves source card center');
-const fanIn=makePlan([['a','b','c','d'],['target']],
+const isolatedFanIn=makePlan([['a','b','c','d'],['target']],
  ['a','b','c','d'].map(from=>({from,to:'target'}))).plan;
-assert.deepEqual(fanIn.groups.map(g=>g.kind),['fan-in']);
-assert.equal(fanIn.parts.filter(p=>p.role==='bus').length,1,'one early fan-in bus');
-assert.equal(fanIn.parts.filter(p=>p.arrow).length,1,'only one arrow at the converged destination');
-assert.equal(fanIn.parts.filter(p=>p.role==='feed').length,4);
-assert.ok(fanIn.groups[0].busY!<fanIn.tops[1]/2+40,'merge bus is closer to sources');
+assert.ok(isolatedFanIn.groups.every(group=>group.kind==='single'),'unrelated roots must keep independent incoming arrows');
+const fanIn=makePlan([['upstream'],['a','b','c'],['target']],
+ [...['a','b','c'].map(to=>({from:'upstream',to})),...['a','b','c'].map(from=>({from,to:'target'}))]).plan;
+assert.ok(fanIn.groups.some(group=>group.kind==='fan-in'),'adjacent teachers with one immediate upstream narrator may share a merge bus');
+assert.equal(fanIn.parts.filter(part=>part.arrow).length,4,'three actual outward links and one converged destination');
 const manyToMany=[
  ...['A','B','C','D','E'].flatMap(from=>['X','Y','Z'].map(to=>({from,to,routes:[1,2]}))),
 ];
 const fullFan=makePlan([['A','B','C','D','E'],['X','Y','Z']],manyToMany,228).plan;
-assert.equal(fullFan.groups.length,1);
-assert.equal(fullFan.groups[0].kind,'complete');
-assert.equal(fullFan.parts.filter(p=>p.role==='bus').length,1);
-assert.equal(fullFan.parts.filter(p=>p.arrow).length,3);
-assert.equal(fullFan.edgePaths.length,15);
-assert.ok(fullFan.parts.filter(p=>p.role==='drop').every(p=>p.d.includes(' V')),
- 'all descendants leave the one shared horizontal bus by vertical drops');
+assert.ok(fullFan.groups.every(group=>group.kind!=='complete'&&group.kind!=='fan-in'),'wide root rows must not acquire a shared meeting bus');
+assert.equal(fullFan.edgePaths.length,15,'all real dense connections survive separate routing');
+const neighbourComplete=makePlan([['root'],['A','B','C'],['X','Y','Z']],
+ [...['A','B','C'].map(to=>({from:'root',to})),...['A','B','C'].flatMap(from=>['X','Y','Z'].map(to=>({from,to})))],228).plan;
+assert.ok(neighbourComplete.groups.some(group=>group.kind==='complete'),'complete adjacent relationships with common upstream retain shared routing');
 const partial=makePlan([['A','B'],['X','Y']],
  [{from:'A',to:'X'},{from:'B',to:'Y'}]).plan;
 assert.equal(partial.groups.filter(g=>g.kind!=='single').length,0,
@@ -234,7 +232,7 @@ const mixed=makePlan([['A','B'],['X','Y','Z'],['one']],
  [{from:'A',to:'X'},{from:'A',to:'Y'},{from:'B',to:'Y'},
  {from:'X',to:'one'},{from:'Y',to:'one'},{from:'Z',to:'one'}]).plan;
 assert.equal(mixed.edgePaths.length,6,'mixed fan-in and fan-out reuse same routing engine');
-assert.ok(mixed.groups.some(g=>g.kind==='fan-in'));
+assert.ok(mixed.groups.every(g=>g.kind!=='fan-in'),'the unrelated Z source must not be joined into X/Y incoming bus');
 const asym=makePlan([['root'],['one','two','three','four']],
  ['one','two','three','four'].map(to=>({from:'root',to})),228,
  new Map([['root',132],['one',70],['two',106],['three',160],['four',90]])).plan;
@@ -503,4 +501,51 @@ const preferredQalun=historicalSection([labelledQalun],'nafi','قالون','rawi
 assert.equal(preferredQalun?.names['rawi:qalun'],preferredName,
  'Show an existing audited full person name without altering route identities');
 console.log('Source-only Rijal rawi/imam, branching, Companion/Prophet and preferred-name tests passed');
+
+
+// Reported 4 -> lower 5: the inner lane crosses the left 5 fan-out.
+// Both right-hand cards have a clear outer edge, so use it without contact.
+const rightBypassRows=[['left4','right4'],['left5'],['left6','right6'],['left7','right5']];
+const rightBypassCenters=new Map(rightBypassRows.flat().map(id=>[id,{x:id.startsWith('right')?420:140}]));
+const rightBypassEdges=[{from:'left4',to:'left5'},{from:'left5',to:'left6'},{from:'left5',to:'right6'},{from:'left6',to:'left7'},{from:'right6',to:'right5'},{from:'right4',to:'right5',id:'reported-4-to-5',routes:[2]}];
+const rightBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,560,180,100);
+assert.equal(rightBypass.valid,true);
+const reported=rightBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!;
+assert.match(reported.d,/^M510 50 H526 V[\d.]+ H511$/,'choose right-side ports and the clear outer corridor');
+assert.deepEqual(reported.routes,[2]);
+const segmentsOf=(d:string)=>{const points=tracePoints(d);return points.slice(1).map((b,i)=>{const a=points[i];return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};});};
+const reportSegments=segmentsOf(reported.d);
+for(const part of rightBypass.parts.filter(part=>!part.edgeIndices.includes(reported.edgeIndex)))for(const a of reportSegments)for(const b of segmentsOf(part.d)){
+ assert.ok(Math.max(a.left,b.left)>Math.min(a.right,b.right)||Math.max(a.top,b.top)>Math.min(a.bottom,b.bottom),'the 4-to-5 side route must not even touch another physical connector');
+}
+
+assert.equal(rightBypass.edgePaths.length,rightBypassEdges.length,'rerouting preserves all original relations');
+console.log('Crossing-aware outer corridor for reported 4-to-5 route: PASS');
+
+const obstructedRows=[['left4','right4','blocking-card'],...rightBypassRows.slice(1)];
+const obstructedCenters=new Map([...rightBypassCenters,['blocking-card',{x:650}] as const]);
+const obstructed=planCoordinatedSanad(obstructedRows,obstructedCenters,rightBypassEdges,800,180,100);
+assert.equal(obstructed.valid,true,'an occupied side exit must never route through the neighbouring card');
+assert.doesNotMatch(obstructed.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H792/);
+
+// Extra canvas width must not push a local detour to the global margin.
+const wideCanvasBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,1800,180,100);
+assert.match(wideCanvasBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H526 V[\d.]+ H511$/,'the nearest clear lane stays 16px beside the cards on a wide canvas');
+
+// Teachers must enter a student's box in physical left-to-right order,
+// regardless of saved-path order or later crossing-avoidance refinements.
+for(const order of [['right','left','middle'],['middle','right','left'],['left','middle','right']]){
+ const rows=[['left','middle','right'],['student']];
+ const centers=new Map([['left',{x:140}],['middle',{x:420}],['right',{x:700}],['student',{x:420}]]);
+ const edges=order.map(from=>({from,to:'student'}));
+ const plan=planCoordinatedSanad(rows,centers,edges,840,180,100);
+ assert.equal(plan.valid,true);
+ const arrivals=['left','middle','right'].map(id=>tracePoints(plan.edgePaths.find(edge=>edge.from===id)!.d).at(-1)!);
+ assert.ok(arrivals[0].x<arrivals[1].x&&arrivals[1].x<arrivals[2].x,'right teacher stays right, middle stays middle, left stays left');
+ const ports=edges.map(edge=>({...edge,x1:centers.get(edge.from)!.x,x2:420+(['left','middle','right'].indexOf(edge.from)-1)*16}));
+ const fallback=optimizeSanadPorts(rows,centers,ports,840,180,100,new Map());
+ for(const [index,connector] of fallback.connectors.entries())assert.equal(tracePoints(connector.d).at(-1)!.x,ports[index].x2,'fallback optimizer preserves ordered arrival slots');
+}
+console.log('Teacher arrival order survives shuffled saved paths and both routing modes: PASS');
+
 

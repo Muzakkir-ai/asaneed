@@ -74,11 +74,12 @@ const library={
    '--hostname','127.0.0.1','--port','3112'],{stdio:'inherit'});
   let started=false;
   for(let attempt=0;attempt<120&&!started;attempt++){
+   if(server.exitCode!==null)break;
    try{const response=await fetch(url);started=response.ok;}catch{}
    if(!started)await new Promise(resolve=>setTimeout(resolve,500));
   }
   assert.ok(started,'Next.js local screenshot fixture started');
-  browser=await chromium.launch();
+  browser=await chromium.launch({executablePath:process.env.CHROME_PATH||undefined});
   const page=await browser.newPage({viewport:{width:1440,height:960},deviceScaleFactor:1});
   // Every request stays inside the runner; even the simulated save uses
   // synthetic records and does not reach production Supabase.
@@ -102,7 +103,7 @@ const library={
    await page.getByTestId('visual-preview-label').waitFor();
    // Wait for the first authenticated-data fixture graph to render and React to
    // hydrate before clicking a tab. Otherwise an early click can be ignored.
-   await page.locator('[data-combined-narrator]').first().waitFor();
+   await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
    const nav=page.locator('nav[aria-label="مراحل مخططات القراء"]');
    for(let i=0;i<previewRows.length;i++){
     const stage=previewRows[i];
@@ -127,6 +128,9 @@ const library={
      await page.locator('details').first().locator('summary').click();
      await page.getByRole('button',{name:'مسارات السبعة الأخرى'}).click();
     }
+    await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
+    await page.screenshot({path:path.join(output,stage.slug+'-'+label+'-route.png'),fullPage:true,animations:'disabled'});
+    await page.getByRole('button',{name:'جميع الروابط',exact:true}).click();
     await page.locator('[data-combined-narrator]').first().waitFor();
     await page.evaluate(()=>document.fonts.ready);
     assert.equal(await nav.locator('button[aria-pressed="true"]').count(),i<4?1:0);
@@ -140,7 +144,7 @@ const library={
   // branch prose, independently of the saved book-chain graph.
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
-  await page.locator('[data-combined-narrator]').first().waitFor();
+  await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
   for(const [kind,label,filename] of [
    ['rawi-imam','الرواة ← الأئمة','06-rawi-imam.png'],
    ['imam-sahaba','الأئمة ← الصحابة','07-imam-sahaba.png'],
@@ -151,6 +155,9 @@ const library={
    assert.equal(await page.getByLabel('القارئ في تتمة السند').count(),1);
    if(kind==='rawi-imam')assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),1);
    else assert.equal(await page.getByLabel('الراوي في تتمة السند').count(),0);
+   await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
+   assert.equal(await page.getByRole('button',{name:'مسار واضح',exact:true}).getAttribute('aria-pressed'),'true');
+   await page.getByRole('button',{name:'جميع الروابط',exact:true}).click();
    if(kind==='imam-sahaba'){
     await page.getByText('رسم من علاقات رجال الأسانيد',{exact:false}).waitFor();
     await page.locator('[data-combined-narrator="imam:nafi"]').waitFor();
@@ -189,7 +196,7 @@ const library={
   await page.setViewportSize({width:1440,height:960});
   await page.goto(url,{waitUntil:'domcontentloaded'});
   await page.getByRole('heading',{name:'مخططات أسانيد القراء'}).waitFor();
-  await page.locator('[data-combined-narrator]').first().waitFor();
+  await page.getByRole('list',{name:'مسار السند المختار'}).waitFor();
   await page.locator('nav[aria-label="مراحل مخططات القراء"]').getByRole('button',{name:'الداني ← القراء السبعة'}).click();
   await page.getByRole('button',{name:'تعديل هذا السند'}).click();
   await page.getByRole('heading',{name:'تعديل السند',exact:true}).waitFor();
@@ -210,7 +217,7 @@ const library={
   // Clicking Save posts the SAME stored route ID, leaves the existing
   // parent/book/reading untouched, and refetches the persisted branches.
   await page.getByRole('button',{name:'حفظ التغييرات'}).click();
-  await page.locator('[data-combined-narrator="other"]').waitFor({timeout:20000});
+  await page.getByRole('list',{name:'مسار السند المختار'}).getByText('أبو الحسين المكي',{exact:true}).waitFor({timeout:20000});
   assert.ok(savedRecord,'The save button must submit a route update');
   assert.equal(savedRecord.id,'route-qalun','Existing route ID reused');
   assert.equal(savedRecord.book_chain_id,'parent-seven','Original book chain preserved');

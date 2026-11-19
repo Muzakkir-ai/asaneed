@@ -1,3 +1,87 @@
+## Ordered teacher arrivals — 19 November 2026
+
+Incoming connection slots follow the teachers' physical horizontal positions instead of saved-route/group order. Outgoing slots likewise follow the students' positions. Crossing avoidance may use a side entrance only for the outermost connection on that side; middle arrivals retain their ordered top-edge slots. The fallback optimizer also preserves each arrival slot when a student has multiple teachers. Square corners and local side-lane clearance remain unchanged.
+
+Validated three shuffled orders of left/middle/right teachers, both routing modes, the reported 4-to-5 side bypass, card clearance, original edge membership, the full sanad suite, typecheck and desktop/mobile graph regression. Display geometry only; no saved sanad or certificate changes.
+
+## Square connectors and compact traced trees — 19 November 2026
+
+The full-network viewer now draws the router's square orthogonal paths directly, with butt caps, miter joins and lighter strokes. Rounded corner conversion is no longer used in the displayed network. Selecting a route/group or tracing a narrator rebuilds the displayed graph from only the matching complete saved paths; it no longer reserves space for unrelated faded cards. Original route-membership indices are mapped back after layout. Clearing trace restores the original network; choosing a different route clears the prior narrator focus. Card measurement observes the displayed graph so its height and width compact correctly after filtering.
+
+Reviewed screenshots of the actual live 83-card shaykh network and its dense upper/middle branches before implementation. Validated square rendered paths, focused node/edge membership, narrower focused width, complete restore, original edge identities, route filtering, desktop/mobile layouts, editing controls and hub access/reopen checks with synthetic fixtures. No saved narrator, sanad or certificate content is changed. A post-release live screenshot is included in the response.
+
+## Compact local side lanes — 19 November 2026
+
+Side detours start beside the connected cards, with 16px local clearance, rather than using the far edge of the entire diagram. Nearby card and vertical-line boundaries supply additional candidate lanes; the canvas edge remains a fallback. Candidates are tested shortest-first with the existing no-card-collision and crossing/separation priorities, so a wide canvas does not create an unnecessarily wide local connection. Candidate counts are bounded and evaluation stops at the shortest fully clear option.
+
+Validated the reported 4→5 reproduction at normal and much wider canvas sizes, unchanged no-touch/card safety assertions, the full routing suite and desktop/mobile graph checks. Display geometry only.
+
+## Crossing-aware side corridors — 19 November 2026
+
+The coordinated diagram router compares complete physical connector paths after the initial layout. For independent links it considers outward left/right side ports and clear outer corridors, rejects routes through other narrator cards, then prioritizes fewer line intersections/touches, greater separation and shorter distance. Thus a skipped-rank 4→5 link can travel around the right edge and enter the target from the side instead of crossing a fan-out between intermediate rows. When a side is obstructed, the existing safe route remains available. Two bounded refinement passes preserve all original source/target IDs, route memberships, grouping rules and arrow dimensions. Not every graph admits a crossing-free drawing; the rule chooses the best available safe candidate rather than promising to remove necessary intersections.
+
+Validated a synthetic reproduction of the reported right-hand 4→5 shape, an obstructed-side case, the complete routing/identity suite and desktop/mobile graph regressions. These changes affect display geometry only; saved sanads and certificates are unchanged.
+
+## Unified sanad explorer and shared diagrams — 19 November 2026
+
+The sidebar has one الأسانيد ورجالها entry under مكتبة الأسانيد, with tabs for رجال الأسانيد, أسانيد القراء and أسانيد المشايخ. Shaykh diagrams are removed from the shared-text cards. Existing narrator and Qurra URLs enter the appropriate hub tab; page=sanad-explorer&view=... reopens the chosen tab. The shaykh tab retains its existing administrator-only, non-inspection visibility and source API permissions; the move does not grant staff new data access.
+
+The readers, historical sections and shaykh diagrams share SanadDiagramViewer. It opens one exact saved route as full-width numbered cards with simple arrows; the optional network retains all original paths and identifiers. Shaykh text preview is tied to the same selected route. Full networks render rounded corners within the router's existing corridors, clearer teal strokes and complete saved-route highlighting when tracing a narrator. No graph edge, narrator identity, saved sanad or certificate is rewritten. Original invisible edge geometry remains available for source-edge audit checks.
+
+Validated hub desktop/mobile layout and navigation, saved-tab reopening, unchanged visibility, exact shaykh route/text alignment, rendered rounded connectors and tracing beyond adjacent edges using synthetic API records only. The existing Qurra screenshots/editor workflow passes for upper and historical routes. Production build and global graph checks are recorded in the release report. No real records or certificates were changed by tests.
+
+## Certificate selection and readable historical routes — 19 November 2026
+
+Certificate creation auto-selects the only available Sughra/Kubra scope; both scopes remain selectable when held. Saved sanads use checkbox cards with select-all/clear and a selected count. Empty explicit selections block submission. The old five-source cap is raised to the existing 2,000-row source-query bound; merged text and graph safety limits are unchanged. Identity-backed merge rendering still visits meeting points from nearer students toward older teachers; ambiguous unions retain their literal fallback and input order.
+
+Cards load source-based longest narrator counts via the existing authorized, read-only preview endpoints (two requests at a time). Counts exclude the Prophet and begin with the first named transmitting teacher. The count joins only complete identity-backed personal paths at the explicit Jazari/Ubaydi anchor to the selected reading's existing historical index. Missing, duplicate, changed or unresolved sources and unsupported custom continuations show “needs review”; a custom saved path explicitly reaching the Prophet can be counted directly. These historical source counts are display metadata, not transmission approval, and are not saved into draft provenance or finalized snapshots.
+
+Historical panels default to one complete saved route with numbered cards and simple arrows, with route selection and an optional full-network overview. All stored paths and links remain unchanged. Certificate formatting keeps every setting with shorter labels, aligned control cards, collapsed title/footer positions and a persistent save/reset row. Back-to-issuer is an accessible icon.
+
+Validated source-based counts against saved Hafs sections (longest branch and anchor deduplication), more than five selections, changed/missing source rejection, read-only preview/no publication, selection scope and empty-selection guards, desktop/mobile diagrams, and PDF layout/save/reset/overflow checks. An existing diagram test expected a shared bus for unrelated roots; its fixtures now exercise the current common-upstream policy without changing the routing engine. Local download tests disable the host OS share sheet and supply the real basmalah fixture. No production records or certificate publication were changed by testing.
+
+## Riwayah editing and reusable matn texts — 18 November 2026
+
+Saved-sanad copy cards show the sheikh, riwayah and saved variant name. Save/adopt and cancel return to the same riwayah view and retain its URL. The reading list now includes the basic/shared sanad as well as named alternatives, using explicit saved-reading metadata. Cancel and discard actions use red text. The optional saved-route section explains its link to the books/routes library.
+
+Introduction and conclusion tabs offer saved choices, new rich-text entries and copies. Authors can opt in to reuse by other issuing accounts. The database SELECT policy exposes only published opted-in templates to active staff. Ownership and write policies are unchanged. Legacy private templates stay private. Heading controls use compact labels, icons, rounded displayed measurements and aligned checkbox rows. The redundant per-matn size explanation is removed.
+
+Validated personal-sanad, ordered-sanad, heading and formatting suites, save/cancel URL regressions, cross-owner template API denial, staging rollback-only SELECT/UPDATE/DELETE checks and synthetic browser layouts at 796/390 px. The browser fixture verifies template save and automatic selection. Real user content and publication were not modified by tests.
+
+## Heading spacing and additional sanad wording — 18 November 2026
+
+The basmalah, ijazah title and riwayah line now scale as one heading group from the fixed basmalah anchor, so their intervening gaps follow the percentage control. Text-box and footer widths and the footer anchor remain fixed. Additional independent incoming sanads use **وقد أخذت أيضًا عن** after the first sanad. Branches from an already named narrator retain **وقرأ … أيضًا على**. Validated ordered-sanad and heading/formatting suites, TypeScript, and synthetic screen/print heading-spacing measurements.
+
+## Whole certificate content size — 18 November 2026
+
+The draft certificate preview includes **حجم النص والرسوم ٪** with a 50–150% range and a 100% reset. Text reflows inside its original full-width box. The footer keeps its width and fixed bottom anchor, with a 32 mm signing slot (36 mm for historical QR output). Heading and issuer artwork resize inside their original slots, preserving each slot's top and horizontal alignment. The border and A4 paper retain their dimensions. The value is saved in certificate-only draft formatting and frozen on finalization. Existing formatting defaults to 100%. Preview, native print and PDF capture share these rules. Overlap and safe-area checks remain active, including footer overflow.
+
+Verified with the production build, heading and formatting suites, footer-layout tests, and synthetic Chromium screen/print measurements at 50%, 85%, 125% and 150%. Measurements verify unchanged text and footer widths and unchanged header/footer anchors. An authenticated real-certificate print and physical printer were not exercised. The build reports an existing Next.js security advisory.
+
+## Certificate integration candidate (12 November 2026)
+
+Draft #121 passed isolated staging migration parity, synthetic two-Ḥafṣ issuance and recipient access, historical verification, and staging app rollback. Hosted print, abuse controls and provider recovery remain release gates. See the [release QA matrix](RELEASE-QA.md) for the tested commits and approval checkpoint.
+
+## Chat 03 review branch — ordered sanads for one riwāyah
+
+The certificate selector and personal-sanad generator can preview an ordered list of up to five authorized saved sanads. Selections must share an issuer, riwāyah and certificate ṭarīq. The combined text retains a complete branch for every selection, separated by `(ح)`, and uses the first selection's framing. Diagrams display saved personal paths and any identity-verified continuation. Legacy prose without stable narrator IDs remains visible as text. The additional-shaykh editor retains every branch when reopening a reviewed variant, uses the rows returned by Save and discards superseded loading responses.
+
+**Chat 04 integration:** `prepareIjazah.holdingIds` and `additionalShaykhs.personalSanadIds` are ordered arrays. Both support `previewOnly` without writes. The generated sanad linked from a new draft stores `orderedSanads` v1 with source, continuation and route IDs. Draft reload uses the validated draft chain even if a source is later deleted. New previews reject missing sources. Finalization copies the draft text and provenance into the immutable snapshot. Existing scalar requests and historical drafts use the existing path. Keep this metadata when merging any finalization changes.
+
+**Verification:** `node tests/ordered-sanads.test.cjs` exercises the Ḥafṣ reload defect, authorized ordering, legacy inputs, shared Ṣughrā, library-linked Kubrā, different continuations and the finalization payload with synthetic storage. Authenticated staging and physical print remain release checks. Base main and the last production SHA in the audit are `292dc0d5dbd27556b4004051b782cc369946c21d`. This branch has no migration or deployment.
+## Number-only certificate presentation — Chat 05 branch
+
+New and existing drafts now preview and print with the registration number. The draft verification display selector is removed, and new finalizations explicitly freeze number-only output. Previously issued snapshots still read their original presentation mode and retain their historical QR links. The application keeps verification token and registration data for compatibility.
+
+The draft formatting endpoints still save and restore typography and layout separately from final approval. Old draft presentation choices are ignored when opening the draft. No data migration accompanies this branch. The production baseline is `292dc0d5dbd27556b4004051b782cc369946c21d`; this change is pending release.
+## Mutūn publication audit — 10 November 2026
+
+A shared introduction or conclusion moved back to draft could still enter a certificate when the current administrator could read its record. Certificate draft creation, preview and approval now treat unpublished shared templates as unavailable. Personal templates and legacy shared templates without a status remain eligible. Issued snapshots are unaffected. No migration is required.
+
+Reproduce with a synthetic certificate draft linked to a published shared introduction. Move that introduction back to draft and reopen the certificate preview as an administrator. The previous resolver incorporated the unpublished text. The branch reports the template as unavailable until it is published again or replaced on the holding.
+
+Synthetic coverage includes request approval and rejection, ownership, normalized duplicates, atomic rollback, review replay, template changes, personal overrides and frozen snapshots. Simultaneous database sessions and authenticated browser coverage remain open. The personal editor currently offers its general template list regardless of the catalog's saved template associations.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.
@@ -622,3 +706,20 @@ CertificateViewport defaults to fit-page and offers fit-width, zoom presets/butt
 Validation: independent dimension/aspect/centering/gap/fallback and serialization/precedence tests; real endpoint save/reopen/finalization-schema compatibility; in-memory draft source refresh/owner isolation/ambiguity/published guard tests. Chrome loaded the pinned real two-line المقدمة الجزرية artwork (`ac3a0a0f6e5f8fb96d84dc1bb7be41fc021f31a8`), KSA and Sakkal fonts. At main 60pt / secondary 30pt all three rendering contexts computed 80px / 40px; measured line gap was 3.998mm and text gap 8.099mm for requested 4mm/8mm. Overflow detection was exercised with oversized synthetic content. Desktop/mobile fit/zoom checks passed. Real one-page A4 landscape PDFs at 50% and 200% viewer zoom produced identical Poppler-rendered images, proving that viewer zoom does not alter print scale. Screenshots and the rendered PDF were visually reviewed. No live account/certificate issuance or physical printer was used, and no production deployment was performed.
 
 إعدادات الشيخ تفصل تغطية القراءات عن اختيار السند المشترك أو المستقل، وتدعم سندًا مشتركًا مستقلًا للكبرى المرتبطة بالمكتبة.
+
+## Public certificate-number verification — Chat 01
+
+GitHub main and the READY production alias were both at `292dc0d5dbd27556b4004051b782cc369946c21d` during review. A well-formed synthetic number reached the anonymous RPC and returned `preparing`. The read-only counts showed 48 drafts and zero finalized certificates, snapshots, verification index entries or published entries. No finalized snapshot was missing from the projection. Final approval writes the snapshot and its public projection in one transaction. Draft number allocation does not publish a certificate.
+
+This review change restricts verification to exact-match functions and removes direct SELECT access to the projection for anonymous and authenticated callers. The HTTP route allows only the certificate number, recipient, issuer, reading and completion date. The home page has a single sign-in destination and privacy metadata follows English, Arabic and Urdu. The historical token function, URLs and issued snapshots retain their existing contract. Chat 05 owns number-only certificate output in [PR #113](https://github.com/Muzakkir-ai/asaneed/pull/113).
+
+Run `node tests/public-verification.test.cjs` for the isolated first-publication fixture and API handler tests. Chat 04 can reuse this fixture for integrated staging validation. Sequential certificate numbers remain guessable via repeated exact requests, including requests sent directly to the public RPC. An abuse-control decision covering both entry points remains part of the pilot. Production received no writes, deployment or migration.
+## Certificate finalization concurrency — 10 November 2026
+
+Final approval reserves the registration number before taking its own certificate row lock, following the same lock order as draft reservation. If two approvals race on one draft, the first transaction freezes the chain and formatting. An authorized retry returns that same snapshot, including when the source or submitted formatting has since changed. The migration replaces the finalization function and does not rewrite existing rows.
+
+Local PostgreSQL with synthetic accounts reproduced a deadlock on main and passed the same two-session test after the fix. Tests also covered concurrent approval of one draft, snapshot equality after retry, issuer and capability denial, linked recipient reads, annual allocation by issuer, and serial 100. Main uses annual allocation with khatam-date ordering, which supersedes the earlier lifetime-serial description. Chat 01's verification migration verified the local fixture `9876-10010` by number without exposing draft `9976-0110`. Chat 03's ordered-sanad fixture passed with the finalization change applied, including reloading and freezing two branches with their ordered source IDs. The fixture exists only in local test setup.
+
+The shared student picker still submits names. The certificate adapter selects the first normalized match, so distinct students with the same normalized name cannot be reliably distinguished in this workflow. Existing records and links were preserved. Hosted staging and authenticated end-to-end recipient import remain pending.
+
+

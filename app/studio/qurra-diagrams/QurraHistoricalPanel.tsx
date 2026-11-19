@@ -2,7 +2,7 @@
 
 import {useState} from 'react';
 import {BookOpen,ChevronDown} from 'lucide-react';
-import CombinedSanadView from '../../../legacy/components/CombinedSanadView';
+import SanadDiagramViewer from '../../../legacy/components/SanadDiagramViewer';
 import BranchPersonCard from '../../../legacy/components/BranchPersonCard';
 import {arabicDigits} from '../../../legacy/lib/arabicDigits';
 import {displayRawi,shortQariName} from '../../../legacy/lib/qurra';
@@ -29,8 +29,7 @@ export default function QurraHistoricalPanel({section}:{
   </div>
   {section.paths.length?
    <div className="space-y-2">
-    <p className="text-xs text-muted-foreground">الأسماء كاملة من فهرس رجال الأسانيد، مع الاحتفاظ بكل فرع وموضع التقاء. مرّر أفقيًا لقراءة المخطط دون تصغير الأسماء.</p>
-    <CombinedSanadView paths={section.paths} review spacious
+    <SanadDiagramViewer paths={section.paths} review spacious
      routeLabels={section.paths.map((_,index)=>'الفرع '+arabicDigits(index+1))}
      renderPerson={(id,positions)=>{
       const label=id==='prophet'?'النبي ﷺ'

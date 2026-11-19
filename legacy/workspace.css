@@ -448,3 +448,13 @@
  .zite-app .sanad-graph-junction,.zite-app .connected-chain-lane .sanad-graph-stem{display:none}
 }
 .zite-app .connected-chain-split[data-many-lanes]>.connected-chain-lane .sanad-graph-stem{display:none}
+
+/* Keep formatting fields and line-break choices aligned in RTL at narrow widths. */
+.zite-app .matn-heading-controls fieldset {min-width:0}
+.zite-app .matn-heading-controls .matn-dimension-field {padding:12px;border:1px solid hsl(var(--border));border-radius:10px;background:hsl(var(--background))}
+.zite-app .matn-heading-controls .matn-dimension-fields {gap:12px}
+.zite-app .matn-heading-controls .matn-dimension-field>div {grid-template-columns:minmax(0,1fr) 88px;gap:10px}
+.zite-app .matn-heading-controls .matn-dimension-field input[type=number] {width:88px;min-width:0;max-width:88px;text-align:center}
+.zite-app .matn-break-row {display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:8px;background:hsl(var(--muted)/.4);font-size:14px}
+.zite-app .matn-break-row input[type=checkbox] {appearance:auto;width:18px!important;min-width:18px!important;height:18px!important;padding:0!important;margin:0;accent-color:hsl(var(--primary))}
+.zite-app .matn-break-row+ .matn-break-row {margin-top:8px}

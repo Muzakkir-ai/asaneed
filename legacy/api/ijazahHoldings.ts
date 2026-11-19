@@ -1,3 +1,4 @@
+import {joinOrderedSanads} from '../lib/orderedSanads';
 import {assembleHoldingIjazah,resolveHoldingSanad} from '../lib/assembleHoldingIjazah';
 import {isAppAdmin} from '../lib/admin';
 import { z } from 'zod';
@@ -28,9 +29,9 @@ export default createEndpoint({
       const paths=await Promise.all(selected.map(async holding=>{
         const h=holding!;const result=await assembleHoldingIjazah({...h,qariId:h.qariId||'',personalChain:h.personalChain||'',junction:h.junction||'ubaydi',introductionId:'',wordingId:''},sections.filter(s=>s.sectionType!=='conclusion').map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||''})));
         if(result.missing.length)throw Error('أكمل السند قبل الدمج: '+result.missing.join('، '));
-        return result.chain.replace(/^【بيان القراءة:[^】]*】\n/u,'');
+        return result.isnad;
       }));
-      const personalChain=paths.join('\n\n(ح)\n\n');if(personalChain.length>30000)throw Error('السند المدمج أطول من الحد المتاح؛ اختر أسانيد أقل');
+      const personalChain=joinOrderedSanads(paths);
       return {holdings:[],merged:{personalChain,qariId:first.qariId||'',rawi:first.rawi,tariqNumber:first.tariqNumber||'',tariqName:first.tariqName||'',introductionId:first.introductionId||'',wordingId:first.wordingId||'',bookAuthor:first.bookAuthor||'',routeSource:first.routeSource||'',shortName:selected.map(h=>h!.shortName||h!.sourceTeacherName||'سند').join(' + ').slice(0,80)}};
     }
     if(input.action==='deleteAll'){
