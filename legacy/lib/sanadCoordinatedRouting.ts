@@ -180,6 +180,13 @@ export function planCoordinatedSanad(
   for(const id of group.from)sourceOwners.set(id,[...(sourceOwners.get(id)||[]),i]);
   for(const id of group.to)targetOwners.set(id,[...(targetOwners.get(id)||[]),i]);
  }
+ // Ports follow physical neighbours, never the order of saved paths/groups.
+ const oppositeX=(group:number,side:'source'|'target')=>{
+  const ids=side==='source'?groups[group].to:groups[group].from;
+  return ids.reduce((sum,id)=>sum+xOf(id),0)/ids.length;
+ };
+ for(const owners of sourceOwners.values())owners.sort((a,b)=>oppositeX(a,'source')-oppositeX(b,'source')||a-b);
+ for(const owners of targetOwners.values())owners.sort((a,b)=>oppositeX(a,'target')-oppositeX(b,'target')||a-b);
  const attach=(id:string,group:number,side:'source'|'target')=>{
   const owners=(side==='source'?sourceOwners:targetOwners).get(id)||[group];
   const index=owners.indexOf(group);
@@ -421,6 +428,8 @@ export function planCoordinatedSanad(
  for(let pass=0;pass<2;pass++)for(const edge of edgePaths){
   const gi=groups.findIndex(group=>group.kind==='single'&&group.edgeIndices.includes(edge.edgeIndex));
   if(gi<0)continue;
+  const arrivals=targetOwners.get(edge.to)??[gi];
+  const arrivalIndex=arrivals.indexOf(gi);
   const part=parts.find(candidate=>candidate.key===gi+':single');
   if(!part)continue;
   const others=parts.filter(candidate=>candidate!==part).flatMap(candidate=>lineSegments(candidate.d));
@@ -440,6 +449,9 @@ export function planCoordinatedSanad(
   const sourceY=tops[rankOf.get(edge.from)!]+heightOf(edge.from)/2;
   const targetY=tops[rankOf.get(edge.to)!]+heightOf(edge.to)/2;
   const alternatives=[edge.d,...([-1,1] as const).flatMap(side=>{
+   // Only the outermost teacher may enter on that side. Middle teachers
+   // retain their top slots, so avoiding a crossing cannot reverse arrivals.
+   if(arrivals.length>1&&arrivalIndex!==(side===-1?0:arrivals.length-1))return [];
    const sx=xOf(edge.from)+side*cardWidth/2;
    const tx=xOf(edge.to)+side*(cardWidth/2+1);
    const outward=side===1?Math.max(sx,tx):Math.min(sx,tx);
@@ -486,3 +498,4 @@ export function planCoordinatedSanad(
  const valid=JSON.stringify(original)===JSON.stringify(kept)&&collisions.length===0;
  return {tops,height:tops.at(-1)!,groups,parts,edgePaths,valid,collisions};
 }
+

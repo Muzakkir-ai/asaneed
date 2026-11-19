@@ -531,3 +531,21 @@ assert.doesNotMatch(obstructed.edgePaths.find(edge=>edge.id==='reported-4-to-5')
 // Extra canvas width must not push a local detour to the global margin.
 const wideCanvasBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,1800,180,100);
 assert.match(wideCanvasBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H526 V[\d.]+ H511$/,'the nearest clear lane stays 16px beside the cards on a wide canvas');
+
+// Teachers must enter a student's box in physical left-to-right order,
+// regardless of saved-path order or later crossing-avoidance refinements.
+for(const order of [['right','left','middle'],['middle','right','left'],['left','middle','right']]){
+ const rows=[['left','middle','right'],['student']];
+ const centers=new Map([['left',{x:140}],['middle',{x:420}],['right',{x:700}],['student',{x:420}]]);
+ const edges=order.map(from=>({from,to:'student'}));
+ const plan=planCoordinatedSanad(rows,centers,edges,840,180,100);
+ assert.equal(plan.valid,true);
+ const arrivals=['left','middle','right'].map(id=>tracePoints(plan.edgePaths.find(edge=>edge.from===id)!.d).at(-1)!);
+ assert.ok(arrivals[0].x<arrivals[1].x&&arrivals[1].x<arrivals[2].x,'right teacher stays right, middle stays middle, left stays left');
+ const ports=edges.map(edge=>({...edge,x1:centers.get(edge.from)!.x,x2:420+(['left','middle','right'].indexOf(edge.from)-1)*16}));
+ const fallback=optimizeSanadPorts(rows,centers,ports,840,180,100,new Map());
+ for(const [index,connector] of fallback.connectors.entries())assert.equal(tracePoints(connector.d).at(-1)!.x,ports[index].x2,'fallback optimizer preserves ordered arrival slots');
+}
+console.log('Teacher arrival order survives shuffled saved paths and both routing modes: PASS');
+
+

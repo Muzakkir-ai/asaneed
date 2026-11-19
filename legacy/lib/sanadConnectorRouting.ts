@@ -89,7 +89,9 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
    const obstacles=cards.filter(card=>card.id!==edge.from&&card.id!==edge.to&&card.top>=base.tops[from]&&card.top<=base.tops[to]);
    const others=routed.flatMap((route,j)=>j===i?[]:route.map(bounds)).filter(b=>b.bottom>=base.tops[from]&&b.top<=base.tops[to]);
    const start=base.tops[from]+heightOf(edge.from),end=base.tops[to]-1;
+   const orderedArrival=ports.filter(port=>port.to===edge.to).length>1;
    const score=(route:Segment[])=>{
+    if(orderedArrival&&(Math.abs(route.at(-1)!.b.x-edge.x2)>.01||Math.abs(route.at(-1)!.b.y-end)>.01))return Infinity;
     let collisions=0,touches=0;
     for(const segment of route){
      const b=bounds(segment);
@@ -151,7 +153,7 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
    return cost(y1)-cost(y2);
   }).slice(0,limit);
  };
-   const sourcePorts=options(edge.from,edge.x1),destinationPorts=options(edge.to,edge.x2);
+   const sourcePorts=options(edge.from,edge.x1),destinationPorts=orderedArrival?[edge.x2]:options(edge.to,edge.x2);
    for(const x1 of sourcePorts)for(const x2 of destinationPorts){
     if(from+1===to){
      for(const y of gapChoices(from,x1,x2,12))candidate([{x:x1,y:start},{x:x1,y},{x:x2,y},{x:x2,y:end}]);
@@ -231,3 +233,4 @@ export function optimizeSanadPorts(rows:string[][],centers:ReadonlyMap<string,{x
   return {d,x1:a.x,x2:b.x};
  })};
 }
+
