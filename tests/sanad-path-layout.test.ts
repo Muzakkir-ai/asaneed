@@ -511,7 +511,7 @@ const rightBypassEdges=[{from:'left4',to:'left5'},{from:'left5',to:'left6'},{fro
 const rightBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,560,180,100);
 assert.equal(rightBypass.valid,true);
 const reported=rightBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!;
-assert.match(reported.d,/^M510 50 H552 V[\d.]+ H511$/,'choose right-side ports and the clear outer corridor');
+assert.match(reported.d,/^M510 50 H526 V[\d.]+ H511$/,'choose right-side ports and the clear outer corridor');
 assert.deepEqual(reported.routes,[2]);
 const segmentsOf=(d:string)=>{const points=tracePoints(d);return points.slice(1).map((b,i)=>{const a=points[i];return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};});};
 const reportSegments=segmentsOf(reported.d);
@@ -527,3 +527,7 @@ const obstructedCenters=new Map([...rightBypassCenters,['blocking-card',{x:650}]
 const obstructed=planCoordinatedSanad(obstructedRows,obstructedCenters,rightBypassEdges,800,180,100);
 assert.equal(obstructed.valid,true,'an occupied side exit must never route through the neighbouring card');
 assert.doesNotMatch(obstructed.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H792/);
+
+// Extra canvas width must not push a local detour to the global margin.
+const wideCanvasBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,1800,180,100);
+assert.match(wideCanvasBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H526 V[\d.]+ H511$/,'the nearest clear lane stays 16px beside the cards on a wide canvas');
