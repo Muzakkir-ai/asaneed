@@ -1,3 +1,9 @@
+## Crossing-aware side corridors — 19 November 2026
+
+The coordinated diagram router compares complete physical connector paths after the initial layout. For independent links it considers outward left/right side ports and clear outer corridors, rejects routes through other narrator cards, then prioritizes fewer line intersections/touches, greater separation and shorter distance. Thus a skipped-rank 4→5 link can travel around the right edge and enter the target from the side instead of crossing a fan-out between intermediate rows. When a side is obstructed, the existing safe route remains available. Two bounded refinement passes preserve all original source/target IDs, route memberships, grouping rules and arrow dimensions. Not every graph admits a crossing-free drawing; the rule chooses the best available safe candidate rather than promising to remove necessary intersections.
+
+Validated a synthetic reproduction of the reported right-hand 4→5 shape, an obstructed-side case, the complete routing/identity suite and desktop/mobile graph regressions. These changes affect display geometry only; saved sanads and certificates are unchanged.
+
 ## Unified sanad explorer and shared diagrams — 19 November 2026
 
 The sidebar has one الأسانيد ورجالها entry under مكتبة الأسانيد, with tabs for رجال الأسانيد, أسانيد القراء and أسانيد المشايخ. Shaykh diagrams are removed from the shared-text cards. Existing narrator and Qurra URLs enter the appropriate hub tab; page=sanad-explorer&view=... reopens the chosen tab. The shaykh tab retains its existing administrator-only, non-inspection visibility and source API permissions; the move does not grant staff new data access.

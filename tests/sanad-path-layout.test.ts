@@ -502,3 +502,28 @@ assert.equal(preferredQalun?.names['rawi:qalun'],preferredName,
  'Show an existing audited full person name without altering route identities');
 console.log('Source-only Rijal rawi/imam, branching, Companion/Prophet and preferred-name tests passed');
 
+
+// Reported 4 -> lower 5: the inner lane crosses the left 5 fan-out.
+// Both right-hand cards have a clear outer edge, so use it without contact.
+const rightBypassRows=[['left4','right4'],['left5'],['left6','right6'],['left7','right5']];
+const rightBypassCenters=new Map(rightBypassRows.flat().map(id=>[id,{x:id.startsWith('right')?420:140}]));
+const rightBypassEdges=[{from:'left4',to:'left5'},{from:'left5',to:'left6'},{from:'left5',to:'right6'},{from:'left6',to:'left7'},{from:'right6',to:'right5'},{from:'right4',to:'right5',id:'reported-4-to-5',routes:[2]}];
+const rightBypass=planCoordinatedSanad(rightBypassRows,rightBypassCenters,rightBypassEdges,560,180,100);
+assert.equal(rightBypass.valid,true);
+const reported=rightBypass.edgePaths.find(edge=>edge.id==='reported-4-to-5')!;
+assert.match(reported.d,/^M510 50 H552 V[\d.]+ H511$/,'choose right-side ports and the clear outer corridor');
+assert.deepEqual(reported.routes,[2]);
+const segmentsOf=(d:string)=>{const points=tracePoints(d);return points.slice(1).map((b,i)=>{const a=points[i];return {left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)};});};
+const reportSegments=segmentsOf(reported.d);
+for(const part of rightBypass.parts.filter(part=>!part.edgeIndices.includes(reported.edgeIndex)))for(const a of reportSegments)for(const b of segmentsOf(part.d)){
+ assert.ok(Math.max(a.left,b.left)>Math.min(a.right,b.right)||Math.max(a.top,b.top)>Math.min(a.bottom,b.bottom),'the 4-to-5 side route must not even touch another physical connector');
+}
+
+assert.equal(rightBypass.edgePaths.length,rightBypassEdges.length,'rerouting preserves all original relations');
+console.log('Crossing-aware outer corridor for reported 4-to-5 route: PASS');
+
+const obstructedRows=[['left4','right4','blocking-card'],...rightBypassRows.slice(1)];
+const obstructedCenters=new Map([...rightBypassCenters,['blocking-card',{x:650}] as const]);
+const obstructed=planCoordinatedSanad(obstructedRows,obstructedCenters,rightBypassEdges,800,180,100);
+assert.equal(obstructed.valid,true,'an occupied side exit must never route through the neighbouring card');
+assert.doesNotMatch(obstructed.edgePaths.find(edge=>edge.id==='reported-4-to-5')!.d,/^M510 50 H792/);

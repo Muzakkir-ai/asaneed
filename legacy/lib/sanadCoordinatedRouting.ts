@@ -408,6 +408,54 @@ export function planCoordinatedSanad(
    break;
   }
  }
+ // Compare complete physical routes, not only the distance between cards.
+ // A side-to-side outer corridor can avoid a whole fan-out below the source.
+ // Prefer no intersections/touches, then clear separation, then shorter lines.
+ const lineSegments=(d:string)=>{
+  const vertices=matches(d);
+  return vertices.slice(1).flatMap((b,index)=>{
+   const a=vertices[index];
+   return a.x===b.x&&a.y===b.y?[]:[{left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y)}];
+  });
+ };
+ for(let pass=0;pass<2;pass++)for(const edge of edgePaths){
+  const gi=groups.findIndex(group=>group.kind==='single'&&group.edgeIndices.includes(edge.edgeIndex));
+  if(gi<0)continue;
+  const part=parts.find(candidate=>candidate.key===gi+':single');
+  if(!part)continue;
+  const others=parts.filter(candidate=>candidate!==part).flatMap(candidate=>lineSegments(candidate.d));
+  const score=(d:string)=>{
+   let contacts=0,near=0,length=0;
+   for(const segment of lineSegments(d)){
+    length+=segment.right-segment.left+segment.bottom-segment.top;
+    for(const other of others){
+     const dx=Math.max(segment.left,other.left)-Math.min(segment.right,other.right);
+     const dy=Math.max(segment.top,other.top)-Math.min(segment.bottom,other.bottom);
+     if(dx<=.01&&dy<=.01)contacts++;
+     else if(dx<7&&dy<7)near++;
+    }
+   }
+   return [contacts,near,length];
+  };
+  const sourceY=tops[rankOf.get(edge.from)!]+heightOf(edge.from)/2;
+  const targetY=tops[rankOf.get(edge.to)!]+heightOf(edge.to)/2;
+  const alternatives=[edge.d,...([-1,1] as const).map(side=>{
+   const sx=xOf(edge.from)+side*cardWidth/2;
+   const tx=xOf(edge.to)+side*(cardWidth/2+1);
+   const channel=side===1?width-8:8;
+   // Leave and enter the outward-facing edges of the cards. A corridor
+   // on the opposite side would cut through the source/target themselves.
+   if(side===1&&(channel<=sx||channel<=tx)||side===-1&&(channel>=sx||channel>=tx))return null;
+   return pathFrom([{x:sx,y:sourceY},{x:channel,y:sourceY},{x:channel,y:targetY},{x:tx,y:targetY}]);
+  })].filter((d):d is string=>d!==null&&!hitsUnrelatedCard(edge,d));
+  let best=edge.d,bestScore=score(best);
+  for(const candidate of alternatives){
+   const candidateScore=score(candidate);
+   const firstDifference=candidateScore.findIndex((value,index)=>Math.abs(value-bestScore[index])>.01);
+   if(firstDifference>=0&&candidateScore[firstDifference]<bestScore[firstDifference]){best=candidate;bestScore=candidateScore;}
+  }
+  edge.d=best;part.d=best;
+ }
  for(const edge of edgePaths){
   const vertices=matches(edge.d);
   for(let j=1;j<vertices.length;j++){
