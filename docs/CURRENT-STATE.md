@@ -1,3 +1,9 @@
+## Ordered teacher arrivals — 19 November 2026
+
+Incoming connection slots follow the teachers' physical horizontal positions instead of saved-route/group order. Outgoing slots likewise follow the students' positions. Crossing avoidance may use a side entrance only for the outermost connection on that side; middle arrivals retain their ordered top-edge slots. The fallback optimizer also preserves each arrival slot when a student has multiple teachers. Square corners and local side-lane clearance remain unchanged.
+
+Validated three shuffled orders of left/middle/right teachers, both routing modes, the reported 4-to-5 side bypass, card clearance, original edge membership, the full sanad suite, typecheck and desktop/mobile graph regression. Display geometry only; no saved sanad or certificate changes.
+
 ## Square connectors and compact traced trees — 19 November 2026
 
 The full-network viewer now draws the router's square orthogonal paths directly, with butt caps, miter joins and lighter strokes. Rounded corner conversion is no longer used in the displayed network. Selecting a route/group or tracing a narrator rebuilds the displayed graph from only the matching complete saved paths; it no longer reserves space for unrelated faded cards. Original route-membership indices are mapped back after layout. Clearing trace restores the original network; choosing a different route clears the prior narrator focus. Card measurement observes the displayed graph so its height and width compact correctly after filtering.
@@ -715,3 +721,5 @@ Final approval reserves the registration number before taking its own certificat
 Local PostgreSQL with synthetic accounts reproduced a deadlock on main and passed the same two-session test after the fix. Tests also covered concurrent approval of one draft, snapshot equality after retry, issuer and capability denial, linked recipient reads, annual allocation by issuer, and serial 100. Main uses annual allocation with khatam-date ordering, which supersedes the earlier lifetime-serial description. Chat 01's verification migration verified the local fixture `9876-10010` by number without exposing draft `9976-0110`. Chat 03's ordered-sanad fixture passed with the finalization change applied, including reloading and freezing two branches with their ordered source IDs. The fixture exists only in local test setup.
 
 The shared student picker still submits names. The certificate adapter selects the first normalized match, so distinct students with the same normalized name cannot be reliably distinguished in this workflow. Existing records and links were preserved. Hosted staging and authenticated end-to-end recipient import remain pending.
+
+
