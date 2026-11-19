@@ -1,3 +1,9 @@
+## Square connectors and compact traced trees — 19 November 2026
+
+The full-network viewer now draws the router's square orthogonal paths directly, with butt caps, miter joins and lighter strokes. Rounded corner conversion is no longer used in the displayed network. Selecting a route/group or tracing a narrator rebuilds the displayed graph from only the matching complete saved paths; it no longer reserves space for unrelated faded cards. Original route-membership indices are mapped back after layout. Clearing trace restores the original network; choosing a different route clears the prior narrator focus. Card measurement observes the displayed graph so its height and width compact correctly after filtering.
+
+Reviewed screenshots of the actual live 83-card shaykh network and its dense upper/middle branches before implementation. Validated square rendered paths, focused node/edge membership, narrower focused width, complete restore, original edge identities, route filtering, desktop/mobile layouts, editing controls and hub access/reopen checks with synthetic fixtures. No saved narrator, sanad or certificate content is changed. A post-release live screenshot is included in the response.
+
 ## Compact local side lanes — 19 November 2026
 
 Side detours start beside the connected cards, with 16px local clearance, rather than using the far edge of the entire diagram. Nearby card and vertical-line boundaries supply additional candidate lanes; the canvas edge remains a fallback. Candidates are tested shortest-first with the existing no-card-collision and crossing/separation priorities, so a wide canvas does not create an unnecessarily wide local connection. Candidate counts are bounded and evaluation stops at the shortest fully clear option.
