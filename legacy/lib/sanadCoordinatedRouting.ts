@@ -439,18 +439,28 @@ export function planCoordinatedSanad(
   };
   const sourceY=tops[rankOf.get(edge.from)!]+heightOf(edge.from)/2;
   const targetY=tops[rankOf.get(edge.to)!]+heightOf(edge.to)/2;
-  const alternatives=[edge.d,...([-1,1] as const).map(side=>{
+  const alternatives=[edge.d,...([-1,1] as const).flatMap(side=>{
    const sx=xOf(edge.from)+side*cardWidth/2;
    const tx=xOf(edge.to)+side*(cardWidth/2+1);
-   const channel=side===1?width-8:8;
-   // Leave and enter the outward-facing edges of the cards. A corridor
-   // on the opposite side would cut through the source/target themselves.
-   if(side===1&&(channel<=sx||channel<=tx)||side===-1&&(channel>=sx||channel>=tx))return null;
-   return pathFrom([{x:sx,y:sourceY},{x:channel,y:sourceY},{x:channel,y:targetY},{x:tx,y:targetY}]);
-  })].filter((d):d is string=>d!==null&&!hitsUnrelatedCard(edge,d));
+   const outward=side===1?Math.max(sx,tx):Math.min(sx,tx);
+   // Start beside the local cards, not at the edge of the whole canvas.
+   // Nearby card/vertical-line boundaries provide further lanes if needed.
+   const lowY=Math.min(sourceY,targetY),highY=Math.max(sourceY,targetY);
+   const candidates=[outward+side*16,
+    ...cards.filter(card=>card.bottom>=lowY&&card.top<=highY).map(card=>(side===1?card.right:card.left)+side*16),
+    ...others.filter(line=>line.left===line.right&&line.bottom>=lowY&&line.top<=highY).map(line=>line.left+side*16)];
+   const nearby=[...new Set(candidates)].filter(x=>x>=8&&x<=width-8&&side*(x-outward)>0)
+    .sort((a,b)=>Math.abs(a-outward)-Math.abs(b-outward)).slice(0,16);
+   const channels=[...new Set([...nearby,side===1?width-8:8])];
+   return channels.filter(channel=>side*(channel-outward)>0).map(channel=>
+    pathFrom([{x:sx,y:sourceY},{x:channel,y:sourceY},{x:channel,y:targetY},{x:tx,y:targetY}]));
+  })].filter(d=>!hitsUnrelatedCard(edge,d));
+  const distance=(d:string)=>lineSegments(d).reduce((sum,line)=>sum+line.right-line.left+line.bottom-line.top,0);
+  alternatives.sort((a,b)=>distance(a)-distance(b));
   let best=edge.d,bestScore=score(best);
   for(const candidate of alternatives){
    const candidateScore=score(candidate);
+   if(candidateScore[0]===0&&candidateScore[1]===0){best=candidate;break;}
    const firstDifference=candidateScore.findIndex((value,index)=>Math.abs(value-bestScore[index])>.01);
    if(firstDifference>=0&&candidateScore[firstDifference]<bestScore[firstDifference]){best=candidate;bestScore=candidateScore;}
   }

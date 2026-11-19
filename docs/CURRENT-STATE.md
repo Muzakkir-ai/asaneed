@@ -1,3 +1,9 @@
+## Compact local side lanes — 19 November 2026
+
+Side detours start beside the connected cards, with 16px local clearance, rather than using the far edge of the entire diagram. Nearby card and vertical-line boundaries supply additional candidate lanes; the canvas edge remains a fallback. Candidates are tested shortest-first with the existing no-card-collision and crossing/separation priorities, so a wide canvas does not create an unnecessarily wide local connection. Candidate counts are bounded and evaluation stops at the shortest fully clear option.
+
+Validated the reported 4→5 reproduction at normal and much wider canvas sizes, unchanged no-touch/card safety assertions, the full routing suite and desktop/mobile graph checks. Display geometry only.
+
 ## Crossing-aware side corridors — 19 November 2026
 
 The coordinated diagram router compares complete physical connector paths after the initial layout. For independent links it considers outward left/right side ports and clear outer corridors, rejects routes through other narrator cards, then prioritizes fewer line intersections/touches, greater separation and shorter distance. Thus a skipped-rank 4→5 link can travel around the right edge and enter the target from the side instead of crossing a fan-out between intermediate rows. When a side is obstructed, the existing safe route remains available. Two bounded refinement passes preserve all original source/target IDs, route memberships, grouping rules and arrow dimensions. Not every graph admits a crossing-free drawing; the rule chooses the best available safe candidate rather than promising to remove necessary intersections.
