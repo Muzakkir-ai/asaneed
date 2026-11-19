@@ -32,8 +32,8 @@ const output=process.env.ASANEED_EXPLORER_SCREENSHOTS||'../sanad-hub-review';
   assert.equal(new URL(page.url()).searchParams.get('view'),'qurra');
   await page.getByRole('button',{name:'جميع الروابط',exact:true}).click();
   await page.locator('[data-combined-narrator]').first().waitFor();
-  const curved=await page.locator('[data-visible-connector]').evaluateAll(nodes=>nodes.filter(node=>node.getAttribute('d').includes('Q')).length);
-  assert.ok(curved>0,'overview actually renders rounded connectors');
+  const curved=await page.locator('[data-visible-connector]').evaluateAll(nodes=>nodes.filter(node=>/[QC]/.test(node.getAttribute('d'))).length);
+  assert.equal(curved,0,'network connectors have square orthogonal corners');
   await page.locator('[data-trace-person="bookTeacher"]').click();
   assert.ok(await page.locator('[data-focused-edge]').count()>=3,'trace highlights the complete saved route beyond adjacent edges');
   await tabs.getByRole('tab',{name:'أسانيد المشايخ',exact:true}).click();
@@ -54,7 +54,7 @@ const output=process.env.ASANEED_EXPLORER_SCREENSHOTS||'../sanad-hub-review';
   await page.reload();
   await tabs.getByRole('tab',{name:'أسانيد المشايخ',exact:true,selected:true}).waitFor();
   assert.ok(requests.every(({input})=>!input.action||input.action==='list'),'no application writes during browsing');
-  console.log('PASS single hub entry, shared tabs, saved URL reopen, exact shaykh route/text, rounded real edges, full-route trace, mobile width and source permissions');
+  console.log('PASS single hub entry, shared tabs, saved URL reopen, exact shaykh route/text, square real edges, full-route trace, mobile width and source permissions');
  }finally{
   await browser?.close();if(server&&server.exitCode===null){server.kill();await new Promise(r=>setTimeout(r,400));}
   const target=path.resolve(directory);if(!target.startsWith(root+path.sep))throw Error('Unsafe cleanup');fs.rmSync(target,{recursive:true,force:true});

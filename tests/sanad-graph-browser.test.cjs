@@ -342,12 +342,18 @@ const {chromium}=require('playwright');
   }
 
   const dense=page.getByTestId('coordinated-dense');
+  const fullDenseWidth=await dense.locator('[data-sanad-viewport]>div').evaluate(node=>node.getBoundingClientRect().width);
   await dense.locator('[data-trace-person="teacher1"]').click();
   assert.equal(await dense.locator('path[data-focused-edge]').count(),7,
    'trace follows the complete saved routes: one incoming, three outgoing and three continuing edges');
   const tracedPairs=await dense.evaluate(section=>{const indices=new Set([...section.querySelectorAll('[data-focused-edge]')].map(node=>node.dataset.focusedEdge));return [...section.querySelectorAll('[data-edge-index]')].filter(node=>indices.has(node.dataset.edgeIndex)).map(node=>[node.dataset.from,node.dataset.to].join('>')).sort();});
   assert.deepEqual(tracedPairs,['imam>teacher1',...['sahabi1','sahabi2','sahabi3'].flatMap(id=>['teacher1>'+id,id+'>ubayy'])].sort(),'complete-route trace does not highlight another teacher branch');
+  assert.equal(await dense.locator('[data-combined-narrator]').count(),6,'focused layout contains only the narrator and the complete saved routes through them');
+  assert.equal(await dense.locator('[data-combined-narrator="teacher2"]').count(),0,'unrelated faded branches are removed from the focused layout');
+  const focusedDenseWidth=await dense.locator('[data-sanad-viewport]>div').evaluate(node=>node.getBoundingClientRect().width);
+  assert.ok(focusedDenseWidth<fullDenseWidth,'tracing reflows the tree into a narrower layout');
   await dense.getByRole('button',{name:'إلغاء التحديد'}).click();
+  assert.equal(await dense.locator('[data-combined-narrator]').count(),10,'clearing trace restores the full original network');
   const originalEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
    paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
   await dense.locator('summary').first().click();
