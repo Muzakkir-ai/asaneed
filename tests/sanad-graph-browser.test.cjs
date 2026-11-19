@@ -343,8 +343,10 @@ const {chromium}=require('playwright');
 
   const dense=page.getByTestId('coordinated-dense');
   await dense.locator('[data-trace-person="teacher1"]').click();
-  assert.equal(await dense.locator('path[data-focused-edge]').count(),4,
-   'one teacher trace highlights exactly one incoming and three outgoing real edges');
+  assert.equal(await dense.locator('path[data-focused-edge]').count(),7,
+   'trace follows the complete saved routes: one incoming, three outgoing and three continuing edges');
+  const tracedPairs=await dense.evaluate(section=>{const indices=new Set([...section.querySelectorAll('[data-focused-edge]')].map(node=>node.dataset.focusedEdge));return [...section.querySelectorAll('[data-edge-index]')].filter(node=>indices.has(node.dataset.edgeIndex)).map(node=>[node.dataset.from,node.dataset.to].join('>')).sort();});
+  assert.deepEqual(tracedPairs,['imam>teacher1',...['sahabi1','sahabi2','sahabi3'].flatMap(id=>['teacher1>'+id,id+'>ubayy'])].sort(),'complete-route trace does not highlight another teacher branch');
   await dense.getByRole('button',{name:'إلغاء التحديد'}).click();
   const originalEdges=await dense.locator('path[data-from][data-to]').evaluateAll(paths=>
    paths.map(path=>JSON.stringify([path.dataset.from,path.dataset.to])).sort());
@@ -384,12 +386,12 @@ const {chromium}=require('playwright');
   await regression.getByLabel('عرض المسارات').selectOption('');
   const traceIcon=regression.locator('[data-trace-person="umyuti"]');
   assert.equal(await traceIcon.innerText(),'','the trace control is icon-only');
-  assert.equal(await traceIcon.getAttribute('aria-label'),'تتبّع اتصالات الراوي','the trace control keeps an accessible name');
+  assert.equal(await traceIcon.getAttribute('aria-label'),'تتبّع مسارات الراوي','the trace control keeps an accessible name');
   assert.equal(await traceIcon.locator('svg').count(),1,'the icon is rendered');
   await traceIcon.click();
   assert.equal(await regression.locator('path[data-from="umyuti"][data-to="samdasi"]').getAttribute('stroke-width'),'2','trace highlighting only bolds the line');
   assert.equal(await marker.getAttribute('markerHeight'),'7','trace highlighting keeps arrowheads the same height');
-  assert.equal(await regression.locator('path[data-from][opacity="1"]').count(),3,'trace shows the selected narrator’s direct connections');
+  assert.equal(await regression.locator('path[data-from][opacity="1"]').count(),6,'trace shows the complete saved routes through the selected narrator');
   await regression.getByRole('button',{name:'إلغاء التحديد'}).click();
   const unlabelled=page.getByTestId('combined-no-labels');
   await unlabelled.getByText('تفاصيل فروع السند',{exact:true}).click();

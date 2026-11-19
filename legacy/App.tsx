@@ -24,8 +24,7 @@ import IjazahHoldingsView from './components/IjazahHoldingsView';
 import CertificatePrint from './components/CertificatePrint';
 import ShaykhPrintProfileForm from './components/ShaykhPrintProfileForm';
 import DataBackupPanel from './components/DataBackupPanel';
-import NarratorDirectoryPage from './components/NarratorDirectoryPage';
-import QurraTransmissionWorkspace from '../app/studio/qurra-diagrams/client';
+import SanadExplorer from './components/SanadExplorer';
 import AdditionalShaykhsPage from './components/AdditionalShaykhsPage';
 import MyCertificatesPage from './components/MyCertificatesPage';
 import UsersManager from './components/UsersManager';
@@ -66,13 +65,13 @@ function PrivateApp() {
   const [active,setActivePage]=useState(()=>{
     const fallback=user?.role==='student'?'mycerts':'certs';
     const page=new URLSearchParams(window.location.search).get('page')||'';
-    const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue ?? user?.role!=='student')?['qurra-diagrams']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];
+    const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue ?? user?.role!=='student')?['qurra-diagrams','sanad-explorer']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shaykh-sanads','shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];
     return allowed.includes(page)?page:fallback;
   });
   const setActive=(page:string)=>{
     if(page===active)return;
     const url=new URL(window.location.href);
-    for(const key of ['shaykh','qari','rawi','tariq','variant','settings'])url.searchParams.delete(key);
+    for(const key of ['shaykh','qari','rawi','tariq','variant','settings','view'])url.searchParams.delete(key);
     url.searchParams.set('page',page);
     window.history.replaceState(window.history.state,'',url);
     setActivePage(page);
@@ -188,8 +187,10 @@ function PrivateApp() {
           {isAdmin&&!inspecting&&<TabsContent value="shared-texts"><SharedContentPage/></TabsContent>}
           <TabsContent value="asaneed"><IjazahHoldingsView key={user.id}/></TabsContent>
           <TabsContent value="mycerts"><MyCertificatesPage key={user.id} onPrint={setPrinting} onImported={()=>void load()}/></TabsContent>
-          <TabsContent value="narrators"><NarratorDirectoryPage/></TabsContent>
-          {isStaff&&<TabsContent value="qurra-diagrams"><QurraTransmissionWorkspace/></TabsContent>}
+          <TabsContent value="narrators"><SanadExplorer initialView="narrators" canViewQurra={isStaff} canViewShaykhs={isAdmin&&!inspecting}/></TabsContent>
+          {isStaff&&<TabsContent value="sanad-explorer"><SanadExplorer canViewShaykhs={isAdmin&&!inspecting}/></TabsContent>}
+          {isAdmin&&!inspecting&&<TabsContent value="shaykh-sanads"><SanadExplorer initialView="sheikhs" canViewShaykhs/></TabsContent>}
+          {isStaff&&<TabsContent value="qurra-diagrams"><SanadExplorer initialView="qurra" canViewShaykhs={isAdmin&&!inspecting}/></TabsContent>}
           {isAdmin&&<TabsContent value="shared-sanads"><div className="space-y-5"><RiwayahColorsEditor/><SanadSectionEditor/></div></TabsContent>}
           {isAdmin&&<TabsContent value="extra-sheikhs"><AdditionalShaykhsPage issuers={directory.issuers} onSaved={()=>{void refreshDirectory();void load();}}/></TabsContent>}
           {isAdmin&&!inspecting&&<TabsContent value="users"><SystemAdministration directory={directory} onUpdated={()=>{void refreshDirectory();void load();}} onInspect={(p:WorkspacePerson)=>{changeScope(p.id);setActive('certs');}}/></TabsContent>}
