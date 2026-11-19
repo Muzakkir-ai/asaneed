@@ -5,6 +5,10 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
+      - 'legacy/components/SanadExplorer.tsx'
+      - 'legacy/components/SanadDiagramViewer.tsx'
+      - 'legacy/components/WorkspaceNavigation.tsx'
+      - 'tests/sanad-explorer-browser.test.cjs'
       - 'tests/qurra-visual-preview.cjs'
       - 'tests/fixtures/qurra-visual-preview.tsx'
       - '.github/workflows/asaneed-visual-preview.yml'
@@ -33,6 +37,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Take Qurra transmission workspace screenshots (synthetic data)
         run: node tests/qurra-visual-preview.cjs
+      - name: Check unified sanad hub and shared diagram viewer
+        run: node tests/sanad-explorer-browser.test.cjs
+        env:
+          ASANEED_EXPLORER_SCREENSHOTS: artifacts/visual-preview/hub
       - name: Prepare narrator graph screenshot output
         run: mkdir -p "$ASANEED_SANAD_REVIEW_SCREENSHOTS"
       - name: Take narrator graph screenshots (existing regression fixture)

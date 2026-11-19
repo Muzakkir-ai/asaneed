@@ -7,24 +7,15 @@ const directory=fs.readFileSync('legacy/components/NarratorDirectoryPage.tsx','u
 const page=fs.readFileSync('app/studio/qurra-diagrams/page.tsx','utf8');
 const workspace=fs.readFileSync('app/studio/qurra-diagrams/client.tsx','utf8');
 
-assert.match(sidebar,/\{id:'qurra-diagrams',label:'مخططات أسانيد القراء'[^}]+show:staff/u,
- 'Qurra graphs belong in the main staff sidebar');
-assert.match(app,/<WorkspaceSidebar active=\{active\}.*dark=\{dark\} onTheme=/u,
- 'Studio owns the shared theme and sidebar controls');
-assert.match(app,/<TabsContent value="qurra-diagrams"><QurraTransmissionWorkspace\/>/u,
- 'Qurra graphs must use the same studio tabs rather than a standalone shell');
-assert.match(app,/localStorage\.getItem\('asaneed-theme'\)/,
- 'The normal studio remembers the selected dark theme');
-assert.doesNotMatch(directory,/href="\/studio\?page=qurra-diagrams"/,
- 'Qurra diagrams must not be kept inside رجال الأسانيد');
-assert.match(page,/redirect\('\/studio\?page=qurra-diagrams'\)/,
- 'Existing bookmarked Qurra URLs should resolve to the theme-aware studio');
-assert.doesNotMatch(page,/QurraTransmissionWorkspace/,
- 'The legacy route must not render a second unthemed studio shell');
-assert.match(sidebar,/show:staff,group:'أسانيد القراء'/u,
- 'The Qurra workspace has its own navigation group');
-assert.doesNotMatch(workspace,/العودة إلى رجال الأسانيد/u,
- 'The independent workspace must not navigate back into narrator directory');
+assert.match(sidebar,/id:'sanad-explorer',label:'الأسانيد ورجالها'/u,'all three tools share one sidebar entry');
+assert.doesNotMatch(sidebar,/id:'qurra-diagrams'|id:'narrators'/u,'old tools are not scattered in sidebar groups');
+assert.match(app,/<TabsContent value="qurra-diagrams"><SanadExplorer initialView="qurra"/u,'old diagram deep links enter the unified hub');
+assert.match(app,/<TabsContent value="narrators"><SanadExplorer initialView="narrators"/u,'old narrator deep links remain available');
+assert.match(app,/canViewShaykhs=\{isAdmin&&!inspecting\}/u,'moving the view does not broaden administrator-only source access');
+assert.match(page,/redirect\('\/studio\?page=qurra-diagrams'\)/,'legacy URL remains theme-aware');
+const shared=fs.readFileSync('legacy/components/SharedContentPage.tsx','utf8');
+assert.doesNotMatch(shared,/ShaykhSanadTree/,'shaykh diagrams no longer live under shared texts');
+console.log('PASS unified sanad navigation, legacy links, inherited theme and unchanged source visibility');
 assert.match(workspace,/<SimpleRouteEditor key=\{editingChain.id\} library=\{library\} route=\{editingChain\}/u,
  'Manual route editing starts on the exact saved sanad rather than opening the full book editor');
 assert.match(workspace,/const \[showAll,setShowAll\]=useState\(false\)/u,

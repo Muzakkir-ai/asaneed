@@ -1,3 +1,11 @@
+## Unified sanad explorer and shared diagrams — 19 November 2026
+
+The sidebar has one الأسانيد ورجالها entry under مكتبة الأسانيد, with tabs for رجال الأسانيد, أسانيد القراء and أسانيد المشايخ. Shaykh diagrams are removed from the shared-text cards. Existing narrator and Qurra URLs enter the appropriate hub tab; page=sanad-explorer&view=... reopens the chosen tab. The shaykh tab retains its existing administrator-only, non-inspection visibility and source API permissions; the move does not grant staff new data access.
+
+The readers, historical sections and shaykh diagrams share SanadDiagramViewer. It opens one exact saved route as full-width numbered cards with simple arrows; the optional network retains all original paths and identifiers. Shaykh text preview is tied to the same selected route. Full networks render rounded corners within the router's existing corridors, clearer teal strokes and complete saved-route highlighting when tracing a narrator. No graph edge, narrator identity, saved sanad or certificate is rewritten. Original invisible edge geometry remains available for source-edge audit checks.
+
+Validated hub desktop/mobile layout and navigation, saved-tab reopening, unchanged visibility, exact shaykh route/text alignment, rendered rounded connectors and tracing beyond adjacent edges using synthetic API records only. The existing Qurra screenshots/editor workflow passes for upper and historical routes. Production build and global graph checks are recorded in the release report. No real records or certificates were changed by tests.
+
 ## Certificate selection and readable historical routes — 19 November 2026
 
 Certificate creation auto-selects the only available Sughra/Kubra scope; both scopes remain selectable when held. Saved sanads use checkbox cards with select-all/clear and a selected count. Empty explicit selections block submission. The old five-source cap is raised to the existing 2,000-row source-query bound; merged text and graph safety limits are unchanged. Identity-backed merge rendering still visits meeting points from nearer students toward older teachers; ambiguous unions retain their literal fallback and input order.
