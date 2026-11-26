@@ -157,7 +157,7 @@ export default createEndpoint({
       const bridges=verifiedOnwardSources(reviewed,context);
       const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
       if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
-      const composed=composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
+      const composed=composeReferencedPersonalSanad(text,ids,bridges,selectedReference,true);
       continuationId=selectedReference;
       if(input.personalSanadIds){
        const reviewed=savedSharedBridgeDiagram(text,ids,bridges,undefined,undefined,selectedReference,context)?.diagram;
