@@ -68,6 +68,14 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);
  assert.equal(captured.personalChain,personal+'، '+tail);
  assert.equal(guest.personalChain,personal,'issuance does not rewrite the shared personal prefix');
+ guest.personalChain=personal+'، '+tail;
+ const writesBeforeLegacyIssue=profileWrites;
+ await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);
+ assert.equal(captured.personalChain,guest.personalChain);
+ assert.equal(profileWrites,writesBeforeLegacyIssue);
+ guest.personalChain=personal+'، '+tail+' تغيير';
+ await assert.rejects(()=>call(issuance),/نقطة الالتقاء/);
+ guest.personalChain=personal;
  await call({...input,personalChain:personal,personalPersonIds:branchIds,continuationId:ref,sharedSughraSanad:false});
  const saveReading=async value=>reading.execute({input:reading.inputSchema.parse({action:'save',shaykhId:'guest',qariId:'nafi',rawi:'قالون',sanadText:personal,junction:'jazari',personalPersonIds:branchIds,continuationId:ref,...value}),context:{user:{email:'fixture@example.invalid'}}});
  await assert.rejects(()=>saveReading({sanadText:personal+'، '+tail}),/نقطة الالتقاء/);
