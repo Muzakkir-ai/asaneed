@@ -183,10 +183,13 @@ export function attachIbrahimUbaydiRoot(
 
 
 /** Validate the stored prefix and preserve the exact reviewed transmission wording for issuance. */
-export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string){
+export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:ReviewedSharedBridge[],continuationId:string,allowEmbedded=false){
+ const original=text;
  const selected=bridges.filter(bridge=>bridge.source.id===continuationId);
  const resolved=savedSharedBridgeDiagram(text,ids,selected,undefined,undefined,continuationId)?.diagram;
- if(!resolved||resolved.personalText!==text.trim().replace(/[.،؛]+$/u,''))throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+ const embedded=!!resolved&&resolved.personalText!==text.trim().replace(/[.،؛]+$/u,'');
+ if(!resolved||(embedded&&(!allowEmbedded||!resolved.preparation.suffix.trim()||selected[0]?.source.kind)))throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+ if(embedded)text=resolved.personalText;
  const bridge=selected[0];
  const meeting=ids.at(-1)!;
  if(bridge.source.kind){
@@ -209,7 +212,12 @@ export function composeReferencedPersonalSanad(text:string,ids:string[],bridges:
  for(const tail of tails){
   const paths=linkedBridgeTails(bridge,tail,meeting);
   if(paths&&new Set(paths.map(path=>JSON.stringify(path.map(node=>node.id)))).size===keys.size){
-   return text.trim().replace(/[.،؛]+$/u,'')+'، '+tail;
+   const composed=text.trim().replace(/[.،؛]+$/u,'')+'، '+tail;
+   if(embedded){
+    if(original.trim()!==composed)throw Error('راجع الرواة ونقطة الالتقاء والتتمة المشتركة المختارة');
+    return original;
+   }
+   return composed;
   }
  }
  throw Error('لا يوجد نص مشترك معتمد يطابق جميع مسارات نقطة الالتقاء');
