@@ -1,4 +1,5 @@
 import {QURRA} from './qurra';
+import {routeIdentityLinks,type ReadingIdentityLink} from './qurraRouteIdentities';
 import {builderNameKey,type BuilderLibrary,type BuilderChain} from './bookBuilder';
 
 /** Historical segments are assembled ONLY from saved explicit narrator IDs
@@ -17,6 +18,7 @@ export type QurraTransmissionData={
  jazariId:string|null;
  daniId:string|null;
  skipped:number;
+ identityLinks:Record<string,ReadingIdentityLink>;
 };
 
 /** Stage one is a shared historical segment, not a selection of readings.
@@ -103,5 +105,5 @@ export function buildQurraTransmissionData(lib:BuilderLibrary):QurraTransmission
    });
   });
  }
- return {witnesses,names,jazariId,daniId,skipped};
+ return {witnesses,names,jazariId,daniId,skipped,identityLinks:routeIdentityLinks(lib.chains,lib.continuationSections||[],lib.people)};
 }
