@@ -10,7 +10,20 @@ async function main(){
   execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3105'],{stdio:'pipe',windowsHide:true});let serverLog='';server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
   let ready=false;for(let i=0;i<120;i++){try{const r=await fetch('http://127.0.0.1:3105/editor-review',{signal:AbortSignal.timeout(3000)});if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}if(!ready)throw Error(serverLog);
   browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH,headless:true}:{channel:'chrome',headless:true});
-  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:3105/editor-review');const box=page.getByRole('textbox');await box.waitFor();await page.evaluate(()=>document.fonts.ready);await page.addStyleTag({content:'nextjs-portal{display:none}'});
+  const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+  // Use the exact fixture revision, and validate the real font bytes. CDN availability
+  // is not a visual regression; never substitute a system font or waive the assertion.
+  const fontRevision='ac3a0a0f6e5f8fb96d84dc1bb7be41fc021f31a8';
+  const blobs={'KSARegular.ttf':'ea6f50e396cab516ebe0adf851e195838eec3170','KSARegular_B.ttf':'51aed2479aa6f444e856b25d876ad00d3d861641','SakkalKitab-Bold.ttf':'5fa3f651526537ccc453f0e15fb2476061915316','SakkalKitab-Regular.ttf':'b0007b4978a25cff6930b1bfc69c9f9e20c3b183'};
+  const fontBytes=new Map();
+  for(const [file,sha] of Object.entries(blobs)){
+   let bytes;for(const url of ['https://raw.githubusercontent.com/Muzakkir-ai/fonts/'+fontRevision+'/fonts/'+file,'https://cdn.jsdelivr.net/gh/Muzakkir-ai/fonts@'+fontRevision+'/fonts/'+file]){
+    try{const response=await fetch(url,{signal:AbortSignal.timeout(15000)});if(!response.ok)continue;const candidate=Buffer.from(await response.arrayBuffer());const hash=require('node:crypto').createHash('sha1').update('blob '+candidate.length+'\0').update(candidate).digest('hex');if(hash===sha){bytes=candidate;break;}}catch{}
+   }assert.ok(bytes,'Pinned font could not be retrieved or verified: '+file);fontBytes.set(file,bytes);
+  }
+  await page.route('https://cdn.jsdelivr.net/gh/Muzakkir-ai/fonts@'+fontRevision+'/fonts/*',route=>{const file=new URL(route.request().url()).pathname.split('/').pop();const body=fontBytes.get(file);return body?route.fulfill({status:200,body,contentType:'font/ttf',headers:{'access-control-allow-origin':'*'}}):route.continue();});
+  await page.goto('http://127.0.0.1:3105/editor-review');const box=page.getByRole('textbox');await box.waitFor();await page.locator('#remote-assets').waitFor({state:'attached'});
+  await page.evaluate(async()=>{for(const family of ['KSA Regular','Sakkal Kitab'])for(const weight of [400,700]){const loaded=await document.fonts.load(weight+' 12px "'+family+'"','بَارَكَ اللّٰهُ');if(!loaded.length||loaded.some(face=>face.status!=='loaded'))throw Error('Missing loaded font face: '+family+' '+weight);}await document.fonts.ready;});await page.addStyleTag({content:'nextjs-portal{display:none}'});
   assert.equal(await page.getByRole('button',{name:'تراجع',exact:true}).isVisible(),false);
   await box.click();await page.keyboard.press('Control+End');await page.getByRole('button',{name:'غامق',exact:true}).first().click();await page.keyboard.insertText(' بَارَكَ اللّٰهُ');await page.keyboard.press('Shift');await page.keyboard.insertText(' فِيهِ');
   const state=JSON.parse(await page.getByTestId('state').textContent());assert.ok(state.formats.some(f=>f.bold&&f.text.includes('بَارَكَ اللّٰهُ فِيهِ')));assert.equal(await page.getByRole('button',{name:'غامق',exact:true}).first().getAttribute('aria-pressed'),'true');
