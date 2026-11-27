@@ -43,6 +43,7 @@ export default createEndpoint({
  }),
  outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional(),preview:orderedSanadPreviewSchema.optional()}),
  execute:async({input,context})=>{
+  if(input.readinessOnly&&input.action!=='issue')throw Error('التحقق متاح للإصدار فقط');
   if(!(await isAppAdmin(context.user.email)))throw new Error('Permission denied');
   let {records:extensions}=await zite.additionalShaykhExtensions.findAll({limit:2000});
   const extensionFor=(id:string)=>extensions.find(e=>e.shaykhId===id);
