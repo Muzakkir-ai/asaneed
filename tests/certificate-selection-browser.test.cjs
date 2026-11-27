@@ -21,6 +21,7 @@ const {chromium}=require('playwright');
   await page.route('**/api/workspace/*',route=>{
    const endpoint=route.request().url().split('/').at(-1),input=route.request().postDataJSON();
    requests.push({endpoint,...input});
+   if(endpoint==='additionalShaykhs'&&input.readinessOnly){assert.equal(input.previewOnly,true);return route.fulfill({json:{sheikhs:[],ready:true}});}
    if(endpoint==='additionalShaykhs')return route.fulfill({json:input.action==='list'?{sheikhs:[guest]}:{sheikhs:[],preview:{chain:'سند المعاينة التجريبي',branches:input.personalSanadIds.map(sourceId=>({sourceId,label:'تجريبي',paths:[],names:{},continuationId:null,routeId:null,narratorCount:32}))}}});
    if(endpoint==='studentDirectory')return route.fulfill({json:{students:[],entries:[]}});
    if(endpoint==='ijazahHoldings')return route.fulfill({json:{holdings:[]}});
@@ -34,6 +35,7 @@ const {chromium}=require('playwright');
   await page.getByRole('option',{name:'رواية حفص',exact:true}).click();
   const picker=page.getByRole('group',{name:'الأسانيد المحفوظة لهذه الرواية'});
   await picker.getByRole('checkbox').first().waitFor();
+  await page.getByText('السند مكتمل وجاهز للإصدار',{exact:true}).waitFor();
   assert.equal(await picker.getByRole('checkbox').count(),7);
   assert.equal(await picker.getByRole('checkbox',{checked:true}).count(),1,'default sanad visibly selected');
   await picker.getByRole('button',{name:'تحديد الكل',exact:true}).click();
@@ -42,12 +44,13 @@ const {chromium}=require('playwright');
   await picker.getByRole('checkbox').nth(2).uncheck();
   await page.getByRole('button',{name:'معاينة السند المجمّع'}).click();
   await page.getByText('سند المعاينة التجريبي',{exact:true}).waitFor();
-  assert.equal(requests.at(-1).personalSanadIds.length,6);
+  assert.equal(requests.filter(r=>r.previewOnly&&!r.readinessOnly&&r.personalSanadIds?.length===6).length>0,true);
   assert.ok(requests.filter(r=>r.action==='issue').every(r=>r.previewOnly),'all requests are read-only previews');
   await picker.getByRole('button',{name:'تحديد الكل',exact:true}).click();
   await picker.getByRole('button',{name:'مسح التحديد',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'حفظ المسودة',exact:true}).isDisabled(),true,'empty selection cannot silently issue the default');
   assert.equal(await page.getByRole('button',{name:'رجوع إلى المُجيز'}).innerText(),'','back is an accessible icon');
+  for(const width of [320,375,390,768]){await page.setViewportSize({width,height:844});assert.ok(await page.locator('.certificate-entry-dialog').evaluate(e=>e.scrollWidth<=e.clientWidth+1),'form has no horizontal overflow at '+width);}
   fs.mkdirSync('work/certificate-selection',{recursive:true});
   await page.screenshot({path:'work/certificate-selection/selection.png',fullPage:true});
   guest.routes=[{qariId:'asim',rawi:'حفص',tariqNumber:'1031',tariqName:'المستنير — طريق تجريبي'}];
