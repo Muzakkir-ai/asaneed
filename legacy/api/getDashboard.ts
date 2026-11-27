@@ -30,6 +30,26 @@ export default createEndpoint({
   }),
   execute: async ({ context,input }) => {
     const admin=(await isAppAdmin(context.user.email));
+    if(input.metadataOnly&&input.listPage)throw Error('Invalid dashboard request');
+    const request=requestContext(),scope=request.scope,filter=input.listPage?.filters;
+    const pageSchema=z.object({ids:z.array(z.string().uuid()).max(15),totalCertificates:z.number().int().nonnegative(),pages:z.number().int().positive(),page:z.number().int().nonnegative(),years:z.array(z.string())});
+    let databasePage:z.infer<typeof pageSchema>|undefined;
+    if(scope&&!scope.system&&scope.role!=='student'&&input.listPage?.view==='certificates'&&filter&&!filter.query.trim()&&filter.issuer==='all'&&filter.qari==='all'&&filter.rawi==='all'&&filter.sort!=='name'&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)){
+      // A non-admin may have linked issuers whose personal identity belongs to another
+      // account. Preserve the legacy ownership filter by falling back in that case.
+      let eligible=admin||scope.issuerIds.length===0;
+      if(!admin&&scope.issuerIds.length>0&&scope.issuerIds.length<=100){
+        const profiles=await request.client.from('issuers').select('id,print_profile').in('id',scope.issuerIds);
+        if(profiles.error)throw Error(profiles.error.message);
+        eligible=(profiles.data||[]).length===scope.issuerIds.length&&(profiles.data||[]).every((i:any)=>!i.print_profile?.personalAccount||i.print_profile.personalAccount===scope.accountId);
+      }
+      if(eligible){
+        const result=await request.client.rpc('certificate_list_page',{p_issuers:scope.issuerIds,p_year:filter.year==='all'?null:Number(filter.year),p_status:filter.status,p_sort:filter.sort,p_page:input.listPage.page});
+        // Rolling deploy compatibility only: other errors must not silently load the entire database.
+        if(result.error&&!['PGRST202','42883'].includes(result.error.code))throw Error(result.error.message);
+        if(!result.error){databasePage=pageSchema.parse(result.data);request.certificateListIds=databasePage.ids;}
+      }
+    }
     const [{ records: qiraat }, { records: asaneed }, { records: certs },{records:snapshots},users,extras,profiles] = await Promise.all([
       zite.qiraat.findAll({ limit: 2000 }),
       // Admins list certificates from all issuers, so resolve their linked sanads as well.
@@ -94,7 +114,9 @@ export default createEndpoint({
           snapshotFormatting:snapMap.get(c.id)?.formatting||'',
         }))
         .sort((a, b) => b.certificateNumber - a.certificateNumber);
-    const paged=input.listPage?certificatePage(certificates,input.listPage.filters,input.listPage.view,input.listPage.page):undefined;
+    const byId=new Map(certificates.map(c=>[c.id,c]));
+    if(databasePage&&databasePage.ids.some(id=>!byId.has(id)))throw Error('تغيّرت قائمة الشهادات؛ أعد المحاولة');
+    const paged=databasePage?{...databasePage,certificates:databasePage.ids.map(id=>byId.get(id)!),students:[]}:input.listPage?certificatePage(certificates,input.listPage.filters,input.listPage.view,input.listPage.page):undefined;
     return {isAdmin:admin,shaykhs,issuers,asaneed:input.listPage?[]:sanads,certificates:paged?paged.certificates:certificates,...(paged?{certificatePage:{totalCertificates:paged.totalCertificates,pages:paged.pages,page:paged.page,years:paged.years,students:paged.students}}:{})};
   },
 });
