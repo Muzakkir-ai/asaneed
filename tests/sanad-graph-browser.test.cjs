@@ -352,6 +352,8 @@ const {chromium}=require('playwright');
      ['different-parents','coordinated-different-parents'],
      ['separated-parents','coordinated-separated-parents'],
      ['mixed-rank','coordinated-mixed-rank'],
+     ['staggered-fanin','coordinated-staggered-fanin'],
+     ['long-bypass','coordinated-long-bypass'],
     ]){
      await page.getByTestId(id).screenshot({
       style:'nextjs-portal { display: none !important; }',
