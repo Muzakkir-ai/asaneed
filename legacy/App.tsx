@@ -114,7 +114,7 @@ function PrivateApp() {
     const version=scopeVersion.current;
     setLoadError('');setRefreshing(true);
     try {
-      const dashboard=await getDashboard({});
+      const dashboard=await getDashboard({metadataOnly:true});
       if(activeUserId.current===requestedUser&&version===scopeVersion.current)setData(dashboard);
     } catch(e) {
       if(activeUserId.current===requestedUser&&version===scopeVersion.current)setLoadError(e instanceof Error?e.message:'تعذّر تحميل البيانات');
