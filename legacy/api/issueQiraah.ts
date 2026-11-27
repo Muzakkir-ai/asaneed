@@ -4,7 +4,6 @@ import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {QURRA} from '../lib/qurra';
-import {nextShahadaNumber} from '../lib/shahadaSequence';
 import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
 import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 
@@ -42,7 +41,6 @@ export default createEndpoint({
       return {rawi,holding,assembled};
     }));
     if(input.readinessOnly)return {ids:[],ready:true as const};
-    const nextNumber=await nextShahadaNumber();
     const created:{id:string}[]=[];
     try{
       for(const [index,{rawi,holding,assembled}] of entries.entries()){
@@ -57,7 +55,7 @@ export default createEndpoint({
         const sourceSignature=JSON.stringify({chain:assembled.chain,sectionIds:assembled.sectionIds,holdingId:holding.id,rawi});
         if(previous)await zite.preparedIjazahs.update({id:previous.id,record:{sanadId:sanad.id,sourceSignature}});
         else await zite.preparedIjazahs.create({record:{name:rawi,ownerId:owner,holdingId:holding.id,rawi,sanadId:sanad.id,sourceSignature}});
-        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,shahadaNumber:nextNumber+index,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
+        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
         created.push({id:cert.id});
         await ensureCertificateRegistration(cert.id);
       }
