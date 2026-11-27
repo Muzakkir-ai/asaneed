@@ -12,9 +12,10 @@ import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 export default createEndpoint({
   description:'Issue two distinct narrator certificates for one qiraah on the same completion date',
   authenticated:true,
-  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),readinessOnly:z.boolean().optional(),studentName:z.string().trim().min(2),completionDate:z.string().min(1),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
-  outputSchema:z.object({ids:z.array(z.string())}),
+  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),readinessOnly:z.boolean().optional(),studentName:z.string().trim(),completionDate:z.string(),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
+  outputSchema:z.object({ids:z.array(z.string()),ready:z.literal(true).optional()}),
   execute:async({input,context})=>{
+    if(!input.readinessOnly&&(input.studentName.length<2||!input.completionDate))throw Error('أدخل اسم الطالب وتاريخ الختم');
     const admin=(await isAppAdmin(context.user.email));
     const owner=admin&&input.ownerId?input.ownerId:context.user.id;
     if(admin&&owner!==context.user.id){
@@ -40,7 +41,7 @@ export default createEndpoint({
       if(assembled.missing.length)throw new Error(`سند ${rawi} غير مكتمل: ${assembled.missing.join('، ')}`);
       return {rawi,holding,assembled};
     }));
-    if(input.readinessOnly)return {ids:[]};
+    if(input.readinessOnly)return {ids:[],ready:true as const};
     const nextNumber=await nextShahadaNumber();
     const created:{id:string}[]=[];
     try{
