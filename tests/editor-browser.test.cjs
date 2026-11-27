@@ -7,7 +7,7 @@ async function main(){
  fs.mkdirSync(route);fs.copyFileSync('tests/fixtures/editor-review.tsx',path.join(route,'page.tsx'));fs.mkdirSync(out,{recursive:true});
  let server,browser;
  try{
-  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3105'],{stdio:'pipe',windowsHide:true});let serverLog='';server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
+  execFileSync(process.execPath,['scripts/build-studio.cjs']);server=spawn(process.execPath,[require.resolve('next/dist/bin/next'),'dev','--hostname','127.0.0.1','--port','3105'],{stdio:'pipe',windowsHide:true,detached:process.platform!=='win32'});let serverLog='';server.stdout.on('data',b=>serverLog+=b);server.stderr.on('data',b=>serverLog+=b);
   let ready=false;for(let i=0;i<120;i++){try{const r=await fetch('http://127.0.0.1:3105/editor-review',{signal:AbortSignal.timeout(3000)});if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,250));}if(!ready)throw Error(serverLog);
   browser=await chromium.launch(process.env.CHROME_PATH?{executablePath:process.env.CHROME_PATH,headless:true}:{channel:'chrome',headless:true});
   const page=await browser.newPage({viewport:{width:1280,height:900}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -23,7 +23,23 @@ async function main(){
   }
   await page.route('https://cdn.jsdelivr.net/gh/Muzakkir-ai/fonts@'+fontRevision+'/fonts/*',route=>{const file=new URL(route.request().url()).pathname.split('/').pop();const body=fontBytes.get(file);return body?route.fulfill({status:200,body,contentType:'font/ttf',headers:{'access-control-allow-origin':'*'}}):route.continue();});
   await page.goto('http://127.0.0.1:3105/editor-review');const box=page.getByRole('textbox');await box.waitFor();await page.locator('#remote-assets').waitFor({state:'attached'});
-  await page.evaluate(async()=>{for(const family of ['KSA Regular','Sakkal Kitab'])for(const weight of [400,700]){const loaded=await document.fonts.load(weight+' 12px "'+family+'"','بَارَكَ اللّٰهُ');if(!loaded.length||loaded.some(face=>face.status!=='loaded'))throw Error('Missing loaded font face: '+family+' '+weight);}await document.fonts.ready;});await page.addStyleTag({content:'nextjs-portal{display:none}'});
+  // Revalidate after media/viewport transitions. check() without text tests a
+  // space, not the Arabic glyphs used by the certificate, and can observe pending faces.
+  const verifyArabicFonts=()=>page.evaluate(async()=>{
+   const sample='بَارَكَ اللّٰهُ';
+   const diagnostics=[];
+   for(const family of ['KSA Regular','Sakkal Kitab'])for(const weight of [400,700]){
+    const spec=weight+' 12px "'+family+'"';
+    const loaded=await document.fonts.load(spec,sample);
+    const faces=loaded.map(face=>({family:face.family,weight:face.weight,status:face.status}));
+    const matching=loaded.some(face=>face.family.replace(/^["']|["']$/g,'')===family&&face.weight===String(weight)&&face.status==='loaded');
+    if(!matching||loaded.some(face=>face.status!=='loaded')||!document.fonts.check(spec,sample))throw Error('Arabic font check failed: '+JSON.stringify({family,weight,faces,registered:[...document.fonts].map(face=>({family:face.family,weight:face.weight,status:face.status}))}));
+    diagnostics.push({family,weight,faces});
+   }
+   await document.fonts.ready;
+   return diagnostics;
+  });
+  await verifyArabicFonts();await page.addStyleTag({content:'nextjs-portal{display:none}'});
   assert.equal(await page.getByRole('button',{name:'تراجع',exact:true}).isVisible(),false);
   await box.click();await page.keyboard.press('Control+End');await page.getByRole('button',{name:'غامق',exact:true}).first().click();await page.keyboard.insertText(' بَارَكَ اللّٰهُ');await page.keyboard.press('Shift');await page.keyboard.insertText(' فِيهِ');
   const state=JSON.parse(await page.getByTestId('state').textContent());assert.ok(state.formats.some(f=>f.bold&&f.text.includes('بَارَكَ اللّٰهُ فِيهِ')));assert.equal(await page.getByRole('button',{name:'غامق',exact:true}).first().getAttribute('aria-pressed'),'true');
@@ -41,14 +57,14 @@ async function main(){
   assert.equal(headingMetrics.mainHeight,80);assert.equal(headingMetrics.secondHeight,40);assert.ok(Math.abs(headingMetrics.mainRatio-186.29/48.19)<.01);assert.ok(Math.abs(headingMetrics.secondRatio-184.97/19.84)<.01);assert.ok(Math.abs(headingMetrics.centerMain-headingMetrics.centerPaper)<1);assert.ok(Math.abs(headingMetrics.centerSecond-headingMetrics.centerBasmalah)<1);assert.ok(Math.abs(headingMetrics.lineGapMm-4)<.3);assert.ok(Math.abs(headingMetrics.afterGapMm-8)<.6);assert.ok(headingMetrics.allMainHeights.every(h=>h==='80px'));assert.equal(headingMetrics.overflow,false);
   await page.locator('.print-area').evaluate(e=>e.querySelector('.certificate-sanad-paragraph').parentElement.style.minHeight='500mm');await page.waitForFunction(()=>JSON.parse(document.querySelector('[data-testid="state"]').textContent).overflow);await page.locator('.print-area').evaluate(e=>e.querySelector('.certificate-sanad-paragraph').parentElement.style.minHeight='');await page.waitForFunction(()=>!JSON.parse(document.querySelector('[data-testid="state"]').textContent).overflow);
   for(const width of [1280,390]){await page.setViewportSize({width,height:900});await page.getByRole('button',{name:'كامل الشهادة',exact:true}).click();await page.screenshot({path:path.join(out,`matn-heading-viewer-${width}.png`),fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));}
-  for(const zoom of ['50','200']){await page.getByLabel('نسبة التكبير',{exact:true}).selectOption(zoom);const dims=await page.locator('.print-area').evaluate(e=>({width:e.offsetWidth,height:e.offsetHeight}));assert.ok(Math.abs(dims.width-297*96/25.4)<1&&Math.abs(dims.height-210*96/25.4)<1);await page.emulateMedia({media:'print'});await page.pdf({path:path.join(out,`matn-heading-zoom-${zoom}.pdf`),preferCSSPageSize:true,printBackground:true});await page.emulateMedia({media:'screen'});}
+  for(const zoom of ['50','200']){await page.getByLabel('نسبة التكبير',{exact:true}).selectOption(zoom);const dims=await page.locator('.print-area').evaluate(e=>({width:e.offsetWidth,height:e.offsetHeight}));assert.ok(Math.abs(dims.width-297*96/25.4)<1&&Math.abs(dims.height-210*96/25.4)<1);await page.emulateMedia({media:'print'});await verifyArabicFonts();await page.pdf({path:path.join(out,`matn-heading-zoom-${zoom}.pdf`),preferCSSPageSize:true,printBackground:true});await page.emulateMedia({media:'screen'});}
   console.log(JSON.stringify({headingMetrics}));
   await page.emulateMedia({media:'print'});assert.equal(await page.locator('.review-print .certificate-sanad-paragraph').count(),2);assert.equal(await page.locator('.review-print .certificate-sanad-paragraph').first().locator('div').count(),0,'inline rich source adds no nested blocks');
   const printBounds=await page.locator('.print-area').boundingBox();assert.ok(printBounds.width>1100&&printBounds.width<1130,'A4 landscape width in CSS pixels');
-  await page.pdf({path:path.join(out,'editor-a4-landscape.pdf'),preferCSSPageSize:true,printBackground:true});assert.deepEqual(errors,[]);
-  const fonts=await page.evaluate(()=>({ksa:document.fonts.check('12px "KSA Regular"'),sakkal:document.fonts.check('12px "Sakkal Kitab"')}));assert.ok(fonts.ksa&&fonts.sakkal);console.log(JSON.stringify({arabicTyping:state.text,fonts,desktop:1280,mobile:[320,390],printParagraphs:2,errors,out}));
+  await verifyArabicFonts();await page.pdf({path:path.join(out,'editor-a4-landscape.pdf'),preferCSSPageSize:true,printBackground:true});assert.deepEqual(errors,[]);
+  const fonts=await verifyArabicFonts();assert.equal(fonts.length,4,'Both original Arabic families and both weights remain loaded after PDF generation');console.log(JSON.stringify({arabicTyping:state.text,fonts,desktop:1280,mobile:[320,390],printParagraphs:2,errors,out}));
  }finally{
-  await browser?.close();if(server){if(process.platform==='win32'){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{}}else server.kill();}
+  await browser?.close();if(server){if(process.platform==='win32'){try{execFileSync('taskkill',['/pid',String(server.pid),'/T','/F'],{stdio:'ignore',windowsHide:true});}catch{}}else if(server.pid){try{process.kill(-server.pid,'SIGTERM');}catch(error){if(error.code!=='ESRCH')throw error;}}}
   fs.unlinkSync(path.join(route,'page.tsx'));fs.rmdirSync(route);const validator='.next/dev/types/validator.ts';if(fs.existsSync(validator)&&fs.readFileSync(validator,'utf8').includes('editor-review/page'))fs.unlinkSync(validator);for(const item of generated)fs.writeFileSync(item.file,item.content);
  }
 }
