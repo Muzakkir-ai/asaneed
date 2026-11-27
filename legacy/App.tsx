@@ -68,15 +68,18 @@ function PrivateApp() {
     const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue ?? user?.role!=='student')?['qurra-diagrams','sanad-explorer']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shaykh-sanads','shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];
     return allowed.includes(page)?page:fallback;
   });
+  const navigationAllowed=()=>window.dispatchEvent(new Event('asaneed-before-navigation',{cancelable:true}));
+  const activeUrl=useRef(window.location.href);
   const setActive=(page:string)=>{
-    if(page===active)return;
+    if(page===active||!navigationAllowed())return;
+    activeUrl.current=window.location.href;
     const url=new URL(window.location.href);
     for(const key of ['shaykh','qari','rawi','tariq','variant','settings','view'])url.searchParams.delete(key);
     url.searchParams.set('page',page);
     window.history.pushState(window.history.state,'',url);
-    setActivePage(page);
+    activeUrl.current=url.href;setActivePage(page);
   };
-  useEffect(()=>{const restore=()=>{const page=new URLSearchParams(window.location.search).get('page')||'';const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue??user?.role!=='student')?['qurra-diagrams','sanad-explorer']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shaykh-sanads','shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];setActivePage(allowed.includes(page)?page:user?.role==='student'?'mycerts':'certs');};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[user?.role,user?.canIssue]);
+  useEffect(()=>{const restore=()=>{const page=new URLSearchParams(window.location.search).get('page')||'';if(page!==active&&!navigationAllowed()){window.history.pushState(window.history.state,'',activeUrl.current);return;}activeUrl.current=window.location.href;const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue??user?.role!=='student')?['qurra-diagrams','sanad-explorer']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shaykh-sanads','shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];setActivePage(allowed.includes(page)?page:user?.role==='student'?'mycerts':'certs');};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[user?.role,user?.canIssue,active]);
   const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('asaneed-sidebar')==='collapsed');
   const scopeVersion=useRef(0);
   const person=directory?.accounts.find(a=>a.id===(target||directory.actorId));
@@ -155,7 +158,7 @@ function PrivateApp() {
   return (
     <div className={'min-h-screen workspace-shell '+(collapsed?'sidebar-collapsed':'')}>
       <Toaster />
-      <WorkspaceSidebar active={active} onSelect={setActive} admin={isAdmin&&!inspecting} staff={isStaff} collapsed={collapsed} onCollapse={()=>setCollapsed(v=>{localStorage.setItem('asaneed-sidebar',v?'expanded':'collapsed');return !v;})} onLogout={()=>logout()} english={language==='en'} dark={dark} onTheme={()=>setDark(v=>!v)} onLanguage={()=>setLanguage(v=>v==='ar'?'en':'ar')}/>
+      <WorkspaceSidebar active={active} onSelect={setActive} admin={isAdmin&&!inspecting} staff={isStaff} collapsed={collapsed} onCollapse={()=>setCollapsed(v=>{localStorage.setItem('asaneed-sidebar',v?'expanded':'collapsed');return !v;})} onLogout={()=>{if(navigationAllowed())logout();}} english={language==='en'} dark={dark} onTheme={()=>setDark(v=>!v)} onLanguage={()=>setLanguage(v=>v==='ar'?'en':'ar')}/>
       <header className="studio-header bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 py-3 sm:py-5 flex items-center justify-between gap-2 sm:gap-4">
           <div className="studio-header-brand flex items-center gap-3 min-w-0">
@@ -168,14 +171,14 @@ function PrivateApp() {
           <div className="studio-header-actions flex gap-2 items-center">
           <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setDark(v=>!v)}>{dark?<Sun className="h-4 w-4" aria-hidden="true"/>:<Moon className="h-4 w-4" aria-hidden="true"/>}<span>{dark?tx('فاتح','Light'):tx('داكن','Dark')}</span></Button>
           <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setLanguage(v=>v==='ar'?'en':'ar')}><Languages className="h-4 w-4" aria-hidden="true"/><span>{language==='ar'?'English':'العربية'}</span></Button>
-          <Button variant="ghost" className="shrink-0 px-2 sm:px-4 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={() => logout()}>
+          <Button variant="ghost" className="shrink-0 px-2 sm:px-4 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={() => {if(navigationAllowed())logout();}}>
             <LogOut className="h-4 w-4 sm:me-2" /> <span className="hidden sm:inline">{tx('خروج','Sign out')}</span>
           </Button></div>
         </div>
         <div className="h-1 bg-accent" />
       </header>
       <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
-        {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>changeScope(target,!editInspection)}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{changeScope(directory.actorId);setActive('certs');}}>العودة إلى مساحتي</Button></section>}
+        {inspecting&&<section className="inspection-banner" role="status"><strong>عرض مساحة المستخدم: {person?.name}</strong><span>{editInspection?'وضع التعديل الإداري مفعّل':'للقراءة فقط'}</span><Button variant="outline" onClick={()=>{if(navigationAllowed())changeScope(target,!editInspection);}}>{editInspection?'العودة للقراءة فقط':'تفعيل التعديل الإداري'}</Button><Button onClick={()=>{if(navigationAllowed()){changeScope(directory.actorId);setActive('certs');}}}>العودة إلى مساحتي</Button></section>}
         {isStaff&&<MatnDecisionNotice/>}
         <Tabs value={active} onValueChange={setActive} dir={language==='ar'?'rtl':'ltr'} key={target+':'+editInspection}>
           <TabsContent value="certs">
