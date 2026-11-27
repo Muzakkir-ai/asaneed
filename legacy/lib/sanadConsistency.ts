@@ -27,9 +27,12 @@ export function orderedNameEvidence(ids:readonly string[],body:string,witnesses:
  for(const id of ids){
   const keys=witnesses.names.get(id)||[];
   const safe=keys.filter(k=>witnesses.owners.get(k)?.size===1);
-  const positions=safe.flatMap(k=>{const i=source.indexOf(' '+k+' ',Math.max(0,cursor-1));return i<0||i+1<cursor?[]:[i+1+k.length];});
+  // A written conjunction is not part of the narrator's name. Accept attached
+  // waw only for the explicit kunya forms, and never override another identity.
+  const variants=(k:string)=>[k,...(/^اب[ويا] /u.test(k)&&!witnesses.owners.get('و'+k)?.size?['و'+k]:[])];
+  const positions=safe.flatMap(variants).flatMap(k=>{const i=source.indexOf(' '+k+' ',Math.max(0,cursor-1));return i<0||i+1<cursor?[]:[i+1+k.length];});
   if(positions.length){cursor=Math.min(...positions);continue;}
-  const has=(k:string)=>source.includes(' '+k+' ');
+  const has=(k:string)=>variants(k).some(v=>source.includes(' '+v+' '));
   const code=safe.some(has)?'name-out-of-order':keys.some(has)?'ambiguous-name':'name-not-found';
   issues.push({code,severity:'review',personId:id,personName:witnesses.peopleById.get(id),message:code==='name-out-of-order'?'الاسم موجود خارج الموضع المتوقع أو تكرر بلا شاهد مستقل':code==='ambiguous-name'?'اسم مشترك بين هويات؛ يلزم تعيين الراوي':'لم يُعثر على الاسم أو بديل فريد في النص المحدد'});
  }
@@ -82,14 +85,41 @@ export function validateRoute(lib:BuilderLibrary,route:BuilderChain,witnesses=na
  else add('legacy-continuation','review','تتمة نصية محفوظة بلا مراجع منظمة؛ لا تستبدل النص');
  const {own,shared}=routeSourceSections(lib,route);
  if(own.length!==1)add('source-selection','review',own.length?'أكثر من مصدر للرواية؛ يلزم تعيين المصدر':'لا يوجد مصدر معيّن لهذا الكتاب والطريق');
- if(!readingIdentityLink(sections,lib.people,route.qari_id,route.rawi))add('reading-identity','review','لم تتعين هوية القارئ والراوي من عبارتي المصدر');
+ const reading=readingIdentityLink(sections,lib.people,route.qari_id,route.rawi);
+ if(!reading)add('reading-identity','review','لم تتعين هوية القارئ والراوي من عبارتي المصدر');
+ // التحويل: a branch may end at an explicit shared narrator ID and
+ // reuse the existing continuation of another branch. Never require a
+ // duplicate rawi node, infer a join by name, or mutate the saved graph.
+ if(reading&&own.length===1)route.branches.forEach((nodes,branch)=>{
+  const path=nodes.map(n=>n.person_id),end=path.at(-1);
+  if(end===reading.rawiPersonId)return;
+  const tails=route.branches.flatMap((other,index)=>{
+   if(index===branch||!end)return [];
+   const ids=other.map(n=>n.person_id),at=ids.indexOf(end);
+   if(at<0||at!==ids.lastIndexOf(end)||ids.at(-1)!==reading.rawiPersonId)return [];
+   const tail=ids.slice(at+1);
+   if(!tail.length||new Set([...path,...tail]).size!==path.length+tail.length)return [];
+   return [tail];
+  });
+  const unique=[...new Map(tails.map(t=>[JSON.stringify(t),t])).values()];
+  if(unique.length===1&&!orderedNameEvidence([end!,...unique[0]],own[0].body,witnesses).issues.length){
+   issues.push({code:'shared-tail',severity:'info',personId:end,personName:witnesses.peopleById.get(end!),branch:branch+1,message:'التحويل: يلتقي الفرع براوٍ مشترك وله تتمة محفوظة في الفرع الآخر إلى الراوي؛ لا تكرار للعقد'});
+   return;
+  }
+  issues.push({code:'rawi-endpoint-missing',severity:'review',personId:reading.rawiPersonId,personName:reading.rawiName,branch:branch+1,message:'لم يتعين اتصال نهاية الفرع بالراوي مباشرة أو عبر تتمة مشتركة محفوظة؛ يلزم مراجعة التحويل'});
+ });
  const paths=routePaths(lib,route);let matched=0,checked=0;
  // A known two-part source is scanned in order, never mixed with unrelated
  // reading texts. This checks lexical coverage only, not branch equivalence.
  if(own.length===1&&shared.length<=1){
   const body=[...shared,...own].map(s=>s.body).join('\n');
   checked=paths.length;
-  paths.forEach((ids,branch)=>{const e=orderedNameEvidence(ids,body,witnesses);if(!e.issues.length)matched++;issues.push(...e.issues.map(i=>({...i,branch:branch+1})));});
+  // Durrah's saved reading prose begins AFTER the implicit book author.
+  // Scope lexical evidence to the recorded segment only; explicitly flag
+  // the unverified author-to-first-teacher boundary. Never add an edge.
+  const implicitDurrahAuthor=book&&sanadKey(book.title)==='الدرة'&&parent?.branches.length===1&&parent.branches[0].length===0;
+  if(implicitDurrahAuthor)add('author-boundary-unverified','review','نص الدرة يبدأ بعد مؤلف الكتاب؛ اتصال المؤلف بأول راوٍ يحتاج مراجعة مستقلة');
+  paths.forEach((ids,branch)=>{const scoped=implicitDurrahAuthor&&ids[0]===book?.author_id?ids.slice(1):ids;const e=orderedNameEvidence(scoped,body,witnesses);if(!e.issues.length)matched++;issues.push(...e.issues.map(i=>({...i,branch:branch+1})));});
  }else if(shared.length>1)add('shared-source-ambiguous','review','تعددت مصادر المقطع المشترك');
  return result(route.id,'route',route.title,issues,checked,matched);
 }
