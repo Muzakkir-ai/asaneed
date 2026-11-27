@@ -31,17 +31,17 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   const contrast=await view.locator('svg').evaluate(e=>{const ctx=document.createElement('canvas').getContext('2d');const l=s=>{ctx.fillStyle=s;ctx.fillRect(0,0,1,1);return [...ctx.getImageData(0,0,1,1).data].slice(0,3).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0)},a=l(getComputedStyle(e).color),b=l(getComputedStyle(e.closest('button')).backgroundColor);return (Math.max(a,b)+.05)/(Math.min(a,b)+.05);});assert.ok(contrast>=4.5,'filled icon contrast in dark mode');await page.screenshot({path:path.join(out,'workspace-theme-dark.png'),fullPage:true,animations:'disabled'});
   await page.emulateMedia({reducedMotion:'reduce'});await link.hover();assert.equal(await link.locator('.sidebar-icon').evaluate(e=>getComputedStyle(e).transform),'none');await page.emulateMedia({reducedMotion:'no-preference'});await page.evaluate(()=>document.documentElement.classList.remove('dark'));
   for(const width of [390,320]){await page.setViewportSize({width,height:900});const lanes=page.locator('[data-testid=parallel-mobile] .connected-chain-split');assert.equal(await lanes.evaluate(e=>getComputedStyle(e).gridTemplateColumns.split(' ').length),1,'parallel narrator paths stack on mobile');assert.ok(await page.locator('[data-testid=parallel-mobile] .narrator-person-card p').evaluateAll(els=>els.every(e=>e.getBoundingClientRect().height<180)),'names stay readable instead of wrapping letter by letter');assert.ok(await page.getByTestId('prepared-branch-review').locator('[data-sanad-node]').evaluateAll(els=>els.every(e=>e.getBoundingClientRect().width>=120)),'prepared graph node width stays readable');assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.getByRole('button',{name:'فتح قائمة التنقل'}).click();await page.getByRole('dialog').waitFor();await page.screenshot({path:path.join(out,`workspace-theme-mobile-${width}.png`),fullPage:true,animations:'disabled'});await page.getByRole('dialog').getByRole('button',{name:'أسانيدي',exact:true}).click();await page.getByRole('dialog').waitFor({state:'hidden'});}
-  const review=page.getByTestId('narrator-create-review'),search=review.getByRole('combobox');
-  await search.fill('الاختباري أَحْمَد');
-  const results=page.getByRole('listbox',{name:'الرواة المحفوظون'}),choices=results.getByRole('option');
-  assert.equal(await choices.count(),10,'unordered vocalized words find saved people');
-  const popover=results.locator('..');
-  assert.ok(await popover.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1&&e.scrollHeight>=e.clientHeight;}),'mobile narrator results stay within viewport');
+  const review=page.getByTestId('narrator-create-review'),narratorSearch=review.getByRole('combobox');
+  await narratorSearch.fill('الاختباري أَحْمَد');
+  const narratorResults=page.getByRole('listbox',{name:'الرواة المحفوظون'}),narratorChoices=narratorResults.getByRole('option');
+  assert.equal(await narratorChoices.count(),10,'unordered vocalized words find saved people');
+  const narratorPopover=narratorResults.locator('..');
+  assert.ok(await narratorPopover.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1&&e.scrollHeight>=e.clientHeight;}),'mobile narrator narratorResults stay within viewport');
   await page.screenshot({path:path.join(out,'narrator-review-mobile.png')});
-  await choices.first().click();
+  await narratorChoices.first().click();
   assert.ok(await review.getByText('تم اختيار راوٍ محفوظ',{exact:true}).isVisible());
   assert.ok(await review.getByRole('button',{name:'إنشاء جديد',exact:true}).isDisabled(),'saved identity cannot be created again');
-  assert.equal(await results.count(),0,'choosing a saved person closes the list');
+  assert.equal(await narratorResults.count(),0,'choosing a saved person closes the list');
   const jointReview=page.getByTestId('joint-level-review');assert.deepEqual(await jointReview.locator('[data-narrator-level]').evaluateAll(els=>els.map(e=>e.dataset.narratorLevel)),['١','٢','٢','٣'],'parallel teachers have the same path position in separate lanes');await jointReview.screenshot({path:path.join(out,'joint-narrator-levels-mobile.png')});
   const graphReview=page.getByTestId('prepared-branch-review'),allView=graphReview.getByRole('button',{name:'عرض الكل'});
   assert.equal(await graphReview.locator('[data-sanad-mode]').getAttribute('data-sanad-mode'),'view');assert.equal(await graphReview.getByRole('button',{name:/تعديل الراوي/}).count(),0,'view has no narrator edit icons');assert.equal(await graphReview.getByText('بناء السند الشخصي — إضافة الرواة',{exact:true}).count(),0);await graphReview.getByRole('button',{name:'تعديل السند',exact:true}).click();assert.ok(await graphReview.getByText('بناء السند الشخصي — إضافة الرواة',{exact:true}).isVisible());
