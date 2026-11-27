@@ -723,3 +723,7 @@ Local PostgreSQL with synthetic accounts reproduced a deadlock on main and passe
 The shared student picker still submits names. The certificate adapter selects the first normalized match, so distinct students with the same normalized name cannot be reliably distinguished in this workflow. Existing records and links were preserved. Hosted staging and authenticated end-to-end recipient import remain pending.
 
 
+
+## Narrator registry isolation — 27 November 2026
+
+Integrate #120 on top of production baseline `1be580e9`, without replacing newer release code or scripts. The registry reads only paginated shared historical sanad sections and no longer infers pupils from private certificates. Historical identities and source text remain unchanged. Dedicated registry regression is included in the existing personal-sanads suite. No migration or stored data edits. Production integration checks required before release. See [audit](CHAT-08-BOOKS-ROUTES-REGISTRY-AUDIT.md).
