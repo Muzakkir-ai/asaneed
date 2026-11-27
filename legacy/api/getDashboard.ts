@@ -32,7 +32,7 @@ export default createEndpoint({
     const admin=(await isAppAdmin(context.user.email));
     if(input.metadataOnly&&input.listPage)throw Error('Invalid dashboard request');
     const request=requestContext(),scope=request.scope,filter=input.listPage?.filters;
-    const pageSchema=z.object({ids:z.array(z.string().uuid()).max(15),totalCertificates:z.number().int().nonnegative(),pages:z.number().int().positive(),page:z.number().int().nonnegative(),years:z.array(z.string())});
+    const pageSchema=z.object({ids:z.array(z.string().uuid()).max(150),groups:z.array(z.array(z.string().uuid())).max(15).optional(),totalCertificates:z.number().int().nonnegative(),pages:z.number().int().positive(),page:z.number().int().nonnegative(),years:z.array(z.string())});
     let databasePage:z.infer<typeof pageSchema>|undefined;
     if(scope&&!scope.system&&scope.role!=='student'&&input.listPage?.view==='certificates'&&filter&&!filter.query.trim()&&filter.issuer==='all'&&filter.qari==='all'&&filter.rawi==='all'&&filter.sort!=='name'&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)){
       // A non-admin may have linked issuers whose personal identity belongs to another
@@ -50,13 +50,11 @@ export default createEndpoint({
         if(!result.error){databasePage=pageSchema.parse(result.data);request.certificateListIds=databasePage.ids;}
       }
     }
-    const [{ records: qiraat }, { records: asaneed }, { records: certs },{records:snapshots},users,extras,profiles] = await Promise.all([
+    const [{ records: qiraat }, { records: asaneed },users,extras,profiles] = await Promise.all([
       zite.qiraat.findAll({ limit: 2000 }),
       // Admins list certificates from all issuers, so resolve their linked sanads as well.
       // Only the signed-in issuer's sanads are exposed in the editable asaneed list.
       allPages(offset=>zite.asaneed.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})),
-      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificates.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})):zite.certificates.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
-      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificateSnapshots.findAll({...(admin?{}:{filters:{ownerId:context.user.id}}),offset,limit:2000})):zite.certificateSnapshots.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
       admin?zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}):Promise.resolve({records:[context.user]}),
       zite.additionalShaykhs.findAll({limit:2000}),
       zite.shaykhPrintProfiles.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
@@ -76,8 +74,6 @@ export default createEndpoint({
     // Enforce account isolation independently of the database query filter.
     const owns=(value:string|string[]|undefined)=>Array.isArray(value)?value.includes(context.user.id):value===context.user.id;
     const ownAsaneed=asaneed;
-    const ownCerts=admin?certs:certs.filter(c=>owns(c.shaykh));
-    const ownSnapshots=admin?snapshots:snapshots.filter(s=>s.ownerId===context.user.id);
     const qName = new Map(qiraat.map((q) => [q.id, q.name ?? '']));
     const sanads = ownAsaneed.map((a) => ({
       id: a.id,
@@ -90,6 +86,32 @@ export default createEndpoint({
       a.id,
       displayReadingLabel((a.chain||'').match(/^【بيان القراءة:([^】]+)】/)?.[1]?.trim() || qName.get(first(a.qiraah)) || ''),
     ]));
+    // Complex list filters use the same labels as the legacy renderer, not a second
+    // implementation of scholarly reading-name rules in SQL. Only metadata is sent
+    // to the invoker-scoped RPC; certificate rows remain in the database until picked.
+    if(!databasePage&&scope&&!scope.system&&scope.role!=='student'&&input.listPage&&filter&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)&&scope.issuerIds.length<=100){
+      const issuerProfiles=scope.issuerIds.length?await request.client.from('issuers').select('id,print_profile').in('id',scope.issuerIds):{data:[],error:null};
+      if(issuerProfiles.error)throw Error(issuerProfiles.error.message);
+      const profiles=issuerProfiles.data||[];
+      // Linked historical guests have record-level identity rules; do not guess.
+      if(profiles.length===scope.issuerIds.length&&profiles.every((i:any)=>i.print_profile?.loginLinked!==true&&(admin||!i.print_profile?.personalAccount||i.print_profile.personalAccount===scope.accountId))){
+        const labels=Object.fromEntries(profiles.map((i:any)=>{
+          const personal=i.print_profile?.personalAccount;
+          const accountId=personal&&(admin&&!scope.inspection?(directoryAccounts?.data||[]).find((a:any)=>a.id===personal)?.auth_user_id:personal===scope.accountId?scope.authUserId:undefined);
+          return [i.id,personal?{key:'user:'+(accountId||'guest:'+i.id),name:shaykhNames.get(accountId||'')||'شيخ غير مسمى'}:{key:'guest:'+i.id,name:guestNames.get(i.id)||shaykhNames.get(context.user.id)||'شيخ غير مسمى'}];
+        }));
+        const readings=Object.fromEntries([...readingBySanad].map(([id,label])=>{const identity=readingIdentityFromHeading(label);return [id,{label,qari:identity?.qariId||'',rawi:identity?.rawi||''}];}));
+        const result=await request.client.rpc('certificate_filtered_page',{p_issuers:scope.issuerIds,p_readings:readings,p_issuer_labels:labels,p_filters:filter,p_view:input.listPage.view,p_page:input.listPage.page});
+        if(result.error&&!['PGRST202','42883'].includes(result.error.code))throw Error(result.error.message);
+        if(!result.error&&result.data?.fallback!==true){databasePage=pageSchema.parse(result.data);request.certificateListIds=databasePage.ids;}
+      }
+    }
+    const [{records:certs},{records:snapshots}]=await Promise.all([
+      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificates.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})):zite.certificates.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
+      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificateSnapshots.findAll({...(admin?{}:{filters:{ownerId:context.user.id}}),offset,limit:2000})):zite.certificateSnapshots.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
+    ]);
+    const ownCerts=admin?certs:certs.filter(c=>owns(c.shaykh));
+    const ownSnapshots=admin?snapshots:snapshots.filter(s=>s.ownerId===context.user.id);
     const snapMap=new Map(ownSnapshots.map(s=>[s.certificateId,s]));
     const certificates=ownCerts
         .map((c) => ({
@@ -116,7 +138,7 @@ export default createEndpoint({
         .sort((a, b) => b.certificateNumber - a.certificateNumber);
     const byId=new Map(certificates.map(c=>[c.id,c]));
     if(databasePage&&databasePage.ids.some(id=>!byId.has(id)))throw Error('تغيّرت قائمة الشهادات؛ أعد المحاولة');
-    const paged=databasePage?{...databasePage,certificates:databasePage.ids.map(id=>byId.get(id)!),students:[]}:input.listPage?certificatePage(certificates,input.listPage.filters,input.listPage.view,input.listPage.page):undefined;
+    const paged=databasePage?{...databasePage,certificates:input.listPage?.view==='students'?[]:databasePage.ids.map(id=>byId.get(id)!),students:(databasePage.groups||[]).map(ids=>ids.map(id=>byId.get(id)!))}:input.listPage?certificatePage(certificates,input.listPage.filters,input.listPage.view,input.listPage.page):undefined;
     return {isAdmin:admin,shaykhs,issuers,asaneed:input.listPage?[]:sanads,certificates:paged?paged.certificates:certificates,...(paged?{certificatePage:{totalCertificates:paged.totalCertificates,pages:paged.pages,page:paged.page,years:paged.years,students:paged.students}}:{})};
   },
 });
