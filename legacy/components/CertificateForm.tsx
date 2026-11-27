@@ -184,11 +184,14 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
     const check=async()=>{
       if(isGuest){
         const full=form.sanadId.startsWith('guest-qiraah:');
-        await additionalShaykhs({action:'issue',readinessOnly:true,id:selectedGuestId,qariId:full?form.sanadId.slice('guest-qiraah:'.length):alternativeQari,rawi:full?undefined:alternativeRawi,tariqNumber:guestTariq,personalSanadIds:explicitOrder?orderedIds:undefined});
+        const result=await additionalShaykhs({action:'issue',readinessOnly:true,previewOnly:true,id:selectedGuestId,qariId:full?form.sanadId.slice('guest-qiraah:'.length):alternativeQari,rawi:full?undefined:alternativeRawi,tariqNumber:guestTariq,personalSanadIds:explicitOrder?orderedIds:undefined});
+        if(!result.ready)throw Error('حدّث الصفحة لإعادة التحقق من السند');
       }else if(choosingQiraah){
-        await issueQiraah({readinessOnly:true,qariId:form.sanadId.slice('qiraah:'.length),tariqNumber:selectedTariq,ownerId:form.shaykhId,studentName:'اختبار الجاهزية',completionDate:'2000-01-01',notes:''});
+        const result=await issueQiraah({readinessOnly:true,qariId:form.sanadId.slice('qiraah:'.length),tariqNumber:selectedTariq,ownerId:form.shaykhId,studentName:'',completionDate:'',notes:''});
+        if(!result.ready)throw Error('حدّث الصفحة لإعادة التحقق من السند');
       }else if(baseHolding){
-        await prepareIjazah({readinessOnly:true,holdingId:explicitOrder?orderedIds[0]:baseHolding.id,holdingIds:explicitOrder?orderedIds:undefined,rawi:holdingRawi,ownerId:form.shaykhId});
+        const result=await prepareIjazah({readinessOnly:true,previewOnly:true,holdingId:explicitOrder?orderedIds[0]:baseHolding.id,holdingIds:explicitOrder?orderedIds:undefined,rawi:holdingRawi,ownerId:form.shaykhId});
+        if(!result.ready)throw Error('حدّث الصفحة لإعادة التحقق من السند');
       }else throw Error('السند المختار غير متاح؛ اختر القراءة مرة أخرى');
     };
     const timer=window.setTimeout(()=>{check().then(()=>{if(active)setReadiness({key:readinessKey,state:'ready'});}).catch(e=>{if(active)setReadiness({key:readinessKey,state:'error',message:e instanceof Error?e.message:'تعذر التحقق من السند'});});},250);
