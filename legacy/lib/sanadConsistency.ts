@@ -103,7 +103,7 @@ export function validateRoute(lib:BuilderLibrary,route:BuilderChain,witnesses=na
   // the unverified author-to-first-teacher boundary. Never add an edge.
   const implicitDurrahAuthor=book&&sanadKey(book.title)==='الدرة'&&parent?.branches.length===1&&parent.branches[0].length===0;
   if(implicitDurrahAuthor)add('author-boundary-unverified','review','نص الدرة يبدأ بعد مؤلف الكتاب؛ اتصال المؤلف بأول راوٍ يحتاج مراجعة مستقلة');
-  paths.forEach((ids,branch)=>{const scoped=implicitDurrahAuthor&&ids[0]===book.author_id?ids.slice(1):ids;const e=orderedNameEvidence(scoped,body,witnesses);if(!e.issues.length)matched++;issues.push(...e.issues.map(i=>({...i,branch:branch+1})));});
+  paths.forEach((ids,branch)=>{const scoped=implicitDurrahAuthor&&ids[0]===book?.author_id?ids.slice(1):ids;const e=orderedNameEvidence(scoped,body,witnesses);if(!e.issues.length)matched++;issues.push(...e.issues.map(i=>({...i,branch:branch+1})));});
  }else if(shared.length>1)add('shared-source-ambiguous','review','تعددت مصادر المقطع المشترك');
  return result(route.id,'route',route.title,issues,checked,matched);
 }
