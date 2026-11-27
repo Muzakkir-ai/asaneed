@@ -5,33 +5,38 @@ import {isAppAdmin} from '../lib/admin';
 import { z } from 'zod';
 import { createEndpoint } from 'zitejs/backend';
 import { zite } from 'zitejs/db';
+import {certificatePage} from '../lib/certificatePage';
 import {displayReadingLabel} from '../lib/qurra';
 
 const first = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v) ?? '';
 
+const certificateSchema=z.object({
+      id: z.string(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
+      qiraahName: z.string(), notes: z.string(), certificateNumber: z.number(), registrationNumber:z.string(),issuerKey:z.string(),qariId:z.string(),rawi:z.string(), publicationStatus:z.enum(['draft','final']), shaykhId:z.string(), shaykhName:z.string(), additionalShaykh:z.string(), snapshotChain:z.string(), snapshotHeading:z.string(), snapshotFormatting:z.string(),
+    });
+const filtersSchema=z.object({query:z.string().max(200),issuer:z.string().max(200),qari:z.string().max(200),rawi:z.string().max(200),year:z.string().max(10),status:z.enum(['all','draft','final']),sort:z.enum(['added','completion','completion-desc','name'])});
+async function allPages<T>(read:(offset:number)=>Promise<{records:T[];hasMore:boolean}>){const records:T[]=[];for(let offset=0;;){const next=await read(offset);records.push(...next.records);if(!next.hasMore)return {records};if(!next.records.length)throw Error('تعذر استكمال تحميل الشهادات');offset+=next.records.length;}}
 export default createEndpoint({
   description: "Loads the signed-in shaykh's asaneed and the certificates he has issued",
   authenticated: true,
-  inputSchema: z.object({}),
+  inputSchema: z.object({metadataOnly:z.boolean().optional(),listPage:z.object({filters:filtersSchema,view:z.enum(['certificates','students']),page:z.number().int().min(0).max(1000000)}).optional()}),
   outputSchema: z.object({
     isAdmin:z.boolean(),
     issuers:z.array(z.object({id:z.string(),name:z.string()})),
     shaykhs:z.array(z.object({id:z.string(),name:z.string()})),
     asaneed: z.array(z.object({ id: z.string(), title: z.string(), qiraahName: z.string(), chain: z.string(), shaykhId:z.string() })),
-    certificates: z.array(z.object({
-      id: z.string(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
-      qiraahName: z.string(), notes: z.string(), certificateNumber: z.number(), registrationNumber:z.string(),issuerKey:z.string(),qariId:z.string(),rawi:z.string(), publicationStatus:z.enum(['draft','final']), shaykhId:z.string(), shaykhName:z.string(), additionalShaykh:z.string(), snapshotChain:z.string(), snapshotHeading:z.string(), snapshotFormatting:z.string(),
-    })),
+    certificates:z.array(certificateSchema),
+    certificatePage:z.object({totalCertificates:z.number(),pages:z.number(),page:z.number(),years:z.array(z.string()),students:z.array(z.array(certificateSchema))}).optional(),
   }),
-  execute: async ({ context }) => {
+  execute: async ({ context,input }) => {
     const admin=(await isAppAdmin(context.user.email));
     const [{ records: qiraat }, { records: asaneed }, { records: certs },{records:snapshots},users,extras,holdings,profiles] = await Promise.all([
       zite.qiraat.findAll({ limit: 2000 }),
       // Admins list certificates from all issuers, so resolve their linked sanads as well.
       // Only the signed-in issuer's sanads are exposed in the editable asaneed list.
       zite.asaneed.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
-      zite.certificates.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
-      zite.certificateSnapshots.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
+      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificates.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})):zite.certificates.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
+      input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificateSnapshots.findAll({...(admin?{}:{filters:{ownerId:context.user.id}}),offset,limit:2000})):zite.certificateSnapshots.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
       admin?zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}):Promise.resolve({records:[context.user]}),
       zite.additionalShaykhs.findAll({limit:2000}),
       zite.ijazahHoldings.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
@@ -69,11 +74,7 @@ export default createEndpoint({
       displayReadingLabel((a.chain||'').match(/^【بيان القراءة:([^】]+)】/)?.[1]?.trim() || qName.get(first(a.qiraah)) || ''),
     ]));
     const snapMap=new Map(ownSnapshots.map(s=>[s.certificateId,s]));
-    return {
-      isAdmin:admin,
-      shaykhs,issuers,
-      asaneed: sanads,
-      certificates: ownCerts
+    const certificates=ownCerts
         .map((c) => ({
           id: c.id,
           studentName: c.studentName ?? '',
@@ -95,7 +96,8 @@ export default createEndpoint({
           snapshotHeading:snapMap.get(c.id)?.heading||'',
           snapshotFormatting:snapMap.get(c.id)?.formatting||'',
         }))
-        .sort((a, b) => b.certificateNumber - a.certificateNumber),
-    };
+        .sort((a, b) => b.certificateNumber - a.certificateNumber);
+    const paged=input.listPage?certificatePage(certificates,input.listPage.filters,input.listPage.view,input.listPage.page):undefined;
+    return {isAdmin:admin,shaykhs,issuers,asaneed:input.listPage?[]:sanads,certificates:paged?paged.certificates:certificates,...(paged?{certificatePage:{totalCertificates:paged.totalCertificates,pages:paged.pages,page:paged.page,years:paged.years,students:paged.students}}:{})};
   },
 });
