@@ -5,20 +5,25 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const old='كما أخذته عن الشيخ الأول، عن الشيخ إبراهيم العُبَيدِي',updated='كما أخذته عن الشيخ الثاني، عن الإمام ابن الجزري';
  const guest={id:'guest',name:'شيخ تجريبي',personalChain:old,junction:'ubaydi',prepareSharedNarratorBoxes:true,sharedPeopleReviewed:false,readingsJson:JSON.stringify(allReadings)};
  const records=[{id:'original',shaykhId:'guest',qariId:'nafi',rawi:'قالون',sanadText:old,junction:'ubaydi',unifiedSanad:{version:1,routeId:'old-reference',prefix:old}},{id:'numbered',shaykhId:'guest',qariId:'nafi',rawi:'قالون',tariqNumber:'1030',tariqName:'طريق مستقل',sanadText:('عن الشيخ الخاص، عن الإمام ابن الجزري ').repeat(5),junction:'jazari'}];
- let admin=true,captured,profileWrites=0;
+ let admin=true,captured,profileWrites=0,readinessFixture=false;
  const db={additionalShaykhs:{findAll:async()=>({records:[guest]}),findOne:async({id})=>{if(id!=='guest')throw Error('not found');return guest;},update:async({record})=>{profileWrites++;return Object.assign(guest,record);}},additionalShaykhExtensions:{findAll:async()=>({records:[{id:'ext',shaykhId:'guest',mutoonJson:'[]'}]}),update:async()=>{}},additionalShaykhReadingSanads:{findAll:async()=>({records}),create:async({record})=>{const row={...record,id:crypto.randomUUID()};records.push(row);return row;},update:async({id,record})=>Object.assign(records.find(r=>r.id===id),record)},sanadSections:{findAll:async()=>({records:[]})},ijazahHoldings:{findAll:async()=>({records:[{qariId:'nafi',rawi:'قالون',unifiedSanad:{routeId:'stale'}}]})}};
  const library={books:[{id:'book',title:'المستنير'}],people:[],chains:[
   {id:'parent',kind:'book'},
   {id:'route1',kind:'route',book_id:'book',book_chain_id:'parent',confirmed:true,reading_scope:'kubra',route_code:'1031',qari_id:'nafi',rawi:'قالون',title:'طريق تجريبي'},
   {id:'draft',kind:'route',book_id:'book',book_chain_id:'parent',confirmed:false,reading_scope:'kubra',route_code:'1032',qari_id:'nafi',rawi:'قالون',title:'مسودة'},
  ]};
- const extras={'../../lib/sanad-library':{loadBuilderLibrary:async()=>library},'../compat/context':{context:()=>({client:{}})},'../lib/bookBuilder':{builderPreview:(_book,_parent,_route,_people,prefix)=>({text:prefix+'، '+('عن راوي طريق الكتاب ').repeat(8),author:'مؤلف الكتاب',sources:['راوي الطريق']})},'zitejs/backend':{createEndpoint:v=>v},'zitejs/db':{zite:db},'../lib/admin':{isAppAdmin:async()=>admin},'../lib/assembleHoldingIjazah':{assembleHoldingIjazah:async h=>{captured=h;throw Error('fixture-stop-before-write');},resolveHoldingSanad:async h=>h.personalChain}};
+ const extras={'../../lib/sanad-library':{loadBuilderLibrary:async()=>library},'../compat/context':{context:()=>({client:{}})},'../lib/bookBuilder':{builderPreview:(_book,_parent,_route,_people,prefix)=>({text:prefix+'، '+('عن راوي طريق الكتاب ').repeat(8),author:'مؤلف الكتاب',sources:['راوي الطريق']})},'zitejs/backend':{createEndpoint:v=>v},'zitejs/db':{zite:db},'../lib/admin':{isAppAdmin:async()=>admin},'../lib/assembleHoldingIjazah':{assembleHoldingIjazah:async h=>{captured=h;if(readinessFixture)return {chain:h.personalChain,missing:[]};throw Error('fixture-stop-before-write');},resolveHoldingSanad:async h=>h.personalChain}};
  const endpoint=load('legacy/api/additionalShaykhs.ts',extras).default,call=async value=>endpoint.outputSchema.parse(await endpoint.execute({input:endpoint.inputSchema.parse(value),context:{user:{id:'fixture',email:'fixture@example.invalid'}}}));
  assert.equal((await call({action:'list'})).sheikhs[0].preparedShared.reviewed,false);
  const input={action:'saveShared',id:'guest',personalChain:updated,junction:'jazari',personalPersonIds:['00000000-0000-4000-8000-000000000001'],sharedSughraSanad:true};
  await assert.rejects(()=>call({...input,personalPersonIds:[]}),/اعتمد/);assert.equal(profileWrites,0);
  const result=await call(input);assert.equal(result.sheikhs[0].sharedSughraSanad,true);assert.equal(guest.personalChain,updated);assert.equal(records[0].sanadText,old,'old per-riwayah sources are retained');assert.equal(records[1].sanadText.includes('الشيخ الخاص'),true);
  const issuance={action:'issue',id:'guest',qariId:'nafi',rawi:'قالون',studentName:'طالب تجريبي',completionDate:'2026-11-05'};
+ readinessFixture=true;
+ const beforeReadiness=JSON.stringify({guest,records,profileWrites});
+ assert.deepEqual(await call({action:'issue',id:'guest',qariId:'nafi',readinessOnly:true}),{sheikhs:[]});
+ assert.equal(JSON.stringify({guest,records,profileWrites}),beforeReadiness,'readiness validates both narrators without writes');
+ readinessFixture=false;
  await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);assert.equal(captured.personalChain,updated);assert.equal(captured.unifiedSanad,undefined,'shared source must not retain a stale individual route reference');
  await assert.rejects(()=>call({...issuance,tariqNumber:'1030'}),/fixture-stop-before-write/);assert.equal(captured.personalChain,records[1].sanadText,'numbered routes retain their independent source');
  await call({...input,sharedSughraSanad:false});await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);assert.equal(captured.personalChain,old,'switching shared mode off restores retained per-riwayah sources');await call(input);
