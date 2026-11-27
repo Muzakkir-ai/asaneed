@@ -7,6 +7,9 @@ import {useEffect,useLayoutEffect,useMemo,useId,useRef,useState,type ReactNode} 
 import {arabicDigits} from '../lib/arabicDigits';
 import {combinedSanad} from '../lib/combinedSanad';
 import {sanadPositions} from '../lib/sanadPathLayout';
+import {sanadPresentation} from '../lib/sanadPresentation';
+import SanadNodePresentation from './SanadNodePresentation';
+import SanadSequence from './SanadSequence';
 import {groupSimilarSanadRoutes} from '../lib/sanadRouteGrouping';
 
 const initialCardHeight=80;
@@ -33,6 +36,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
  const currentIndices=useMemo(()=>exactRoute!==null?[exactRoute]:route===null?paths.map((_,i)=>i):routeGroups[route]??[],[exactRoute,route,paths,routeGroups]);
  const visibleIndices=useMemo(()=>focused===null?currentIndices:currentIndices.filter(index=>paths[index]?.includes(focused)),[currentIndices,focused,paths]);
  const shownPaths=visibleIndices.map(i=>paths[i]);
+ const presentation=sanadPresentation(shownPaths);
  // Re-layout the selected saved routes instead of retaining faded unrelated
  // branches and their empty lanes. Keep original route membership indices.
  const graph=useMemo(()=>{
@@ -93,7 +97,7 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
   <p role="status" className="text-sm text-muted-foreground">تعذر تكوين رسم واحد لهذه المسارات؛ قد تحتوي على تكرار أو حلقة أو اتصال غير متوافق. تُعرض أدناه المسارات المحفوظة منفصلة دون إنشاء روابط جديدة.</p>
   {paths.map((path,i)=><section key={i} className="space-y-2 rounded-lg border p-2" aria-label={'المسار '+arabicDigits(i+1)}>
    <h4 className="text-sm font-semibold">المسار {arabicDigits(i+1)}</h4>
-   {path.map((id,j)=><div key={i+'-'+j+'-'+id}>{renderPerson(id,[j+1])}</div>)}
+   <SanadSequence path={path} renderPerson={renderPerson} preview label={'المسار '+arabicDigits(i+1)}/>
   </section>)}
  </section>;
  const points=new Map(graph.rows.flatMap((row,rank)=>row.map(id=>[id,{x:centers.get(id)!,y:rank}] as const)));
@@ -223,9 +227,9 @@ export default function CombinedSanadView({paths,routeLabels,renderPerson,source
       </g>;
      })}
     </svg>
-    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={((route!==null||exactRoute!==null)&&!shownPaths.some(path=>path.includes(id))?'absolute opacity-40':'absolute')+(spacious?' [&_.narrator-person-card]:shadow-sm [&_.narrator-person-card_p]:text-[15px] [&_.narrator-person-card_p]:leading-7':'')} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
+    {[...points].map(([id,point])=><div key={id} data-combined-narrator={id} dir="rtl" className={((route!==null||exactRoute!==null)&&!shownPaths.some(path=>path.includes(id))?'absolute opacity-40':'absolute')+(spacious?' [&_.narrator-person-card]:shadow-sm':'')} style={{left:point.x-cardWidth/2,top:point.y,width:cardWidth}}>
      <button type="button" data-trace-person={id} aria-label="تتبّع مسارات الراوي" aria-pressed={focused===id} title="تتبّع مسارات الراوي" onClick={()=>setFocused(current=>current===id?null:id)} style={{right:19,top:48,width:20,height:20,minWidth:20,maxWidth:20,minHeight:20,maxHeight:20,padding:0}} className={"absolute z-10 inline-flex items-center justify-center rounded-md border bg-background/95 text-primary shadow-sm transition-colors hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 "+(focused===id?"border-primary bg-primary/10":"border-primary/20")}><Waypoints size={12} strokeWidth={2} aria-hidden="true"/></button>
-     <div className={"[&>article>div:first-child]:min-h-20 [&>article>div>div:last-child]:hidden"+(focused!==null&&!tracedNodes.has(id)?' opacity-50':'')}>{renderPerson(id,sanadPositions(shownPaths,id))}</div>
+     <div className={"[&>article>div:first-child]:min-h-20 [&>article>div>div:last-child]:hidden"+(focused!==null&&!tracedNodes.has(id)?' opacity-50':'')}><SanadNodePresentation labels={presentation.get(id)||[]} preview>{renderPerson(id,sanadPositions(shownPaths,id))}</SanadNodePresentation></div>
     </div>)}
    </div>
   </div>
