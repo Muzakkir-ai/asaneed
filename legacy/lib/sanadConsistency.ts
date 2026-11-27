@@ -3,7 +3,7 @@ import {QURRA} from './qurra';
 import {readingIdentityLink} from './qurraRouteIdentities';
 import type {BuilderLibrary,BuilderPerson,BuilderChain} from './bookBuilder';
 
-export type ConsistencyIssue={code:string;severity:'error'|'review'|'info';message:string;personId?:string;branch?:number};
+export type ConsistencyIssue={code:string;severity:'error'|'review'|'info';message:string;personId?:string;personName?:string;branch?:number};
 export type ConsistencyEntry={id:string;kind:'route'|'holding'|'reading';label:string;issues:ConsistencyIssue[];status:'error'|'review'|'consistent';pathsChecked:number;pathsMatched:number};
 export type LinkedSanadRecord={id:string;kind:string;payload:Record<string,unknown>};
 const string=(x:unknown)=>typeof x==='string'?x:'';
@@ -13,12 +13,13 @@ const namesFor=(p:BuilderPerson)=>[...new Set([normalized(p.name),...(p.aliases|
 /** Only whole-word name witnesses from the active registry; never fuzzy-merge
  * identities. A lexical match is not evidence of a direct transmission. */
 export function nameWitnesses(people:readonly BuilderPerson[]){
+ const peopleById=new Map(people.map(p=>[p.id,p.name]));
  const names=new Map<string,string[]>(),owners=new Map<string,Set<string>>();
  for(const person of people.filter(p=>!p.archived)){
   const keys=namesFor(person);names.set(person.id,keys);
   for(const k of keys){const set=owners.get(k)||new Set<string>();set.add(person.id);owners.set(k,set);}
  }
- return {names,owners};
+ return {names,owners,peopleById};
 }
 export function orderedNameEvidence(ids:readonly string[],body:string,witnesses:ReturnType<typeof nameWitnesses>){
  const source=' '+normalized(body)+' ';let cursor=0;
@@ -30,15 +31,17 @@ export function orderedNameEvidence(ids:readonly string[],body:string,witnesses:
   if(positions.length){cursor=Math.min(...positions);continue;}
   const has=(k:string)=>source.includes(' '+k+' ');
   const code=safe.some(has)?'name-out-of-order':keys.some(has)?'ambiguous-name':'name-not-found';
-  issues.push({code,severity:'review',personId:id,message:code==='name-out-of-order'?'الاسم موجود خارج الموضع المتوقع أو تكرر بلا شاهد مستقل':code==='ambiguous-name'?'اسم مشترك بين هويات؛ يلزم تعيين الراوي':'لم يُعثر على الاسم أو بديل فريد في النص المحدد'});
+  issues.push({code,severity:'review',personId:id,personName:witnesses.peopleById.get(id),message:code==='name-out-of-order'?'الاسم موجود خارج الموضع المتوقع أو تكرر بلا شاهد مستقل':code==='ambiguous-name'?'اسم مشترك بين هويات؛ يلزم تعيين الراوي':'لم يُعثر على الاسم أو بديل فريد في النص المحدد'});
  }
  return {matched:ids.length-issues.length,issues};
 }
 export function routeSourceSections(lib:BuilderLibrary,route:BuilderChain){
  const sections=lib.continuationSections||[];
  const book=lib.books.find(b=>b.id===route.book_id&&!b.archived);
- const own=sections.filter(s=>sanadKey(s.title)===sanadKey('CHAIN:'+route.qari_id+':'+route.rawi)&&s.body.trim());
- const shared=book?.title.includes('الشاطبية')?sections.filter(s=>s.title==='من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة'&&s.body.trim()):[];
+ // Standard CHAIN sections are not automatically evidence for other books/turuq.
+ const standard=!!book&&/الشاطبية|الدرة/u.test(sanadKey(book.title))&&route.reading_scope!=='kubra';
+ const own=standard?sections.filter(s=>sanadKey(s.title)===sanadKey('CHAIN:'+route.qari_id+':'+route.rawi)&&s.body.trim()):[];
+ const shared=standard&&book?.title.includes('الشاطبية')?sections.filter(s=>s.title==='من الإمام ابن الجزري إلى الإمام الداني — القراء السبعة'&&s.body.trim()):[];
  return {own,shared};
 }
 function result(id:string,kind:ConsistencyEntry['kind'],label:string,issues:ConsistencyIssue[],pathsChecked=0,pathsMatched=0):ConsistencyEntry{
@@ -64,7 +67,7 @@ export function validateRoute(lib:BuilderLibrary,route:BuilderChain,witnesses=na
  const q=QURRA.find(q=>q.id===route.qari_id);
  if(!q||!q.rawis.some(r=>sanadKey(r)===sanadKey(route.rawi)))add('invalid-reading','error','القارئ والرواية غير متطابقين');
  const ids=new Set([...(book?[book.author_id]:[]),...(parent?.branches.flat()||[]).map(n=>n.person_id),...route.branches.flat().map(n=>n.person_id)]);
- for(const id of ids){const p=lib.people.find(p=>p.id===id);if(!p||p.archived||!p.name.trim())issues.push({code:'invalid-person',severity:'error',personId:id,message:'هوية راوٍ مفقودة أو مؤرشفة أو بلا اسم'});}
+ for(const id of ids){const p=lib.people.find(p=>p.id===id);if(!p||p.archived||!p.name.trim())issues.push({code:'invalid-person',severity:'error',personId:id,personName:p?.name,message:'هوية راوٍ مفقودة أو مؤرشفة أو بلا اسم'});}
  if(!route.branches.length||!parent?.branches.length)add('missing-branches','review','لا توجد فروع محفوظة كافية للمقارنة');
  // A direct/empty book segment is legitimate; do not infer that it has teachers.
  if(parent&&!parent.confirmed)add('parent-unreviewed','review','إسناد الكتاب غير معتمد');
@@ -78,8 +81,8 @@ export function validateRoute(lib:BuilderLibrary,route:BuilderChain,witnesses=na
  }else if(!route.continuation.trim())add('missing-continuation','review','تتمة السند غير مكتملة');
  else add('legacy-continuation','review','تتمة نصية محفوظة بلا مراجع منظمة؛ لا تستبدل النص');
  const {own,shared}=routeSourceSections(lib,route);
- if(own.length!==1)add('source-selection','review',own.length?'أكثر من مصدر للرواية؛ يلزم تعيين المصدر':'لا يوجد مصدر محدد للرواية');
- else if(!readingIdentityLink(sections,lib.people,route.qari_id,route.rawi))add('reading-identity','review','لم تتعين هوية القارئ والراوي من عبارتي المصدر');
+ if(own.length!==1)add('source-selection','review',own.length?'أكثر من مصدر للرواية؛ يلزم تعيين المصدر':'لا يوجد مصدر معيّن لهذا الكتاب والطريق');
+ if(!readingIdentityLink(sections,lib.people,route.qari_id,route.rawi))add('reading-identity','review','لم تتعين هوية القارئ والراوي من عبارتي المصدر');
  const paths=routePaths(lib,route);let matched=0,checked=0;
  // A known two-part source is scanned in order, never mixed with unrelated
  // reading texts. This checks lexical coverage only, not branch equivalence.
