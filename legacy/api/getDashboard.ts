@@ -30,24 +30,21 @@ export default createEndpoint({
   }),
   execute: async ({ context,input }) => {
     const admin=(await isAppAdmin(context.user.email));
-    const [{ records: qiraat }, { records: asaneed }, { records: certs },{records:snapshots},users,extras,holdings,profiles] = await Promise.all([
+    const [{ records: qiraat }, { records: asaneed }, { records: certs },{records:snapshots},users,extras,profiles] = await Promise.all([
       zite.qiraat.findAll({ limit: 2000 }),
       // Admins list certificates from all issuers, so resolve their linked sanads as well.
       // Only the signed-in issuer's sanads are exposed in the editable asaneed list.
-      zite.asaneed.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
+      allPages(offset=>zite.asaneed.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})),
       input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificates.findAll({...(admin?{}:{filters:{shaykh:context.user.id}}),offset,limit:2000})):zite.certificates.findAll(admin?{limit:2000}:{ filters: { shaykh: context.user.id }, limit: 2000 }),
       input.metadataOnly?Promise.resolve({records:[]}):input.listPage?allPages(offset=>zite.certificateSnapshots.findAll({...(admin?{}:{filters:{ownerId:context.user.id}}),offset,limit:2000})):zite.certificateSnapshots.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
       admin?zite.auth.findAllUsers({appIds:['qkvfmeznbu'],limit:2000}):Promise.resolve({records:[context.user]}),
       zite.additionalShaykhs.findAll({limit:2000}),
-      zite.ijazahHoldings.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
       zite.shaykhPrintProfiles.findAll(admin?{limit:2000}:{filters:{ownerId:context.user.id},limit:2000}),
     ]);
     const directoryAccounts=admin?await requestContext().client.rpc('list_application_accounts'):null;
     if(directoryAccounts?.error)throw Error(directoryAccounts.error.message);
     const directoryProfiles=admin?await requestContext().client.from('issuers').select('id,display_name,print_profile'):null;
     if(directoryProfiles?.error)throw Error(directoryProfiles.error.message);
-    const directoryHoldings=admin?await requestContext().client.from('workspace_records').select('owner:payload->>ownerId').eq('kind','ijazahHoldings'):null;
-    if(directoryHoldings?.error)throw Error(directoryHoldings.error.message);
     const allAccounts:{id:string;name:string;email?:string}[]=admin?(directoryAccounts?.data||[]).filter((a:any)=>a.active&&a.role!=='student').map((a:any)=>({id:a.auth_user_id,name:a.display_name,email:a.email})):users.records;
     const accountNames=allAccounts.map(u=>({id:u.id,name:personalIssuerName(u.name||u.email||'',(directoryProfiles?.data||[]).find((i:any)=>i.print_profile?.personalAccount===(directoryAccounts?.data||[]).find((a:any)=>a.auth_user_id===u.id)?.id)?.print_profile?.printedName||profiles.records.find(p=>p.ownerId===u.id)?.printedName)}));
     const shaykhs=accountNames;
