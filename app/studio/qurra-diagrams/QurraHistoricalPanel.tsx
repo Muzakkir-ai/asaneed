@@ -34,9 +34,9 @@ export default function QurraHistoricalPanel({section}:{
      renderPerson={(id,positions)=>{
       const label=id==='prophet'?'النبي ﷺ'
        :id.startsWith('sahabi:')?'صحابي'
-       :section.kind==='rawi-imam'&&id==='imam:'+section.qariId?'إمام القراءة'
+       :section.kind==='rawi-imam'&&id===(section.qariPersonId||'imam:'+section.qariId)?'إمام القراءة'
        :section.kind==='rawi-imam'&&section.paths.some(path=>path[0]===id)?'صاحب الرواية'
-       :section.kind==='imam-sahaba'&&id==='imam:'+section.qariId?'إمام القراءة'
+       :section.kind==='imam-sahaba'&&id===(section.qariPersonId||'imam:'+section.qariId)?'إمام القراءة'
        :undefined;
       return <BranchPersonCard name={name(id)} label={label} number={positions[0]??null} secondaryNumbers={positions.slice(1)}/>;
      }}/>
