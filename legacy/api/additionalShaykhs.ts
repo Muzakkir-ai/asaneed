@@ -36,7 +36,7 @@ export default createEndpoint({
    action:z.enum(['list','save','saveShared','issue']).default('list'),continuationId:z.string().uuid().nullable().optional(),id:z.string().optional(),
    name:z.string().optional(),qualification:z.string().optional(),teachingRole:z.string().optional(),
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
-   libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),personalSanadIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
+   libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),personalSanadIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),readinessOnly:z.boolean().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
    tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
@@ -119,7 +119,7 @@ export default createEndpoint({
    const guest=input.id?await zite.additionalShaykhs.findOne({id:input.id}).catch(()=>null):null;
    if(!guest)throw new Error('Select an additional sheikh');
    const known=serialize(guest);
-   if(!input.previewOnly&&(!input.studentName?.trim()||!input.completionDate))throw new Error('Student and completion date required');
+   if(!input.previewOnly&&!input.readinessOnly&&(!input.studentName?.trim()||!input.completionDate))throw new Error('Student and completion date required');
    const imam=QURRA.find(q=>q.id===input.qariId);
    if(!imam)throw new Error('اختر قراءة صحيحة');
    if((input.personalSanadIds&&(!input.rawi||input.personalSanadId))||(input.previewOnly&&!input.personalSanadIds))throw Error('اختر أسانيد رواية واحدة');
@@ -192,6 +192,7 @@ export default createEndpoint({
     const {holding,tariqName,bookAuthor,routeSource}=first;
     return {rawi,assembled,previewBranches:input.previewOnly?sources.map(s=>({...s.branch,narratorCount:sanadNarratorCount(s.holding,s.branch,sections)})):undefined,orderedSanads,unifiedHolding:!orderedSanads&&holding.unifiedSanad?holding:undefined,tariqName,bookAuthor,routeSource};
    }));
+   if(input.readinessOnly)return {sheikhs:[]};
    if(input.previewOnly)return {sheikhs:[],preview:{chain:entries[0].assembled.chain,branches:entries[0].previewBranches!}};
    const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
    const number=await nextShahadaNumber();
