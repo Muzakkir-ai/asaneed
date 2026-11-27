@@ -475,3 +475,11 @@
  .zite-app .certificate-entry-dialog .flex.items-center.justify-between{flex-wrap:wrap}
 }
 @media screen and (prefers-reduced-motion:reduce){.zite-app .certificate-entry-dialog *{transition-duration:0s!important;animation-duration:.01ms!important}}
+
+/* Shared screen controls, excluding print and artwork preview containers. */
+@media screen {
+ .zite-app :is(.workspace-shell,.editor-page) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea,[role=combobox]):not(:is(.certificate-heading-preview *,.palette-preview *,.certificate-preview-dialog *)){border-radius:8px;box-shadow:none;max-width:100%;min-width:0}
+ .zite-app :is(.workspace-shell,.editor-page) [data-workspace-button]:not(:is(.certificate-preview-dialog *,.certificate-heading-preview *)){box-shadow:none}
+ .zite-app [data-sonner-toaster]{--offset-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
+@media screen and (max-width:767px){.zite-app .editor-page-header{flex-wrap:wrap;min-width:0}.zite-app .editor-page-actions{flex-wrap:wrap;min-width:0}.zite-app .editor-page-body{min-width:0;overflow-wrap:anywhere}}
