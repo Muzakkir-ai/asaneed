@@ -24,7 +24,7 @@ export default createEndpoint({
   authenticated: true,
   inputSchema: z.object({
     id: z.string().optional(),
-    studentName: z.string().min(1),
+    studentName: z.string().min(1),studentId:z.string().uuid().optional(),
     completionDate: z.string().min(1),
     hijriDayOffset:z.number().int().min(-2).max(2).default(0),
     sanadId: z.string().min(1),
@@ -48,7 +48,7 @@ export default createEndpoint({
         throw new Error('إصدار الشهادة لرواية واحدة فقط؛ اختر رواية محددة من إجازاتك');
     }
     const record = {
-      studentName: input.studentName.trim(),
+      studentName: input.studentName.trim(),studentId:input.studentId,
       completionDate: input.completionDate,
       hijriDayOffset:input.hijriDayOffset,
       sanad: input.sanadId,
@@ -64,13 +64,13 @@ export default createEndpoint({
       if(previousId!==input.sanadId)throw new Error('لا يمكن تغيير الإجازة في شهادة صدرت بالفعل؛ أصدر شهادة جديدة حفاظًا على سندها الأصلي');
       await zite.certificates.update({ id: input.id, record });
       await ensureCertificateRegistration(input.id);
-      await rememberStudent(uid, input.studentName);
+      if(!input.studentId)await rememberStudent(uid, input.studentName);
       return { id: input.id };
     }
     const shahadaNumber=await nextShahadaNumber();
     const created = await zite.certificates.create({ record: {...record,shahadaNumber,publicationStatus:'draft'} });
     try{await ensureCertificateRegistration(created.id);}catch(error){await zite.certificates.delete({id:created.id}).catch(()=>{});throw error;}
-    await rememberStudent(uid, input.studentName);
+    if(!input.studentId)await rememberStudent(uid, input.studentName);
     return { id: created.id };
   },
 });

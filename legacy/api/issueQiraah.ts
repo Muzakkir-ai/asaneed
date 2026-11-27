@@ -12,7 +12,7 @@ import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 export default createEndpoint({
   description:'Issue two distinct narrator certificates for one qiraah on the same completion date',
   authenticated:true,
-  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),studentName:z.string().trim().min(2),completionDate:z.string().min(1),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
+  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),studentName:z.string().trim().min(2),studentId:z.string().uuid().optional(),completionDate:z.string().min(1),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
   outputSchema:z.object({ids:z.array(z.string())}),
   execute:async({input,context})=>{
     const admin=(await isAppAdmin(context.user.email));
@@ -55,7 +55,7 @@ export default createEndpoint({
         const sourceSignature=JSON.stringify({chain:assembled.chain,sectionIds:assembled.sectionIds,holdingId:holding.id,rawi});
         if(previous)await zite.preparedIjazahs.update({id:previous.id,record:{sanadId:sanad.id,sourceSignature}});
         else await zite.preparedIjazahs.create({record:{name:rawi,ownerId:owner,holdingId:holding.id,rawi,sanadId:sanad.id,sourceSignature}});
-        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,shahadaNumber:nextNumber+index,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
+        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),studentId:input.studentId,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,shahadaNumber:nextNumber+index,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
         created.push({id:cert.id});
         await ensureCertificateRegistration(cert.id);
       }
@@ -67,7 +67,7 @@ export default createEndpoint({
       throw error;
     }
     const studentName=input.studentName.normalize('NFKC').trim().replace(/\s+/gu,' ');
-    try{
+    if(!input.studentId)try{
       const {records:students}=await zite.students.findAll({filters:{ownerId:owner},limit:2000});
       if(!students.some(s=>(s.name||'').normalize('NFKC').trim().replace(/\s+/gu,' ').toLocaleLowerCase('ar')===studentName.toLocaleLowerCase('ar')))
         await zite.students.create({record:{name:studentName,ownerId:owner}});
