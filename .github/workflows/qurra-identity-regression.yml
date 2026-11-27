@@ -28,6 +28,8 @@ jobs:
       - run: node /tmp/qurra-identities/tests/qurra-route-identities.test.js
       - run: npx tsc --ignoreConfig tests/sanad-presentation.test.ts --outDir /tmp/sanad-presentation --module commonjs --target es2022 --esModuleInterop --skipLibCheck --types node --noEmitOnError
       - run: node /tmp/sanad-presentation/tests/sanad-presentation.test.js
+      - run: npx tsc --ignoreConfig tests/sanad-consistency.test.ts --outDir /tmp/sanad-consistency --module commonjs --target es2022 --resolveJsonModule --esModuleInterop --skipLibCheck --types node --noEmitOnError
+      - run: node /tmp/sanad-consistency/tests/sanad-consistency.test.js
       - run: npm run test:personal-sanads
       - run: node tests/ordered-sanads.test.cjs
       - run: npm run test:sanad
