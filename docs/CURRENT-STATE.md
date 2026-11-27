@@ -1,3 +1,23 @@
+## Qurra stage and route-picker audit — 10 November 2026
+
+Draft branch based on GitHub main `292dc0d5dbd27556b4004051b782cc369946c21d`, also the verified READY production SHA at audit time. This branch changes display labels and counts only. A repeated witness of one route is selectable once by its saved route ID. If distinct route IDs have the same display label, the picker uses marked صاحب الطريق narrators and the saved route number. A shared source or identical title is not sufficient evidence to merge records. Abū ʿAmr uses الدوري and al-Kisāʾī uses حفص الدوري in route labels. The all-ten overview distinguishes drawn ID sequences, saved route records and represented slots out of the 20 canonical riwāyāt. The two al-Dūrī slots still refer to one historical person.
+
+| Stage | Input and boundary |
+| --- | --- |
+| Ibn al-Jazarī → all ten | Saved parent book chain plus its explicit route. Identical ordered ID sequences draw once, and every represented route record appears under advanced sources. The graph can end before the rāwī. |
+| Ibn al-Jazarī → al-Dānī | Shared saved prefix through the uniquely resolved al-Dānī ID in a seven-reader witness. Identical prefixes draw once, without a reader/route picker. |
+| Al-Dānī → seven | A saved seven-reader route segment containing the uniquely resolved al-Dānī ID and a following narrator. The secondary Other routes control shows saved seven-reader branches without that usable downstream segment. |
+| Ibn al-Jazarī → three | Saved parent and route for the three-reader catalog family. |
+| Rāwī → imam | Selected `CHAIN:<qari>:<rawi>` section. The indexed graph needs an identifiable صاحب الرواية clause and a path to the selected imam. The existing linear parser can also draw an explicitly written unbranched suffix. |
+| Imam → Companions | Selected `CHAIN:<qari>:sahaba` and its section-scoped narrator index. The indexed paths are a review view. |
+| Companions → Prophet ﷺ | Selected `CHAIN:<qari>:prophet`. Graph creation requires a recitation clause and a text witness for each indexed Companion. |
+
+Reproduction on main uses a synthetic library with two Isḥāq and two Idrīs route IDs under Khalaf al-Bazzār. Select Ibn al-Jazarī → three and Khalaf al-Bazzār. Main shows two distinct labels for four IDs. The regression checks four labels, their marked source evidence and selection by the original IDs. The synthetic Warsh source `synthetic-warsh-fallback` (`CHAIN:nafi:ورش`) has no صاحب الرواية clause, so it remains saved text under review with zero drawn links. The source key now appears alongside the original text, for comparison with the shared-text record.
+
+Production fallback route IDs and individual missing junctions require authenticated source review. The repository references for Khalaf preserve two branches in each of the Isḥāq and Idrīs import plans. Those plans do not establish whether the reported live options are separate saves, which paths they contain, or which shared-text sections fell back. For the Chat 08 scholarly handoff, compare each affected saved route ID with its `CHAIN` source ID, exact clause and indexed endpoints. Keep unresolved matches pending review. In particular, the imam-to-Companions index can supply pre-indexed links for a nonempty matching section title, so a rendered graph alone does not corroborate every link against the selected prose.
+
+Local Chromium passed the stage, picker, fallback and synthetic route-edit checks at desktop and mobile sizes. Studio integration checks passed. The existing `npm run test:sanad` fan-in assertion fails on the same mixed-rank routing fixture on untouched main and this branch. Routing belongs to Chat 06.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.

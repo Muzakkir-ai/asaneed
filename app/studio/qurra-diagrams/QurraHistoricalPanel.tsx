@@ -53,6 +53,7 @@ export default function QurraHistoricalPanel({section}:{
    </div>}
   {showSource&&<div className="space-y-2 rounded-lg border bg-muted/20 p-3">
    <p className="text-xs font-semibold text-muted-foreground">النص المحفوظ كما هو (دون تغيير)</p>
+   <bdi dir="ltr" className="block break-all text-xs text-muted-foreground">{section.title}</bdi>
    <p className="whitespace-pre-wrap break-words text-sm leading-8">{section.body}</p>
   </div>}
   {section.paths.length>0&&section.branches.length>1&&<details className="rounded-md border px-3 py-2 text-sm">
