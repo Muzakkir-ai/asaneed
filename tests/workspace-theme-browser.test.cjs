@@ -36,12 +36,14 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   const narratorResults=page.getByRole('listbox',{name:'الرواة المحفوظون'}),narratorChoices=narratorResults.getByRole('option');
   assert.equal(await narratorChoices.count(),10,'unordered vocalized words find saved people');
   const narratorPopover=narratorResults.locator('..');
-  assert.ok(await narratorPopover.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1&&e.scrollHeight>=e.clientHeight;}),'mobile narrator narratorResults stay within viewport');
+  assert.ok(await narratorPopover.evaluate(e=>{const r=e.getBoundingClientRect();return r.left>=-1&&r.right<=innerWidth+1&&e.scrollHeight>=e.clientHeight;}),'mobile narrator results stay within viewport');
   await page.screenshot({path:path.join(out,'narrator-review-mobile.png')});
   await narratorChoices.first().click();
   assert.ok(await review.getByText('تم اختيار راوٍ محفوظ',{exact:true}).isVisible());
   assert.ok(await review.getByRole('button',{name:'إنشاء جديد',exact:true}).isDisabled(),'saved identity cannot be created again');
-  assert.equal(await narratorResults.count(),0,'choosing a saved person closes the list');
+  assert.equal(await narratorSearch.getAttribute('aria-expanded'),'false','selection closes the combobox immediately');
+  await narratorResults.waitFor({state:'hidden',timeout:5000});
+  assert.equal(await narratorResults.count(),0,'list is unmounted after the closing animation');
   const jointReview=page.getByTestId('joint-level-review');assert.deepEqual(await jointReview.locator('[data-narrator-level]').evaluateAll(els=>els.map(e=>e.dataset.narratorLevel)),['١','٢','٢','٣'],'parallel teachers have the same path position in separate lanes');await jointReview.screenshot({path:path.join(out,'joint-narrator-levels-mobile.png')});
   const graphReview=page.getByTestId('prepared-branch-review'),allView=graphReview.getByRole('button',{name:'عرض الكل'});
   assert.equal(await graphReview.locator('[data-sanad-mode]').getAttribute('data-sanad-mode'),'view');assert.equal(await graphReview.getByRole('button',{name:/تعديل الراوي/}).count(),0,'view has no narrator edit icons');assert.equal(await graphReview.getByText('بناء السند الشخصي — إضافة الرواة',{exact:true}).count(),0);await graphReview.getByRole('button',{name:'تعديل السند',exact:true}).click();assert.ok(await graphReview.getByText('بناء السند الشخصي — إضافة الرواة',{exact:true}).isVisible());
