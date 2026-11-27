@@ -199,8 +199,8 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const errors = parsed.success ? {} : parsed.error.flatten().fieldErrors;
   const err = (k: keyof typeof errors) => touched && errors[k]?.[0] && <p className="text-sm text-destructive">{errors[k]?.[0]}</p>;
 
-  const initialForm=useRef(JSON.stringify(form));
-  const dirty=JSON.stringify(form)!==initialForm.current||!!orderedSelection;
+  const initialForm=useRef(JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId]));
+  const dirty=JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId])!==initialForm.current||!!orderedSelection;
   useEffect(()=>{if(!dirty)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   const closeSafely=(close:()=>void)=>{if(savingRef.current)return;if(!dirty||window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))close();};
   const submit = async () => {
