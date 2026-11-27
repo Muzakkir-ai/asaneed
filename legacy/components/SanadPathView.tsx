@@ -18,7 +18,7 @@ export default function SanadPathView({paths,renderPerson,afterPerson,unconnecte
  const routeLabel=(index:number)=>'المسار '+arabicDigits((selected ? pathIndex ?? index : index)+1);
  const layout=sanadPathLayout(visible,true);
  const labels=sanadPresentation(visible);
- const networkAvailable=showPaths&&!unconnected&&paths.length>1;
+ const networkAvailable=showPaths&&!unconnected&&paths.length>1&&paths.every(path=>path.length>0);
  const showNetwork=networkAvailable&&network;
  const gap=(id:string,connector:'arrow'|'stem'|null)=><SanadConnectorGap connector={connector} action={afterPerson?.(id)}/>;
  function blocks(items:SanadPathBlock[],after=false):ReactNode{
