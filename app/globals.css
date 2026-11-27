@@ -211,3 +211,10 @@ html[lang=ur] .auth-content form>button { font-size:1.3rem; line-height:1.8; min
 html[lang=ur] .auth-divider { margin:20px 0 4px; line-height:1.5; }
 html[lang=ur] .auth-panel .auth-links { margin-top:18px; }
 html[lang=ur] .auth-panel .auth-back { margin-bottom:0; margin-top:20px; }
+
+/* Public page controls only; studio and print are intentionally excluded. */
+@media screen {
+ .verification-page .homepage-login{background:var(--accent);color:white;box-shadow:none}
+ .verification-page .language-switcher button[aria-pressed=true],.auth-brand .language-switcher button[aria-pressed=true]{background:var(--accent);color:white}
+ .verification-page input,.auth-panel input,.auth-panel button,.verification-page .verify-button{border-radius:8px;box-shadow:none}
+}
