@@ -82,7 +82,7 @@ export default createEndpoint({
           notes: c.notes ?? '',
           registrationNumber:c.registrationNumber||'',
           certificateNumber: c.shahadaNumber ?? c.certificateNumber ?? 0,
-          publicationStatus:c.publicationStatus==='draft'?'draft':'final' as const,
+          publicationStatus:c.publicationStatus==='draft'?('draft' as const):('final' as const),
           shaykhId:first(c.shaykh),
           additionalShaykh:c.additionalShaykh||'',
           issuerKey:c.additionalShaykh?'guest:'+c.additionalShaykh:'user:'+first(c.shaykh),
