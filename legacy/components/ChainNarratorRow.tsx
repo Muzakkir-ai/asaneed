@@ -1,6 +1,7 @@
 import NarratorManagement from './NarratorManagement';
 import {workspaceHeaders} from '../lib/workspaceSelection';
 import BranchPersonCard from './BranchPersonCard';
+import {useSanadNodePresentation} from './SanadNodePresentation';
 import {useId,useState} from 'react';
 import {ArrowUp,ArrowDown,Trash2,Pencil,ChevronUp} from 'lucide-react';
 import {Button} from '@project/components/ui/button';
@@ -8,12 +9,14 @@ import type {BuilderLibrary,BuilderPerson} from '../lib/bookBuilder';
 import NarratorPicker from './NarratorPicker';
 import NarratorShortName from './NarratorShortName';
 type Node={editorKey?:string;name:string;source:boolean;personId?:string;sourceLevel?:'upper'|'branch'|null};
-export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,sourceMarker,badgeLabels,connected,onChange,onCreate,onShortName,onPersonUpdated,onMove,onRemove,onParallel,lockedLayout=false,initialEditing,readOnly=false}:{node:Node;index:number;count:number;number?:number|null;sourceMarker?:string;badgeLabels?:string[];connected?:boolean;lockedLayout?:boolean;initialEditing?:boolean;readOnly?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onPersonUpdated?:(sourceId:string,person:BuilderPerson)=>void;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
+export default function ChainNarratorRow({node,index,count,lib,previous,next,roles,number,sourceMarker,badgeLabels,connected,onChange,onCreate,onShortName,onPersonUpdated,onMove,onRemove,onParallel,lockedLayout=false,initialEditing,readOnly:requestedReadOnly=false}:{node:Node;index:number;count:number;number?:number|null;sourceMarker?:string;badgeLabels?:string[];connected?:boolean;lockedLayout?:boolean;initialEditing?:boolean;readOnly?:boolean;lib:BuilderLibrary;previous?:string;next?:string;roles:boolean;onChange:(value:Node)=>void;onCreate:(name:string,alias:string,distinct:boolean)=>Promise<BuilderPerson>;onShortName?:(id:string,value:string)=>Promise<void>;onPersonUpdated?:(sourceId:string,person:BuilderPerson)=>void;onMove:(direction:-1|1)=>void;onRemove:()=>void;onParallel?:()=>void}){
+ const presentation=useSanadNodePresentation();
+ const readOnly=requestedReadOnly||presentation?.preview===true;
  const ordinal=number===undefined?index+1:number;
  const [editing,setEditing]=useState(initialEditing??!node.personId),panel=useId();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
- return <BranchPersonCard editorKey={node.editorKey} name={node.name} number={ordinal} badgeLabels={badgeLabels} label={node.source?'صاحب الطريق':sourceMarker} connected={person?connected:undefined}
+ return <BranchPersonCard editorKey={presentation?.preview?undefined:node.editorKey} name={node.name} number={ordinal} badgeLabels={badgeLabels} label={node.source?'صاحب الطريق':sourceMarker} connected={person?connected:undefined}
  controls={!readOnly&&<Button type="button" variant={editing?'secondary':'ghost'} size="sm" className="w-7 shrink-0 p-0" aria-label={`${editing?'إغلاق تعديل':'تعديل'} الراوي ${ordinal??index+1}`} aria-expanded={editing} aria-controls={panel} onClick={()=>setEditing(v=>!v)}>{editing?<ChevronUp aria-hidden="true" className="h-4 w-4"/>:<Pencil aria-hidden="true" className="h-4 w-4"/>}</Button>}>
  {!readOnly&&editing&&<div id={panel} className="space-y-3 border-t p-3">
  <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>{onChange({...node,...value});if(value.personId)setEditing(false);}}/>
