@@ -90,6 +90,26 @@ const {chromium}=require('playwright');
    assert.equal(await graph('book').locator('.sanad-graph-merge .sanad-graph-arrow:visible').count(),width===1100?2:0);
    assert.ok(await page.locator('main.zite-app').evaluate(e=>e.scrollWidth<=e.clientWidth));
   }
+  // All editors and saved viewers use the same position badges and network renderer.
+  for(const width of [1100,390,320]){
+   await page.setViewportSize({width,height:900});
+   const book=graph('book');
+   const flowBadges=()=>book.locator('[data-sanad-node] [data-narrator-level]:visible,[data-sanad-node] [data-narrator-secondary-level]:visible').evaluateAll(nodes=>nodes.map(n=>[n.textContent,n.getAttribute('data-parallel-label')||''].join(':')).sort());
+   const expected=await flowBadges();
+   assert.ok(expected.includes('٢:أ')&&expected.includes('٢:ب'),'parallel narrators share their actual level with distinct letters');
+   for(const id of ['reading','saved','personal']){
+    assert.deepEqual(await graph(id).locator('[data-sanad-node] [data-narrator-level]:visible,[data-sanad-node] [data-narrator-secondary-level]:visible').evaluateAll(nodes=>nodes.map(n=>[n.textContent,n.getAttribute('data-parallel-label')||''].join(':')).sort()),expected,id+' same level badges');
+   }
+   await book.getByRole('button',{name:'معاينة الرسم الشبكي',exact:true}).click();
+   const preview=book.locator('[data-sanad-viewport]');
+   await preview.waitFor();
+   assert.equal(await preview.locator('[data-combined-narrator]').count(),6,'preview shares meeting node once');
+   assert.deepEqual(await preview.locator('[data-narrator-level],[data-narrator-secondary-level]').evaluateAll(nodes=>nodes.map(n=>[n.textContent,n.getAttribute('data-parallel-label')||''].join(':')).sort()),expected,'preview and editable flow use identical numeric and letter badges');
+   assert.equal(await preview.getByRole('button',{name:/تعديل الراوي|إضافة راو|حذف الراوي/}).count(),0,'network preview never exposes editing actions');
+   assert.ok(await page.locator('main.zite-app').evaluate(e=>e.scrollWidth<=e.clientWidth),'network preview stays inside mobile viewport');
+   await book.getByRole('button',{name:'العودة إلى ترتيب السند',exact:true}).click();
+   assert.deepEqual(await flowBadges(),expected,'return preserves the original layout and badges');
+  }
   // Straight connections are preferable whenever card interiors share an
   // unobstructed vertical corridor. An intervening card still forces a bypass.
   const straightCases=page.getByTestId('straight-port-regression');
