@@ -1,4 +1,4 @@
-import {sanadKey,resolveSanadContinuation,type ContinuationSection} from './unifiedSanad';
+import {sanadKey,resolveSanadContinuation} from './unifiedSanad';
 import {QURRA} from './qurra';
 import {readingIdentityLink} from './qurraRouteIdentities';
 import type {BuilderLibrary,BuilderPerson,BuilderChain} from './bookBuilder';
@@ -80,14 +80,15 @@ export function validateRoute(lib:BuilderLibrary,route:BuilderChain,witnesses=na
  const {own,shared}=routeSourceSections(lib,route);
  if(own.length!==1)add('source-selection','review',own.length?'أكثر من مصدر للرواية؛ يلزم تعيين المصدر':'لا يوجد مصدر محدد للرواية');
  else if(!readingIdentityLink(sections,lib.people,route.qari_id,route.rawi))add('reading-identity','review','لم تتعين هوية القارئ والراوي من عبارتي المصدر');
- const paths=routePaths(lib,route);let matched=0;
+ const paths=routePaths(lib,route);let matched=0,checked=0;
  // A known two-part source is scanned in order, never mixed with unrelated
  // reading texts. This checks lexical coverage only, not branch equivalence.
  if(own.length===1&&shared.length<=1){
   const body=[...shared,...own].map(s=>s.body).join('\n');
+  checked=paths.length;
   paths.forEach((ids,branch)=>{const e=orderedNameEvidence(ids,body,witnesses);if(!e.issues.length)matched++;issues.push(...e.issues.map(i=>({...i,branch:branch+1})));});
  }else if(shared.length>1)add('shared-source-ambiguous','review','تعددت مصادر المقطع المشترك');
- return result(route.id,'route',route.title,issues,paths.length,matched);
+ return result(route.id,'route',route.title,issues,checked,matched);
 }
 export function validateLinkedRecord(lib:BuilderLibrary,record:LinkedSanadRecord,witnesses=nameWitnesses(lib.people)):ConsistencyEntry|null{
  const p=record.payload,u=object(p.unifiedSanad),legacy=string(p.builderRouteId),structured=string(u.routeId),routeId=structured||legacy;
