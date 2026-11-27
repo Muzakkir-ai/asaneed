@@ -146,7 +146,7 @@ export default createEndpoint({
      const bridges=verifiedOnwardSources(reviewed,context);
      const selectedReference=reference||automaticSharedBridgeId(text,ids,bridges,context);
      if(!selectedReference)throw Error('اختر تتمة مشتركة معتمدة عند نقطة الالتقاء');
-     return composeReferencedPersonalSanad(text,ids,bridges,selectedReference);
+     return composeReferencedPersonalSanad(text,ids,bridges,selectedReference,true);
     };
     const kubraSeparate=known.kubraSanadMode==='separate';
     const catalogPersonal=catalogRoute?await composePersonal(variant?.sanadText||kubraChain,variant?.personalPersonIds??(kubraSeparate?known.kubraPersonalPersonIds:known.personalPersonIds),variant?variant.continuationId:kubraSeparate?known.kubraContinuationId:known.continuationId):'';
