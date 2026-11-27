@@ -40,3 +40,25 @@ const audit=auditSanadConsistency(lib,[record,{...record,id:'unlinked',payload:{
 assert.equal(audit.routes.length,1);assert.equal(audit.linked.length,1);assert.equal(audit.unlinked,1);
 assert.equal(JSON.stringify({lib,record}),before,'all original prose, IDs and branches byte-for-byte unchanged');
 console.log('PASS consistency: scoped source, unique alias, word boundary, order, repeated witness, missing/archived identity, reading/continuation references, immutable linked snapshots and no-link exclusion');
+
+ // Durrah sources start after their author. The implicit join must be
+ // reported separately, not misrepresented as a missing name in the prose.
+const durrahPeople=[p('jazari','إمام المقرئين أبي الخير محمد بن محمد الجزري'),p('first','أبي محمد عبد الرحمن بن أحمد البغدادي'),p('second','أبي عبد الله محمد بن عبد الرحمن الحنفي'),p('teacher2','أبي عبد الله محمد بن أحمد الصائغ المصري'),p('rawi2','أبي يعقوب إسحاق بن إبراهيم الوراق'),p('imam2','أبي محمد خلف بن هشام البزار')];
+const node=(person_id:string)=>({person_id,route_source:false});
+const durrahParent={...parent,confirmed:false,branches:[[]]};
+const durrahRoute={...route,qari_id:'khalaf',rawi:'إسحاق',confirmed:false,continuation:'',continuation_ids:null,branches:[['first','teacher2','rawi2'].map(node),['second','teacher2'].map(node)]};
+const durrahSource={id:'durrah-source',title:'CHAIN:khalaf:إسحاق',body:'عن أبي محمد عبد الرحمن بن أحمد البغدادي، وأبي عبد الله محمد بن عبد الرحمن الحنفي، وهما قرءا على أبي عبد الله محمد بن أحمد الصائغ المصري، عن الإمام أبي يعقوب إسحاق بن إبراهيم الوراق صاحب الرواية، عن الإمام أبي محمد خلف بن هشام البزار صاحب القراءة'};
+const durrahLib:BuilderLibrary={...lib,people:durrahPeople,books:[{...lib.books[0],title:'الدرة',author_id:'jazari'}],chains:[durrahParent,durrahRoute],continuationSections:[durrahSource]};
+const savedDurrah=JSON.stringify(durrahLib);
+const durrahAudit=validateRoute(durrahLib,durrahRoute);
+assert.ok(durrahAudit.issues.some(i=>i.code==='author-boundary-unverified'));
+assert.ok(!durrahAudit.issues.some(i=>i.code==='name-not-found'),'implicit author and attached conjunction not reported as missing written names');
+assert.deepEqual(durrahAudit.issues.filter(i=>i.code==='rawi-endpoint-missing').map(i=>[i.branch,i.personId]),[[2,'rawi2']],'detect missing rawi despite ordered names matching');
+const complete={...durrahRoute,branches:[durrahRoute.branches[0],[...durrahRoute.branches[1],node('rawi2')]]};
+assert.ok(!validateRoute(durrahLib,complete).issues.some(i=>i.code==='rawi-endpoint-missing'));
+assert.ok(validateRoute({...durrahLib,books:[{...durrahLib.books[0],title:'الشاطبية'}]},durrahRoute).issues.some(i=>i.code==='name-not-found'&&i.personId==='jazari'),'do not suppress missing names for other books');
+assert.equal(orderedNameEvidence(['second'],durrahSource.body,nameWitnesses(durrahPeople)).issues.length,0);
+const collision=[...durrahPeople,p('another','وأبي عبد الله محمد بن عبد الرحمن الحنفي')];
+assert.ok(orderedNameEvidence(['second'],durrahSource.body,nameWitnesses(collision)).issues.length,'attached conjunction cannot override a distinct registered spelling');
+assert.equal(JSON.stringify(durrahLib),savedDurrah,'source and saved graph untouched');
+console.log('PASS Durrah source scope, attached waw, distinct identity safety, missing branch endpoint and original preservation');
