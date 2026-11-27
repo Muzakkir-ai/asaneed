@@ -16,7 +16,7 @@ export default function ChainNarratorRow({node,index,count,lib,previous,next,rol
  const [editing,setEditing]=useState(initialEditing??!node.personId),panel=useId();
  const [busy,setBusy]=useState(false),[error,setError]=useState('');
  const person=lib.people.find(p=>p.id===node.personId&&!p.archived);
- return <BranchPersonCard editorKey={node.editorKey} name={node.name} number={ordinal} badgeLabels={badgeLabels} label={node.source?'صاحب الطريق':sourceMarker} connected={person?connected:undefined}
+ return <BranchPersonCard editorKey={presentation?.preview?undefined:node.editorKey} name={node.name} number={ordinal} badgeLabels={badgeLabels} label={node.source?'صاحب الطريق':sourceMarker} connected={person?connected:undefined}
  controls={!readOnly&&<Button type="button" variant={editing?'secondary':'ghost'} size="sm" className="w-7 shrink-0 p-0" aria-label={`${editing?'إغلاق تعديل':'تعديل'} الراوي ${ordinal??index+1}`} aria-expanded={editing} aria-controls={panel} onClick={()=>setEditing(v=>!v)}>{editing?<ChevronUp aria-hidden="true" className="h-4 w-4"/>:<Pencil aria-hidden="true" className="h-4 w-4"/>}</Button>}>
  {!readOnly&&editing&&<div id={panel} className="space-y-3 border-t p-3">
  <NarratorPicker lib={lib} node={node} previous={previous} next={next} onCreate={onCreate} onChange={value=>{onChange({...node,...value});if(value.personId)setEditing(false);}}/>
