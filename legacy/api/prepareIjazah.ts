@@ -12,8 +12,8 @@ import {canUsePersonalSanad,sanadBlockMessage} from '../lib/personalSanadValidat
 export default createEndpoint({
  description:'Prepare one stable, automatically assembled sanad per held ijazah, updating it instead of creating duplicates',
  authenticated:true,
- inputSchema:z.object({holdingId:z.string(),holdingIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),rawi:z.string().optional(),ownerId:z.string().optional()}),
- outputSchema:z.object({sanadId:z.string(),updated:z.boolean(),heading:z.string(),preview:orderedSanadPreviewSchema.optional()}),
+ inputSchema:z.object({holdingId:z.string(),holdingIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),readinessOnly:z.boolean().optional(),rawi:z.string().optional(),ownerId:z.string().optional()}),
+ outputSchema:z.object({sanadId:z.string(),updated:z.boolean(),heading:z.string(),ready:z.literal(true).optional(),preview:orderedSanadPreviewSchema.optional()}),
  execute:async({input,context})=>{
   const admin=(await isAppAdmin(context.user.email));
   const uid=admin&&input.ownerId?input.ownerId:context.user.id;
@@ -37,6 +37,7 @@ export default createEndpoint({
     branch:{sourceId:h.id,continuationId:null,routeId:h.unifiedSanad?.routeId??null,label:h.shortName||h.sourceTeacherName||h.name||'سند محفوظ',
      ...personalBranchDiagram(h.unifiedSanad?.prefix??h.personalChain??'',h.unifiedSanad?.prefixPersonIds??h.personalPersonIds??[])},
    })),visibleSections);
+   if(input.readinessOnly)return {sanadId:'',updated:false,heading:assembled.heading,ready:true as const};
    if(input.previewOnly)return {sanadId:'',updated:false,heading:assembled.heading,preview:{chain:assembled.chain,branches:assembled.branches.map((branch,index)=>({...branch,narratorCount:sanadNarratorCount({...selected[index],qariId:q.id,rawi:selectedRawi,personalChain:selected[index].personalChain||'',junction:selected[index].junction||'ubaydi'},branch,visibleSections)}))}};
    const orderedSanads:OrderedSanadProvenance={version:1,kind:'holding',qariId:q.id,rawi:selectedRawi,branches:assembled.branches};
    const {records:previous}=await zite.asaneed.findAll({filters:{shaykh:uid},limit:2000});
@@ -50,9 +51,10 @@ export default createEndpoint({
     chain:assembled.chain,qiraah:null,shaykh:uid,certificates:null}});
    return {sanadId:saved.id,updated:false,heading:assembled.heading};
   }
-  if(input.previewOnly)throw Error('اختر سندًا محفوظًا للمعاينة');
+  if(input.previewOnly&&!input.readinessOnly)throw Error('اختر سندًا محفوظًا للمعاينة');
   const assembled=await assembleHoldingIjazah({...holding,rawi:selectedRawi} as Parameters<typeof assembleHoldingIjazah>[0],sections.map(s=>({id:s.id,title:s.title||'',body:s.body||'',sectionType:s.sectionType||'',formatting:s.formatting||''})));
   if(assembled.missing.length)throw new Error('لم تكتمل الأسانيد: '+assembled.missing.join('، '));
+  if(input.readinessOnly)return {sanadId:'',updated:false,heading:assembled.heading,ready:true as const};
   const {records:preparations}=await zite.preparedIjazahs.findAll({filters:{ownerId:uid},limit:2000});
   const existing=preparations.find(p=>p.holdingId===holding.id&&(p.rawi||'')===selectedRawi);
   const sig=JSON.stringify({chain:assembled.chain,sectionIds:assembled.sectionIds,holdingId:holding.id,rawi:selectedRawi});

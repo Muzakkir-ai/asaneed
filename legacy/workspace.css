@@ -458,3 +458,33 @@
 .zite-app .matn-break-row {display:grid;grid-template-columns:18px minmax(0,1fr);align-items:center;gap:12px;min-height:44px;padding:10px 12px;border-radius:8px;background:hsl(var(--muted)/.4);font-size:14px}
 .zite-app .matn-break-row input[type=checkbox] {appearance:auto;width:18px!important;min-width:18px!important;height:18px!important;padding:0!important;margin:0;accent-color:hsl(var(--primary))}
 .zite-app .matn-break-row+ .matn-break-row {margin-top:8px}
+
+/* Screen controls only: do not modify certificate print styles. */
+@media screen {
+ .zite-app .certificate-entry-dialog :is(input:not([type=checkbox]):not([type=radio]),select,[role=combobox],textarea){border-radius:8px;box-shadow:none;max-width:100%;min-width:0}
+ .zite-app .certificate-entry-dialog :is(input:not([type=checkbox]):not([type=radio]),select,[role=combobox]){min-height:44px}
+ .zite-app .certificate-entry-dialog [data-workspace-button]{border-radius:8px;box-shadow:none}
+ .zite-app .certificate-entry-error{overflow-wrap:anywhere;scroll-margin:16px}
+ .zite-app .certificate-entry-dialog .certificate-entry-actions{padding-bottom:env(safe-area-inset-bottom,0px)}
+ .zite-app .certificate-entry-dialog [role=combobox]>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+}
+@media screen and (max-width:767px){
+ .zite-app [role=dialog].certificate-entry-dialog{padding:16px 12px calc(20px + env(safe-area-inset-bottom,0px));overflow-x:hidden;overscroll-behavior:contain}
+ .zite-app .certificate-entry-dialog .certificate-entry-actions{display:flex;flex-direction:column-reverse;gap:8px}
+ .zite-app .certificate-entry-dialog .certificate-entry-actions>button{width:100%;min-height:44px}
+ .zite-app .certificate-entry-dialog .flex.items-center.justify-between{flex-wrap:wrap}
+}
+@media screen and (prefers-reduced-motion:reduce){.zite-app .certificate-entry-dialog *{transition-duration:0s!important;animation-duration:.01ms!important}}
+
+/* Shared screen controls, excluding print and artwork preview containers. */
+@media screen {
+ .zite-app :is(.workspace-shell,.editor-page) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea,[role=combobox]):not(:is(.certificate-heading-preview *,.palette-preview *,.certificate-preview-dialog *)){border-radius:8px;box-shadow:none;max-width:100%;min-width:0}
+ .zite-app :is(.workspace-shell,.editor-page) [data-workspace-button]:not(:is(.certificate-preview-dialog *,.certificate-heading-preview *)){box-shadow:none}
+ .zite-app [data-sonner-toaster]{--offset-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
+@media screen and (max-width:767px){.zite-app .editor-page-header{flex-wrap:wrap;min-width:0}.zite-app .editor-page-actions{flex-wrap:wrap;min-width:0}.zite-app .editor-page-body{min-width:0}}
+
+/* Removing decorative shadows must not remove keyboard focus indication. */
+@media screen {
+ .zite-app :is(.workspace-shell,.editor-page,.certificate-entry-dialog) :is(button,input,select,textarea,[role=combobox]):focus-visible:not(:is(.print-area *,.certificate-heading-preview *,.certificate-preview-dialog *)){outline:2px solid hsl(var(--ring));outline-offset:2px}
+}

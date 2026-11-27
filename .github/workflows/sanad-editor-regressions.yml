@@ -16,6 +16,13 @@ on:
       - 'tests/reusable-reading-sanad.test.cjs'
       - 'legacy/components/OrderedSanadPicker.tsx'
       - 'legacy/components/CertificateForm.tsx'
+      - 'legacy/components/CertificateCreation.tsx'
+      - 'legacy/components/EditorPage.tsx'
+      - 'legacy/api/issueQiraah.ts'
+      - 'legacy/App.tsx'
+      - 'legacy/workspace.css'
+      - 'app/globals.css'
+      - 'tests/certificate-selection-browser.test.cjs'
       - 'legacy/api/prepareIjazah.ts'
       - 'legacy/api/additionalShaykhs.ts'
       - 'legacy/api/additionalReadingSanads.ts'
@@ -50,3 +57,7 @@ jobs:
       - run: node tests/ordered-sanads.test.cjs
       - run: npm run test:sanad-count
       - run: node tests/public-verification.test.cjs
+
+      - run: npx playwright install --with-deps chromium
+      - run: node tests/certificate-selection-browser.test.cjs
+      - run: npm run test:workspace-theme

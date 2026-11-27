@@ -200,6 +200,10 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  assertOrder(kubra,ids.slice(0,2));
  assert.ok(kubra.branches.every(branch=>branch.routeId===id(41)));
  assert.equal(sanads.length,0,'preview is read-only');
+ const beforeReady=JSON.stringify({sanads,certs,snapshots});
+ assert.equal((await call('additionalShaykhs',{...issue,studentName:undefined,completionDate:undefined,readinessOnly:true,previewOnly:true,personalSanadIds:ids.slice(0,2),tariqNumber:'1031'})).ready,true);
+ await assert.rejects(()=>call('additionalShaykhs',{...issue,readinessOnly:true,previewOnly:true,personalSanadIds:[id(999)]}),/غير متاح/);
+ assert.equal(JSON.stringify({sanads,certs,snapshots}),beforeReady,'Kubra readiness never persists records');
  const references=[id(50),id(51)],meeting=id(52);
  library.reviewedPersonalGraphs=references.map((id,i)=>({source:{id,kind:'personal',shaykhId:guestId,qariId:'asim',rawi:'حفص',body:''},
   routes:[[{id:meeting,name:'الشيخ مُلْتَقًى'},{id:'teacher-'+i,name:i?'شيخ التتمة الثانية':'شيخ التتمة الأولى'},{id:jazari,name:'الإمام ابن الجزري'}]]}));
@@ -227,6 +231,9 @@ async function exerciseOrderedSanads({ createDraft, reserve, publish } = {}){
  await call('additionalShaykhs',{...issue,personalSanadId:ids[2]});
  assert.equal(sanads.at(-1).orderedSanads,undefined);
  const prepare={holdingId:order[0],holdingIds:order,rawi:'حفص'};
+ const beforeHoldingReady=JSON.stringify({sanads,certs,snapshots});
+ assert.equal((await call('prepareIjazah',{...prepare,previewOnly:true,readinessOnly:true})).ready,true);
+ assert.equal(JSON.stringify({sanads,certs,snapshots}),beforeHoldingReady,'ordered holding readiness never persists records');
  const personal=(await call('prepareIjazah',{...prepare,previewOnly:true})).preview;
  assertOrder(personal,order);
  const {sanadId}=await call('prepareIjazah',prepare);

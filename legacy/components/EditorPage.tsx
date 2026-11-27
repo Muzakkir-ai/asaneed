@@ -10,6 +10,7 @@ export default function EditorPage({title,context,backLabel='العودة إلى
  const dirty=dirtyKey!==undefined&&dirtyKey!==(savedKey??initial.current);
  useEffect(()=>{heading.current?.focus();heading.current?.scrollIntoView?.({block:'start'});},[]);
  useEffect(()=>{if(!dirty)return;const warn=(e:BeforeUnloadEvent)=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+ useEffect(()=>{if(!dirty&&!busy)return;const guard=(event:Event)=>{if(busy||!window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))event.preventDefault();};window.addEventListener('asaneed-before-navigation',guard);return()=>window.removeEventListener('asaneed-before-navigation',guard);},[dirty,busy]);
  const back=()=>{if(busy)return;if(dirty)setDiscard(true);else onBack();};
  const save=async()=>{if(!onSave||busy||saveDisabled)return;const result=await onSave();if(result===true)setSavedKey(dirtyKey);};
  return <section className="editor-page" aria-labelledby={id} dir="rtl">

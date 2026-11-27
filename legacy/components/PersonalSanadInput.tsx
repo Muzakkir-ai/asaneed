@@ -20,6 +20,7 @@ export default function PersonalSanadInput({value,personIds=[],complete=false,pr
  const [library,setLibrary]=useState<BuilderLibrary|null>(null),[error,setError]=useState(''),[draft,setDraft]=useState(value),[selected,setSelected]=useState(''),[pending,setPending]=useState(false),[revision,setRevision]=useState(0);
  const preselected=useRef(false);
  const markPending=(next:boolean)=>{setPending(next);onPendingChange?.(next);};
+ useEffect(()=>{if(!pending)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[pending]);
  const load=async()=>{setError('');try{const response=await fetch('/api/book-builder',{headers:workspaceHeaders()});const data=await response.json();if(!response.ok)throw Error(data.error||'تعذر تحميل الرواة');setLibrary(data);}catch(e){setError(e instanceof Error?e.message:'تعذر تحميل الرواة');}};
  useEffect(()=>{void load();},[]);
  useEffect(()=>{onEditingChange?.(editing);if(editing&&preparation&&!preparation.reviewed)markPending(true);},[editing]);
