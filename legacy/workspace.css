@@ -488,3 +488,7 @@
 @media screen {
  .zite-app :is(.workspace-shell,.editor-page,.certificate-entry-dialog) :is(button,input,select,textarea,[role=combobox]):focus-visible:not(:is(.print-area *,.certificate-heading-preview *,.certificate-preview-dialog *)){outline:2px solid hsl(var(--ring));outline-offset:2px}
 }
+
+/* Position suffixes distinguish parallel narrators without changing the stored path index. */
+.zite-app [data-narrator-level][data-parallel-label]::after{content:attr(data-parallel-label);font-size:10px;line-height:1;color:inherit}
+.zite-app [data-narrator-secondary-level][data-parallel-label]::after{content:attr(data-parallel-label);font-size:9px;margin-inline-start:2px;line-height:1}

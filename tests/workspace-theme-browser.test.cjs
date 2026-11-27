@@ -51,7 +51,10 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
   assert.ok(await allView.evaluate(e=>{const others=[...e.parentElement.children].filter(n=>n!==e),r=e.getBoundingClientRect();return others.every(n=>n.getBoundingClientRect().bottom<=r.top)&&r.width>=e.parentElement.getBoundingClientRect().width-1;}),'All occupies a full row beneath route buttons');
   assert.equal(await allView.getAttribute('aria-pressed'),'true');
   assert.equal(await graphReview.locator('[data-sanad-node]').count(),8);
-  assert.equal(await graphReview.locator('[data-sanad-node="p-9"] [data-narrator-level]').getAttribute('data-narrator-level'),'٦ / ٧ / ٨');
+  const meeting=graphReview.locator('[data-sanad-node="p-9"]');
+  assert.equal(await meeting.locator('[data-narrator-level]').getAttribute('data-narrator-level'),'٦');
+  assert.deepEqual(await meeting.locator('[data-narrator-secondary-level]').allTextContents(),['٧','٨'],'all alternate saved path positions remain visible');
+  assert.deepEqual(await jointReview.locator('[data-narrator-level]').evaluateAll(els=>els.map(e=>e.dataset.parallelLabel||'')),['','أ','ب',''],'parallel suffixes distinguish equal positions');
   for(const [i,length] of [[1,6],[2,7],[3,8]]){
    await graphReview.getByRole('button',{name:new RegExp('المسار '+['١','٢','٣'][i-1])}).click();
    assert.equal(await graphReview.locator('[data-sanad-node]').count(),length);

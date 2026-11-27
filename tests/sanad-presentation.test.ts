@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {sanadPresentation} from '../legacy/lib/sanadPresentation';
+const paths=[['root','a','meeting','end'],['root','b','c','meeting','end']];
+const original=JSON.stringify(paths);
+const levels=sanadPresentation(paths);
+assert.deepEqual(levels.get('root'),[{position:1,parallel:''}]);
+assert.deepEqual(levels.get('a'),[{position:2,parallel:'أ'}]);
+assert.deepEqual(levels.get('b'),[{position:2,parallel:'ب'}]);
+assert.deepEqual(levels.get('meeting'),[{position:3,parallel:'أ'},{position:4,parallel:'ب'}]);
+assert.deepEqual(levels.get('end'),[{position:4,parallel:'أ'},{position:5,parallel:''}]);
+assert.deepEqual(sanadPresentation([paths[1]]).get('meeting'),[{position:4,parallel:''}]);
+assert.deepEqual(sanadPresentation([paths[0],paths[0]]).get('a'),[{position:2,parallel:''}]);
+assert.deepEqual(sanadPresentation([['same','same']]).get('same'),[{position:1,parallel:''},{position:2,parallel:''}]);
+const wide=sanadPresentation(Array.from({length:30},(_,i)=>['root','node-'+i]));
+assert.equal(new Set([...wide.values()].flatMap(labels=>labels.filter(l=>l.position===2).map(l=>l.parallel))).size,30);
+assert.equal(JSON.stringify(paths),original);
+assert.equal(sanadPresentation([]).size,0);
+console.log('PASS common actual-path numbering, parallel letters, shared narrator alternate positions, focused routes, duplicates and nonmutation');
