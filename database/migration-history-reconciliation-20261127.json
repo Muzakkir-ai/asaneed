@@ -1,0 +1,942 @@
+{
+  "release_commit": "4867f44073bb5e48f4ac0d5d2b16268d01258be5",
+  "method": "Metadata-only version/name reconciliation, retaining original SQL statements and other metadata. Do not rerun migration SQL. Original values permit reversal.",
+  "exceptions": [
+    {
+      "migration": "independent_foundation",
+      "environment": "staging",
+      "reason": "Synthetic issuer seed replaces production issuer seed; preserve original applied statements."
+    },
+    {
+      "migration": "requested_issuer_codes",
+      "environment": "staging",
+      "reason": "Three synthetic prerequisite issuer rows; preserve original applied statements."
+    },
+    {
+      "migration": "permanent_book_artwork_numbers",
+      "environment": "production",
+      "reason": "Applied guard requires exactly one المستنير; repo allows zero for fresh databases. Production has one book, correctly numbered 01. Preserve applied SQL."
+    },
+    {
+      "migration": "restrict_subject_catalog_writes",
+      "environment": "production",
+      "reason": "Comment and whitespace differences only."
+    },
+    {
+      "migration": "admin_account_usernames",
+      "environment": "production",
+      "reason": "Whitespace only."
+    },
+    {
+      "migration": "restrict_verification_projection_reads; serialize_certificate_finalization; guard_certificate_number_lookup",
+      "environment": "production (lookup also staging)",
+      "reason": "Outer transaction wrappers only; body identical."
+    }
+  ],
+  "environments": {
+    "production": [
+      {
+        "repository_version": "20261027195210",
+        "repository_name": "independent_foundation",
+        "repository_blob": "7668818ede92ce169fed47107eae0680b138ae42",
+        "original_version": "20261027195030",
+        "original_name": "independent_foundation",
+        "original_row_hash": "605524f39612860217183150690fbaa7",
+        "statements_hash": "5e858a5a6cd4348c67465d7492de902c"
+      },
+      {
+        "repository_version": "20261027195307",
+        "repository_name": "atomic_finalization",
+        "repository_blob": "2e55dec49023fcf346909709d748ac355db3ecd8",
+        "original_version": "20261027195253",
+        "original_name": "atomic_finalization",
+        "original_row_hash": "c7a64c195d224601e518bc7bf35d331d",
+        "statements_hash": "c1c775623e1b1eb919a600725635632f"
+      },
+      {
+        "repository_version": "20261027195508",
+        "repository_name": "reading_catalog_and_issuer_integrity",
+        "repository_blob": "8774dbbd02ef868455b7c634bd6ae0d9e6960c5a",
+        "original_version": "20261027195357",
+        "original_name": "reading_catalog_and_issuer_integrity",
+        "original_row_hash": "d0acb61e0b06fadf071ad2fbf076e92b",
+        "statements_hash": "26eeab5c59d3a0b189ca370e534fa86b"
+      },
+      {
+        "repository_version": "20261027201519",
+        "repository_name": "public_ijazah_lookup",
+        "repository_blob": "edeef45b6919dc7f5c206ad5e85db8b726f86b27",
+        "original_version": "20261027201739",
+        "original_name": "public_ijazah_lookup",
+        "original_row_hash": "453e8be8fc1cfde77dd42127a779b9ec",
+        "statements_hash": "6659a3e44453857b05712ec833907b9e"
+      },
+      {
+        "repository_version": "20261028113026",
+        "repository_name": "pending_auth_accounts",
+        "repository_blob": "10f37801a5ad9eb5c6529405296b7fa0b7483243",
+        "original_version": "20261028113350",
+        "original_name": "pending_auth_accounts",
+        "original_row_hash": "b2e88ff183b7ceca94a604cbeee287bf",
+        "statements_hash": "cb8665147aa89fab675e71ff9c34d8e8"
+      },
+      {
+        "repository_version": "20261028180210",
+        "repository_name": "management_access",
+        "repository_blob": "3beab73aa6c8a62fdf5d4e12a2c97062e5521ff9",
+        "original_version": "20261028180421",
+        "original_name": "management_access",
+        "original_row_hash": "07a8d7e8cb92df543c5a852dc93a1d57",
+        "statements_hash": "90c433619410bdfab9f5f1f43977b267"
+      },
+      {
+        "repository_version": "20261028181224",
+        "repository_name": "legacy_library",
+        "repository_blob": "00ce549820bb2757cbde272e8042f1dc3b8ff650",
+        "original_version": "20261028181438",
+        "original_name": "legacy_library",
+        "original_row_hash": "b8ef9b233708276b5f001112059ea56a",
+        "statements_hash": "501d0f5a72a33bba1ea5b7268d7bdd2b"
+      },
+      {
+        "repository_version": "20261028182428",
+        "repository_name": "full_workspace_port",
+        "repository_blob": "728562393789ef3c6b2eaa567a74b8d4121187a6",
+        "original_version": "20261028182813",
+        "original_name": "full_workspace_port",
+        "original_row_hash": "00099ca54fccad6402d4624ea8bd6121",
+        "statements_hash": "16fca49ccd184b58730184e12e642af3"
+      },
+      {
+        "repository_version": "20261028183102",
+        "repository_name": "studio_verification",
+        "repository_blob": "0f77b7f98482d106033c55a86f2e142f0dcb83da",
+        "original_version": "20261028183403",
+        "original_name": "studio_verification",
+        "original_row_hash": "29b402c4a94e884b0d78bd37fba2c680",
+        "statements_hash": "942e0a502b5bce2e55ea9e7da8c79904"
+      },
+      {
+        "repository_version": "20261028184350",
+        "repository_name": "personal_workspace_parity",
+        "repository_blob": "232e87d7f45e38d92f9fb7e0676c7765419eedea",
+        "original_version": "20261028184531",
+        "original_name": "personal_workspace_parity",
+        "original_row_hash": "01c31bc5f122d10f1473ef612c77834d",
+        "statements_hash": "048a0def1e82e243b03e29d1ebcb8f8b"
+      },
+      {
+        "repository_version": "20261028185638",
+        "repository_name": "named_legacy_linking",
+        "repository_blob": "8e631a8f98edd0f935073e4644b638a789ad6a4a",
+        "original_version": "20261028185915",
+        "original_name": "named_legacy_linking",
+        "original_row_hash": "3c187e3ce28d2c60043e6309f038cf2a",
+        "statements_hash": "f6b1b92626aa982b747aeee24981b399"
+      },
+      {
+        "repository_version": "20261028215255",
+        "repository_name": "migration_audit_backups",
+        "repository_blob": "b1359ef493006d005e240fe4d4df0c9cf63326db",
+        "original_version": "20261028215320",
+        "original_name": "migration_audit_backups",
+        "original_row_hash": "4e89546a770baef3adcd43616de4b54a",
+        "statements_hash": "9116f28430993777c669c969fa8de768"
+      },
+      {
+        "repository_version": "20261028215640",
+        "repository_name": "permanent_workspace_ownership",
+        "repository_blob": "9c492fd038480f8f3686b8da95e1ae4cc12f7fe5",
+        "original_version": "20261028220130",
+        "original_name": "permanent_workspace_ownership",
+        "original_row_hash": "eb7001f28618bc85abcaabae7fce9442",
+        "statements_hash": "37a20bdb109c0114aa15540f9561d660"
+      },
+      {
+        "repository_version": "20261028220642",
+        "repository_name": "workspace_relationship_controls",
+        "repository_blob": "6e222c5dd7ef1c4abad249da932026117bca8428",
+        "original_version": "20261028220745",
+        "original_name": "workspace_relationship_controls",
+        "original_row_hash": "7d9793278dde88634b2060ea5c162cf8",
+        "statements_hash": "d3835e623cbae3e3b7bd0bc9d7faea6a"
+      },
+      {
+        "repository_version": "20261029021511",
+        "repository_name": "legacy_directory_deduplication",
+        "repository_blob": "9dc39c89bbbda0a5abefa1d51102dfa241a5524f",
+        "original_version": "20261029021530",
+        "original_name": "legacy_directory_deduplication",
+        "original_row_hash": "5dec897bd7b2707cab71804b093b2a7e",
+        "statements_hash": "443159cd003e7125aee665057f05676c"
+      },
+      {
+        "repository_version": "20261029033647",
+        "repository_name": "year_first_personal_issuers",
+        "repository_blob": "379e8f287f952af1cdf5b0dc26724c36417df7ae",
+        "original_version": "20261029034037",
+        "original_name": "year_first_personal_issuers",
+        "original_row_hash": "3a9bbee531c06efec9d8fd2e93c799cc",
+        "statements_hash": "f4d543675da9f5b67ee5b18b482bb553"
+      },
+      {
+        "repository_version": "20261029035054",
+        "repository_name": "requested_issuer_codes",
+        "repository_blob": "63190ebad5fd7654f9f895f319b17397701fbcb4",
+        "original_version": "20261029035330",
+        "original_name": "requested_issuer_codes",
+        "original_row_hash": "35b4836b564411f5b330af8078857591",
+        "statements_hash": "7b77659a51ea0f66620ca02df67eeb14"
+      },
+      {
+        "repository_version": "20261029154016",
+        "repository_name": "student_recipient_links",
+        "repository_blob": "2b559628f899cea40d9c1b9d11173d10ae5ca716",
+        "original_version": "20261029154131",
+        "original_name": "student_recipient_links",
+        "original_row_hash": "cde7775b62d8d9e843356892bad248e3",
+        "statements_hash": "8762a542f0c6847eb53813a2741d0ad6"
+      },
+      {
+        "repository_version": "20261030103051",
+        "repository_name": "book_tariq_builder",
+        "repository_blob": "1da1dc9d96969f86bf96d93ac7eed8d81f79e99b",
+        "original_version": "20261030103713",
+        "original_name": "book_tariq_builder",
+        "original_row_hash": "264588e9c54c691e1a816f92e8ac88fd",
+        "statements_hash": "63c520b18cc3fc59da93a0a6638d40d4"
+      },
+      {
+        "repository_version": "20261030103948",
+        "repository_name": "atomic_builder_attachment",
+        "repository_blob": "fae12cd1dc407d3ad711ba500056058170f81a03",
+        "original_version": "20261030104014",
+        "original_name": "atomic_builder_attachment",
+        "original_row_hash": "d0a8abc9d9f6b2b3a10f6832cdc5cc3d",
+        "statements_hash": "640ff875874205a947eda707a4d69a79"
+      },
+      {
+        "repository_version": "20261030104402",
+        "repository_name": "builder_restore_safety",
+        "repository_blob": "01690cdf1e01529aa901907eb4e88590a72c4862",
+        "original_version": "20261030104432",
+        "original_name": "builder_restore_safety",
+        "original_row_hash": "f18a7cfdba79a83e9850e57b9bcef526",
+        "statements_hash": "85857cb8313e57e892917087af5f9ac8"
+      },
+      {
+        "repository_version": "20261030130111",
+        "repository_name": "route_hierarchy",
+        "repository_blob": "f59c0e7e654e91195cb7c788e82bde48d733d193",
+        "original_version": "20261030130807",
+        "original_name": "route_hierarchy",
+        "original_row_hash": "8638812984e36a727ca7975c03cf6f7c",
+        "statements_hash": "51f13553a666d87e042bf8f76397834f"
+      },
+      {
+        "repository_version": "20261030131010",
+        "repository_name": "route_hierarchy_backup_compat",
+        "repository_blob": "7b037b30a9a276aa5385b560e96b86e08ab8e0ef",
+        "original_version": "20261030131034",
+        "original_name": "route_hierarchy_backup_compat",
+        "original_row_hash": "19d13f2d195efcbe03d10cb34be7a1ee",
+        "statements_hash": "4c6ece41a371e501d1d01b61e8dd0da5"
+      },
+      {
+        "repository_version": "20261030183246",
+        "repository_name": "permanent_book_artwork_numbers",
+        "repository_blob": "be2579bc8823707a2fe01645390638ae41127fed",
+        "original_version": "20261030183140",
+        "original_name": "permanent_book_artwork_numbers",
+        "original_row_hash": "cd1c7da21af69cc77dcfd14c7817ff96",
+        "statements_hash": "137eecdf8c4855b3a33a42f684a40401"
+      },
+      {
+        "repository_version": "20261030183255",
+        "repository_name": "book_artwork_number_restore_compat",
+        "repository_blob": "de011effd3759a3fee61ceeecbf95ecea8ed0ab4",
+        "original_version": "20261030183245",
+        "original_name": "book_artwork_number_restore_compat",
+        "original_row_hash": "d917481af12a1e2ac6ff7330db3f4fb4",
+        "statements_hash": "be3d2313d6e3739dbc61f47824949e53"
+      },
+      {
+        "repository_version": "20261030184211",
+        "repository_name": "github_artwork_refresh",
+        "repository_blob": "a9005f24821d4563a5d1a16a65c237591ef8b280",
+        "original_version": "20261030184300",
+        "original_name": "github_artwork_refresh",
+        "original_row_hash": "95de1b4f4a1870451bc4f47e559654c4",
+        "statements_hash": "28b04dee573c8a0239713767a07ea0ae"
+      },
+      {
+        "repository_version": "20261031152251",
+        "repository_name": "lifetime_issuer_certificate_numbers",
+        "repository_blob": "d436937808ab90d1c1ed14c1dc10b33de393e527",
+        "original_version": "20261031152539",
+        "original_name": "lifetime_issuer_certificate_numbers",
+        "original_row_hash": "2f12691be2d0a71d6a4f7f69c136da37",
+        "statements_hash": "1918b1991d02fa649ae7003794949569"
+      },
+      {
+        "repository_version": "20261101023728",
+        "repository_name": "refresh_changed_artwork_catalog",
+        "repository_blob": "7de191a59d896ca674be748fab16eb9bbca64799",
+        "original_version": "20261101023827",
+        "original_name": "refresh_changed_artwork_catalog",
+        "original_row_hash": "38bc9eabd6e171c61b704c1567192400",
+        "statements_hash": "4e74495cd037d60dd99e42a9cc0e4ffd"
+      },
+      {
+        "repository_version": "20261101065024",
+        "repository_name": "narrator_merge",
+        "repository_blob": "9030bcc4dd0a3850489908d786da827c327d1669",
+        "original_version": "20261101065155",
+        "original_name": "narrator_merge",
+        "original_row_hash": "90ff4dcddd4ea8cf1b8f902697d44473",
+        "statements_hash": "a1d6f85c425198bd6fc339bcfda4b55e"
+      },
+      {
+        "repository_version": "20261101105550",
+        "repository_name": "annual_issuer_numbers",
+        "repository_blob": "907f6b18e801f0a240b6c7f7bf40a4a5c7c09b40",
+        "original_version": "20261101105913",
+        "original_name": "annual_issuer_numbers",
+        "original_row_hash": "e9576c51c7c643f5e3512c59ecce3f26",
+        "statements_hash": "cf37dcab5e1408011033f01971a57338"
+      },
+      {
+        "repository_version": "20261101163930",
+        "repository_name": "khatam_order_draft_numbers",
+        "repository_blob": "04953dfcb93be6824473cdb5cabeee8746390b6f",
+        "original_version": "20261101164036",
+        "original_name": "khatam_order_draft_numbers",
+        "original_row_hash": "7cd6801a157809634bb50f9b87f87835",
+        "statements_hash": "a77e0ef4179d541e7cdc3288e12e85a8"
+      },
+      {
+        "repository_version": "20261103193314",
+        "repository_name": "matn_certificate_subjects",
+        "repository_blob": "e65fbe40471f1abd41b71991cadf159ea2bc2f56",
+        "original_version": "20261103193832",
+        "original_name": "matn_certificate_subjects",
+        "original_row_hash": "5cad07e1946f404c6c435a15dd03e8eb",
+        "statements_hash": "48d03779cb4d9d9e5c18c8e28c1a2c4c"
+      },
+      {
+        "repository_version": "20261103194027",
+        "repository_name": "restrict_subject_catalog_writes",
+        "repository_blob": "b915d38f3659f1d77d0bfacfeae19edbb666f723",
+        "original_version": "20261103194046",
+        "original_name": "restrict_subject_catalog_writes",
+        "original_row_hash": "d447d8e1f32e90b841e79bfee2fb06ba",
+        "statements_hash": "f28d7b7461755cbfab1db0ab2d28042d"
+      },
+      {
+        "repository_version": "20261103194633",
+        "repository_name": "include_matn_catalog_in_backups",
+        "repository_blob": "acd5b9e043199bcb0dea7dafc576e213bc248be8",
+        "original_version": "20261103194650",
+        "original_name": "include_matn_catalog_in_backups",
+        "original_row_hash": "1f308c7a6d7a91c85502ffa8ab9c2dd3",
+        "statements_hash": "b1f60c56734f42e768a43562a8de4e89"
+      },
+      {
+        "repository_version": "20261103195403",
+        "repository_name": "account_usernames",
+        "repository_blob": "50114bbcd44f3b078de3d07caac44576a6e79856",
+        "original_version": "20261103195613",
+        "original_name": "account_usernames",
+        "original_row_hash": "eb923a8c9ca43fd0cf69a0869b66b551",
+        "statements_hash": "172fa58c2d39470e998c44ceb1236bcc"
+      },
+      {
+        "repository_version": "20261103202113",
+        "repository_name": "admin_account_usernames",
+        "repository_blob": "96b1a0818c64ba68871a969be7c76baca0d8c381",
+        "original_version": "20261103202233",
+        "original_name": "admin_account_usernames",
+        "original_row_hash": "1cf3c2b46e190d2712689eb865ea34fd",
+        "statements_hash": "ae08d9bdd1d042452947d4fcef5eb06c"
+      },
+      {
+        "repository_version": "20261104125019",
+        "repository_name": "unified_matn_catalog",
+        "repository_blob": "8ee4e9d4ed8bfef5e3d9136fab70be5d11cce8a1",
+        "original_version": "20261104133700",
+        "original_name": "unified_matn_catalog",
+        "original_row_hash": "b5c9ad434eecc000ded268d621b0c848",
+        "statements_hash": "37caa211773d8731dfaaaaaf14c2c752"
+      },
+      {
+        "repository_version": "20261104164423",
+        "repository_name": "unified_sanad_continuations",
+        "repository_blob": "e2621e8da7d677665dd9f34648916135ff94e2fe",
+        "original_version": "20261104181222",
+        "original_name": "unified_sanad_continuations",
+        "original_row_hash": "dffc6cdb962076d4e632e45e70737dc9",
+        "statements_hash": "02d75a285857fd08e18b2bf7f0eeff45"
+      },
+      {
+        "repository_version": "20261104212114",
+        "repository_name": "recoverable_account_deletion",
+        "repository_blob": "3b6e028a35d81f34cf396a36890214144e9a9d47",
+        "original_version": "20261104212445",
+        "original_name": "recoverable_account_deletion",
+        "original_row_hash": "f3feb9dcdcfd1f578c53f49da896bfbd",
+        "statements_hash": "623c1c47406abb9db4d4e7a8c2533553"
+      },
+      {
+        "repository_version": "20261105142134",
+        "repository_name": "personal_sanad_variants",
+        "repository_blob": "4b175795a496270939d80b177a94a7cf0e45cd5a",
+        "original_version": "20261105143141",
+        "original_name": "personal_sanad_variants",
+        "original_row_hash": "d933229941b9a3558c8eff959bde675d",
+        "statements_hash": "a260a0384c07adc7050d0c4ef7dda84b"
+      },
+      {
+        "repository_version": "20261105151613",
+        "repository_name": "account_setup_invitations",
+        "repository_blob": "5dd0117d9394b78a80f86752396f4ab7606f80dc",
+        "original_version": "20261105153206",
+        "original_name": "account_setup_invitations",
+        "original_row_hash": "e1d8e1da15eed774948748724e0dff89",
+        "statements_hash": "acf5a41383efe8028bd14f59297b1ac4"
+      },
+      {
+        "repository_version": "20261105213349",
+        "repository_name": "reviewed_narrator_aliases",
+        "repository_blob": "c3ebf6afe700eeeaddfd8b11a8ce92bce9fbb213",
+        "original_version": "20261105213349",
+        "original_name": "reviewed_narrator_aliases",
+        "original_row_hash": "3979703af1b44eb2f5dd5b6644184fa8",
+        "statements_hash": "482b8c82d1315ca33c5c4b1c5d3363f9"
+      },
+      {
+        "repository_version": "20261109221703",
+        "repository_name": "restrict_verification_projection_reads",
+        "repository_blob": "35f2b82f4c9e8ab90e48b1f0c6992ce5f2704d8e",
+        "original_version": "20261109221703",
+        "original_name": "restrict_verification_projection_reads",
+        "original_row_hash": "8c0cafdaf9cf8389f98f349f580740df",
+        "statements_hash": "b27a92241dbb3251b55254186bad1d37"
+      },
+      {
+        "repository_version": "20261110082014",
+        "repository_name": "serialize_certificate_finalization",
+        "repository_blob": "4897855c9432fc280a2d50c36020fec8bad8041a",
+        "original_version": "20261110082014",
+        "original_name": "serialize_certificate_finalization",
+        "original_row_hash": "8d0af5bf2f369a2d6391b86be56cd350",
+        "statements_hash": "526ddc59bb96d4c235ef19e2088c2dc8"
+      },
+      {
+        "repository_version": "20261112122627",
+        "repository_name": "guard_certificate_number_lookup",
+        "repository_blob": "62178521c68d7ead864cdbf06f81697706c4abfb",
+        "original_version": "20261112122627",
+        "original_name": "guard_certificate_number_lookup",
+        "original_row_hash": "74ca45230bef337327aba4d499928fec",
+        "statements_hash": "ea3f7f05a71ac15bba08e179b1618db1"
+      },
+      {
+        "repository_version": "20261118205028",
+        "repository_name": "reusable_issuer_matn_templates",
+        "repository_blob": "86ae072d1201459bfd703d97e93e79a97dcbf88f",
+        "original_version": "20261118205028",
+        "original_name": "reusable_issuer_matn_templates",
+        "original_row_hash": "4ddbd087471bddd5f20900efd5587f54",
+        "statements_hash": "3c3fa9da84c4e7d57d19cf7573e0dcdd"
+      },
+      {
+        "repository_version": "20261127021802",
+        "repository_name": "atomic_certificate_display_numbers",
+        "repository_blob": "aaf879fa2c5c57056a179067d6e183d28a0df16f",
+        "original_version": "20261127033605",
+        "original_name": "atomic_certificate_display_numbers",
+        "original_row_hash": "15c6b0fde27f8a4a73fa6193f41962bf",
+        "statements_hash": "c6e416d7af5ce47a34ac30e2d30c5f5d"
+      },
+      {
+        "repository_version": "20261127024712",
+        "repository_name": "scoped_certificate_list_page",
+        "repository_blob": "414cc34f8bcbd40d95aa0af589e5a40580b58782",
+        "original_version": "20261127033610",
+        "original_name": "scoped_certificate_list_page",
+        "original_row_hash": "99a507e6c1c3ef8adf4d34c50ca9dcc7",
+        "statements_hash": "7dc06b7233e2799fe76d601032665c85"
+      },
+      {
+        "repository_version": "20261127025050",
+        "repository_name": "certificate_filtered_pages_and_index",
+        "repository_blob": "185b2e7b65b7212cfe98a62e694e74077235d0e3",
+        "original_version": "20261127033616",
+        "original_name": "certificate_filtered_pages_and_index",
+        "original_row_hash": "6b97a57a592ae07ec9036586597108e4",
+        "statements_hash": "9d71853b685152b826e3fe868309ebb3"
+      },
+      {
+        "repository_version": "20261127025505",
+        "repository_name": "restrict_recipient_access_to_finalized_certificates",
+        "repository_blob": "c9eace25471beda336adc631898c3a3a94a789da",
+        "original_version": "20261127033622",
+        "original_name": "restrict_recipient_access_to_finalized_certificates",
+        "original_row_hash": "afcaec18d78dd10c37159e8e41398be3",
+        "statements_hash": "5ebac37f9138b156f294d52348613e56"
+      }
+    ],
+    "staging": [
+      {
+        "repository_version": "20261027195210",
+        "repository_name": "independent_foundation",
+        "repository_blob": "7668818ede92ce169fed47107eae0680b138ae42",
+        "original_version": "20261110144811",
+        "original_name": "20261027195210_independent_foundation",
+        "original_row_hash": "95835b0034661d321a4a6e85f9a7f6ab",
+        "statements_hash": "31937edf0e1492333e0600febfdefb29"
+      },
+      {
+        "repository_version": "20261027195307",
+        "repository_name": "atomic_finalization",
+        "repository_blob": "2e55dec49023fcf346909709d748ac355db3ecd8",
+        "original_version": "20261110144838",
+        "original_name": "20261027195307_atomic_finalization",
+        "original_row_hash": "4895f2fdc0e5b84046060152ec0ddd5d",
+        "statements_hash": "a90c2b84c2f1d46e348cbc282f84220e"
+      },
+      {
+        "repository_version": "20261027195508",
+        "repository_name": "reading_catalog_and_issuer_integrity",
+        "repository_blob": "8774dbbd02ef868455b7c634bd6ae0d9e6960c5a",
+        "original_version": "20261110144841",
+        "original_name": "20261027195508_reading_catalog_and_issuer_integrity",
+        "original_row_hash": "e9c0f6922473089deffe5c45f7c13359",
+        "statements_hash": "5eac0fad62153da64e24ebe3775e6441"
+      },
+      {
+        "repository_version": "20261027201519",
+        "repository_name": "public_ijazah_lookup",
+        "repository_blob": "edeef45b6919dc7f5c206ad5e85db8b726f86b27",
+        "original_version": "20261110144843",
+        "original_name": "20261027201519_public_ijazah_lookup",
+        "original_row_hash": "d6faf583d5f2e9403d35a6c7412eb93c",
+        "statements_hash": "1cd560966a3dac1a5dd93e83eb0a5d35"
+      },
+      {
+        "repository_version": "20261028113026",
+        "repository_name": "pending_auth_accounts",
+        "repository_blob": "10f37801a5ad9eb5c6529405296b7fa0b7483243",
+        "original_version": "20261110144845",
+        "original_name": "20261028113026_pending_auth_accounts",
+        "original_row_hash": "908205e0e596e15f041dfa727aa8829a",
+        "statements_hash": "8e96d607eead0010a08e3758f5c79f90"
+      },
+      {
+        "repository_version": "20261028180210",
+        "repository_name": "management_access",
+        "repository_blob": "3beab73aa6c8a62fdf5d4e12a2c97062e5521ff9",
+        "original_version": "20261110144847",
+        "original_name": "20261028180210_management_access",
+        "original_row_hash": "9c66a50749915bde5e3c0721da4b6608",
+        "statements_hash": "b7cfdf37b1c114a4620ffdb51a4f3e05"
+      },
+      {
+        "repository_version": "20261028181224",
+        "repository_name": "legacy_library",
+        "repository_blob": "00ce549820bb2757cbde272e8042f1dc3b8ff650",
+        "original_version": "20261110144850",
+        "original_name": "20261028181224_legacy_library",
+        "original_row_hash": "35e2406f6a29557d543bebd867c98c3b",
+        "statements_hash": "f15fa375b534f85d825f32eb707184a9"
+      },
+      {
+        "repository_version": "20261028182428",
+        "repository_name": "full_workspace_port",
+        "repository_blob": "728562393789ef3c6b2eaa567a74b8d4121187a6",
+        "original_version": "20261110144852",
+        "original_name": "20261028182428_full_workspace_port",
+        "original_row_hash": "cc42563175c55813ca305f87be81271a",
+        "statements_hash": "b863dc2859c20f4bcc905534df4da5a4"
+      },
+      {
+        "repository_version": "20261028183102",
+        "repository_name": "studio_verification",
+        "repository_blob": "0f77b7f98482d106033c55a86f2e142f0dcb83da",
+        "original_version": "20261110144855",
+        "original_name": "20261028183102_studio_verification",
+        "original_row_hash": "9b3df713a8f5cba6b7e22a043b5251ab",
+        "statements_hash": "f4b7f20da98a0611ab7e700ac1f9715e"
+      },
+      {
+        "repository_version": "20261028184350",
+        "repository_name": "personal_workspace_parity",
+        "repository_blob": "232e87d7f45e38d92f9fb7e0676c7765419eedea",
+        "original_version": "20261110144857",
+        "original_name": "20261028184350_personal_workspace_parity",
+        "original_row_hash": "e486dc94aa14d3104a54af14472bfea1",
+        "statements_hash": "89daeaeb11fec77fc03872c3309b8b84"
+      },
+      {
+        "repository_version": "20261028185638",
+        "repository_name": "named_legacy_linking",
+        "repository_blob": "8e631a8f98edd0f935073e4644b638a789ad6a4a",
+        "original_version": "20261110144859",
+        "original_name": "20261028185638_named_legacy_linking",
+        "original_row_hash": "68e99ae2f8f8f6d6fddaa941ceca1273",
+        "statements_hash": "cd3d2c8be8084f76a913491731c7e7ec"
+      },
+      {
+        "repository_version": "20261028215255",
+        "repository_name": "migration_audit_backups",
+        "repository_blob": "b1359ef493006d005e240fe4d4df0c9cf63326db",
+        "original_version": "20261110144902",
+        "original_name": "20261028215255_migration_audit_backups",
+        "original_row_hash": "bbcc9dcee405c182e32b36ad1558ba91",
+        "statements_hash": "2d918117b8f3cc4914bd283a5e7db307"
+      },
+      {
+        "repository_version": "20261028215640",
+        "repository_name": "permanent_workspace_ownership",
+        "repository_blob": "9c492fd038480f8f3686b8da95e1ae4cc12f7fe5",
+        "original_version": "20261110144904",
+        "original_name": "20261028215640_permanent_workspace_ownership",
+        "original_row_hash": "872cdab9e6e44ffcbc5dba942eface00",
+        "statements_hash": "addde66d43531171541de70dee97edd6"
+      },
+      {
+        "repository_version": "20261028220642",
+        "repository_name": "workspace_relationship_controls",
+        "repository_blob": "6e222c5dd7ef1c4abad249da932026117bca8428",
+        "original_version": "20261110144906",
+        "original_name": "20261028220642_workspace_relationship_controls",
+        "original_row_hash": "ba1c6a7a0dd8c96d95f095f07c56b87c",
+        "statements_hash": "1800f440d78b16b89a255e339b202720"
+      },
+      {
+        "repository_version": "20261029021511",
+        "repository_name": "legacy_directory_deduplication",
+        "repository_blob": "9dc39c89bbbda0a5abefa1d51102dfa241a5524f",
+        "original_version": "20261110144909",
+        "original_name": "20261029021511_legacy_directory_deduplication",
+        "original_row_hash": "a432101cd3a1d57e7bda7e3b02dca1d0",
+        "statements_hash": "a35e26bf0255b47586fbf0b4b191a835"
+      },
+      {
+        "repository_version": "20261029033647",
+        "repository_name": "year_first_personal_issuers",
+        "repository_blob": "379e8f287f952af1cdf5b0dc26724c36417df7ae",
+        "original_version": "20261110144911",
+        "original_name": "20261029033647_year_first_personal_issuers",
+        "original_row_hash": "8e45d72df7bd2378ff220c08003f4544",
+        "statements_hash": "c6e0c3060978b0d8abc8f9eecd781483"
+      },
+      {
+        "repository_version": "20261029035054",
+        "repository_name": "requested_issuer_codes",
+        "repository_blob": "63190ebad5fd7654f9f895f319b17397701fbcb4",
+        "original_version": "20261110144913",
+        "original_name": "20261029035054_requested_issuer_codes",
+        "original_row_hash": "317c293aa4b6ff3ae6612fe465615616",
+        "statements_hash": "80a256746af1cad56649b124fcdbbf7d"
+      },
+      {
+        "repository_version": "20261029154016",
+        "repository_name": "student_recipient_links",
+        "repository_blob": "2b559628f899cea40d9c1b9d11173d10ae5ca716",
+        "original_version": "20261110144915",
+        "original_name": "20261029154016_student_recipient_links",
+        "original_row_hash": "d1fd917b541dd1418e8dbc29fd749c73",
+        "statements_hash": "1d8a2f731d5cc64c5eb395dcfbbe6a33"
+      },
+      {
+        "repository_version": "20261030103051",
+        "repository_name": "book_tariq_builder",
+        "repository_blob": "1da1dc9d96969f86bf96d93ac7eed8d81f79e99b",
+        "original_version": "20261110145004",
+        "original_name": "20261030103051_book_tariq_builder",
+        "original_row_hash": "602f5ed9737efeb5b26a0bd0c2dcdc60",
+        "statements_hash": "d93755546f9e5a063335aefcea5dabd0"
+      },
+      {
+        "repository_version": "20261030103948",
+        "repository_name": "atomic_builder_attachment",
+        "repository_blob": "fae12cd1dc407d3ad711ba500056058170f81a03",
+        "original_version": "20261110145007",
+        "original_name": "20261030103948_atomic_builder_attachment",
+        "original_row_hash": "13adfa5e222d793cbe6d89009667f547",
+        "statements_hash": "d7346c8f6823c6a1b3a1057ba6921f46"
+      },
+      {
+        "repository_version": "20261030104402",
+        "repository_name": "builder_restore_safety",
+        "repository_blob": "01690cdf1e01529aa901907eb4e88590a72c4862",
+        "original_version": "20261110145009",
+        "original_name": "20261030104402_builder_restore_safety",
+        "original_row_hash": "8174716eeb401ad5e8ea8a08a7907836",
+        "statements_hash": "2bcfd0f863cc217b6f7e0daa343000bc"
+      },
+      {
+        "repository_version": "20261030130111",
+        "repository_name": "route_hierarchy",
+        "repository_blob": "f59c0e7e654e91195cb7c788e82bde48d733d193",
+        "original_version": "20261110145023",
+        "original_name": "20261030130111_route_hierarchy",
+        "original_row_hash": "7a74c498f110e4e24ad6e84f8136c989",
+        "statements_hash": "c181075ddeb00c0c2afd2d8add363a6f"
+      },
+      {
+        "repository_version": "20261030131010",
+        "repository_name": "route_hierarchy_backup_compat",
+        "repository_blob": "7b037b30a9a276aa5385b560e96b86e08ab8e0ef",
+        "original_version": "20261110145026",
+        "original_name": "20261030131010_route_hierarchy_backup_compat",
+        "original_row_hash": "a452e3ae78d4f9eb8804edfad0ac711a",
+        "statements_hash": "b36c8813507e4675eeac9b2818efd2e2"
+      },
+      {
+        "repository_version": "20261030183246",
+        "repository_name": "permanent_book_artwork_numbers",
+        "repository_blob": "be2579bc8823707a2fe01645390638ae41127fed",
+        "original_version": "20261110145028",
+        "original_name": "20261030183246_permanent_book_artwork_numbers",
+        "original_row_hash": "ae0d014af6911b2b2f50083f2b994282",
+        "statements_hash": "00bd208fa1bed161c0915443fd85a171"
+      },
+      {
+        "repository_version": "20261030183255",
+        "repository_name": "book_artwork_number_restore_compat",
+        "repository_blob": "de011effd3759a3fee61ceeecbf95ecea8ed0ab4",
+        "original_version": "20261110145031",
+        "original_name": "20261030183255_book_artwork_number_restore_compat",
+        "original_row_hash": "596e96bde73f1d004305d05ea0db225a",
+        "statements_hash": "320a3272e56ba9bc6f2d39ed3d0689c3"
+      },
+      {
+        "repository_version": "20261030184211",
+        "repository_name": "github_artwork_refresh",
+        "repository_blob": "a9005f24821d4563a5d1a16a65c237591ef8b280",
+        "original_version": "20261110145033",
+        "original_name": "20261030184211_github_artwork_refresh",
+        "original_row_hash": "a90c8441117912c8e778ab31be3e29e8",
+        "statements_hash": "49bdde55f4893958cbe441791b038feb"
+      },
+      {
+        "repository_version": "20261031152251",
+        "repository_name": "lifetime_issuer_certificate_numbers",
+        "repository_blob": "d436937808ab90d1c1ed14c1dc10b33de393e527",
+        "original_version": "20261112115948",
+        "original_name": "20261031152251_lifetime_issuer_certificate_numbers",
+        "original_row_hash": "c898071951b5d3548b55a51c996290ac",
+        "statements_hash": "1918b1991d02fa649ae7003794949569"
+      },
+      {
+        "repository_version": "20261101023728",
+        "repository_name": "refresh_changed_artwork_catalog",
+        "repository_blob": "7de191a59d896ca674be748fab16eb9bbca64799",
+        "original_version": "20261112120036",
+        "original_name": "20261101023728_refresh_changed_artwork_catalog",
+        "original_row_hash": "a2f0afa79fd90368db0734a94a1b23ac",
+        "statements_hash": "8220743d25471b7489b4e68cdf27156a"
+      },
+      {
+        "repository_version": "20261101065024",
+        "repository_name": "narrator_merge",
+        "repository_blob": "9030bcc4dd0a3850489908d786da827c327d1669",
+        "original_version": "20261112120039",
+        "original_name": "20261101065024_narrator_merge",
+        "original_row_hash": "e9e42b3aa059b7f88e9b66a60d7e5cbb",
+        "statements_hash": "8e99445ffc476eb0380aa7696982426f"
+      },
+      {
+        "repository_version": "20261101105550",
+        "repository_name": "annual_issuer_numbers",
+        "repository_blob": "907f6b18e801f0a240b6c7f7bf40a4a5c7c09b40",
+        "original_version": "20261112120044",
+        "original_name": "20261101105550_annual_issuer_numbers",
+        "original_row_hash": "2fa7dd23e281665508406ad6917a9367",
+        "statements_hash": "7f297d13230cdbb8da7f99e2a273799f"
+      },
+      {
+        "repository_version": "20261101163930",
+        "repository_name": "khatam_order_draft_numbers",
+        "repository_blob": "04953dfcb93be6824473cdb5cabeee8746390b6f",
+        "original_version": "20261112120116",
+        "original_name": "20261101163930_khatam_order_draft_numbers",
+        "original_row_hash": "0be77b82a732b01065ff35f98d91839c",
+        "statements_hash": "93b8c71b4b594fa79d9f09036ddc9eea"
+      },
+      {
+        "repository_version": "20261103193314",
+        "repository_name": "matn_certificate_subjects",
+        "repository_blob": "e65fbe40471f1abd41b71991cadf159ea2bc2f56",
+        "original_version": "20261112120120",
+        "original_name": "20261103193314_matn_certificate_subjects",
+        "original_row_hash": "1f29a72b1954fa42156ef33d45b843b4",
+        "statements_hash": "3cbc98799a5a98faaad69d96a2c8a92f"
+      },
+      {
+        "repository_version": "20261103194027",
+        "repository_name": "restrict_subject_catalog_writes",
+        "repository_blob": "b915d38f3659f1d77d0bfacfeae19edbb666f723",
+        "original_version": "20261112120124",
+        "original_name": "20261103194027_restrict_subject_catalog_writes",
+        "original_row_hash": "93e07cf304c36fa10fb9cdca838ee714",
+        "statements_hash": "bec70628049b2383e50167d9261a4309"
+      },
+      {
+        "repository_version": "20261103194633",
+        "repository_name": "include_matn_catalog_in_backups",
+        "repository_blob": "acd5b9e043199bcb0dea7dafc576e213bc248be8",
+        "original_version": "20261112120128",
+        "original_name": "20261103194633_include_matn_catalog_in_backups",
+        "original_row_hash": "99ec625560b995d088c6ceff54f69669",
+        "statements_hash": "e771910ea528c9e13fb2d6bbe514d962"
+      },
+      {
+        "repository_version": "20261103195403",
+        "repository_name": "account_usernames",
+        "repository_blob": "50114bbcd44f3b078de3d07caac44576a6e79856",
+        "original_version": "20261112120132",
+        "original_name": "20261103195403_account_usernames",
+        "original_row_hash": "5d3289dfd39ef7738d8b52c56332e862",
+        "statements_hash": "8efb79ffd1b8afdc73abb3b341fe1c1b"
+      },
+      {
+        "repository_version": "20261103202113",
+        "repository_name": "admin_account_usernames",
+        "repository_blob": "96b1a0818c64ba68871a969be7c76baca0d8c381",
+        "original_version": "20261112120136",
+        "original_name": "20261103202113_admin_account_usernames",
+        "original_row_hash": "b06e3cdf50b77fb6c1d5fc998adfb0a0",
+        "statements_hash": "44fd9281c82b29417335e8cc4292746f"
+      },
+      {
+        "repository_version": "20261104125019",
+        "repository_name": "unified_matn_catalog",
+        "repository_blob": "8ee4e9d4ed8bfef5e3d9136fab70be5d11cce8a1",
+        "original_version": "20261112120139",
+        "original_name": "20261104125019_unified_matn_catalog",
+        "original_row_hash": "e3df331917f03b8f653321564e5a0420",
+        "statements_hash": "6187a2169e3edfc0c2a255855deaeb36"
+      },
+      {
+        "repository_version": "20261104164423",
+        "repository_name": "unified_sanad_continuations",
+        "repository_blob": "e2621e8da7d677665dd9f34648916135ff94e2fe",
+        "original_version": "20261112120143",
+        "original_name": "20261104164423_unified_sanad_continuations",
+        "original_row_hash": "7c0f4502079694dec3a965b8ce42a222",
+        "statements_hash": "0d21843789e37e8443e64bc0ae0a0cca"
+      },
+      {
+        "repository_version": "20261104212114",
+        "repository_name": "recoverable_account_deletion",
+        "repository_blob": "3b6e028a35d81f34cf396a36890214144e9a9d47",
+        "original_version": "20261112120148",
+        "original_name": "20261104212114_recoverable_account_deletion",
+        "original_row_hash": "5b2a093e88a8920cb299b37b6458f801",
+        "statements_hash": "68042d76819ba99e77e4a49b518ba36a"
+      },
+      {
+        "repository_version": "20261105142134",
+        "repository_name": "personal_sanad_variants",
+        "repository_blob": "4b175795a496270939d80b177a94a7cf0e45cd5a",
+        "original_version": "20261112120152",
+        "original_name": "20261105142134_personal_sanad_variants",
+        "original_row_hash": "aa0523beb465a7fa7783669e10ecab9a",
+        "statements_hash": "2977431a2ebab3239cd4ae7c5224f047"
+      },
+      {
+        "repository_version": "20261105151613",
+        "repository_name": "account_setup_invitations",
+        "repository_blob": "5dd0117d9394b78a80f86752396f4ab7606f80dc",
+        "original_version": "20261112120157",
+        "original_name": "20261105151613_account_setup_invitations",
+        "original_row_hash": "020175b4ebc49f60c4d20cf48d58d7cb",
+        "statements_hash": "e85085e26db9e34074749993cda78f6d"
+      },
+      {
+        "repository_version": "20261105213349",
+        "repository_name": "reviewed_narrator_aliases",
+        "repository_blob": "c3ebf6afe700eeeaddfd8b11a8ce92bce9fbb213",
+        "original_version": "20261112120202",
+        "original_name": "20261105213349_reviewed_narrator_aliases",
+        "original_row_hash": "c995f7cce28e633ad0483340009ceafc",
+        "statements_hash": "e9b19014f8bed330edc9d173192954fc"
+      },
+      {
+        "repository_version": "20261109221703",
+        "repository_name": "restrict_verification_projection_reads",
+        "repository_blob": "35f2b82f4c9e8ab90e48b1f0c6992ce5f2704d8e",
+        "original_version": "20261112120207",
+        "original_name": "20261109221703_restrict_verification_projection_reads",
+        "original_row_hash": "a46351129e5e9ae7b4cd58d8f6d17210",
+        "statements_hash": "ec1402bd88cedaa0679dd4a5f5389705"
+      },
+      {
+        "repository_version": "20261110082014",
+        "repository_name": "serialize_certificate_finalization",
+        "repository_blob": "4897855c9432fc280a2d50c36020fec8bad8041a",
+        "original_version": "20261112120211",
+        "original_name": "20261110082014_serialize_certificate_finalization",
+        "original_row_hash": "13d993df52e4d9e65fd83dc7b031e8f9",
+        "statements_hash": "2e231378c88e0c90533a3a8ac81c9244"
+      },
+      {
+        "repository_version": "20261112122627",
+        "repository_name": "guard_certificate_number_lookup",
+        "repository_blob": "62178521c68d7ead864cdbf06f81697706c4abfb",
+        "original_version": "20261112122627",
+        "original_name": "guard_certificate_number_lookup",
+        "original_row_hash": "8f73a5d170a4ee38411b644c62808202",
+        "statements_hash": "1bce65efeaf1c58207b7bff728efea13"
+      },
+      {
+        "repository_version": "20261118205028",
+        "repository_name": "reusable_issuer_matn_templates",
+        "repository_blob": "86ae072d1201459bfd703d97e93e79a97dcbf88f",
+        "original_version": "20261118203905",
+        "original_name": "reusable_issuer_matn_templates",
+        "original_row_hash": "6740c2badeed21e58cf6e64eae8bd893",
+        "statements_hash": "3c3fa9da84c4e7d57d19cf7573e0dcdd"
+      },
+      {
+        "repository_version": "20261127021802",
+        "repository_name": "atomic_certificate_display_numbers",
+        "repository_blob": "aaf879fa2c5c57056a179067d6e183d28a0df16f",
+        "original_version": "20261127021802",
+        "original_name": "atomic_certificate_display_numbers",
+        "original_row_hash": "1628af7833770267deb12282e8615f8c",
+        "statements_hash": "c10fc84c497f042ff8c9a2e974c0fa0a"
+      },
+      {
+        "repository_version": "20261127024712",
+        "repository_name": "scoped_certificate_list_page",
+        "repository_blob": "414cc34f8bcbd40d95aa0af589e5a40580b58782",
+        "original_version": "20261127024712",
+        "original_name": "scoped_certificate_list_page",
+        "original_row_hash": "0c914b39040d5f3f50f79a1cfc94ace7",
+        "statements_hash": "396681606919a079f92eab996e3dd4b4"
+      },
+      {
+        "repository_version": "20261127025050",
+        "repository_name": "certificate_filtered_pages_and_index",
+        "repository_blob": "185b2e7b65b7212cfe98a62e694e74077235d0e3",
+        "original_version": "20261127025050",
+        "original_name": "certificate_filtered_pages_and_index",
+        "original_row_hash": "f47790030588e5c620a7baab79ed61ca",
+        "statements_hash": "2b6d8067425ffcd217d6c875437a41c9"
+      },
+      {
+        "repository_version": "20261127025505",
+        "repository_name": "restrict_recipient_access_to_finalized_certificates",
+        "repository_blob": "c9eace25471beda336adc631898c3a3a94a789da",
+        "original_version": "20261127025505",
+        "original_name": "restrict_recipient_access_to_finalized_certificates",
+        "original_row_hash": "db622663439d3073c013a5c6076b553e",
+        "statements_hash": "b98355b284842fa1a24d9f3314f5c910"
+      }
+    ]
+  }
+}
