@@ -45,7 +45,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
     hijriDayOffset:cert?.hijriDayOffset ?? 0,
     sanadId: cert?.sanadId ?? '',
     notes: cert?.notes ?? '',
-    shaykhId:cert?.additionalShaykh ? 'guest:'+cert.additionalShaykh : cert?.shaykhId ?? (isAdmin?(shaykhs.some(s=>s.id===preferredPersonal)?preferredPersonal:shaykhs[0]?.id||''):currentUserId),
+    shaykhId:cert?.additionalShaykh ? 'guest:'+cert.additionalShaykh : cert?.shaykhId ?? (isAdmin?(selectedIssuer?.startsWith('guest:')?selectedIssuer:shaykhs.some(s=>s.id===preferredPersonal)?preferredPersonal:shaykhs[0]?.id||''):currentUserId),
   });
   const [saving, setSaving] = useState(false);
   const savingRef=useRef(false);
@@ -60,7 +60,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   useEffect(()=>{
     if(!isAdmin)return;
     let active=true;setGuestLoading(true);setGuestError('');
-    additionalShaykhs({action:'list'}).then(r=>{if(active){setGuestSheikhs(r.sheikhs);const selected=r.sheikhs.find(s=>s.id===(selectedIssuer||'').replace(/^guest:/,''));if(!cert&&selected)setForm(p=>p.shaykhId==='guest:'+selected.id?p:({...p,shaykhId:'guest:'+selected.id,sanadId:''}));}})
+    additionalShaykhs({action:'list'}).then(r=>{if(active){setGuestSheikhs(r.sheikhs);}})
       .catch(()=>{if(active)setGuestError('تعذر تحميل المشايخ الإضافيين');}).finally(()=>{if(active)setGuestLoading(false);});
     return()=>{active=false;};
   },[isAdmin,selectedIssuer,guestAttempt]);
@@ -172,12 +172,13 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
    const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq&&!(isGuest&&readingScope==='sughra'&&explicitOrder&&orderedIds.some(id=>id!==selectedGuestId))?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
   }
 
-  const readinessKey=JSON.stringify([selectionKey,guestTariq,explicitOrder?orderedIds:[],selectedGuest?.id,baseHolding?.id]);
-  const [readiness,setReadiness]=useState<{key:string;state:'checking'|'ready'|'error';message?:string}>();
   const [readinessAttempt,setReadinessAttempt]=useState(0);
-  const requiresReadiness=!cert&&!!form.sanadId&&(isGuest||choosingQiraah||!!baseHolding);
+  const readinessKey=JSON.stringify([selectionKey,guestTariq,explicitOrder?orderedIds:[],selectedGuest?.id,baseHolding?.id,guestAttempt,holdingsAttempt,readinessAttempt]);
+  const [readiness,setReadiness]=useState<{key:string;state:'checking'|'ready'|'error';message?:string}>();
+
+  const requiresReadiness=!cert&&!!form.sanadId&&(isGuest||choosingQiraah||form.sanadId.startsWith('holding:'));
   useEffect(()=>{
-    if(!requiresReadiness||(isGuest&&!selectedGuest)||((baseHolding||needsSanadSelection)&&!orderedIds.length))return;
+    if(!requiresReadiness||(isGuest&&(guestLoading||!selectedGuest))||(!isGuest&&holdingsLoading)||((baseHolding||needsSanadSelection)&&!orderedIds.length))return;
     let active=true;
     setReadiness({key:readinessKey,state:'checking'});
     const check=async()=>{
@@ -188,20 +189,21 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         await issueQiraah({readinessOnly:true,qariId:form.sanadId.slice('qiraah:'.length),tariqNumber:selectedTariq,ownerId:form.shaykhId,studentName:'اختبار الجاهزية',completionDate:'2000-01-01',notes:''});
       }else if(baseHolding){
         await prepareIjazah({readinessOnly:true,holdingId:explicitOrder?orderedIds[0]:baseHolding.id,holdingIds:explicitOrder?orderedIds:undefined,rawi:holdingRawi,ownerId:form.shaykhId});
-      }
+      }else throw Error('السند المختار غير متاح؛ اختر القراءة مرة أخرى');
     };
-    check().then(()=>{if(active)setReadiness({key:readinessKey,state:'ready'});}).catch(e=>{if(active)setReadiness({key:readinessKey,state:'error',message:e instanceof Error?e.message:'تعذر التحقق من السند'});});
-    return()=>{active=false;};
-  },[readinessKey,readinessAttempt,requiresReadiness]);
-  const readinessPassed=!requiresReadiness||(readiness?.key===readinessKey&&readiness.state==='ready');
+    const timer=window.setTimeout(()=>{check().then(()=>{if(active)setReadiness({key:readinessKey,state:'ready'});}).catch(e=>{if(active)setReadiness({key:readinessKey,state:'error',message:e instanceof Error?e.message:'تعذر التحقق من السند'});});},250);
+    return()=>{active=false;window.clearTimeout(timer);};
+  },[readinessKey,requiresReadiness,guestLoading,holdingsLoading]);
+  const readinessPassed=!requiresReadiness||(readiness?.key===readinessKey&&readiness.state==='ready'&&!(isGuest?guestLoading:holdingsLoading)&&(!needsSanadSelection||orderedIds.length>0));
   const [touched, setTouched] = useState(false);
   const parsed = schema.safeParse(form);
   const errors = parsed.success ? {} : parsed.error.flatten().fieldErrors;
   const err = (k: keyof typeof errors) => touched && errors[k]?.[0] && <p className="text-sm text-destructive">{errors[k]?.[0]}</p>;
 
-  const initialForm=useRef(JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId]));
-  const dirty=JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId])!==initialForm.current||!!orderedSelection;
+  const initialForm=useRef(JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId]));
+  const dirty=JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId])!==initialForm.current||!!orderedSelection||!!selectedBook;
   useEffect(()=>{if(!dirty)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+  useEffect(()=>{if(!dirty&&!saving)return;const guard=(event:Event)=>{if(savingRef.current||!window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))event.preventDefault();};window.addEventListener('asaneed-before-navigation',guard);return()=>window.removeEventListener('asaneed-before-navigation',guard);},[dirty,saving]);
   const closeSafely=(close:()=>void)=>{if(savingRef.current)return;if(!dirty||window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))close();};
   const submit = async () => {
     if(savingRef.current)return;
@@ -252,11 +254,11 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
       <DialogContent dir="rtl" className="text-right certificate-entry-dialog" onInteractOutside={event=>event.preventDefault()}>
         {onBack&&<Button variant="ghost" size="icon" aria-label="رجوع إلى المُجيز" title="رجوع إلى المُجيز" onClick={()=>closeSafely(onBack)}><ArrowRight size={20}/></Button>}
         <DialogHeader className="text-right"><DialogTitle className="font-display text-2xl">{cert ? 'تعديل بيانات الشهادة' : 'إضافة شهادة'}</DialogTitle></DialogHeader>
-        <div className="space-y-4">
+        <fieldset disabled={saving} className="space-y-4 min-w-0 border-0 p-0 m-0">
           {fixedIssuer&&!isAdmin&&<p className="rounded border p-3">المُجيز: {shaykhs.find(s=>s.id===form.shaykhId)?.name||'إجازاتي'}</p>}
           {isAdmin&&<div className="space-y-1.5">
             <Label>المُجيز (الشيخ صاحب الإجازة)</Label>
-            <Select dir="rtl" disabled={!!cert||fixedIssuer} value={form.shaykhId} onValueChange={v=>setForm(prev=>({...prev,shaykhId:v,sanadId:''}))}>
+            <Select dir="rtl" disabled={saving||!!cert||fixedIssuer} value={form.shaykhId} onValueChange={v=>setForm(prev=>({...prev,shaykhId:v,sanadId:''}))}>
               <SelectTrigger aria-label="المُجيز"><SelectValue placeholder="اختر المُجيز" /></SelectTrigger>
               <SelectContent>
                 <SelectGroup><SelectLabel>مشايخ لهم إجازات في حساباتهم</SelectLabel>
@@ -278,7 +280,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             {!cert&&hasSughra&&hasKubra&&<label className="block space-y-1">نوع الإجازة<select className="w-full rounded border bg-background p-2" value={readingScope} onChange={e=>{setReadingScope(e.target.value as typeof readingScope);setSelectedBook('');setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">اختر العشر الصغرى أو الكبرى</option><option value="sughra">العشر الصغرى — الشاطبية والدرة</option><option value="kubra">العشر الكبرى</option></select></label>}
             {!cert&&readingScope==='kubra'&&bookOptions.length>0&&<label className="block space-y-1">الكتاب / الطريق<select className="w-full rounded border bg-background p-2" value={selectedBook} onChange={e=>{setSelectedBook(e.target.value);setSelectedTariq('');setForm(v=>({...v,sanadId:''}));}}><option value="">جميع كتب العشر الكبرى</option>{bookOptions.map(name=><option key={name} value={name}>{name}</option>)}</select></label>}
             <Label>القراءة أو الرواية</Label>
-            <Select dir="rtl" disabled={!!cert||!readingScope} value={form.sanadId || undefined} onValueChange={selectReading}>
+            <Select dir="rtl" disabled={saving||!!cert||!readingScope} value={form.sanadId || undefined} onValueChange={selectReading}>
               <SelectTrigger aria-label="القراءة أو الرواية"><SelectValue placeholder="اختر من إجازاتك المحفوظة" /></SelectTrigger>
               <SelectContent className="max-h-[340px] max-w-[calc(100vw-32px)]" dir="rtl">
                 {!cert&&isGuest&&guestChoices.map(({q,rawis})=><SelectGroup key={q.id}>
@@ -367,7 +369,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             <Label>ملاحظات (اختياري)</Label>
             <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
           </div>
-        </div>
+        </fieldset>
         {saveError&&<div role="alert" className="certificate-entry-error rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{saveError}</div>}
         <DialogFooter className="gap-2 certificate-entry-actions">
           <Button variant="outline" disabled={saving} onClick={()=>closeSafely(onClose)}>إلغاء</Button>
