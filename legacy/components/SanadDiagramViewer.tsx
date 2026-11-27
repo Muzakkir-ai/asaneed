@@ -1,6 +1,7 @@
 import {useState,type ComponentProps} from 'react';
-import {ArrowDown,GitBranch,Route} from 'lucide-react';
+import {GitBranch,Route} from 'lucide-react';
 import CombinedSanadView from './CombinedSanadView';
+import SanadSequence from './SanadSequence';
 import {arabicDigits} from '../lib/arabicDigits';
 type Props=ComponentProps<typeof CombinedSanadView>&{selectedRoute?:number;onRouteChange?:(index:number)=>void};
 /** One exact saved sequence at a time. The overview retains all original paths. */
@@ -17,10 +18,7 @@ export default function SanadDiagramViewer({selectedRoute,onRouteChange,...props
   {network?<CombinedSanadView {...props}/>:<div className="rounded-xl border bg-background p-3 sm:p-5">
    {props.source&&<p className="mb-3 text-center text-xs text-muted-foreground">{props.source}</p>}
    {props.review&&<p className="mb-3 text-center text-xs text-muted-foreground">من النص المحفوظ · يحتاج مراجعة</p>}
-   <ol aria-label="مسار السند المختار" className="mx-auto max-w-md">{path.map((id,i)=><li key={i+':'+id}>
-    {props.renderPerson(id,[i+1])}
-    {i<path.length-1&&<div className="flex h-10 items-center justify-center text-primary" aria-hidden="true"><ArrowDown size={23} strokeWidth={1.6}/></div>}
-   </li>)}</ol>
+   <SanadSequence path={path} renderPerson={props.renderPerson} compact preview/>
    {!path.length&&<p role="status" className="text-sm text-muted-foreground">لا يوجد مسار محفوظ للعرض.</p>}
   </div>}
  </section>;
