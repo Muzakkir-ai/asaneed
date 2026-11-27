@@ -73,9 +73,10 @@ function PrivateApp() {
     const url=new URL(window.location.href);
     for(const key of ['shaykh','qari','rawi','tariq','variant','settings','view'])url.searchParams.delete(key);
     url.searchParams.set('page',page);
-    window.history.replaceState(window.history.state,'',url);
+    window.history.pushState(window.history.state,'',url);
     setActivePage(page);
   };
+  useEffect(()=>{const restore=()=>{const page=new URLSearchParams(window.location.search).get('page')||'';const allowed=['profile','mycerts','asaneed','narrators',...((user?.canIssue??user?.role!=='student')?['qurra-diagrams','sanad-explorer']:[]),...(user?.role==='student'?[]:['certs','available-mutoon','appearance']),...(user?.role==='admin'?['shaykh-sanads','shared-mutoon','content-requests','shared-texts','shared-sanads','extra-sheikhs','users']:[])];setActivePage(allowed.includes(page)?page:user?.role==='student'?'mycerts':'certs');};window.addEventListener('popstate',restore);return()=>window.removeEventListener('popstate',restore);},[user?.role,user?.canIssue]);
   const [collapsed,setCollapsed]=useState(()=>localStorage.getItem('asaneed-sidebar')==='collapsed');
   const scopeVersion=useRef(0);
   const person=directory?.accounts.find(a=>a.id===(target||directory.actorId));
@@ -160,15 +161,15 @@ function PrivateApp() {
           <div className="studio-header-brand flex items-center gap-3 min-w-0">
             <div className="h-9 w-9 sm:h-11 sm:w-11 shrink-0 rounded-full bg-accent grid place-items-center"><BookOpen className="h-5 w-5" /></div>
             <div className="min-w-0">
-              <h1 className="font-display text-lg sm:text-2xl font-bold leading-tight">منصة الأسانيد والإجازات</h1>
+              <h1 className="font-display text-lg sm:text-2xl font-bold leading-tight">{tx('منصة الأسانيد والإجازات','Asaneed and Ijazah platform')}</h1>
               <p className="text-xs sm:text-sm opacity-80 truncate">{person?.name||shaykhName}</p>
             </div>
           </div>
           <div className="studio-header-actions flex gap-2 items-center">
-          <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setDark(v=>!v)}>{dark?<Sun className="h-4 w-4" aria-hidden="true"/>:<Moon className="h-4 w-4" aria-hidden="true"/>}<span>{dark?'Light':'Dark'}</span></Button>
+          <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setDark(v=>!v)}>{dark?<Sun className="h-4 w-4" aria-hidden="true"/>:<Moon className="h-4 w-4" aria-hidden="true"/>}<span>{dark?tx('فاتح','Light'):tx('داكن','Dark')}</span></Button>
           <Button size="sm" variant="outline" className="gap-2 bg-transparent text-white border-white/60 hover:bg-white/15 hover:text-white focus-visible:ring-white" onClick={()=>setLanguage(v=>v==='ar'?'en':'ar')}><Languages className="h-4 w-4" aria-hidden="true"/><span>{language==='ar'?'English':'العربية'}</span></Button>
           <Button variant="ghost" className="shrink-0 px-2 sm:px-4 text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" onClick={() => logout()}>
-            <LogOut className="h-4 w-4 sm:me-2" /> <span className="hidden sm:inline">خروج</span>
+            <LogOut className="h-4 w-4 sm:me-2" /> <span className="hidden sm:inline">{tx('خروج','Sign out')}</span>
           </Button></div>
         </div>
         <div className="h-1 bg-accent" />
