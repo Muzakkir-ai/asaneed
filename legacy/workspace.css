@@ -482,4 +482,9 @@
  .zite-app :is(.workspace-shell,.editor-page) [data-workspace-button]:not(:is(.certificate-preview-dialog *,.certificate-heading-preview *)){box-shadow:none}
  .zite-app [data-sonner-toaster]{--offset-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 }
-@media screen and (max-width:767px){.zite-app .editor-page-header{flex-wrap:wrap;min-width:0}.zite-app .editor-page-actions{flex-wrap:wrap;min-width:0}.zite-app .editor-page-body{min-width:0;overflow-wrap:anywhere}}
+@media screen and (max-width:767px){.zite-app .editor-page-header{flex-wrap:wrap;min-width:0}.zite-app .editor-page-actions{flex-wrap:wrap;min-width:0}.zite-app .editor-page-body{min-width:0}}
+
+/* Removing decorative shadows must not remove keyboard focus indication. */
+@media screen {
+ .zite-app :is(.workspace-shell,.editor-page,.certificate-entry-dialog) :is(button,input,select,textarea,[role=combobox]):focus-visible:not(:is(.print-area *,.certificate-heading-preview *,.certificate-preview-dialog *)){outline:2px solid hsl(var(--ring));outline-offset:2px}
+}
