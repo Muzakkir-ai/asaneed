@@ -20,6 +20,7 @@ export default function PersonalSanadInput({value,personIds=[],complete=false,pr
  const [library,setLibrary]=useState<BuilderLibrary|null>(null),[error,setError]=useState(''),[draft,setDraft]=useState(value),[selected,setSelected]=useState(''),[pending,setPending]=useState(false),[revision,setRevision]=useState(0);
  const preselected=useRef(false);
  const markPending=(next:boolean)=>{setPending(next);onPendingChange?.(next);};
+ useEffect(()=>{if(!pending)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[pending]);
  const load=async()=>{setError('');try{const response=await fetch('/api/book-builder',{headers:workspaceHeaders()});const data=await response.json();if(!response.ok)throw Error(data.error||'تعذر تحميل الرواة');setLibrary(data);}catch(e){setError(e instanceof Error?e.message:'تعذر تحميل الرواة');}};
  useEffect(()=>{void load();},[]);
  useEffect(()=>{onEditingChange?.(editing);if(editing&&preparation&&!preparation.reviewed)markPending(true);},[editing]);
@@ -59,7 +60,7 @@ export default function PersonalSanadInput({value,personIds=[],complete=false,pr
    onApply(text,ids,'jazari',sourceId);setDraft(text);markPending(false);return;
   }
   const composed=complete?text:resolveBuilderPrefix(text,library?.prefixContinuations,selected).text;if(complete&&composed.trim().length<100)throw Error('أكمل رواة السند إلى النبي ﷺ ثم اعتمد الترتيب');if(!complete&&(saveContinuation||diagram?.personalText===value.trim())&&composed!==text.trim())throw Error('اختر تتمة مشتركة معتمدة مرتبطة بهوية راوي نقطة الالتقاء لحفظها مستقلة عن السند الشخصي.');onApply(composed,ids,'jazari',saveContinuation?null:undefined);setDraft(composed);markPending(false);}catch(e){markPending(true);setError(e instanceof Error?e.message:'راجع نقطة الالتقاء');}};
- return <section className="space-y-3" aria-label="محرر السند الشخصي بالرواة" data-sanad-mode={editing?"edit":"view"}>{!readOnly&&<div className="flex justify-end"><Button type="button" variant="outline" onClick={()=>setEditing(v=>!v)}>{editing?"عرض السند":"تعديل السند"}</Button></div>}{saveContinuation&&(!complete||personalPrefix)&&<div className="rounded-md border px-3 py-2 text-sm">
+ return <section className="space-y-3" aria-label="محرر السند الشخصي بالرواة" data-sanad-mode={editing?"edit":"view"}>{!readOnly&&<div className="flex justify-end"><Button type="button" variant="outline" onClick={()=>{if(editing&&pending){setError('اعتمد ترتيب الرواة قبل مغادرة التعديل');return;}setEditing(v=>!v);}}>{editing?"عرض السند":"تعديل السند"}</Button></div>}{saveContinuation&&(!complete||personalPrefix)&&<div className="rounded-md border px-3 py-2 text-sm">
   <strong>نقطة الالتقاء</strong>
   {meeting&&<p>{meeting.display_name||meeting.name}</p>}
   {editing&&(!!selectedSource||!!resolved?.options.length)&&<label className="block space-y-1">التتمة المعتمدة
