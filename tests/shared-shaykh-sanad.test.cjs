@@ -21,7 +21,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  const issuance={action:'issue',id:'guest',qariId:'nafi',rawi:'قالون',studentName:'طالب تجريبي',completionDate:'2026-11-05'};
  readinessFixture=true;
  const beforeReadiness=JSON.stringify({guest,records,profileWrites});
- assert.deepEqual(await call({action:'issue',id:'guest',qariId:'nafi',readinessOnly:true}),{sheikhs:[]});
+ assert.deepEqual(await call({action:'issue',id:'guest',qariId:'nafi',readinessOnly:true,previewOnly:true}),{sheikhs:[],ready:true});
  assert.equal(JSON.stringify({guest,records,profileWrites}),beforeReadiness,'readiness validates both narrators without writes');
  readinessFixture=false;
  await assert.rejects(()=>call(issuance),/fixture-stop-before-write/);assert.equal(captured.personalChain,updated);assert.equal(captured.unifiedSanad,undefined,'shared source must not retain a stale individual route reference');
