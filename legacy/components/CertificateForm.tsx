@@ -172,6 +172,28 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
    const qari=QURRA.find(q=>q.id===qariId);if(qari)for(const r of full?qari.rawis:[rawi])if(qari.rawis.includes(r))previewChoices.push({qariId,rawi:r,heading:vocalizeReadingLabel(readingText({qariId,rawi:r})+' '+(selectedTariq&&!(isGuest&&readingScope==='sughra'&&explicitOrder&&orderedIds.some(id=>id!==selectedGuestId))?certificateRoutePhrase(routeOptions.find(([n])=>n===selectedTariq)?.[1]||''):routeFor([qariId])))});
   }
 
+  const readinessKey=JSON.stringify([selectionKey,guestTariq,explicitOrder?orderedIds:[],selectedGuest?.id,baseHolding?.id]);
+  const [readiness,setReadiness]=useState<{key:string;state:'checking'|'ready'|'error';message?:string}>();
+  const [readinessAttempt,setReadinessAttempt]=useState(0);
+  const requiresReadiness=!cert&&!!form.sanadId&&(isGuest||choosingQiraah||!!baseHolding);
+  useEffect(()=>{
+    if(!requiresReadiness||(isGuest&&!selectedGuest)||((baseHolding||needsSanadSelection)&&!orderedIds.length))return;
+    let active=true;
+    setReadiness({key:readinessKey,state:'checking'});
+    const check=async()=>{
+      if(isGuest){
+        const full=form.sanadId.startsWith('guest-qiraah:');
+        await additionalShaykhs({action:'issue',readinessOnly:true,id:selectedGuestId,qariId:full?form.sanadId.slice('guest-qiraah:'.length):alternativeQari,rawi:full?undefined:alternativeRawi,tariqNumber:guestTariq,personalSanadIds:explicitOrder?orderedIds:undefined});
+      }else if(choosingQiraah){
+        await issueQiraah({readinessOnly:true,qariId:form.sanadId.slice('qiraah:'.length),tariqNumber:selectedTariq,ownerId:form.shaykhId,studentName:'اختبار الجاهزية',completionDate:'2000-01-01',notes:''});
+      }else if(baseHolding){
+        await prepareIjazah({readinessOnly:true,holdingId:explicitOrder?orderedIds[0]:baseHolding.id,holdingIds:explicitOrder?orderedIds:undefined,rawi:holdingRawi,ownerId:form.shaykhId});
+      }
+    };
+    check().then(()=>{if(active)setReadiness({key:readinessKey,state:'ready'});}).catch(e=>{if(active)setReadiness({key:readinessKey,state:'error',message:e instanceof Error?e.message:'تعذر التحقق من السند'});});
+    return()=>{active=false;};
+  },[readinessKey,readinessAttempt,requiresReadiness]);
+  const readinessPassed=!requiresReadiness||(readiness?.key===readinessKey&&readiness.state==='ready');
   const [touched, setTouched] = useState(false);
   const parsed = schema.safeParse(form);
   const errors = parsed.success ? {} : parsed.error.flatten().fieldErrors;
@@ -185,7 +207,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
     if(savingRef.current)return;
     setSaveError('');
     setTouched(true);
-    if (!parsed.success || (baseHolding||needsSanadSelection) && !orderedIds.length) return;
+    if (!readinessPassed || !parsed.success || (baseHolding||needsSanadSelection) && !orderedIds.length) return;
     savingRef.current=true;setSaving(true);
     try {
       if(!cert&&isGuest){
@@ -297,6 +319,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             const provenance=JSON.parse(saved.formatting).orderedSanads;
             return orderedSanadPreviewSchema.parse({chain:saved.chain,branches:provenance?.branches??[]});
           }}/>}
+          {requiresReadiness&&<div className="rounded border p-3 text-sm" role={readiness?.key===readinessKey&&readiness.state==='error'?'alert':'status'}>{readinessPassed?'السند مكتمل وجاهز للإصدار':readiness?.key===readinessKey&&readiness.state==='error'?<>{readiness.message}<Button type="button" variant="outline" size="sm" onClick={()=>setReadinessAttempt(n=>n+1)}>إعادة التحقق</Button></>:'جارٍ التحقق من السند…'}</div>}
           {previewChoices.length>0&&<details className="rounded-lg border p-3" onToggle={e=>setHeadingPreviewOpen(e.currentTarget.open)}><summary className="cursor-pointer text-sm font-semibold">معاينة عنوان الإجازة قبل الحفظ</summary>{headingPreviewOpen&&<div className="space-y-3 mt-3">{previewChoices.length>1&&<p className="text-xs text-muted-foreground">القراءة كاملة: تُنشأ شهادتان مستقلتان، وهذه معاينة عنوان كل رواية.</p>}{previewColorError?<p role="alert" className="text-sm text-destructive">تعذر تحميل ألوان الروايات. أغلق المعاينة وافتحها لإعادة المحاولة.</p>:!previewColors?<p role="status">جارٍ تحميل المعاينة…</p>:previewChoices.map(choice=>{const colors=previewColors.find(c=>c.qariId===choice.qariId&&c.rawi===choice.rawi);return <div key={choice.heading} className="rounded border bg-white"><CertificateHeadingPreview heading={choice.heading} primary={colors?.primaryColor||'#926e35'} secondary={colors?.secondaryColor||'#075f69'}/></div>;})}</div>}</details>}
           <div className="space-y-1.5">
             <Label>اسم الطالب</Label>
@@ -348,7 +371,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         {saveError&&<div role="alert" className="certificate-entry-error rounded-lg border border-destructive/40 p-3 text-sm text-destructive">{saveError}</div>}
         <DialogFooter className="gap-2 certificate-entry-actions">
           <Button variant="outline" disabled={saving} onClick={()=>closeSafely(onClose)}>إلغاء</Button>
-          <Button onClick={submit} disabled={saving || (!cert&&(isGuest?(guestLoading||!selectedGuest):holdingsLoading)) || Boolean((baseHolding||needsSanadSelection)&&!orderedIds.length) || (touched && !parsed.success)}>
+          <Button onClick={submit} disabled={saving || !readinessPassed || (!cert&&(isGuest?(guestLoading||!selectedGuest):holdingsLoading)) || Boolean((baseHolding||needsSanadSelection)&&!orderedIds.length) || (touched && !parsed.success)}>
             {saving && <Loader2 className="h-4 w-4 me-2 animate-spin" />} {choosingQiraah?'حفظ مسودتين':'حفظ المسودة'}
           </Button>
         </DialogFooter>
