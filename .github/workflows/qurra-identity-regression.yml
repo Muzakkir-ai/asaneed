@@ -1,0 +1,60 @@
+name: Qurra canonical identity regression
+
+on:
+  pull_request:
+    branches:
+      - audit/chat12-integration-c1ae83cba1a2
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node scripts/build-studio.cjs
+      - run: npm run typecheck
+      - run: npx tsc --ignoreConfig tests/qurra-route-identities.test.ts --outDir /tmp/qurra-identities --module commonjs --target es2022 --resolveJsonModule --esModuleInterop --skipLibCheck --types node --noEmitOnError
+      - run: node /tmp/qurra-identities/tests/qurra-route-identities.test.js
+      - run: npm run test:personal-sanads
+      - run: node tests/ordered-sanads.test.cjs
+      - run: npm run test:sanad
+      - run: npm run test:shared-bridge
+      - run: npm run test:sanad-count
+      - run: npm run test:matn-heading
+      - run: npm run test:certificate-layout
+      - run: npm run test:account-setup
+      - run: npm run test:editor
+      - run: node tests/public-verification.test.cjs
+  browser-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: echo "CHROME_PATH=$(node -p "require('playwright').chromium.executablePath()")" >> "$GITHUB_ENV"
+      - run: node tests/certificate-selection-browser.test.cjs
+      - run: npm run test:workspace-theme
+      - run: npm run test:sanad:graph
+      - run: npm run test:sanad:browser
+      - run: npm run test:editor:browser
+      - run: node tests/certificate-layout-browser.test.cjs

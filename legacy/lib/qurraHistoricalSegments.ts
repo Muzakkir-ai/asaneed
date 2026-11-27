@@ -3,12 +3,14 @@ import {sanadKey,type ContinuationSection} from './unifiedSanad';
 import {fullRawiName,savedRawiPerson} from './rawiIdentity';
 import type {BuilderPerson} from './bookBuilder';
 import {buildNarratorDirectory} from './narratorDirectory';
+import {readingIdentityLink,qariIdentity,linkExistingGraph} from './qurraRouteIdentities';
 
 export type HistoricalSegmentKind='rawi-imam'|'imam-sahaba'|'sahaba-prophet';
 export type HistoricalSectionView={
  id:string; title:string; body:string;kind:HistoricalSegmentKind;
  qariId:string; rawi:string;
  branches:string[];paths:string[][];names:Record<string,string>;
+ qariPersonId?:string;rawiPersonId?:string;
  /** Extracted from unreviewed source prose: never a confirmed sanad. */
  status:'source-text-review';
 };
@@ -162,8 +164,9 @@ export function historicalSection(
  const index=kind==='imam-sahaba'?imamCompanionIndexedGraph(section,qariId)
   :kind==='rawi-imam'?rawiImamIndexedGraph(section,qariId,rawi)
   :companionsProphetIndexedGraph(section,qariId);
- const names:Record<string,string>=index?.names||{};
- const paths:string[][]=index?.paths||[];
+ let names:Record<string,string>=index?.names||{};
+ let paths:string[][]=index?.paths||[];
+ let qariPersonId:string|undefined,rawiPersonId:string|undefined;
  if(kind==='rawi-imam'&&paths.length){
   // Prefer the database's audited full name for the same selected rawi;
   // this changes a label, never the historical source edge or person ID.
@@ -189,7 +192,32 @@ export function historicalSection(
    }
   }
  }
+ // Resolve only existing source-indexed nodes, not the fallback prose parser.
+ // The exact role clauses identify the endpoints; the original edges are unchanged.
+ if(index.paths.length&&paths.length&&kind!=='sahaba-prophet'){
+  const mapping:Record<string,{id:string;name:string}>={};
+  if(kind==='rawi-imam'){
+   const link=readingIdentityLink(sections,people,qariId,rawi);
+   const root=paths[0][0],target='imam:'+qariId;
+   if(link&&paths.every(p=>p[0]===root&&p.at(-1)===target)){
+    mapping[root]={id:link.rawiPersonId,name:link.rawiName};
+    mapping[target]={id:link.qariPersonId,name:link.qariName};
+   }
+  }else{
+   for(const id of new Set(paths.flat()))if(id.startsWith('imam:')){
+    const person=qariIdentity(sections,people,id.slice(5));
+    if(person)mapping[id]={id:person.id,name:person.name};
+   }
+  }
+  const linked=linkExistingGraph(paths,names,mapping);
+  if(linked.linked){
+   paths=linked.paths;names=linked.names;
+   qariPersonId=mapping['imam:'+qariId]?.id;
+   if(kind==='rawi-imam'&&qariPersonId)rawiPersonId=paths[0][0];
+  }
+ }
  return {
+  qariPersonId,rawiPersonId,
   id:section.id,title:section.title,body:section.body,
   kind,qariId,rawi,branches:parts(section.body),
   paths,names,status:'source-text-review',

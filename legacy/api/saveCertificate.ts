@@ -4,7 +4,6 @@ import { z } from 'zod';
 import { createEndpoint, ZiteError } from 'zitejs/backend';
 import { zite } from 'zitejs/db';
 import {QURRA,displayRawi} from '../lib/qurra';
-import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 
 const owns = (v: string | string[] | undefined, id: string) => (Array.isArray(v) ? v.includes(id) : v === id);
@@ -67,8 +66,7 @@ export default createEndpoint({
       await rememberStudent(uid, input.studentName);
       return { id: input.id };
     }
-    const shahadaNumber=await nextShahadaNumber();
-    const created = await zite.certificates.create({ record: {...record,shahadaNumber,publicationStatus:'draft'} });
+    const created = await zite.certificates.create({ record: {...record,publicationStatus:'draft'} });
     try{await ensureCertificateRegistration(created.id);}catch(error){await zite.certificates.delete({id:created.id}).catch(()=>{});throw error;}
     await rememberStudent(uid, input.studentName);
     return { id: created.id };

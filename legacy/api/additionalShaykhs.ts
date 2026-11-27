@@ -19,7 +19,6 @@ import {isAppAdmin} from '../lib/admin';
 import {QURRA} from '../lib/qurra';
 import {assembleHoldingIjazah} from '../lib/assembleHoldingIjazah';
 import {reachesJunction} from '../lib/personalSanadValidation';
-import {nextShahadaNumber} from '../lib/shahadaSequence';
 
 const choice=z.object({qariId:z.string(),rawi:z.string()});
 const matn=z.object({id:z.string().uuid().optional(),catalogId:z.string().uuid().optional(),name:z.string().trim().min(1).max(200),category:z.string().trim().min(1).max(120),sanadText:z.string().min(1).max(60000).refine(v=>!!v.trim(),'Complete sanad required'),wordingText:z.string().max(30000).default(''),introductionId:z.string().default(''),conclusionId:z.string().default(''),sanadFormatting:z.string().default('')});
@@ -195,16 +194,14 @@ export default createEndpoint({
    }));
    if(input.readinessOnly)return {sheikhs:[],ready:true as const};
    if(input.previewOnly)return {sheikhs:[],preview:{chain:entries[0].assembled.chain,branches:entries[0].previewBranches!}};
-   const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];
-   const number=await nextShahadaNumber();
-   try{
+   const created:{certificateId:string;sanadId:string;snapshotId:string}[]=[];   try{
     for(const [index,{rawi,assembled,orderedSanads,unifiedHolding,tariqName,bookAuthor,routeSource}] of entries.entries()){
      const sanad=await zite.asaneed.create({record:{orderedSanads,unifiedHolding,tariqNumber:input.tariqNumber,tariqName,bookAuthor,routeSource,title:known.name+' — '+rawi+' — سند خاص',
        shaykh:context.user.id,additionalShaykh:known.id,chain:assembled.chain,qiraah:null,certificates:null}});
      const row={certificateId:'',sanadId:sanad.id,snapshotId:''};created.push(row);
      const cert=await zite.certificates.create({record:{
        studentName:input.studentName!.trim(),completionDate:input.completionDate!,
-       sanad:sanad.id,shaykh:context.user.id,publicationStatus:'draft',shahadaNumber:number+index,
+       sanad:sanad.id,shaykh:context.user.id,publicationStatus:'draft',
        hijriDayOffset:input.hijriDayOffset??0,notes:input.notes||'',additionalShaykh:known.id
      }});
      row.certificateId=cert.id;

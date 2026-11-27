@@ -181,8 +181,9 @@ export default function QurraTransmissionWorkspace(){
       :<p className="p-4 text-sm text-muted-foreground">لا توجد وصلة محفوظة.</p>}
     {!editingChain&&current&&<div className="space-y-1 rounded-md border border-dashed px-3 py-2 text-sm">
      <span className="text-xs text-muted-foreground">الراوي صاحب الرواية</span>
-     <p className="font-semibold leading-8">{savedRawiName(library?.people||[],current.qariId,current.rawi)}</p>
-     <p className="text-xs text-muted-foreground">لإضافة هذا الراوي إلى السند، اضغط «تعديل هذا السند».</p>
+     <p className="font-semibold leading-8">{data.identityLinks[current.routeId]?.rawiName||savedRawiName(library?.people||[],current.qariId,current.rawi)}</p>
+     {data.identityLinks[current.routeId]&&<><span className="text-xs text-muted-foreground">إمام القراءة — الهوية المحفوظة</span><p className="font-semibold leading-8">{data.identityLinks[current.routeId].qariName}</p></>}
+     <p className="text-xs text-muted-foreground">ربط الهوية لا يعني اعتماد الوصلة؛ راجع التتمة من النص المحفوظ قبل تعديل السند.</p>
     </div>}
    </div>}
 

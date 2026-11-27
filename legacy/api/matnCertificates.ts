@@ -5,7 +5,6 @@ import {zite} from 'zitejs/db';
 import {isAppAdmin} from '../lib/admin';
 import {assembleMatnCertificate,defaultMatnWording,findMatnCertificateTemplate,matnFormats,type MatnSource} from '../lib/matnCertificate';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
-import {nextShahadaNumber} from '../lib/shahadaSequence';
 import {context as requestContext} from '../compat/context';
 const option=z.object({id:z.string(),name:z.string(),category:z.string(),sanadText:z.string(),wordingText:z.string()});
 export default createEndpoint({
@@ -66,7 +65,7 @@ export default createEndpoint({
   const sanad=await zite.asaneed.create({record:{title:source.name,chain,shaykh:uid,additionalShaykh:guestId,matnCode:String(code),matnName:source.name,matnFormatting:formatting}});
   let certificateId='';
   try{
-   const created=await zite.certificates.create({record:{studentName:input.studentName,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes,sanad:sanad.id,shaykh:uid,additionalShaykh:guestId,shahadaNumber:await nextShahadaNumber(),publicationStatus:'draft'}});
+   const created=await zite.certificates.create({record:{studentName:input.studentName,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes,sanad:sanad.id,shaykh:uid,additionalShaykh:guestId,publicationStatus:'draft'}});
    certificateId=created.id;await ensureCertificateRegistration(created.id);
    return {options,certificateId:created.id};
   }catch(e){if(certificateId)await zite.certificates.delete({id:certificateId}).catch(()=>{});await zite.asaneed.delete({id:sanad.id}).catch(()=>{});throw e;}
