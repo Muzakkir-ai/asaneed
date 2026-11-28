@@ -8,9 +8,12 @@ permissions:
 jobs:
   student-identity-database:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        postgres: [17, 18]
     services:
       postgres:
-        image: postgres:18
+        image: postgres:${{ matrix.postgres }}
         env:
           POSTGRES_PASSWORD: fixture-only
         options: >-
@@ -23,4 +26,4 @@ jobs:
       - name: Verify synthetic student identity and deletion constraints
         run: |
           set -euo pipefail
-          cat tests/fixtures/student-identity-database.sql supabase/migrations/20261127025050_certificate_filtered_pages_and_index.sql supabase/migrations/20261128170000_student_identity_protection.sql tests/student-identity-database.sql | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d postgres -v ON_ERROR_STOP=1
+          cat tests/fixtures/student-identity-database.sql supabase/migrations/20261127025050_certificate_filtered_pages_and_index.sql supabase/migrations/20261128172615_student_identity_protection.sql tests/student-identity-database.sql | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d postgres -v ON_ERROR_STOP=1
