@@ -25,10 +25,11 @@ export type SanadCoordinatedPlan={
 
 type Task={key:string;rank:number;left:number;right:number;priority:number};
 type LocalGroup={kind:Kind;from:string[];to:string[];indices:number[];fromRank:number;toRank:number};
+type Point={x:number;y:number};
 type Card={id:string;left:number;right:number;top:number;bottom:number};
 const margin=10,trackStep=20;
 const key=(from:string,to:string)=>JSON.stringify([from,to]);
-const pathFrom=(points:{x:number;y:number}[])=>{
+const pathFrom=(points:Point[])=>{
  const clean=points.filter((p,i)=>!i||p.x!==points[i-1].x||p.y!==points[i-1].y);
  if(!clean.length)return '';
  return 'M'+clean[0].x+' '+clean[0].y+clean.slice(1).map((p,i)=>{
@@ -97,12 +98,16 @@ export function groupSanadConnections(
  // may be an ancestor or belong to a completely separate branch. Each
  // transmission retains its own arrow unless all parents pass the strict
  // same-rank, adjacent and common-upstream policy below.
+ const incomingCount=new Map<string,number>();
+ for(const edge of edges)incomingCount.set(edge.to,(incomingCount.get(edge.to)??0)+1);
+ const hasSkippedParent=new Set(edges.filter(e=>rankOf.get(e.to)!>rankOf.get(e.from)!+1).map(e=>e.to));
  const shared=sharedSanadBuses(rows,edges);
  for(const bus of shared){
   const indices=bus.edgeIndices.filter(i=>!used.has(i));
   if(indices.length!==bus.edgeIndices.length)continue;
   if(bus.from.some(from=>bus.to.some(to=>!indices.some(i=>edges[i].from===from&&edges[i].to===to))))continue;
-  if(bus.from.length>1&&!canShareSanadFanIn(bus.from,rows,edges,centers,cardWidth))continue;
+  if(bus.from.length>1&&(bus.to.some(to=>hasSkippedParent.has(to))
+   ||!canShareSanadFanIn(bus.from,rows,edges,centers,cardWidth)))continue;
   // A partially overlapping biclique would leave another connection entering
   // the same child as a second arrow. Only bundle an entire rank-gap component.
   const completeIncoming=bus.to.every(to=>edges.every(e=>
@@ -121,7 +126,7 @@ export function groupSanadConnections(
    if(available.length<2)continue;
    const indices=[source,other].flatMap(from=>available.map(target=>
     edges.findIndex((e,i)=>!used.has(i)&&e.from===from&&e.to===target)));
-   const completelyLinked=indices.every(i=>i>=0)
+   const completelyLinked=available.every(to=>!hasSkippedParent.has(to))&&indices.every(i=>i>=0)
     &&available.every(to=>edges.every(e=>rankOf.get(e.from)!==rank||e.to!==to||[source,other].includes(e.from)))
     &&[source,other].every(from=>edges.every(e=>rankOf.get(e.to)!==rank+1||e.from!==from||available.includes(e.to)));
    if(completelyLinked&&canShareSanadFanIn([source,other],rows,edges,centers,cardWidth))
@@ -137,7 +142,7 @@ export function groupSanadConnections(
    // when its children do not have competing incoming transmissions.
    for(const id of rows[rank+1]){
     const indices=remaining.filter(i=>edges[i].to===id);
-    if(indices.length>=2
+    if(indices.length>=2&&indices.length===incomingCount.get(id)&&!hasSkippedParent.has(id)
       &&canShareSanadFanIn(indices.map(i=>edges[i].from),rows,edges,centers,cardWidth)
       &&(!best||indices.length>best.indices.length))best={kind:'fan-in',indices};
    }
@@ -182,9 +187,13 @@ export function planCoordinatedSanad(
  }
  const attach=(id:string,group:number,side:'source'|'target')=>{
   const owners=(side==='source'?sourceOwners:targetOwners).get(id)||[group];
-  const index=owners.indexOf(group);
+  const fanOut=side==='source'?owners.find(i=>groups[i].kind==='fan-out'):undefined;
+  if(group===fanOut)return xOf(id);
+  const index=owners.filter(i=>i!==fanOut).indexOf(group);
   const step=Math.min(16,(cardWidth-28)/(owners.length+1));
-  return Math.round((xOf(id)+(index-(owners.length-1)/2)*step)*100)/100;
+  const offset=fanOut===undefined?index-(owners.length-1)/2:
+   (index%2===0?1:-1)*(Math.floor(index/2)+1);
+  return Math.round((xOf(id)+offset*step)*100)/100;
  };
  const spans=new Map<string,{sources:Map<string,number>;targets:Map<string,number>}>();
  for(const [i,g] of groups.entries())spans.set(String(i),{
@@ -201,46 +210,19 @@ export function planCoordinatedSanad(
   const blocked=rows.slice(g.fromRank+1,g.toRank).flat().map(id=>xOf(id));
   const half=cardWidth/2+margin;
   const candidates=[sx,tx,(sx+tx)/2,8,width-8,
-   ...blocked.flatMap(cx=>[cx-half,cx+half])];
+   ...blocked.flatMap(cx=>[cx-half,cx+half]),
+   ...[...corridors.values()].flatMap(x=>[x-14,x+14])];
   const safe=[...new Set(candidates.map(x=>Math.round(x*100)/100))]
    .filter(x=>x>=8&&x<=width-8&&blocked.every(cx=>Math.abs(cx-x)>=half-.01));
-  const chosen=(safe.length?safe:[8,width-8]).sort((a,b)=>{
-   const score=(x:number)=>Math.abs(sx-x)+Math.abs(tx-x)+
-    [...corridors].reduce((cost,[other,otherX])=>{
-     const og=groups[other];
-     const overlaps=og.fromRank<g.toRank&&og.toRank>g.fromRank;
-     return cost+(overlaps&&Math.abs(otherX-x)<14?200:0);
-    },0);
-   return score(a)-score(b);
-  })[0];
+  const separated=safe.filter(x=>[...corridors].every(([other,otherX])=>{
+   const og=groups[other];
+   return og.fromRank>=g.toRank||og.toRank<=g.fromRank||Math.abs(otherX-x)>=14;
+  }));
+  const distance=(x:number)=>Math.abs(sx-x)+Math.abs(tx-x);
+  const chosen=(separated.length?separated:safe.length?safe:[8,width-8])
+   .sort((a,b)=>distance(a)-distance(b)||Math.abs(a-sx)-Math.abs(b-sx))[0];
   corridors.set(gi,chosen);
  }
- // Mixed-rank fan-in feeders use an obstacle-free corridor around every
- // intervening narrator row and enter one common bus above their child.
- const mixedFeedCorridors=new Map<string,number>();
- const mixedBusRank=(g:SanadVisualGroup)=>g.kind==='fan-in'&&g.toRank>g.fromRank+1
-  ?g.toRank-1:g.fromRank;
- for(const [gi,g] of groups.entries()){
-  if(g.kind!=='fan-in'||g.toRank<=g.fromRank+1)continue;
-  const ports=spans.get(String(gi))!;
-  const tx=ports.targets.get(g.to[0])!;
-  for(const id of g.from){
-   const rank=rankOf.get(id)!;
-   if(rank>=g.toRank-1)continue;
-   const sx=ports.sources.get(id)!;
-   const blocked=rows.slice(rank+1,g.toRank).flat().map(other=>xOf(other));
-   const half=cardWidth/2+margin;
-   const candidates=[sx,tx,(sx+tx)/2,8,width-8,
-    ...blocked.flatMap(cx=>[cx-half,cx+half])];
-   const safe=[...new Set(candidates.map(x=>Math.round(x*100)/100))]
-    .filter(x=>x>=8&&x<=width-8&&blocked.every(cx=>Math.abs(cx-x)>=half-.01));
-   const selected=(safe.length?safe:[8,width-8]).sort((a,b)=>
-    Math.abs(a-sx)+Math.abs(a-tx)-Math.abs(b-sx)-Math.abs(b-tx))[0];
-   mixedFeedCorridors.set(gi+':'+id,selected);
-  }
- }
- const busEntryX=(gi:number,id:string)=>mixedFeedCorridors.get(gi+':'+id)
-  ??spans.get(String(gi))!.sources.get(id)!;
  const tasks:Task[]=[];
  const gapTask=(key:string,rank:number,a:number,b:number,priority:number)=>{
   if(rank<0||rank>=rows.length-1)return;
@@ -250,21 +232,12 @@ export function planCoordinatedSanad(
   const ports=spans.get(String(i))!;
   const xs=[...ports.sources.values(),...ports.targets.values()];
   if(g.kind!=='single'){
-   const busXs=[...g.from.map(id=>busEntryX(i,id)),...ports.targets.values()];
-   gapTask(i+':bus',mixedBusRank(g),Math.min(...busXs),Math.max(...busXs),g.kind==='fan-in'?0:1);
-   for(const id of g.from){
-    const rank=rankOf.get(id)!;
-    if(rank<g.toRank-1){
-     const sx=ports.sources.get(id)!,corridor=busEntryX(i,id);
-     if(Math.abs(sx-corridor)>0.5)
-      gapTask(i+':feed-exit:'+id,rank,sx,corridor,3);
-    }
-   }
+   gapTask(i+':bus',g.fromRank,Math.min(...xs),Math.max(...xs),g.kind==='fan-in'?0:1);
    continue;
   }
   const sx=xs[0],tx=xs[1];
   if(g.toRank===g.fromRank+1){
-   if(Math.abs(sx-tx)>0.5)gapTask(i+':single',g.fromRank,sx,tx,2);
+   if(sx!==tx)gapTask(i+':single',g.fromRank,sx,tx,2);
   }else{
    const corridor=corridors.get(i)!;
    gapTask(i+':exit',g.fromRank,sx,corridor,3);
@@ -302,16 +275,12 @@ export function planCoordinatedSanad(
  for(const [i,g] of groups.entries()){
   const ports=spans.get(String(i))!,all=g.edgeIndices;
   if(g.kind!=='single'){
-   const y=yFor(i+':bus',mixedBusRank(g));
+   const y=yFor(i+':bus',g.fromRank);
    g.busY=y;
-   const xs=[...g.from.map(id=>busEntryX(i,id)),...ports.targets.values()];
+   const xs=[...ports.sources.values(),...ports.targets.values()];
    const feedPoints=(id:string)=>{
-    const px=ports.sources.get(id)!,corridor=busEntryX(i,id);
-    const rank=rankOf.get(id)!;
-    return rank<g.toRank-1
-     ?[{x:px,y:bottom(id)},{x:px,y:yFor(i+':feed-exit:'+id,rank)},
-       {x:corridor,y:yFor(i+':feed-exit:'+id,rank)},{x:corridor,y}]
-     :[{x:px,y:bottom(id)},{x:px,y}];
+    const x=ports.sources.get(id)!;
+    return [{x,y:bottom(id)},{x,y}];
    };
    for(const id of g.from){
     parts.push({key:i+':feed:'+id,d:pathFrom(feedPoints(id)),
@@ -337,7 +306,7 @@ export function planCoordinatedSanad(
    let coords:{x:number;y:number}[];
    if(g.toRank===g.fromRank+1){
     const y=yFor(i+':single',g.fromRank);
-    coords=Math.abs(sx-tx)<=.5?[{x:sx,y:fromY},{x:tx,y:toY}]:
+    coords=sx===tx?[{x:sx,y:fromY},{x:tx,y:toY}]:
      [{x:sx,y:fromY},{x:sx,y},{x:tx,y},{x:tx,y:toY}];
    }else{
     const channel=corridors.get(i)!;
@@ -407,6 +376,76 @@ export function planCoordinatedSanad(
    if(part)part.d=d;
    break;
   }
+ }
+ // Keep buses fixed. Shorten independent edges only when the alternative
+ // clears the cards and does not add intersections to the visible drawing.
+ const segments=(points:Point[])=>points.slice(1).flatMap((b,i)=>{
+  const a=points[i];
+  return a.x===b.x&&a.y===b.y?[]:[{
+   left:Math.min(a.x,b.x),right:Math.max(a.x,b.x),top:Math.min(a.y,b.y),bottom:Math.max(a.y,b.y),
+  }];
+ });
+ const visible=new Map(parts.map(part=>[part.key,segments(matches(part.d))]));
+ for(const [i,g] of groups.entries()){
+  if(g.kind!=='single')continue;
+  const part=parts.find(part=>part.key===i+':single')!;
+  const edge=edgePaths.find(edge=>edge.edgeIndex===g.edgeIndices[0])!;
+  const source=cards.find(card=>card.id===edge.from)!;
+  const target=cards.find(card=>card.id===edge.to)!;
+  const ports=spans.get(String(i))!;
+  const sx=ports.sources.get(edge.from)!,tx=ports.targets.get(edge.to)!;
+  const start=source.bottom,end=target.top-1;
+  const candidates:Point[][]=[];
+  if(sourceOwners.get(edge.from)?.length===1&&targetOwners.get(edge.to)?.length===1){
+   const left=Math.max(source.left,target.left)+12,right=Math.min(source.right,target.right)-12;
+   if(left<=right){
+    const x=Math.max(left,Math.min(right,(sx+tx)/2));
+    candidates.push([{x,y:start},{x,y:end}]);
+   }
+  }
+  const corridor=corridors.get(i),entry=yFor(i+':entry',g.toRank-1);
+  const sourceY=Math.round(source.top+(source.bottom-source.top)*.72);
+  const targetY=Math.round(target.top+(target.bottom-target.top)*.3);
+  for(const direction of [-1,1]){
+   const x=direction<0?source.left:source.right;
+   if((tx-x)*direction>=margin)candidates.push([{x,y:sourceY},{x:tx,y:sourceY},{x:tx,y:end}]);
+   if(corridor!==undefined&&(corridor-x)*direction>=margin){
+    candidates.push([{x,y:sourceY},{x:corridor,y:sourceY},{x:corridor,y:entry},{x:tx,y:entry},{x:tx,y:end}]);
+   }
+   const targetX=direction<0?target.left:target.right;
+   if((sx-targetX)*direction>=margin){
+    candidates.push([{x:sx,y:start},{x:sx,y:targetY},{x:targetX+direction,y:targetY}]);
+   }
+  }
+  if(!candidates.length)continue;
+  const others=[...visible].flatMap(([key,lines])=>key===part.key?[]:lines);
+  const measure=(lines:ReturnType<typeof segments>)=>{
+   let length=0,crossings=0,overlaps=0;
+   for(const r of lines){
+    length+=r.right-r.left+r.bottom-r.top;
+    for(const line of others){
+     const dx=Math.min(r.right,line.right)-Math.max(r.left,line.left);
+     const dy=Math.min(r.bottom,line.bottom)-Math.max(r.top,line.top);
+     if(dx<0||dy<0)continue;
+     if(dx>0||dy>0)overlaps++;
+     else crossings++;
+    }
+   }
+   return {length,crossings,overlaps};
+  };
+  let bestLines=visible.get(part.key)!;
+  const baseline=measure(bestLines);
+  let best=baseline;
+  for(const points of candidates){
+   const lines=segments(points),cost=measure(lines),d=pathFrom(points);
+   if(cost.crossings>baseline.crossings||cost.overlaps>baseline.overlaps||cost.length>best.length
+    ||(cost.length===best.length&&lines.length>=bestLines.length)
+    ||hitsUnrelatedCard(edge,d))continue;
+   edge.d=part.d=d;
+   best=cost;
+   bestLines=lines;
+  }
+  visible.set(part.key,bestLines);
  }
  for(const edge of edgePaths){
   const vertices=matches(edge.d);

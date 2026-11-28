@@ -65,15 +65,14 @@ const longBypassPaths=[
 ];
 // Reproduces the reported al-Sa'igh layout: a narrator has two actual
 // teachers, one directly above and one skipping the intermediate rank.
-// The same final arrow must be shared by both genuine paths.
+// Each genuine transmission keeps its own arrow.
 const mixedRankFanInPaths=[
  ['jazari','left','saigh','end'],
  ['jazari','saigh','end'],
  ['jazari','right','other','end'],
 ];
 // Three separate row heights feeding a common target, with arbitrary
-// source-side splits elsewhere. All incoming transmissions still need
-// exactly one arrow at the target.
+// source-side splits elsewhere. Each incoming transmission keeps its arrow.
 const staggeredFanInPaths=[
  ['root','a','b','target'],
  ['root','a','target'],

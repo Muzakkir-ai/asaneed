@@ -1,3 +1,9 @@
+## Coordinated narrator routing follow-up — 10 November 2026
+
+Chat 06 keeps the fan-out trunk centered when its teacher also has an independent long edge. A target with a skipped-rank teacher keeps every incoming arrow separate. Independent edges can use a straight run or a side port when an available orthogonal route improves distance or segment count and clears other cards without increasing crossings or overlaps. Geometry uses the saved edges, direction, and path memberships.
+
+The branch is based on `292dc0d5dbd27556b4004051b782cc369946c21d`. Verification uses synthetic comparative reproductions and the source-backed imam-to-Companion fixtures. Authenticated review of the originally reported graphs remains open.
+
 ## Certificate PDF tanseeq, adaptive footer and per-certificate draft save — 9 November 2026
 
 The landscape A4 PDF viewer now lets issuers edit matn SVG/heading measurements, spacing between introduction, wording, sanad and khatima, line and paragraph spacing, and move the khatima up/down within the document flow. For non-matn ijazahs the conclusion offset is a separate certificate typography setting. A negative khatima shift triggers an overlap check before saving, printing or final approval. The body remains in its original vertical position; on short certificates only the pinned mujeez footer gently rises by at most 10 mm, always leaving at least 12 mm between body and footer. Print and preview use the same measurement logic.

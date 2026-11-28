@@ -125,11 +125,24 @@ const {chromium}=require('playwright');
    ['jazari','umyuti','samdasi','ibnShuhadha','end'],
   ];
   const expectedRegressionEdges=[...new Set(regressionPaths.flatMap(path=>path.slice(1).map((to,i)=>JSON.stringify([path[i],to]))))].sort();
+  const expectedMemberships=expectedRegressionEdges.map(pair=>{
+   const [from,to]=JSON.parse(pair);
+   return JSON.stringify([from,to,regressionPaths.flatMap((path,index)=>
+    path.some((id,i)=>id===from&&path[i+1]===to)?[index]:[])]);
+  }).sort();
   for(const width of [1100,390,320]){
    await page.setViewportSize({width,height:900});
    const actualEdges=await regression.locator('path[data-from]').evaluateAll(edges=>edges.map(edge=>JSON.stringify([edge.dataset.from,edge.dataset.to])).sort());
    assert.deepEqual(actualEdges,expectedRegressionEdges,'saved links at '+width);
    assert.equal(await regression.locator('[data-combined-narrator]').count(),new Set(regressionPaths.flat()).size);
+   const memberships=await regression.locator('path[data-from]').evaluateAll(edges=>edges.map(edge=>
+    JSON.stringify([edge.dataset.from,edge.dataset.to,edge.dataset.routes.split(',').map(Number)])).sort());
+   assert.deepEqual(memberships,expectedMemberships,'exact route membership at '+width);
+   const numbering=await regression.locator('[data-combined-narrator="umyuti"]').evaluate(card=>[
+    card.querySelector('[data-narrator-level]').textContent,
+    ...[...card.querySelectorAll('[data-narrator-secondary-level]')].map(node=>node.textContent),
+   ]);
+   assert.deepEqual(numbering,['٢','٣'],'Umyuti retains the lowest and alternate path positions at '+width);
    const tracePlacements=await regression.locator('[data-combined-narrator]').evaluateAll(cards=>cards.map(card=>{
     const circle=card.querySelector('[data-narrator-level]');
     const control=card.querySelector('[data-trace-person]');
@@ -299,7 +312,7 @@ const {chromium}=require('playwright');
     fixture+' must not merge independent, far or cross-rank teachers');
    const arrowGroups=await section.locator('g[data-routing-part="drop"],g[data-routing-part="single"]').evaluateAll(nodes=>
     nodes.map(node=>(node.dataset.edgeIndices||'').split(',').map(Number)));
-   assert.ok(incoming.every(edge=>arrowGroups.some(ids=>ids.includes(edge.index))),
+   assert.ok(incoming.every(edge=>arrowGroups.some(ids=>ids.length===1&&ids[0]===edge.index)),
     fixture+' keeps a final arrow for every saved narrator relationship');
    const collisions=await section.evaluate(element=>{
     const cards=[...element.querySelectorAll('[data-combined-narrator]')];
