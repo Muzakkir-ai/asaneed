@@ -12,5 +12,5 @@ do $$ declare result jsonb; begin
  if result->>'totalCertificates'<>'3' or jsonb_array_length(result->'groups')<>2 or not exists(select 1 from jsonb_array_elements(result->'groups') g where jsonb_array_length(g)=2 and g ? '30000000-0000-4000-8000-000000000001' and g ? '30000000-0000-4000-8000-000000000003') or result->'ids' ? '30000000-0000-4000-8000-000000000004' then raise exception 'Unexpected ID grouping or access boundary: %',result;end if;
 end $$;
 reset role;
-do $ begin if (select h from baseline) is distinct from (select md5(string_agg(to_jsonb(c)::text,'' order by id)) from public.certificates c) then raise exception 'Certificate records changed';end if;end $;
+do $$ begin if (select h from baseline) is distinct from (select md5(string_agg(to_jsonb(c)::text,'' order by id)) from public.certificates c) then raise exception 'Certificate records changed';end if;end $$;
 select 'PASS: separate same-name student IDs, repeated-ID grouping, invoker RLS, certificate and account FK deletion protection' as result;
