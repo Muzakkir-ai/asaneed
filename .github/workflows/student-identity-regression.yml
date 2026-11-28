@@ -1,0 +1,26 @@
+name: Student identity regression
+on:
+  pull_request:
+  push:
+    branches: ['audit/chat12-integration-c1ae83cba1a2']
+permissions:
+  contents: read
+jobs:
+  student-identity-database:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: fixture-only
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify synthetic student identity and deletion constraints
+        run: |
+          set -euo pipefail
+          cat tests/fixtures/student-identity-database.sql supabase/migrations/20261127025050_certificate_filtered_pages_and_index.sql supabase/migrations/20261128170000_student_identity_protection.sql tests/student-identity-database.sql | docker exec -i ${{ job.services.postgres.id }} psql -U postgres -d postgres -v ON_ERROR_STOP=1

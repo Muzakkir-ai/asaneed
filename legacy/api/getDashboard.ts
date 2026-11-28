@@ -89,7 +89,7 @@ export default createEndpoint({
     // Complex list filters use the same labels as the legacy renderer, not a second
     // implementation of scholarly reading-name rules in SQL. Only metadata is sent
     // to the invoker-scoped RPC; certificate rows remain in the database until picked.
-    if(!databasePage&&scope&&!scope.system&&scope.role!=='student'&&input.listPage?.view==='certificates'&&filter&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)&&scope.issuerIds.length<=100){
+    if(!databasePage&&scope&&!scope.system&&scope.role!=='student'&&input.listPage&&filter&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)&&scope.issuerIds.length<=100){
       const issuerProfiles=scope.issuerIds.length?await request.client.from('issuers').select('id,print_profile').in('id',scope.issuerIds):{data:[],error:null};
       if(issuerProfiles.error)throw Error(issuerProfiles.error.message);
       const profiles=issuerProfiles.data||[];

@@ -42,6 +42,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const [form, setForm] = useState({
     studentName: cert?.studentName ?? '',
     studentId:cert?.studentId as string|undefined,
+    createStudent:false,
     completionDate: cert?.completionDate ?? '',
     hijriDayOffset:cert?.hijriDayOffset ?? 0,
     sanadId: cert?.sanadId ?? '',
@@ -86,7 +87,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
     try{
       const result=await studentDirectory({action:'delete',studentId:studentToDelete.id});
       setStudentEntries(result.entries);
-      if(form.studentId===studentToDelete.id)setForm(prev=>({...prev,studentName:'',studentId:undefined}));
+      if(form.studentId===studentToDelete.id)setForm(prev=>({...prev,studentName:'',studentId:undefined,createStudent:false}));
       setStudentToDelete(null);toast.success('حُذف الاسم من قائمة الطلاب المشتركة');
     }catch(error){toast.error(error instanceof Error?error.message:'تعذر حذف الطالب');}
     finally{setDeletingStudent(false);}
@@ -225,14 +226,14 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
         await additionalShaykhs({action:'issue',personalSanadIds:explicitOrder?orderedIds:undefined,tariqNumber:guestTariq,id:selectedGuest.id,qariId,rawi,
-          studentName:form.studentName,studentId:form.studentId,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
+          studentName:form.studentName,studentId:form.studentId,createStudent:form.createStudent,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
         return;
       }
       if(!cert&&choosingQiraah){
         const qariId=form.sanadId.slice('qiraah:'.length);
-        await issueQiraah({tariqNumber:selectedTariq,qariId,studentName:form.studentName,studentId:form.studentId,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
+        await issueQiraah({tariqNumber:selectedTariq,qariId,studentName:form.studentName,studentId:form.studentId,createStudent:form.createStudent,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
         toast.success('تم حفظ مسودتين للروايتين بتاريخ واحد');
         onSaved();
         return;
@@ -340,16 +341,16 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
                   {studentsError&&<div role="alert" className="p-3 text-sm"><p>{studentsError}</p><Button variant="outline" size="sm" onClick={()=>setStudentsAttempt(v=>v+1)}>إعادة المحاولة</Button></div>}
                   <div className="max-h-44 overflow-y-auto p-1" role="listbox" aria-label="الطلاب المحفوظون">
                     {studentEntries.filter(entry=>matchesArabic(entry.name,studentSearch)||entry.id.includes(studentSearch)).map(entry=><div key={entry.id} className="flex items-center gap-1">
-                      <button type="button" role="option" aria-selected={form.studentId===entry.id} onClick={()=>{setForm(prev=>({...prev,studentName:entry.name,studentId:entry.id}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{entry.label}</span>{form.studentId===entry.id&&<Check className="h-4 w-4 shrink-0"/>}</button>
+                      <button type="button" role="option" aria-selected={form.studentId===entry.id} onClick={()=>{setForm(prev=>({...prev,studentName:entry.name,studentId:entry.id,createStudent:false}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{entry.label}</span>{form.studentId===entry.id&&<Check className="h-4 w-4 shrink-0"/>}</button>
                       {isAdmin&&<Button type="button" size="icon" variant="ghost" disabled={!entry.canDelete} aria-label={'حذف الطالب '+entry.label} title={entry.canDelete?'حذف الاسم من القائمة':'لدى الطالب إجازة محفوظة؛ لا يمكن حذف اسمه'} onClick={()=>setStudentToDelete(entry)}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                     </div>)}
                     {isAdmin&&studentEntries.length>0&&<p className="px-3 py-2 text-xs text-muted-foreground">حذف الاسم متاح فقط إذا لم توجد للطالب إجازة محفوظة.</p>}
                     {!studentsLoading&&!studentsError&&studentEntries.filter(entry=>matchesArabic(entry.name,studentSearch)||entry.id.includes(studentSearch)).length===0&&<p className="px-3 py-3 text-center text-sm text-muted-foreground">لا يوجد طالب محفوظ</p>}
                   </div>
-                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:'',studentId:undefined}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
+                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:'',studentId:crypto.randomUUID(),createStudent:true}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
                 </div>}
               </div>}
-              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value,studentId:undefined}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
+              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setForm(prev=>({...prev,studentName:'',studentId:undefined,createStudent:false}));setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
             </div>
             {err('studentName')}
           </div>

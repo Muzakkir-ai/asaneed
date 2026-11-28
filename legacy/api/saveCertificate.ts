@@ -13,7 +13,7 @@ export default createEndpoint({
   authenticated: true,
   inputSchema: z.object({
     id: z.string().optional(),
-    studentName: z.string().min(1),studentId:z.string().uuid().optional(),
+    studentName: z.string().min(1),studentId:z.string().uuid().optional(),createStudent:z.boolean().optional(),
     completionDate: z.string().min(1),
     hijriDayOffset:z.number().int().min(-2).max(2).default(0),
     sanadId: z.string().min(1),
@@ -37,7 +37,7 @@ export default createEndpoint({
         throw new Error('إصدار الشهادة لرواية واحدة فقط؛ اختر رواية محددة من إجازاتك');
     }
     const record = {
-      studentName: input.studentName.trim(),studentId:input.studentId,
+      studentName: input.studentName.trim(),studentId:input.studentId,createStudent:input.createStudent,
       completionDate: input.completionDate,
       hijriDayOffset:input.hijriDayOffset,
       sanad: input.sanadId,
