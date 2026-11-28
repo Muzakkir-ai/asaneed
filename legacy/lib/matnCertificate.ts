@@ -6,6 +6,10 @@ export const isMatnHeading=(heading:string)=>heading.startsWith('إجازة في
 export function matnFormats(raw?:string){
  try{const value=readMatnPresentation(raw).formats;return Array.isArray(value)?value.filter(f=>f&&typeof f.text==='string'&&Number.isInteger(f.start)&&Number.isInteger(f.end)&&f.start>=0&&f.end>f.start&&typeof f.bold==='boolean'&&typeof f.center==='boolean'&&Number.isFinite(f.indent)&&f.indent>=0&&f.indent<=10):[];}catch{return [];}
 }
+/** Shared drafts are visible to administrators for editing only. */
+export function findMatnCertificateTemplate<T extends {id:string;ownerId?:string;status?:string|null}>(templates:readonly T[],id?:string){
+ return templates.find(t=>t.id===id&&(t.ownerId||t.status==null||t.status==='published'));
+}
 /** Keep placeholders until the certificate renderer substitutes the actual identities. */
 export function assembleMatnCertificate(matn:MatnSource,intro='',end=''){
  if(!matn.name.trim()||!matn.sanadText.trim())throw Error('أكمل اسم المتن وسنده أولًا');

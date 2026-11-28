@@ -3,7 +3,7 @@ import {z} from 'zod';
 import {createEndpoint} from 'zitejs/backend';
 import {zite} from 'zitejs/db';
 import {isAppAdmin} from '../lib/admin';
-import {assembleMatnCertificate,defaultMatnWording,matnFormats,type MatnSource} from '../lib/matnCertificate';
+import {assembleMatnCertificate,defaultMatnWording,findMatnCertificateTemplate,matnFormats,type MatnSource} from '../lib/matnCertificate';
 import {ensureCertificateRegistration} from '../lib/certificateRegistration';
 import {nextShahadaNumber} from '../lib/shahadaSequence';
 import {context as requestContext} from '../compat/context';
@@ -50,7 +50,7 @@ export default createEndpoint({
   let catalog:any=null;
   if(source.catalogId){const {data,error}=await requestContext().client.from('matn_catalog').select('*').eq('id',source.catalogId).single();if(error||!data||data.status!=='published')throw Error('المتن المشترك غير متاح للإصدار');catalog=data;source.name=data.title;}
   const {records:templates}=await zite.mutoonTextTemplates.findAll({limit:2000});
-  const intro=templates.find(t=>t.id===source.introductionId),end=templates.find(t=>t.id===source.conclusionId);
+  const intro=findMatnCertificateTemplate(templates,source.introductionId),end=findMatnCertificateTemplate(templates,source.conclusionId);
   if(source.introductionId&&!intro||source.conclusionId&&!end)throw Error('نموذج المقدمة أو الخاتمة غير متاح');
   const client=requestContext().client;
   let issuerId=guestId;
