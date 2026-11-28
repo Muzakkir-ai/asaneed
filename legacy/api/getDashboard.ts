@@ -11,7 +11,7 @@ import {displayReadingLabel} from '../lib/qurra';
 const first = (v?: string | string[]) => (Array.isArray(v) ? v[0] : v) ?? '';
 
 const certificateSchema=z.object({
-      id: z.string(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
+      id: z.string(), studentId:z.string().optional(), studentName: z.string(), completionDate: z.string(), hijriDayOffset:z.number(), sanadId: z.string(),
       qiraahName: z.string(), notes: z.string(), certificateNumber: z.number(), registrationNumber:z.string(),issuerKey:z.string(),qariId:z.string(),rawi:z.string(), publicationStatus:z.enum(['draft','final']), shaykhId:z.string(), shaykhName:z.string(), additionalShaykh:z.string(), snapshotChain:z.string(), snapshotHeading:z.string(), snapshotFormatting:z.string(),
     });
 const filtersSchema=z.object({query:z.string().max(200),issuer:z.string().max(200),qari:z.string().max(200),rawi:z.string().max(200),year:z.string().max(10),status:z.enum(['all','draft','final']),sort:z.enum(['added','completion','completion-desc','name'])});
@@ -89,7 +89,7 @@ export default createEndpoint({
     // Complex list filters use the same labels as the legacy renderer, not a second
     // implementation of scholarly reading-name rules in SQL. Only metadata is sent
     // to the invoker-scoped RPC; certificate rows remain in the database until picked.
-    if(!databasePage&&scope&&!scope.system&&scope.role!=='student'&&input.listPage&&filter&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)&&scope.issuerIds.length<=100){
+    if(!databasePage&&scope&&!scope.system&&scope.role!=='student'&&input.listPage?.view==='certificates'&&filter&&(filter.year==='all'||/^[0-9]{4}$/.test(filter.year)&&Number(filter.year)>0&&Number(filter.year)<9999)&&scope.issuerIds.length<=100){
       const issuerProfiles=scope.issuerIds.length?await request.client.from('issuers').select('id,print_profile').in('id',scope.issuerIds):{data:[],error:null};
       if(issuerProfiles.error)throw Error(issuerProfiles.error.message);
       const profiles=issuerProfiles.data||[];
@@ -116,6 +116,7 @@ export default createEndpoint({
     const certificates=ownCerts
         .map((c) => ({
           id: c.id,
+          studentId:c.studentId,
           studentName: c.studentName ?? '',
           completionDate: c.completionDate ?? '',
           hijriDayOffset:c.hijriDayOffset??0,

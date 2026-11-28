@@ -37,7 +37,7 @@ export default createEndpoint({
    madrasaName:z.string().optional(),madrasaPlace:z.string().optional(),
    libraryKubra:z.boolean().optional(),kubraSanadMode:kubraSanadMode.optional(),individualSughra:z.boolean().optional(),sanadScope:z.enum(['sughra','kubra']).optional(),personalSanadId:z.string().uuid().optional(),personalSanadIds:orderedSanadIds.optional(),previewOnly:z.boolean().optional(),readinessOnly:z.boolean().optional(),sharedSughraSanad:z.boolean().optional(),personalPersonIds:z.array(z.string().uuid()).max(100).optional(),personalChain:z.string().optional(),junction:z.enum(['ubaydi','jazari']).optional(),
    readings:z.array(choice).optional(),email:z.string().email().or(z.literal('')).optional(),mutoon:z.array(matn).max(100).optional(),
-   tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),
+   tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string().optional(),rawi:z.string().optional(),studentName:z.string().optional(),studentId:z.string().uuid().optional(),
    completionDate:z.string().optional(),hijriDayOffset:z.number().int().min(-2).max(2).optional(),notes:z.string().max(10000).optional(),
  }),
  outputSchema:z.object({sheikhs:z.array(shaykh),createdCertificateId:z.string().optional(),ready:z.literal(true).optional(),preview:orderedSanadPreviewSchema.optional()}),
@@ -200,7 +200,7 @@ export default createEndpoint({
        shaykh:context.user.id,additionalShaykh:known.id,chain:assembled.chain,qiraah:null,certificates:null}});
      const row={certificateId:'',sanadId:sanad.id,snapshotId:''};created.push(row);
      const cert=await zite.certificates.create({record:{
-       studentName:input.studentName!.trim(),completionDate:input.completionDate!,
+       studentName:input.studentName!.trim(),studentId:input.studentId,completionDate:input.completionDate!,
        sanad:sanad.id,shaykh:context.user.id,publicationStatus:'draft',
        hijriDayOffset:input.hijriDayOffset??0,notes:input.notes||'',additionalShaykh:known.id
      }});
@@ -211,14 +211,6 @@ export default createEndpoint({
      row.snapshotId=snapshot.id;
     }
     createdCertificateId=created[0]?.certificateId;
-    // Keep a reusable student list specific to this additional sheikh, shared by both admins.
-    const studentName=input.studentName!.normalize('NFKC').trim().replace(/\s+/gu,' ');
-    try{
-     const ownerId='guest:'+known.id;
-     const {records:students}=await zite.students.findAll({filters:{ownerId},limit:2000});
-     if(!students.some(row=>(row.name||'').normalize('NFKC').trim().replace(/\s+/gu,' ').toLocaleLowerCase('ar')===studentName.toLocaleLowerCase('ar')))
-      await zite.students.create({record:{name:studentName,ownerId}});
-    }catch{/* Student autocomplete is auxiliary; the draft was already issued. */}
    }catch(e){
     for(const row of [...created].reverse()){
      if(row.snapshotId)await zite.certificateSnapshots.delete({id:row.snapshotId}).catch(()=>{});

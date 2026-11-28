@@ -9,7 +9,7 @@ import {context as requestContext} from '../compat/context';
 const option=z.object({id:z.string(),name:z.string(),category:z.string(),sanadText:z.string(),wordingText:z.string()});
 export default createEndpoint({
  description:'Create matn ijazah certificates from an explicitly selected issuer-owned matn',authenticated:true,
- inputSchema:z.object({action:z.enum(['options','save']),issuerKey:z.string().regex(/^(?:user|guest):[^:]+$/),matnId:z.string().optional(),id:z.string().optional(),studentName:z.string().trim().min(2).max(300).optional(),completionDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string().max(10000).default('')}),
+ inputSchema:z.object({action:z.enum(['options','save']),issuerKey:z.string().regex(/^(?:user|guest):[^:]+$/),matnId:z.string().optional(),id:z.string().optional(),studentName:z.string().trim().min(2).max(300).optional(),studentId:z.string().uuid().optional(),completionDate:z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string().max(10000).default('')}),
  outputSchema:z.object({options:z.array(option),certificateId:z.string().optional()}),
  execute:async({input,context})=>{
   const admin=await isAppAdmin(context.user.email);
@@ -40,7 +40,7 @@ export default createEndpoint({
    const sid=Array.isArray(existing.sanad)?existing.sanad[0]:existing.sanad;
    const sanad=await zite.asaneed.findOne({id:sid||''});
    if(!sanad?.matnCode)throw Error('هذه ليست شهادة متن');
-   await zite.certificates.update({id:existing.id,record:{studentName:input.studentName,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes}});
+   await zite.certificates.update({id:existing.id,record:{studentName:input.studentName,studentId:input.studentId,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes}});
    await ensureCertificateRegistration(existing.id);
    return {options,certificateId:existing.id};
   }
@@ -65,7 +65,7 @@ export default createEndpoint({
   const sanad=await zite.asaneed.create({record:{title:source.name,chain,shaykh:uid,additionalShaykh:guestId,matnCode:String(code),matnName:source.name,matnFormatting:formatting}});
   let certificateId='';
   try{
-   const created=await zite.certificates.create({record:{studentName:input.studentName,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes,sanad:sanad.id,shaykh:uid,additionalShaykh:guestId,publicationStatus:'draft'}});
+   const created=await zite.certificates.create({record:{studentName:input.studentName,studentId:input.studentId,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,notes:input.notes,sanad:sanad.id,shaykh:uid,additionalShaykh:guestId,publicationStatus:'draft'}});
    certificateId=created.id;await ensureCertificateRegistration(created.id);
    return {options,certificateId:created.id};
   }catch(e){if(certificateId)await zite.certificates.delete({id:certificateId}).catch(()=>{});await zite.asaneed.delete({id:sanad.id}).catch(()=>{});throw e;}
