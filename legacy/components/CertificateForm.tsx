@@ -41,6 +41,8 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const preferredPersonal=selectedIssuer?.startsWith('user:')?selectedIssuer.slice(5):'';
   const [form, setForm] = useState({
     studentName: cert?.studentName ?? '',
+    studentId:cert?.studentId as string|undefined,
+    createStudent:false,
     completionDate: cert?.completionDate ?? '',
     hijriDayOffset:cert?.hijriDayOffset ?? 0,
     sanadId: cert?.sanadId ?? '',
@@ -71,22 +73,21 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const [studentsAttempt,setStudentsAttempt]=useState(0);
   const [holdingsLoading,setHoldingsLoading]=useState(false),[holdingsError,setHoldingsError]=useState('');
   const [studentEntries,setStudentEntries]=useState<StudentDirectoryOutputType['entries']>([]);
-  const [studentToDelete,setStudentToDelete]=useState<string|null>(null),[deletingStudent,setDeletingStudent]=useState(false);
-  const [savedStudents,setSavedStudents] = useState<string[]>([]);
+  const [studentToDelete,setStudentToDelete]=useState<StudentDirectoryOutputType['entries'][number]|null>(null),[deletingStudent,setDeletingStudent]=useState(false);
   const [studentListOpen,setStudentListOpen]=useState(false);
   const [studentSearch,setStudentSearch]=useState('');
   const [addingStudent,setAddingStudent]=useState(false);
   useEffect(()=>{let active=true;setStudentsLoading(true);setStudentsError('');
-    studentDirectory({}).then(r=>{if(active){setSavedStudents(r.students);setStudentEntries(r.entries);}}).catch(e=>{if(active)setStudentsError(e instanceof Error?e.message:'تعذر تحميل الطلاب');}).finally(()=>{if(active)setStudentsLoading(false);});
+    studentDirectory({}).then(r=>{if(active){setStudentEntries(r.entries);}}).catch(e=>{if(active)setStudentsError(e instanceof Error?e.message:'تعذر تحميل الطلاب');}).finally(()=>{if(active)setStudentsLoading(false);});
     return()=>{active=false;};
   },[studentsAttempt]);
   const removeStudent=async()=>{
     if(!studentToDelete)return;
     setDeletingStudent(true);
     try{
-      const result=await studentDirectory({action:'delete',name:studentToDelete});
-      setSavedStudents(result.students);setStudentEntries(result.entries);
-      if(matchesArabic(form.studentName,studentToDelete)&&matchesArabic(studentToDelete,form.studentName))setForm(prev=>({...prev,studentName:''}));
+      const result=await studentDirectory({action:'delete',studentId:studentToDelete.id});
+      setStudentEntries(result.entries);
+      if(form.studentId===studentToDelete.id)setForm(prev=>({...prev,studentName:'',studentId:undefined,createStudent:false}));
       setStudentToDelete(null);toast.success('حُذف الاسم من قائمة الطلاب المشتركة');
     }catch(error){toast.error(error instanceof Error?error.message:'تعذر حذف الطالب');}
     finally{setDeletingStudent(false);}
@@ -203,8 +204,8 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
   const errors = parsed.success ? {} : parsed.error.flatten().fieldErrors;
   const err = (k: keyof typeof errors) => touched && errors[k]?.[0] && <p className="text-sm text-destructive">{errors[k]?.[0]}</p>;
 
-  const initialForm=useRef(JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId]));
-  const dirty=JSON.stringify([form.studentName,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId])!==initialForm.current||!!orderedSelection||!!selectedBook;
+  const initialForm=useRef(JSON.stringify([form.studentName,form.studentId,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId]));
+  const dirty=JSON.stringify([form.studentName,form.studentId,form.completionDate,form.hijriDayOffset,form.notes,form.sanadId,form.shaykhId])!==initialForm.current||!!orderedSelection||!!selectedBook;
   useEffect(()=>{if(!dirty)return;const warn=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   useEffect(()=>{if(!dirty&&!saving)return;const guard=(event:Event)=>{if(savingRef.current||!window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))event.preventDefault();};window.addEventListener('asaneed-before-navigation',guard);return()=>window.removeEventListener('asaneed-before-navigation',guard);},[dirty,saving]);
   const closeSafely=(close:()=>void)=>{if(savingRef.current)return;if(!dirty||window.confirm('لديك تغييرات غير محفوظة. هل تريد المغادرة؟'))close();};
@@ -225,14 +226,14 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
         const qariId=full?parsedChoice:parsedChoice.slice(0,split);
         const rawi=full?undefined:decodeURIComponent(parsedChoice.slice(split+1));
         await additionalShaykhs({action:'issue',personalSanadIds:explicitOrder?orderedIds:undefined,tariqNumber:guestTariq,id:selectedGuest.id,qariId,rawi,
-          studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
+          studentName:form.studentName,studentId:form.studentId,createStudent:form.createStudent,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes});
         toast.success(full?'تم حفظ مسودتين للروايتين بتاريخ واحد':'تم إنشاء مسودة الشهادة باسم المُجيز المختار');
         onSaved();
         return;
       }
       if(!cert&&choosingQiraah){
         const qariId=form.sanadId.slice('qiraah:'.length);
-        await issueQiraah({tariqNumber:selectedTariq,qariId,studentName:form.studentName,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
+        await issueQiraah({tariqNumber:selectedTariq,qariId,studentName:form.studentName,studentId:form.studentId,createStudent:form.createStudent,completionDate:form.completionDate,hijriDayOffset:form.hijriDayOffset,notes:form.notes,ownerId:form.shaykhId});
         toast.success('تم حفظ مسودتين للروايتين بتاريخ واحد');
         onSaved();
         return;
@@ -331,25 +332,25 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
             <div className="space-y-2">
               {!addingStudent&&<div className="relative">
                 <button type="button" aria-expanded={studentListOpen} aria-label="اختر الطالب" onClick={()=>{setStudentListOpen(v=>!v);setStudentSearch('');}} className="flex h-10 w-full items-center justify-between gap-3 rounded-md border border-input bg-background px-3 text-right shadow-sm hover:bg-muted/40">
-                  <span className={form.studentName?'min-w-0 truncate':'text-muted-foreground'}>{form.studentName||'اختر الطالب'}</span>
+                  <span className={form.studentName?'min-w-0 truncate':'text-muted-foreground'}>{studentEntries.find(e=>e.id===form.studentId)?.label||form.studentName||'اختر الطالب'}</span>
                   <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground"/>
                 </button>
                 {studentListOpen&&<div className="mt-2 w-full overflow-hidden rounded-lg border bg-background shadow-sm">
-                  {savedStudents.length>0&&<div className="relative border-b px-2 py-1"><Search className="absolute right-4 top-3.5 h-4 w-4 text-muted-foreground"/><Input className="border-0 pr-9 shadow-none focus-visible:ring-0" placeholder="ابحث عن طالب" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/></div>}
+                  {studentEntries.length>0&&<div className="relative border-b px-2 py-1"><Search className="absolute right-4 top-3.5 h-4 w-4 text-muted-foreground"/><Input className="border-0 pr-9 shadow-none focus-visible:ring-0" placeholder="ابحث عن طالب" value={studentSearch} onChange={e=>setStudentSearch(e.target.value)}/></div>}
                   {studentsLoading&&<p role="status" className="p-3 text-sm">جارٍ تحميل قائمة الطلاب المشتركة…</p>}
                   {studentsError&&<div role="alert" className="p-3 text-sm"><p>{studentsError}</p><Button variant="outline" size="sm" onClick={()=>setStudentsAttempt(v=>v+1)}>إعادة المحاولة</Button></div>}
                   <div className="max-h-44 overflow-y-auto p-1" role="listbox" aria-label="الطلاب المحفوظون">
-                    {savedStudents.filter(name=>matchesArabic(name,studentSearch)).map(name=><div key={name} className="flex items-center gap-1">
-                      <button type="button" role="option" aria-selected={form.studentName===name} onClick={()=>{setForm(prev=>({...prev,studentName:name}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{name}</span>{form.studentName===name&&<Check className="h-4 w-4 shrink-0"/>}</button>
-                      {isAdmin&&<Button type="button" size="icon" variant="ghost" disabled={!studentEntries.find(row=>row.name===name)?.canDelete} aria-label={'حذف الطالب '+name} title={studentEntries.find(row=>row.name===name)?.canDelete?'حذف الاسم من القائمة':'لدى الطالب إجازة محفوظة؛ لا يمكن حذف اسمه'} onClick={()=>setStudentToDelete(name)}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
+                    {studentEntries.filter(entry=>matchesArabic(entry.name,studentSearch)||entry.id.includes(studentSearch)).map(entry=><div key={entry.id} className="flex items-center gap-1">
+                      <button type="button" role="option" aria-selected={form.studentId===entry.id} onClick={()=>{setForm(prev=>({...prev,studentName:entry.name,studentId:entry.id,createStudent:false}));setStudentListOpen(false);setTouched(false);}} className="flex min-w-0 flex-1 items-center justify-between gap-2 rounded px-3 py-2 text-right text-sm hover:bg-muted focus:bg-muted focus:outline-none"><span className="min-w-0 break-words">{entry.label}</span>{form.studentId===entry.id&&<Check className="h-4 w-4 shrink-0"/>}</button>
+                      {isAdmin&&<Button type="button" size="icon" variant="ghost" disabled={!entry.canDelete} aria-label={'حذف الطالب '+entry.label} title={entry.canDelete?'حذف الاسم من القائمة':'لدى الطالب إجازة محفوظة؛ لا يمكن حذف اسمه'} onClick={()=>setStudentToDelete(entry)}><Trash2 className="h-4 w-4 text-destructive"/></Button>}
                     </div>)}
-                    {isAdmin&&savedStudents.length>0&&<p className="px-3 py-2 text-xs text-muted-foreground">حذف الاسم متاح فقط إذا لم توجد للطالب إجازة محفوظة.</p>}
-                    {!studentsLoading&&!studentsError&&savedStudents.filter(name=>matchesArabic(name,studentSearch)).length===0&&<p className="px-3 py-3 text-center text-sm text-muted-foreground">لا يوجد طالب محفوظ</p>}
+                    {isAdmin&&studentEntries.length>0&&<p className="px-3 py-2 text-xs text-muted-foreground">حذف الاسم متاح فقط إذا لم توجد للطالب إجازة محفوظة.</p>}
+                    {!studentsLoading&&!studentsError&&studentEntries.filter(entry=>matchesArabic(entry.name,studentSearch)||entry.id.includes(studentSearch)).length===0&&<p className="px-3 py-3 text-center text-sm text-muted-foreground">لا يوجد طالب محفوظ</p>}
                   </div>
-                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:''}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
+                  <div className="border-t p-1"><button type="button" onClick={()=>{setAddingStudent(true);setStudentListOpen(false);setForm(prev=>({...prev,studentName:'',studentId:crypto.randomUUID(),createStudent:true}));}} className="flex w-full items-center gap-2 rounded px-3 py-2 text-sm font-semibold hover:bg-muted"><Plus className="h-4 w-4"/> إضافة طالب</button></div>
                 </div>}
               </div>}
-              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
+              {addingStudent&&<div className="flex gap-2"><Input autoFocus value={form.studentName} onChange={e=>setForm(prev=>({...prev,studentName:e.target.value}))} onBlur={()=>setTouched(true)} placeholder="اسم الطالب الجديد" className="min-w-0 flex-1"/><Button type="button" variant="outline" onClick={()=>{setAddingStudent(false);setForm(prev=>({...prev,studentName:'',studentId:undefined,createStudent:false}));setStudentListOpen(true);setTouched(false);}}>رجوع</Button></div>}
             </div>
             {err('studentName')}
           </div>
@@ -381,7 +382,7 @@ export default function CertificateForm({ fixedIssuer=false,onBack,selectedIssue
           </Button>
         </DialogFooter>
         <AlertDialog open={!!studentToDelete} onOpenChange={open=>{if(!open&&!deletingStudent)setStudentToDelete(null);}}>
-          <AlertDialogContent dir="rtl"><AlertDialogHeader><AlertDialogTitle>حذف اسم الطالب؟</AlertDialogTitle><AlertDialogDescription>سيُحذف «{studentToDelete}» من قائمة الاختيار المشتركة لجميع المشايخ. لا تُحذف أي شهادة بهذه العملية.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deletingStudent}>إلغاء</AlertDialogCancel><AlertDialogAction disabled={deletingStudent} onClick={event=>{event.preventDefault();void removeStudent();}}>{deletingStudent?'جارٍ الحذف…':'حذف الاسم'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+          <AlertDialogContent dir="rtl"><AlertDialogHeader><AlertDialogTitle>حذف اسم الطالب؟</AlertDialogTitle><AlertDialogDescription>سيُحذف «{studentToDelete?.label}» من قائمة الاختيار المشتركة لجميع المشايخ. لا تُحذف أي شهادة بهذه العملية.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel disabled={deletingStudent}>إلغاء</AlertDialogCancel><AlertDialogAction disabled={deletingStudent} onClick={event=>{event.preventDefault();void removeStudent();}}>{deletingStudent?'جارٍ الحذف…':'حذف الاسم'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
         </AlertDialog>
       </DialogContent>
     </Dialog>

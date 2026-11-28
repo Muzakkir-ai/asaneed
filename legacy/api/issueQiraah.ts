@@ -11,7 +11,7 @@ import {canUsePersonalSanad} from '../lib/personalSanadValidation';
 export default createEndpoint({
   description:'Issue two distinct narrator certificates for one qiraah on the same completion date',
   authenticated:true,
-  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),readinessOnly:z.boolean().optional(),studentName:z.string().trim(),completionDate:z.string(),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
+  inputSchema:z.object({tariqNumber:z.string().regex(/^[0-9]{2,4}$/).or(z.literal('')).default(''),qariId:z.string(),readinessOnly:z.boolean().optional(),studentName:z.string().trim(),studentId:z.string().uuid().optional(),createStudent:z.boolean().optional(),completionDate:z.string(),hijriDayOffset:z.number().int().min(-2).max(2).default(0),notes:z.string(),ownerId:z.string().optional()}),
   outputSchema:z.object({ids:z.array(z.string()),ready:z.literal(true).optional()}),
   execute:async({input,context})=>{
     if(!input.readinessOnly&&(input.studentName.length<2||!input.completionDate))throw Error('أدخل اسم الطالب وتاريخ الختم');
@@ -55,7 +55,7 @@ export default createEndpoint({
         const sourceSignature=JSON.stringify({chain:assembled.chain,sectionIds:assembled.sectionIds,holdingId:holding.id,rawi});
         if(previous)await zite.preparedIjazahs.update({id:previous.id,record:{sanadId:sanad.id,sourceSignature}});
         else await zite.preparedIjazahs.create({record:{name:rawi,ownerId:owner,holdingId:holding.id,rawi,sanadId:sanad.id,sourceSignature}});
-        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
+        const cert=await zite.certificates.create({record:{studentName:input.studentName.trim(),studentId:input.studentId,createStudent:input.createStudent,completionDate:input.completionDate,hijriDayOffset:input.hijriDayOffset,publicationStatus:'draft',sanad:sanad.id,shaykh:owner,notes:input.notes}});
         created.push({id:cert.id});
         await ensureCertificateRegistration(cert.id);
       }
@@ -66,12 +66,6 @@ export default createEndpoint({
       }
       throw error;
     }
-    const studentName=input.studentName.normalize('NFKC').trim().replace(/\s+/gu,' ');
-    try{
-      const {records:students}=await zite.students.findAll({filters:{ownerId:owner},limit:2000});
-      if(!students.some(s=>(s.name||'').normalize('NFKC').trim().replace(/\s+/gu,' ').toLocaleLowerCase('ar')===studentName.toLocaleLowerCase('ar')))
-        await zite.students.create({record:{name:studentName,ownerId:owner}});
-    }catch{/* Student directory is auxiliary; both certificates already exist. */}
     return {ids:created.map(c=>c.id)};
   },
 });

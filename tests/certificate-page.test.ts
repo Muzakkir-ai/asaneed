@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {certificatePage,type ListCertificate} from '../legacy/lib/certificatePage';
 import {defaultCertificateFilters as filters} from '../legacy/lib/certificateFilters';
-const rows:ListCertificate[]=Array.from({length:10001},(_,i)=>({id:String(i).padStart(6,'0'),studentName:i<2?'مُحَمَّد أَحْمَد':'طالب '+i,completionDate:i%2?'2025-01-01':'2026-01-01',certificateNumber:i+1,registrationNumber:'2601-'+String(i+1).padStart(4,'0'),issuerKey:i%2?'user:one':'guest:two',qariId:'asim',rawi:'حفص',publicationStatus:i%2?'draft':'final',qiraahName:'رواية حفص عن عاصم',shaykhName:'الشيخ إبراهيم'}));
+const rows:ListCertificate[]=Array.from({length:10001},(_,i)=>({id:String(i).padStart(6,'0'),studentId:i<2?'same-student':String(i),studentName:i<2?'مُحَمَّد أَحْمَد':'طالب '+i,completionDate:i%2?'2025-01-01':'2026-01-01',certificateNumber:i+1,registrationNumber:'2601-'+String(i+1).padStart(4,'0'),issuerKey:i%2?'user:one':'guest:two',qariId:'asim',rawi:'حفص',publicationStatus:i%2?'draft':'final',qiraahName:'رواية حفص عن عاصم',shaykhName:'الشيخ إبراهيم'}));
 const first=certificatePage(rows,{...filters,sort:'added'},'certificates',0);
 assert.equal(first.certificates.length,15);assert.equal(first.totalCertificates,10001);assert.equal(first.pages,667);
 assert.equal(first.certificates[0].certificateNumber,10001);
@@ -17,3 +17,8 @@ assert.equal(narrow.totalCertificates,5000);assert.ok(narrow.certificates.every(
 assert.equal(certificatePage(rows,{...filters,query:'مفقود'},'certificates',20).page,0);
 assert.equal(certificatePage(rows,{...filters,query:'مفقود'},'certificates',20).totalCertificates,0);
 console.log('PASS: 10001 records, no omissions or duplicate page membership, Arabic search, grouped students, combined filters, empty results and clamped pages');
+
+const homonyms=[{...rows[0],studentId:'first'},{...rows[1],studentId:'second'},{...rows[2],id:'other-certificate',studentId:'first',studentName:rows[0].studentName}];
+const separated=certificatePage(homonyms,{...filters,query:'احمد محمد'},'students',0);assert.equal(separated.students.length,2);assert.deepEqual(separated.students.map(g=>g.length).sort(),[1,2]);
+const unresolved=certificatePage(homonyms.slice(0,2).map(r=>({...r,studentId:undefined})),filters,'students',0);assert.equal(unresolved.students.length,2,'unresolved identities must not be guessed by name');
+console.log('PASS: same-name students remain distinct; repeated student IDs group together; missing IDs stay separate');
