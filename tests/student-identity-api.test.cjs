@@ -52,7 +52,7 @@ async function main(){
   await assert.rejects(()=>directory.invoke({action:'delete',name:base.studentName}),/بمعرّفه/);
   await assert.rejects(()=>directory.invoke({action:'delete',studentId:first}),/مرتبط/);
   await assert.rejects(()=>directory.invoke({action:'delete',studentId:linked}),/مرتبط/);
-  ctx.account.role='shaykh';await assert.rejects(()=>directory.invoke({action:'delete',studentId:unused}),/المدير/);ctx.account.role='admin';
+  ctx.account.role='shaykh';await assert.rejects(()=>directory.invoke({action:'delete',studentId:unused}),/للمدير/);ctx.account.role='admin';
   await directory.invoke({action:'delete',studentId:unused});
   assert.ok(!tables.students.some(s=>s.id===unused));assert.ok(tables.students.some(s=>s.id===first)&&tables.students.some(s=>s.id===second));
   assert.equal(writes.filter(x=>x[1]==='delete').length,1);assert.deepEqual(writes.at(-1),['students','delete',unused]);
